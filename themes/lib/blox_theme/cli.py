@@ -185,7 +185,7 @@ def normalise_option_dashes(arguments: list[str]) -> list[str]:
     return normalised
 
 
-def checked_theme(command: str, reference: str, check_dependencies: bool = True) -> tuple[Path | None, dict[str, Any] | None, dict[str, Any] | None, int]:
+def checked_theme(command: str, reference: str, check_dependencies: bool = True, dependency_gate: bool = True) -> tuple[Path | None, dict[str, Any] | None, dict[str, Any] | None, int]:
     try:
         if reference.lstrip().startswith("{"):
             if command == "apply":
@@ -201,7 +201,7 @@ def checked_theme(command: str, reference: str, check_dependencies: bool = True)
         return None, None, envelope(command, errors=[str(error)]), EXIT_DEPENDENCY
     except (OSError, json.JSONDecodeError, ValueError) as error:
         return None, None, envelope(command, errors=[str(error)]), EXIT_VALIDATION
-    checked = validate_theme(theme, check_dependencies=check_dependencies, source_path=path)
+    checked = validate_theme(theme, check_dependencies=check_dependencies, source_path=path, dependency_gate=dependency_gate)
     if checked.errors:
         return path, theme, envelope(command, errors=checked.errors, warnings=checked.warnings), EXIT_VALIDATION
     return path, theme, None, EXIT_OK
@@ -510,7 +510,7 @@ def run(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
         data = {"generation": manifest["generation_id"], "theme_id": manifest["theme_id"], "active_targets": manifest["enabled_targets"]}
         return envelope(command, data, warnings=warnings), EXIT_RELOAD_WARNING if warnings else EXIT_OK
 
-    path, theme, failure, code = checked_theme(command, args.theme, check_dependencies=command not in ("show", "apply"))
+    path, theme, failure, code = checked_theme(command, args.theme, check_dependencies=command not in ("show", "apply"), dependency_gate=command == "apply")
     if failure:
         return failure, code
     assert path is not None and theme is not None

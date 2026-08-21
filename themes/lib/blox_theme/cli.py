@@ -515,7 +515,7 @@ def run(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
         return failure, code
     assert path is not None and theme is not None
 
-    checked = validate_theme(theme, check_dependencies=command != "show", source_path=path)
+    checked = validate_theme(theme, check_dependencies=command != "show", source_path=path, dependency_gate=command == "apply")
     if command == "show":
         return envelope(command, theme), EXIT_OK
     if command == "validate":

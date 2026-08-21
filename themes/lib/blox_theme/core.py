@@ -438,8 +438,12 @@ def _named_asset_exists(name: str, roots: tuple[Path, ...]) -> bool:
     return any((root / name).exists() for root in roots)
 
 
-def dependency_checks(theme: dict[str, Any], targets: set[str] | None = None, source_path: Path | None = None) -> CheckResult:
+def dependency_checks(theme: dict[str, Any], targets: set[str] | None = None, source_path: Path | None = None, apply_gate: bool = True) -> CheckResult:
+    """Machine-asset absence blocks an apply outright. Read-only commands
+    report the same findings as warnings so a clean machine can still
+    validate and render built-ins that reference optional user themes."""
     result = CheckResult()
+    asset_findings = result.errors if apply_gate else result.warnings
     enabled = lambda target: theme["targets"][target] and (targets is None or target in targets)
     wallpaper = resolve_wallpaper_path(theme["wallpaper"]["path"], source_path)
     if enabled("wallpaper") and not wallpaper.is_file():
@@ -448,13 +452,13 @@ def dependency_checks(theme: dict[str, Any], targets: set[str] | None = None, so
     theme_roots = (Path.home() / ".local/share/themes", Path.home() / ".themes", Path("/usr/local/share/themes"), Path("/usr/share/themes"))
     icon_roots = (Path.home() / ".local/share/icons", Path.home() / ".icons", Path("/usr/local/share/icons"), Path("/usr/share/icons"))
     if enabled("gtk") and not _named_asset_exists(theme["gtk"]["base_theme"], theme_roots):
-        result.errors.append(f"GTK base theme is not installed: {theme['gtk']['base_theme']}")
+        asset_findings.append(f"GTK base theme is not installed: {theme['gtk']['base_theme']}")
     if enabled("gtk") and not _named_asset_exists(theme["icons"]["theme"], icon_roots):
-        result.errors.append(f"icon theme is not installed: {theme['icons']['theme']}")
+        asset_findings.append(f"icon theme is not installed: {theme['icons']['theme']}")
     cursor = theme["cursor"]
     if enabled("cursor"):
         if cursor["mode"] == "installed" and not _named_asset_exists(cursor["base"], icon_roots):
-            result.errors.append(f"cursor base is not installed: {cursor['base']}")
+            asset_findings.append(f"cursor base is not installed: {cursor['base']}")
         elif cursor["mode"] == "generated":
             from .cursor import toolchain_check
 
@@ -477,7 +481,11 @@ def dependency_checks(theme: dict[str, Any], targets: set[str] | None = None, so
 
 
 def validate_theme(
-    theme: dict[str, Any], check_dependencies: bool = True, targets: set[str] | None = None, source_path: Path | None = None
+    theme: dict[str, Any],
+    check_dependencies: bool = True,
+    targets: set[str] | None = None,
+    source_path: Path | None = None,
+    dependency_gate: bool = True,
 ) -> CheckResult:
     result = CheckResult(errors=schema_errors(theme))
     if result.errors:
@@ -533,7 +541,7 @@ def validate_theme(
             if ratio < minimum:
                 result.warnings.append(f"GTK override {foreground}/{background} contrast is {ratio:.2f}:1; recommends {minimum:.1f}:1")
     if check_dependencies:
-        dependencies = dependency_checks(theme, targets=targets, source_path=source_path)
+        dependencies = dependency_checks(theme, targets=targets, source_path=source_path, apply_gate=dependency_gate)
         result.errors.extend(dependencies.errors)
         result.warnings.extend(dependencies.warnings)
     return result

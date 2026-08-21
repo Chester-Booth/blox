@@ -76,7 +76,7 @@ def dependency_notes(theme: dict[str, Any]) -> dict[str, Any]:
 
 
 def _dependency_warnings(theme: dict[str, Any], source_path: Path | None = None) -> list[str]:
-    checked = dependency_checks(theme, source_path=source_path)
+    checked = dependency_checks(theme, source_path=source_path, apply_gate=False)
     return [f"missing dependency: {message}" for message in checked.errors] + checked.warnings
 
 

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Open Theme Picker
+Comment=Open the Blox theme editor
+Exec=quickshell ipc -c blox call themePicker open
+Icon=blox-theme-picker
+Terminal=false
+Categories=Settings;
+Keywords=theme;appearance;colour;quickshell;
+StartupNotify=false

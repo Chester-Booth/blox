@@ -1,0 +1,25 @@
+{
+  "bibata": {
+    "archive_sha256": "1f21e5cade53d668476f973bd8ec827882a0e32c38e0e766abf007f8b3b46313",
+    "archive_url": "https://codeload.github.com/ful1e5/Bibata_Cursor/tar.gz/refs/tags/v2.0.7",
+    "commit": "35ccfe209a808e40d6c2ca60a46cbe4faf68b690",
+    "licence": "GPL-3.0-only",
+    "licence_path": "LICENSE",
+    "source_directory": "Bibata_Cursor-2.0.7",
+    "version": "2.0.7"
+  },
+  "cbmp": {
+    "integrity": "sha512-G2CstvZ8bgX85hzA9nDhKRglGyjZWIp8V01SXtQ6f4NNFe7Xy+lL+z7MrtWCnpKPbBUtr2VJWwZRJaexJDm5kA==",
+    "licence": "MIT",
+    "package": "cbmp",
+    "version": "1.1.1"
+  },
+  "clickgen": {
+    "licence": "MIT",
+    "package": "clickgen",
+    "version": "2.2.5",
+    "wheel_url": "https://files.pythonhosted.org/packages/06/9e/128fa4a8ac38f68401ed711033e993d8d32097e148bee141efe73b9ebca4/clickgen-2.2.5-py3-none-any.whl",
+    "wheel_sha256": "1a7ce572e6cf2bc2cb0d25614b57e87a984e43b34f584b5c7b0f45b4dd9e79f6"
+  },
+  "schema_version": 1
+}

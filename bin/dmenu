@@ -1,0 +1,133 @@
+#!/usr/bin/env python3
+"""Small dmenu-compatible client for the Blox Quickshell launcher."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import selectors
+import socket
+import sys
+from pathlib import Path
+
+MAX_BYTES = 1024 * 1024
+MAX_ITEMS = 10_000
+MAX_RESPONSE = 64 * 1024
+
+
+def read_options() -> list[str] | None:
+    raw = sys.stdin.buffer.read(MAX_BYTES + 1)
+    if len(raw) > MAX_BYTES:
+        print("dmenu: input exceeds 1 MiB", file=sys.stderr)
+        return None
+    options = raw.decode("utf-8", "replace").splitlines()
+    if len(options) > MAX_ITEMS:
+        print("dmenu: input exceeds 10,000 items", file=sys.stderr)
+        return None
+    return options
+
+
+def read_options_fast(client: socket.socket) -> tuple[list[str] | None, bytes | None]:
+    selector = selectors.SelectSelector()
+    stdin_fd = sys.stdin.fileno()
+    previous_blocking = os.get_blocking(stdin_fd)
+    raw = bytearray()
+    response = bytearray()
+    try:
+        os.set_blocking(stdin_fd, False)
+        client.setblocking(False)
+        selector.register(stdin_fd, selectors.EVENT_READ, "stdin")
+        selector.register(client, selectors.EVENT_READ, "socket")
+        while True:
+            for key, _ in selector.select():
+                if key.data == "socket":
+                    chunk = client.recv(4096)
+                    if not chunk:
+                        return None, None
+                    response.extend(chunk)
+                    if len(response) > MAX_RESPONSE:
+                        print("dmenu: response exceeds 64 KiB", file=sys.stderr)
+                        return None, None
+                    if b"\n" in response:
+                        return None, bytes(response)
+                else:
+                    chunk = os.read(stdin_fd, 65536)
+                    if not chunk:
+                        options = bytes(raw).decode("utf-8", "replace").splitlines()
+                        if len(options) > MAX_ITEMS:
+                            print("dmenu: input exceeds 10,000 items", file=sys.stderr)
+                            return None, None
+                        return options, None
+                    raw.extend(chunk)
+                    if len(raw) > MAX_BYTES:
+                        print("dmenu: input exceeds 1 MiB", file=sys.stderr)
+                        return None, None
+    finally:
+        selector.close()
+        os.set_blocking(stdin_fd, previous_blocking)
+        client.setblocking(True)
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("-i", action="store_true")
+    parser.add_argument("-p", default="")
+    parser.add_argument("-l", type=int, default=0)
+    parser.add_argument("-m", default="")
+    parser.add_argument("-b", action="store_true")
+    parser.add_argument("-f", action="store_true")
+    parser.add_argument("-fn", "-nb", "-nf", "-sb", "-sf", default="")
+    args, _ = parser.parse_known_args()
+    options = [] if args.f else read_options()
+    if options is None:
+        return 1
+    runtime = Path(os.environ.get("XDG_RUNTIME_DIR", f"/run/user/{os.getuid()}"))
+    request = {
+        "version": 1,
+        "options": options,
+        "prompt": args.p,
+        "query": "",
+        "insensitive": args.i,
+        "lines": max(0, args.l),
+        "monitor": args.m,
+        "bottom": args.b,
+        "fast": args.f,
+    }
+    client = socket.socket(socket.AF_UNIX)
+    client.settimeout(0.8)
+    try:
+        client.connect(str(runtime / "blox-launcher/dmenu.sock"))
+        client.sendall(json.dumps(request, separators=(",", ":")).encode() + b"\n")
+        early_response = None
+        if args.f:
+            options, early_response = read_options_fast(client)
+            if early_response is None:
+                if options is None:
+                    return 1
+                update = {"version": 1, "event": "options", "options": options}
+                client.sendall(json.dumps(update, separators=(",", ":")).encode() + b"\n")
+        client.settimeout(None)
+        response = early_response or b""
+        while b"\n" not in response:
+            chunk = client.recv(4096)
+            if not chunk:
+                return 1
+            response += chunk
+            if len(response) > MAX_RESPONSE:
+                print("dmenu: response exceeds 64 KiB", file=sys.stderr)
+                return 1
+        result = json.loads(response.split(b"\n", 1)[0])
+        if not result.get("ok"):
+            return 1
+        print(result["value"])
+        return 0
+    except (OSError, ValueError) as error:
+        print(f"dmenu: {error}", file=sys.stderr)
+        return 1
+    finally:
+        client.close()
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

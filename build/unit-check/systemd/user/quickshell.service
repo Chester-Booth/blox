@@ -1,0 +1,19 @@
+[Unit]
+Description=Blox Quickshell desktop shell
+StartLimitIntervalSec=30
+StartLimitBurst=5
+
+[Service]
+Type=exec
+# Let systemd own restarts. Quickshell's internal crash-recovery parent keeps
+# the old instance registry alive, which can turn later IPC clients into full
+# duplicate shells after a QML crash.
+Environment=QS_DISABLE_CRASH_HANDLER=1
+Environment=BLOX_DATA_DIR=/home/blox/.local/share/blox/themes
+Environment=BLOX_SHELL_LAYOUT=installed
+ExecStart=/usr/bin/quickshell --no-duplicate --path /home/blox/.local/share/blox/shell
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=default.target

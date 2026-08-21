@@ -1,0 +1,3 @@
+#!/bin/sh
+umask 077
+exec "$HOME/.config/quickshell/blox/scripts/launcher/clipboardctl.py" ingest --mime "$BLOX_CLIPBOARD_MIME"

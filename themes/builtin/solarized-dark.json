@@ -1,0 +1,241 @@
+{
+  "colours": {
+    "accent": "#268bd2",
+    "background": "#002b36",
+    "border": "#586e75",
+    "danger": "#dc322f",
+    "foreground": "#93a1a1",
+    "info": "#268bd2",
+    "mauve": "#6c71c4",
+    "muted": "#93a1a1",
+    "selection_background": "#b58900",
+    "selection_foreground": "#002b36",
+    "success": "#859900",
+    "surface": "#073642",
+    "surface_alt": "#586e75",
+    "teal": "#2aa198",
+    "warning": "#b58900"
+  },
+  "cursor": {
+    "base": "Bibata-Modern-Classic",
+    "base_colour": "#268bd2",
+    "colour_source": "theme",
+    "handedness": "right",
+    "mode": "generated",
+    "outline_colour": "#002b36",
+    "sizes": [
+      22,
+      24
+    ],
+    "watch_background": "#073642"
+  },
+  "fonts": {
+    "editor_size": 13,
+    "gtk_size": 11,
+    "mono": "SauceCodePro Nerd Font Mono",
+    "panel": "SauceCodePro Nerd Font Propo",
+    "terminal_size": 12,
+    "ui": "Source Sans 3"
+  },
+  "gtk": {
+    "base_theme": "Graphite-Dark-compact",
+    "colour_source": "theme",
+    "mode": "generated"
+  },
+  "icons": {
+    "theme": "Adwaita"
+  },
+  "id": "solarized-dark",
+  "name": "Solarized Dark",
+  "overrides": {
+    "ansi": {
+      "color0": "#002b36",
+      "color1": "#dc322f",
+      "color10": "#859900",
+      "color11": "#b58900",
+      "color12": "#268bd2",
+      "color13": "#6c71c4",
+      "color14": "#2aa198",
+      "color15": "#fdf6e3",
+      "color2": "#859900",
+      "color3": "#b58900",
+      "color4": "#268bd2",
+      "color5": "#d33682",
+      "color6": "#2aa198",
+      "color7": "#93a1a1",
+      "color8": "#586e75",
+      "color9": "#cb4b16"
+    }
+  },
+  "schema_version": 1,
+  "shell": {
+    "bar": {
+      "items": [
+        {
+          "enabled": true,
+          "id": "workspaces",
+          "order": 0,
+          "region": "start"
+        },
+        {
+          "enabled": true,
+          "id": "sound",
+          "order": 1,
+          "region": "start"
+        },
+        {
+          "enabled": true,
+          "id": "clock",
+          "order": 0,
+          "region": "centre"
+        },
+        {
+          "enabled": true,
+          "id": "active-window-title",
+          "order": 1,
+          "orientation": "horizontal",
+          "region": "centre"
+        },
+        {
+          "enabled": true,
+          "id": "tray",
+          "order": 0,
+          "region": "end"
+        },
+        {
+          "enabled": true,
+          "id": "wifi",
+          "order": 1,
+          "region": "end"
+        },
+        {
+          "display": "numeric",
+          "enabled": true,
+          "id": "battery",
+          "order": 2,
+          "region": "end"
+        },
+        {
+          "enabled": true,
+          "id": "notifications",
+          "order": 3,
+          "region": "end"
+        },
+        {
+          "enabled": true,
+          "id": "power",
+          "order": 4,
+          "region": "end"
+        },
+        {
+          "enabled": true,
+          "id": "application-tray",
+          "order": 0,
+          "region": "hidden"
+        },
+        {
+          "enabled": true,
+          "id": "notes",
+          "order": 1,
+          "region": "hidden"
+        },
+        {
+          "enabled": true,
+          "id": "privacy",
+          "order": 2,
+          "region": "hidden"
+        },
+        {
+          "enabled": true,
+          "id": "awake",
+          "order": 3,
+          "region": "hidden"
+        },
+        {
+          "enabled": true,
+          "id": "display",
+          "order": 4,
+          "region": "hidden"
+        },
+        {
+          "enabled": true,
+          "id": "bt",
+          "order": 5,
+          "region": "hidden"
+        },
+        {
+          "enabled": true,
+          "id": "updates",
+          "order": 6,
+          "region": "hidden"
+        },
+        {
+          "enabled": true,
+          "id": "fan",
+          "order": 7,
+          "region": "hidden",
+          "visibility": "normal"
+        },
+        {
+          "enabled": true,
+          "id": "gpu",
+          "order": 8,
+          "region": "hidden",
+          "visibility": "normal"
+        },
+        {
+          "enabled": true,
+          "id": "touchpad",
+          "order": 9,
+          "region": "hidden",
+          "visibility": "normal"
+        }
+      ],
+      "position": "bottom"
+    },
+    "notifications": {
+      "offset_x": 0,
+      "offset_y": 0,
+      "position": "top-right"
+    },
+    "osd": {
+      "offset_x": 0,
+      "offset_y": 0,
+      "position": "centre-top"
+    }
+  },
+  "targets": {
+    "btop": true,
+    "code": true,
+    "cursor": true,
+    "cursor_editor": true,
+    "glow": true,
+    "grub": false,
+    "gtk": true,
+    "hyprland": true,
+    "hyprlock": true,
+    "kitty": true,
+    "micro": true,
+    "obsidian": true,
+    "powerlevel10k": true,
+    "quickshell": true,
+    "sddm": false,
+    "stylus": true,
+
+    "wallpaper": true,
+    "widgets": true
+  },
+  "terminal": {
+    "ansi_source": "override",
+    "canvas": "#002b36",
+    "chrome_background": "#073642"
+  },
+  "variant": "dark",
+  "wallpaper": {
+    "fit": "cover",
+    "path": "wallpapers/showcase/solarized-dark.webp"
+  },
+  "widgets": {
+    "profile": "compact"
+  }
+}

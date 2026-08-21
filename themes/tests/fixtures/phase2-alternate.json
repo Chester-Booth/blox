@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "id": "phase2-alternate",
+  "name": "Phase 2 Alternate",
+  "variant": "dark",
+  "targets": {
+    "quickshell": true,
+
+    "widgets": false,
+    "gtk": false,
+    "cursor": false,
+    "wallpaper": true,
+    "kitty": true,
+    "hyprland": false,
+    "hyprlock": false,
+    "btop": false,
+    "micro": false,
+    "glow": false,
+    "code": false,
+    "cursor_editor": false,
+    "stylus": false,
+    "obsidian": true,
+    "powerlevel10k": false,
+    "sddm": false,
+    "grub": false
+  },
+  "fonts": {
+    "ui": "Google Sans",
+    "mono": "MartianMono Nerd Font Mono",
+    "panel": "MartianMono Nerd Font Propo",
+    "terminal_size": 12,
+    "editor_size": 13,
+    "gtk_size": 11
+  },
+  "colours": {
+    "background": "#101218",
+    "surface": "#181b24",
+    "surface_alt": "#343b4f",
+    "foreground": "#eef2ff",
+    "muted": "#b6bed8",
+    "accent": "#70a5ff",
+    "danger": "#ff7892",
+    "success": "#8ee6a2",
+    "warning": "#f6d477",
+    "info": "#70a5ff",
+    "mauve": "#d99cff",
+    "teal": "#71dfd1",
+    "selection_background": "#70a5ff",
+    "selection_foreground": "#101218",
+    "border": "#343b4f"
+  },
+  "wallpaper": {"path": "~/Pictures/wallpapers/2022-07-07_18.12.55.png", "fit": "contain"},
+  "gtk": {"mode": "installed", "base_theme": "Graphite-Dark-compact", "colour_source": "theme"},
+  "icons": {"theme": "Adwaita"},
+  "cursor": {"mode": "installed", "base": "Bibata-Modern-Classic", "handedness": "right", "sizes": [20, 24], "colour_source": "theme"},
+  "terminal": {"canvas": "#101218", "chrome_background": "#181b24", "ansi_source": "derived"}
+}

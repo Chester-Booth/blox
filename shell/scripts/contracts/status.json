@@ -1,0 +1,379 @@
+{
+  "audio": {
+    "command": ["status/audio.sh"],
+    "required": {
+      "icon": "string",
+      "micIcon": "string",
+      "volume": "number",
+      "muted": "boolean",
+      "micMuted": "boolean",
+      "tooltip": "string",
+      "capability": "object"
+    },
+    "children": {
+      "capability": {
+        "required": {
+          "available": "boolean",
+          "ready": "boolean",
+          "canChange": "boolean",
+          "permission": "string",
+          "reason": ["string", "null"]
+        },
+        "enum": {
+          "permission": ["not-required", "unknown", "granted", "denied"]
+        }
+      }
+    }
+  },
+  "battery": {
+    "command": ["status/battery.sh"],
+    "required": {
+      "icon": "string",
+      "class": "string",
+      "capacity": ["number", "string"],
+      "status": "string",
+      "timeLabel": "string",
+      "tooltip": "string",
+      "capability": "object"
+    },
+    "children": {
+      "capability": {
+        "required": {
+          "available": "boolean",
+          "ready": "boolean",
+          "canChange": "boolean",
+          "permission": "string",
+          "reason": ["string", "null"]
+        },
+        "enum": {
+          "permission": ["not-required", "unknown", "granted", "denied"]
+        }
+      }
+    }
+  },
+  "bluetooth": {
+    "command": ["status/bluetooth.sh"],
+    "required": {
+      "icon": "string",
+      "class": "string",
+      "details": "string",
+      "tooltip": "string",
+      "capability": "object"
+    },
+    "children": {
+      "capability": {
+        "required": {
+          "available": "boolean",
+          "ready": "boolean",
+          "canChange": "boolean",
+          "permission": "string",
+          "reason": ["string", "null"]
+        },
+        "enum": {
+          "permission": ["not-required", "unknown", "granted", "denied"]
+        }
+      }
+    }
+  },
+  "brightness": {
+    "command": ["status/brightness.sh"],
+    "required": {
+      "icon": "string",
+      "percent": "number",
+      "blueLightMode": "string",
+      "blueLightActive": "boolean",
+      "details": "string",
+      "tooltip": "string",
+      "capability": "object"
+    },
+    "children": {
+      "capability": {
+        "required": {
+          "available": "boolean",
+          "ready": "boolean",
+          "canChange": "boolean",
+          "permission": "string",
+          "reason": ["string", "null"]
+        },
+        "enum": {
+          "permission": ["not-required", "unknown", "granted", "denied"]
+        }
+      }
+    }
+  },
+  "network": {
+    "command": ["status/network.sh"],
+    "required": {
+      "icon": "string",
+      "class": "string",
+      "summary": "string",
+      "details": "string",
+      "tooltip": "string",
+      "capability": "object"
+    },
+    "optional": {
+      "ssid": "string",
+      "signal": "number",
+      "freq": "string",
+      "device": "string"
+    },
+    "children": {
+      "capability": {
+        "required": {
+          "available": "boolean",
+          "ready": "boolean",
+          "canChange": "boolean",
+          "permission": "string",
+          "reason": ["string", "null"]
+        },
+        "enum": {
+          "permission": ["not-required", "unknown", "granted", "denied"]
+        }
+      }
+    }
+  },
+  "privacy": {
+    "command": ["status/privacy.py"],
+    "required": {
+      "icon": "string",
+      "class": "string",
+      "active": "boolean",
+      "microphoneCount": "number",
+      "videoCount": "number",
+      "details": "string",
+      "tooltip": "string",
+      "capability": "object"
+    },
+    "children": {
+      "capability": {
+        "required": {
+          "available": "boolean",
+          "ready": "boolean",
+          "canChange": "boolean",
+          "permission": "string",
+          "reason": ["string", "null"]
+        },
+        "enum": {
+          "permission": ["not-required", "unknown", "granted", "denied"]
+        }
+      }
+    }
+  },
+  "system": {
+    "command": ["status/system.sh"],
+    "required": {
+      "profile": "string",
+      "fanRpm": "string",
+      "fan1Rpm": "string",
+      "fan2Rpm": "string",
+      "cpuTemp": "string",
+      "cpuClock": "string",
+      "cpuUtil": "number",
+      "powerW": "string",
+      "uptimeLabel": "string",
+      "ramUsed": "string",
+      "ramTotal": "string",
+      "ramPercent": "number",
+      "swapUsed": "string",
+      "swapTotal": "string",
+      "swapPercent": "number",
+      "gpuMode": "string",
+      "gpuLabel": "string",
+      "gpuOn": "boolean",
+      "refresh": "string",
+      "gpuUtil": "string",
+      "gpuTemp": "string",
+      "vramUsed": "string",
+      "vramTotal": "string",
+      "capability": "object"
+    },
+    "enum": {
+      "gpuMode": ["eco", "high-refresh", "performance", "gaming"]
+    },
+    "children": {
+      "capability": {
+        "required": {
+          "available": "boolean",
+          "ready": "boolean",
+          "canChange": "boolean",
+          "permission": "string",
+          "reason": ["string", "null"]
+        },
+        "enum": {
+          "permission": ["not-required", "unknown", "granted", "denied"]
+        }
+      }
+    }
+  },
+  "todo": {
+    "command": ["todo/status.sh"],
+    "required": {
+      "text": "string",
+      "file": "string",
+      "name": "string",
+      "raw": "string",
+      "index": "number",
+      "count": "number",
+      "tooltip": "string",
+      "capability": "object"
+    },
+    "children": {
+      "capability": {
+        "required": {
+          "available": "boolean",
+          "ready": "boolean",
+          "canChange": "boolean",
+          "permission": "string",
+          "reason": ["string", "null"]
+        },
+        "enum": {
+          "permission": ["not-required", "unknown", "granted", "denied"]
+        }
+      }
+    }
+  },
+  "touchpad": {
+    "command": ["status/touchpad.sh"],
+    "required": {
+      "icon": "string",
+      "class": "string",
+      "enabled": "boolean",
+      "tooltip": "string",
+      "capability": "object"
+    },
+    "children": {
+      "capability": {
+        "required": {
+          "available": "boolean",
+          "ready": "boolean",
+          "canChange": "boolean",
+          "permission": "string",
+          "reason": ["string", "null"]
+        },
+        "enum": {
+          "permission": ["not-required", "unknown", "granted", "denied"]
+        }
+      }
+    }
+  },
+  "caffeine": {
+    "command": ["status/caffeine.sh"],
+    "required": {
+      "icon": "string",
+      "class": "string",
+      "mode": "string",
+      "label": "string",
+      "tooltip": "string",
+      "active": "boolean",
+      "deadline": "number",
+      "remaining": "number",
+      "hypridleRunning": "boolean",
+      "reconciled": "boolean",
+      "capability": "object"
+    },
+    "children": {
+      "capability": {
+        "required": {
+          "available": "boolean",
+          "ready": "boolean",
+          "canChange": "boolean",
+          "permission": "string",
+          "reason": ["string", "null"]
+        },
+        "enum": {
+          "permission": ["not-required", "unknown", "granted", "denied"]
+        }
+      }
+    }
+  },
+  "updates": {
+    "command": ["update/status.sh"],
+    "required": {
+      "alt": "string",
+      "class": "string",
+      "repoCount": "number",
+      "aurCount": "number",
+      "totalCount": "number",
+      "summary": "string",
+      "details": "string",
+      "tooltip": "string",
+      "capability": "object"
+    },
+    "children": {
+      "capability": {
+        "required": {
+          "available": "boolean",
+          "ready": "boolean",
+          "canChange": "boolean",
+          "permission": "string",
+          "reason": ["string", "null"]
+        },
+        "enum": {
+          "permission": ["not-required", "unknown", "granted", "denied"]
+        }
+      }
+    }
+  },
+  "workspaceEmpty": {
+    "command": ["widgets/workspace-empty.sh"],
+    "required": {
+      "workspace": ["number", "null"],
+      "empty": "boolean",
+      "count": "number",
+      "capability": "object"
+    },
+    "children": {
+      "capability": {
+        "required": {
+          "available": "boolean",
+          "ready": "boolean",
+          "canChange": "boolean",
+          "permission": "string",
+          "reason": ["string", "null"]
+        },
+        "enum": {
+          "permission": ["not-required", "unknown", "granted", "denied"]
+        }
+      }
+    }
+  },
+  "workspaces": {
+    "command": ["workspaces/status.py"],
+    "required": {
+      "main": "array",
+      "special": "object",
+      "capability": "object"
+    },
+    "items": {
+      "main": {
+        "id": "number",
+        "active": "boolean",
+        "urgent": "boolean",
+        "urgentAddress": "string",
+        "empty": "boolean",
+        "icon": "string",
+        "tooltip": "string"
+      }
+    },
+    "children": {
+      "special": {
+        "active": "boolean",
+        "occupied": "boolean",
+        "icon": "string",
+        "tooltip": "string"
+      },
+      "capability": {
+        "required": {
+          "available": "boolean",
+          "ready": "boolean",
+          "canChange": "boolean",
+          "permission": "string",
+          "reason": ["string", "null"]
+        },
+        "enum": {
+          "permission": ["not-required", "unknown", "granted", "denied"]
+        }
+      }
+    }
+  }
+}

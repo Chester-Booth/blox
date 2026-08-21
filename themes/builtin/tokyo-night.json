@@ -1,0 +1,189 @@
+{
+  "colours": {
+    "accent": "#7aa2f7",
+    "background": "#1a1b26",
+    "border": "#3b4261",
+    "danger": "#f7768e",
+    "foreground": "#c0caf5",
+    "info": "#7dcfff",
+    "mauve": "#bb9af7",
+    "muted": "#a9b1d6",
+    "selection_background": "#283457",
+    "selection_foreground": "#c0caf5",
+    "success": "#9ece6a",
+    "surface": "#16161e",
+    "surface_alt": "#292e42",
+    "teal": "#73daca",
+    "warning": "#e0af68"
+  },
+  "cursor": {
+    "base": "Bibata-Modern-Classic",
+    "base_colour": "#7aa2f7",
+    "colour_source": "theme",
+    "handedness": "right",
+    "mode": "generated",
+    "outline_colour": "#1a1b26",
+    "sizes": [
+      22,
+      24
+    ],
+    "watch_background": "#1a1b26"
+  },
+  "fonts": {
+    "editor_size": 13,
+    "gtk_size": 11,
+    "mono": "JetBrainsMono Nerd Font Mono",
+    "panel": "JetBrainsMono Nerd Font Propo",
+    "terminal_size": 12,
+    "ui": "Space Grotesk"
+  },
+  "gtk": {
+    "base_theme": "Graphite-Dark-compact",
+    "colour_source": "theme",
+    "mode": "generated"
+  },
+  "icons": {
+    "theme": "Adwaita"
+  },
+  "id": "tokyo-night",
+  "name": "Tokyo Night",
+  "overrides": {
+    "ansi": {
+      "color0": "#414868",
+      "color1": "#f7768e",
+      "color10": "#73daca",
+      "color11": "#e0af68",
+      "color12": "#7aa2f7",
+      "color13": "#bb9af7",
+      "color14": "#7dcfff",
+      "color15": "#c0caf5",
+      "color2": "#73daca",
+      "color3": "#e0af68",
+      "color4": "#7aa2f7",
+      "color5": "#bb9af7",
+      "color6": "#7dcfff",
+      "color7": "#c0caf5",
+      "color8": "#414868",
+      "color9": "#f7768e"
+    }
+  },
+  "schema_version": 1,
+  "shell": {
+    "bar": {
+      "items": [
+        {
+          "enabled": true,
+          "id": "workspaces",
+          "order": 0,
+          "region": "start"
+        },
+        {
+          "enabled": true,
+          "id": "clock",
+          "order": 0,
+          "region": "centre"
+        },
+        {
+          "enabled": true,
+          "id": "tray",
+          "order": 0,
+          "region": "end"
+        },
+        {
+          "enabled": true,
+          "id": "sound",
+          "order": 1,
+          "region": "end"
+        },
+        {
+          "display": "icon",
+          "enabled": true,
+          "id": "battery",
+          "order": 2,
+          "region": "end"
+        },
+        {
+          "enabled": true,
+          "id": "power",
+          "order": 3,
+          "region": "end"
+        },
+        {
+          "enabled": true,
+          "id": "application-tray",
+          "order": 0,
+          "region": "hidden"
+        }
+      ],
+      "position": "right"
+    },
+    "notifications": {
+      "offset_x": 0,
+      "offset_y": 0,
+      "position": "top-left"
+    },
+    "osd": {
+      "offset_x": 0,
+      "offset_y": 0,
+      "position": "centre-top"
+    }
+  },
+  "targets": {
+    "btop": true,
+    "code": true,
+    "cursor": true,
+    "cursor_editor": true,
+    "glow": true,
+    "grub": false,
+    "gtk": true,
+    "hyprland": true,
+    "hyprlock": true,
+    "kitty": true,
+    "micro": true,
+    "obsidian": true,
+    "powerlevel10k": true,
+    "quickshell": true,
+    "sddm": false,
+    "stylus": true,
+
+    "wallpaper": true,
+    "widgets": true
+  },
+  "terminal": {
+    "ansi_source": "override",
+    "canvas": "#1a1b26",
+    "chrome_background": "#16161e"
+  },
+  "variant": "dark",
+  "wallpaper": {
+    "fit": "cover",
+    "path": "wallpapers/showcase/tokyo-night.webp"
+  },
+  "widgets": {
+    "items": [
+      {
+        "anchor": "bottom-left",
+        "content_command": "cava",
+        "enabled": true,
+        "height": 100,
+        "id": "music",
+        "interval_ms": 250,
+        "left_click_command": "",
+        "name": "Music",
+        "offset_x": 0,
+        "offset_y": 0,
+        "options": {
+          "auto_size": false,
+          "background_opacity": 0,
+          "scale": 1.3
+        },
+        "right_click_command": "",
+        "shape": "auto",
+        "type": "music",
+        "visibility": "empty-workspace",
+        "width": 1450
+      }
+    ],
+    "profile": "compact"
+  }
+}

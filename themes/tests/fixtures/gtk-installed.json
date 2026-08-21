@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "id": "gtk-installed",
+  "name": "GTK Installed Mode",
+  "variant": "dark",
+  "targets": {
+    "quickshell": false,
+
+    "widgets": false,
+    "gtk": true,
+    "cursor": false,
+    "wallpaper": false,
+    "kitty": false,
+    "hyprland": false,
+    "hyprlock": false,
+    "btop": false,
+    "micro": false,
+    "glow": false,
+    "code": false,
+    "cursor_editor": false,
+    "stylus": false,
+    "powerlevel10k": false,
+    "sddm": false,
+    "grub": false
+  },
+  "fonts": {
+    "ui": "Google Sans",
+    "mono": "MartianMono Nerd Font Mono",
+    "panel": "MartianMono Nerd Font Propo",
+    "terminal_size": 12,
+    "editor_size": 13,
+    "gtk_size": 11
+  },
+  "colours": {
+    "background": "#242424",
+    "surface": "#1e1e1e",
+    "surface_alt": "#3b3c4a",
+    "foreground": "#cdd6f4",
+    "muted": "#a6adc8",
+    "accent": "#89b4fa",
+    "danger": "#f38ba8",
+    "success": "#a6e3a1",
+    "warning": "#f9e2af",
+    "info": "#89b4fa",
+    "mauve": "#f5c2e7",
+    "teal": "#94e2d5",
+    "selection_background": "#89b4fa",
+    "selection_foreground": "#1e1e1e",
+    "border": "#3b3c4a"
+  },
+  "wallpaper": {"path": "~/Pictures/wallpapers/2022-07-07_18.12.55.png", "fit": "cover"},
+  "gtk": {"mode": "installed", "base_theme": "Adwaita", "colour_source": "theme"},
+  "icons": {"theme": "Adwaita"},
+  "cursor": {"mode": "installed", "base": "Bibata-Modern-Classic", "handedness": "right", "sizes": [20], "colour_source": "theme"},
+  "terminal": {"canvas": "#000000", "chrome_background": "#242424", "ansi_source": "derived"}
+}

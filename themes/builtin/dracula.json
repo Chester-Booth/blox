@@ -1,0 +1,265 @@
+{
+  "colours": {
+    "accent": "#bd93f9",
+    "background": "#282a36",
+    "border": "#44475a",
+    "danger": "#ff5555",
+    "foreground": "#f8f8f2",
+    "info": "#8be9fd",
+    "mauve": "#ff79c6",
+    "muted": "#bd93f9",
+    "selection_background": "#44475a",
+    "selection_foreground": "#f8f8f2",
+    "success": "#50fa7b",
+    "surface": "#21222c",
+    "surface_alt": "#44475a",
+    "teal": "#8be9fd",
+    "warning": "#ffb86c"
+  },
+  "cursor": {
+    "base": "Bibata-Modern-Classic",
+    "base_colour": "#bd93f9",
+    "colour_source": "theme",
+    "handedness": "right",
+    "mode": "generated",
+    "outline_colour": "#21222c",
+    "sizes": [
+      22,
+      24
+    ],
+    "watch_background": "#282a36"
+  },
+  "fonts": {
+    "editor_size": 13,
+    "gtk_size": 11,
+    "mono": "MonaspiceNe Nerd Font Mono",
+    "panel": "MonaspiceNe Nerd Font Propo",
+    "terminal_size": 12,
+    "ui": "Fira Sans"
+  },
+  "gtk": {
+    "base_theme": "Graphite-Dark-compact",
+    "colour_source": "theme",
+    "mode": "generated"
+  },
+  "icons": {
+    "theme": "Adwaita"
+  },
+  "id": "dracula",
+  "name": "Dracula",
+  "overrides": {
+    "ansi": {
+      "color0": "#21222c",
+      "color1": "#ff5555",
+      "color10": "#69ff94",
+      "color11": "#ffffa5",
+      "color12": "#d6acff",
+      "color13": "#ff92df",
+      "color14": "#a4ffff",
+      "color15": "#ffffff",
+      "color2": "#50fa7b",
+      "color3": "#f1fa8c",
+      "color4": "#bd93f9",
+      "color5": "#ff79c6",
+      "color6": "#8be9fd",
+      "color7": "#f8f8f2",
+      "color8": "#6272a4",
+      "color9": "#ff6e6e"
+    }
+  },
+  "schema_version": 1,
+  "shell": {
+    "bar": {
+      "items": [
+        {
+          "enabled": true,
+          "id": "power",
+          "order": 0,
+          "region": "start"
+        },
+        {
+          "enabled": true,
+          "id": "notes",
+          "order": 1,
+          "region": "start"
+        },
+        {
+          "enabled": true,
+          "id": "workspaces",
+          "order": 2,
+          "region": "start"
+        },
+        {
+          "enabled": true,
+          "id": "active-window-title",
+          "order": 3,
+          "orientation": "inward",
+          "region": "start"
+        },
+        {
+          "enabled": true,
+          "id": "clock",
+          "order": 0,
+          "region": "centre"
+        },
+        {
+          "enabled": true,
+          "id": "tray",
+          "order": 0,
+          "region": "end"
+        },
+        {
+          "enabled": true,
+          "id": "notifications",
+          "order": 1,
+          "region": "end"
+        },
+        {
+          "enabled": true,
+          "id": "wifi",
+          "order": 2,
+          "region": "end"
+        },
+        {
+          "enabled": true,
+          "id": "sound",
+          "order": 3,
+          "region": "end"
+        },
+        {
+          "display": "numeric",
+          "enabled": true,
+          "id": "battery",
+          "order": 4,
+          "region": "end"
+        },
+        {
+          "enabled": true,
+          "id": "privacy",
+          "order": 5,
+          "region": "end"
+        },
+        {
+          "enabled": true,
+          "id": "awake",
+          "order": 6,
+          "region": "end"
+        },
+        {
+          "enabled": true,
+          "id": "display",
+          "order": 7,
+          "region": "end"
+        },
+        {
+          "enabled": true,
+          "id": "bt",
+          "order": 8,
+          "region": "end"
+        },
+        {
+          "enabled": true,
+          "id": "updates",
+          "order": 9,
+          "region": "end"
+        },
+        {
+          "enabled": true,
+          "id": "fan",
+          "order": 10,
+          "region": "end",
+          "visibility": "normal"
+        },
+        {
+          "enabled": true,
+          "id": "gpu",
+          "order": 11,
+          "region": "end",
+          "visibility": "normal"
+        },
+        {
+          "enabled": true,
+          "id": "touchpad",
+          "order": 12,
+          "region": "end",
+          "visibility": "normal"
+        },
+        {
+          "enabled": true,
+          "id": "application-tray",
+          "order": 0,
+          "region": "hidden"
+        }
+      ],
+      "position": "top"
+    },
+    "notifications": {
+      "offset_x": 0,
+      "offset_y": 0,
+      "position": "top-right"
+    },
+    "osd": {
+      "offset_x": 0,
+      "offset_y": 0,
+      "position": "centre-top"
+    }
+  },
+  "targets": {
+    "btop": true,
+    "code": true,
+    "cursor": true,
+    "cursor_editor": true,
+    "glow": true,
+    "grub": false,
+    "gtk": true,
+    "hyprland": true,
+    "hyprlock": true,
+    "kitty": true,
+    "micro": true,
+    "obsidian": true,
+    "powerlevel10k": true,
+    "quickshell": true,
+    "sddm": false,
+    "stylus": true,
+
+    "wallpaper": true,
+    "widgets": true
+  },
+  "terminal": {
+    "ansi_source": "override",
+    "canvas": "#21222c",
+    "chrome_background": "#282a36"
+  },
+  "variant": "dark",
+  "wallpaper": {
+    "fit": "cover",
+    "path": "wallpapers/showcase/dracula.webp"
+  },
+  "widgets": {
+    "items": [
+      {
+        "anchor": "centre",
+        "content_command": "pipes.sh",
+        "enabled": true,
+        "height": 1080,
+        "id": "pipes",
+        "interval_ms": 60000,
+        "left_click_command": "",
+        "name": "Pipes",
+        "offset_x": 0,
+        "offset_y": 0,
+        "options": {
+          "auto_size": false,
+          "background_opacity": 0,
+          "scale": 1
+        },
+        "right_click_command": "",
+        "shape": "auto",
+        "type": "pipes",
+        "visibility": "empty-workspace",
+        "width": 1920
+      }
+    ],
+    "profile": "compact"
+  }
+}

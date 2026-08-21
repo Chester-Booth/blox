@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Resolve the CLI implementation: an installed product tree wins, otherwise
+# run from this checkout. BLOX_INSTALL_ROOT overrides both for tests.
+root="${BLOX_INSTALL_ROOT:-${HOME}/.local/share/blox}"
+if [ -f "${root}/shell/scripts/bloxctl.py" ]; then
+	exec python3 "${root}/shell/scripts/bloxctl.py" "$@"
+fi
+exec python3 "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)/shell/scripts/bloxctl.py" "$@"

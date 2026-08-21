@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://blox.local/schemas/defaults-v1.json",
+  "title": "Blox defaults document",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "defaults_version", "theme", "widgets"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "defaults_version": {"const": 1},
+    "theme": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "variant", "colours", "fonts", "shell", "wallpaper"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+        "variant": {"enum": ["dark", "light"]},
+        "colours": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["background", "surface", "surface_alt", "foreground", "muted", "red", "green", "yellow", "accent", "blue", "mauve", "teal", "selection_foreground", "border"],
+          "properties": {
+            "background": {"$ref": "#/$defs/colour"},
+            "surface": {"$ref": "#/$defs/colour"},
+            "surface_alt": {"$ref": "#/$defs/colour"},
+            "foreground": {"$ref": "#/$defs/colour"},
+            "muted": {"$ref": "#/$defs/colour"},
+            "red": {"$ref": "#/$defs/colour"},
+            "green": {"$ref": "#/$defs/colour"},
+            "yellow": {"$ref": "#/$defs/colour"},
+            "accent": {"$ref": "#/$defs/colour"},
+            "blue": {"$ref": "#/$defs/colour"},
+            "mauve": {"$ref": "#/$defs/colour"},
+            "teal": {"$ref": "#/$defs/colour"},
+            "selection_foreground": {"$ref": "#/$defs/colour"},
+            "border": {"$ref": "#/$defs/colour"}
+          }
+        },
+        "fonts": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["panel", "mono", "ui"],
+          "properties": {
+            "panel": {"type": "string", "minLength": 1},
+            "mono": {"type": "string", "minLength": 1},
+            "ui": {"type": "string", "minLength": 1}
+          }
+        },
+        "shell": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["bar", "osd", "notifications"],
+          "properties": {
+            "bar": {"$ref": "#/$defs/bar"},
+            "osd": {"$ref": "#/$defs/position"},
+            "notifications": {"$ref": "#/$defs/position"}
+          }
+        },
+        "wallpaper": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "fit"],
+          "properties": {
+            "path": {"type": "string", "minLength": 1},
+            "fit": {"enum": ["cover", "contain", "stretch"]}
+          }
+        }
+      }
+    },
+    "widgets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile", "profiles"],
+      "properties": {
+        "profile": {"enum": ["minimal", "compact", "comfortable"]},
+        "profiles": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["minimal", "compact", "comfortable"],
+          "properties": {
+            "minimal": {"$ref": "#/$defs/widgetProfile"},
+            "compact": {"$ref": "#/$defs/widgetProfile"},
+            "comfortable": {"$ref": "#/$defs/widgetProfile"}
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "colour": {"type": "string", "pattern": "^#[0-9a-fA-F]{6}$"},
+    "position": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["position", "offset_x", "offset_y"],
+      "properties": {
+        "position": {"enum": ["top-left", "top-right", "bottom-left", "bottom-right", "centre-top", "centre-bottom"]},
+        "offset_x": {"type": "integer"},
+        "offset_y": {"type": "integer"}
+      }
+    },
+    "bar": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["position", "items", "reset_items"],
+      "properties": {
+        "position": {"enum": ["left", "right", "top", "bottom"]},
+        "items": {"type": "array", "minItems": 19, "items": {"$ref": "#/$defs/barItem"}},
+        "reset_items": {"type": "array", "items": {"$ref": "#/$defs/barItem"}}
+      }
+    },
+    "barItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "enabled", "region", "order"],
+      "properties": {
+        "id": {"enum": ["power", "notes", "workspaces", "clock", "active-window-title", "battery", "notifications", "wifi", "sound", "privacy", "awake", "display", "bt", "updates", "fan", "gpu", "touchpad", "tray", "application-tray"]},
+        "enabled": {"type": "boolean"},
+        "region": {"enum": ["start", "centre", "end", "hidden"]},
+        "order": {"type": "integer", "minimum": 0, "maximum": 99},
+        "display": {"enum": ["toggle", "numeric", "icon"]},
+        "orientation": {"enum": ["inward", "outward", "horizontal"]},
+        "titleLength": {"enum": ["truncate", "full"]},
+        "visibility": {"enum": ["always", "normal"]}
+      }
+    },
+    "widgetProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["opacity", "margin", "padding", "radius", "font_size"],
+      "properties": {
+        "opacity": {"type": "number", "minimum": 0, "maximum": 1},
+        "margin": {"type": "number", "minimum": 0},
+        "padding": {"type": "number", "minimum": 0},
+        "radius": {"type": "number", "minimum": 0},
+        "font_size": {"type": "number", "minimum": 1}
+      }
+    }
+  }
+}

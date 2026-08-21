@@ -1,0 +1,241 @@
+{
+  "colours": {
+    "accent": "#d79921",
+    "background": "#282828",
+    "border": "#665c54",
+    "danger": "#cc241d",
+    "foreground": "#ebdbb2",
+    "info": "#458588",
+    "mauve": "#b16286",
+    "muted": "#a89984",
+    "selection_background": "#d79921",
+    "selection_foreground": "#282828",
+    "success": "#98971a",
+    "surface": "#3c3836",
+    "surface_alt": "#504945",
+    "teal": "#689d6a",
+    "warning": "#d79921"
+  },
+  "cursor": {
+    "base": "Bibata-Modern-Classic",
+    "base_colour": "#d79921",
+    "colour_source": "theme",
+    "handedness": "right",
+    "mode": "generated",
+    "outline_colour": "#282828",
+    "sizes": [
+      22,
+      24
+    ],
+    "watch_background": "#3c3836"
+  },
+  "fonts": {
+    "editor_size": 13,
+    "gtk_size": 11,
+    "mono": "IBM Plex Mono",
+    "panel": "MonaspiceAr Nerd Font Propo",
+    "terminal_size": 12,
+    "ui": "Alegreya Sans"
+  },
+  "gtk": {
+    "base_theme": "Graphite-Dark-compact",
+    "colour_source": "theme",
+    "mode": "generated"
+  },
+  "icons": {
+    "theme": "Adwaita"
+  },
+  "id": "gruvbox-dark",
+  "name": "Gruvbox Dark",
+  "overrides": {
+    "ansi": {
+      "color0": "#282828",
+      "color1": "#cc241d",
+      "color10": "#b8bb26",
+      "color11": "#fabd2f",
+      "color12": "#83a598",
+      "color13": "#d3869b",
+      "color14": "#8ec07c",
+      "color15": "#ebdbb2",
+      "color2": "#98971a",
+      "color3": "#d79921",
+      "color4": "#458588",
+      "color5": "#b16286",
+      "color6": "#689d6a",
+      "color7": "#a89984",
+      "color8": "#928374",
+      "color9": "#fb4934"
+    }
+  },
+  "schema_version": 1,
+  "shell": {
+    "bar": {
+      "items": [
+        {
+          "enabled": true,
+          "id": "workspaces",
+          "order": 0,
+          "region": "start"
+        },
+        {
+          "enabled": true,
+          "id": "active-window-title",
+          "order": 1,
+          "orientation": "horizontal",
+          "region": "start"
+        },
+        {
+          "enabled": true,
+          "id": "tray",
+          "order": 0,
+          "region": "end"
+        },
+        {
+          "enabled": true,
+          "id": "clock",
+          "order": 1,
+          "region": "end"
+        },
+        {
+          "enabled": true,
+          "id": "sound",
+          "order": 2,
+          "region": "end"
+        },
+        {
+          "display": "toggle",
+          "enabled": true,
+          "id": "battery",
+          "order": 3,
+          "region": "end"
+        },
+        {
+          "enabled": true,
+          "id": "power",
+          "order": 4,
+          "region": "end"
+        },
+        {
+          "enabled": true,
+          "id": "application-tray",
+          "order": 0,
+          "region": "hidden"
+        },
+        {
+          "enabled": true,
+          "id": "notes",
+          "order": 1,
+          "region": "hidden"
+        },
+        {
+          "enabled": true,
+          "id": "notifications",
+          "order": 2,
+          "region": "hidden"
+        },
+        {
+          "enabled": true,
+          "id": "wifi",
+          "order": 3,
+          "region": "hidden"
+        },
+        {
+          "enabled": true,
+          "id": "privacy",
+          "order": 4,
+          "region": "hidden"
+        },
+        {
+          "enabled": true,
+          "id": "awake",
+          "order": 5,
+          "region": "hidden"
+        },
+        {
+          "enabled": true,
+          "id": "display",
+          "order": 6,
+          "region": "hidden"
+        },
+        {
+          "enabled": true,
+          "id": "bt",
+          "order": 7,
+          "region": "hidden"
+        },
+        {
+          "enabled": true,
+          "id": "updates",
+          "order": 8,
+          "region": "hidden"
+        },
+        {
+          "enabled": true,
+          "id": "fan",
+          "order": 9,
+          "region": "hidden",
+          "visibility": "normal"
+        },
+        {
+          "enabled": true,
+          "id": "gpu",
+          "order": 10,
+          "region": "hidden",
+          "visibility": "normal"
+        },
+        {
+          "enabled": true,
+          "id": "touchpad",
+          "order": 11,
+          "region": "hidden",
+          "visibility": "normal"
+        }
+      ],
+      "position": "top"
+    },
+    "notifications": {
+      "offset_x": 0,
+      "offset_y": 0,
+      "position": "top-right"
+    },
+    "osd": {
+      "offset_x": 0,
+      "offset_y": 0,
+      "position": "centre-bottom"
+    }
+  },
+  "targets": {
+    "btop": true,
+    "code": true,
+    "cursor": true,
+    "cursor_editor": true,
+    "glow": true,
+    "grub": false,
+    "gtk": true,
+    "hyprland": true,
+    "hyprlock": true,
+    "kitty": true,
+    "micro": true,
+    "obsidian": true,
+    "powerlevel10k": true,
+    "quickshell": true,
+    "sddm": false,
+    "stylus": true,
+
+    "wallpaper": true,
+    "widgets": true
+  },
+  "terminal": {
+    "ansi_source": "override",
+    "canvas": "#282828",
+    "chrome_background": "#3c3836"
+  },
+  "variant": "dark",
+  "wallpaper": {
+    "fit": "cover",
+    "path": "wallpapers/showcase/gruvbox-dark.webp"
+  },
+  "widgets": {
+    "profile": "comfortable"
+  }
+}

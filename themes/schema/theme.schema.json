@@ -1,0 +1,198 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://blox.local/schemas/theme-v1.json",
+  "title": "Blox theme",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "id", "name", "variant", "targets", "fonts", "colours", "wallpaper", "gtk", "icons", "cursor", "terminal"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "id": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$", "minLength": 1, "maxLength": 64},
+    "name": {"type": "string", "minLength": 1, "maxLength": 80},
+    "variant": {"enum": ["dark", "light"]},
+    "shell": {
+      "type": "object", "additionalProperties": false,
+      "required": ["bar", "osd", "notifications"],
+      "properties": {
+        "bar": {
+          "type": "object", "additionalProperties": false, "required": ["position"],
+          "properties": {
+            "position": {"enum": ["left", "right", "top", "bottom"]},
+            "items": {
+              "type": "array", "uniqueItems": true,
+              "items": {"$ref": "#/$defs/barItem"}
+            }
+          }
+        },
+        "osd": {"$ref": "#/$defs/position"},
+        "notifications": {"$ref": "#/$defs/position"}
+      }
+    },
+    "widgets": {
+      "type": "object", "additionalProperties": false, "required": ["profile"],
+      "properties": {
+        "profile": {"enum": ["minimal", "compact", "comfortable"]},
+        "items": {"type": "array", "maxItems": 32, "items": {"$ref": "#/$defs/widget"}}
+      }
+    },
+    "targets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["quickshell", "widgets", "gtk", "cursor", "wallpaper", "kitty", "hyprland", "hyprlock", "btop", "micro", "glow", "code", "cursor_editor", "stylus", "powerlevel10k", "sddm", "grub"],
+      "properties": {
+        "quickshell": {"type": "boolean"},
+        "widgets": {"type": "boolean"}, "gtk": {"type": "boolean"},
+        "cursor": {"type": "boolean"}, "wallpaper": {"type": "boolean"},
+        "kitty": {"type": "boolean"}, "hyprland": {"type": "boolean"},
+        "hyprlock": {"type": "boolean"}, "btop": {"type": "boolean"},
+        "micro": {"type": "boolean"}, "glow": {"type": "boolean"},
+        "code": {"type": "boolean"}, "cursor_editor": {"type": "boolean"},
+        "stylus": {"type": "boolean"}, "obsidian": {"type": "boolean"}, "powerlevel10k": {"type": "boolean"},
+        "sddm": {"type": "boolean"}, "grub": {"type": "boolean"}
+      }
+    },
+    "fonts": {
+      "type": "object", "additionalProperties": false,
+      "required": ["ui", "mono", "panel", "terminal_size", "editor_size", "gtk_size"],
+      "properties": {
+        "ui": {"type": "string", "minLength": 1}, "mono": {"type": "string", "minLength": 1},
+        "panel": {"type": "string", "minLength": 1},
+        "terminal_size": {"type": "number", "minimum": 6, "maximum": 48},
+        "editor_size": {"type": "number", "minimum": 6, "maximum": 48},
+        "gtk_size": {"type": "number", "minimum": 6, "maximum": 48}
+      }
+    },
+    "colours": {
+      "type": "object", "additionalProperties": false,
+      "required": ["background", "surface", "surface_alt", "foreground", "muted", "accent", "danger", "success", "warning", "info", "mauve", "teal", "selection_background", "selection_foreground", "border"],
+      "properties": {
+        "background": {"$ref": "#/$defs/colour"}, "surface": {"$ref": "#/$defs/colour"},
+        "surface_alt": {"$ref": "#/$defs/colour"}, "foreground": {"$ref": "#/$defs/colour"},
+        "muted": {"$ref": "#/$defs/colour"}, "accent": {"$ref": "#/$defs/colour"},
+        "danger": {"$ref": "#/$defs/colour"}, "success": {"$ref": "#/$defs/colour"},
+        "warning": {"$ref": "#/$defs/colour"}, "info": {"$ref": "#/$defs/colour"},
+        "mauve": {"$ref": "#/$defs/colour"}, "teal": {"$ref": "#/$defs/colour"},
+        "selection_background": {"$ref": "#/$defs/colour"}, "selection_foreground": {"$ref": "#/$defs/colour"},
+        "border": {"$ref": "#/$defs/colour"}
+      }
+    },
+    "wallpaper": {
+      "type": "object", "additionalProperties": false, "required": ["path", "fit"],
+      "properties": {"path": {"type": "string", "minLength": 1}, "fit": {"enum": ["cover", "contain", "tile"]}}
+    },
+    "gtk": {
+      "type": "object", "additionalProperties": false, "required": ["mode", "base_theme", "colour_source"],
+      "properties": {"mode": {"enum": ["generated", "installed"]}, "base_theme": {"type": "string", "minLength": 1}, "colour_source": {"enum": ["theme", "override"]}}
+    },
+    "icons": {"type": "object", "additionalProperties": false, "required": ["theme"], "properties": {"theme": {"type": "string", "minLength": 1}}},
+    "cursor": {
+      "type": "object", "additionalProperties": false, "required": ["mode", "base", "handedness", "sizes", "colour_source"],
+      "properties": {
+        "mode": {"enum": ["generated", "installed"]}, "base": {"type": "string", "minLength": 1},
+        "handedness": {"enum": ["right", "left"]},
+        "sizes": {"type": "array", "items": {"type": "integer", "minimum": 16, "maximum": 96}, "minItems": 1, "uniqueItems": true},
+        "colour_source": {"enum": ["theme", "override"]},
+        "base_colour": {"$ref": "#/$defs/colour"}, "outline_colour": {"$ref": "#/$defs/colour"},
+        "watch_background": {"$ref": "#/$defs/colour"}
+      }
+    },
+    "terminal": {
+      "type": "object", "additionalProperties": false, "required": ["canvas", "chrome_background", "ansi_source"],
+      "properties": {"canvas": {"$ref": "#/$defs/colour"}, "chrome_background": {"$ref": "#/$defs/colour"}, "ansi_source": {"enum": ["derived", "override"]}}
+    },
+    "generator": {
+      "type": "object", "additionalProperties": false,
+      "required": ["backend", "version", "mapping_version", "options", "wallpaper_sha256"],
+      "properties": {
+        "backend": {"enum": ["matugen", "pywal"]},
+        "version": {"type": "string", "pattern": "^[0-9]+(?:\\.[0-9]+)+$"},
+        "mapping_version": {"const": 1},
+        "options": {
+          "type": "object", "additionalProperties": false, "required": ["mode"],
+          "properties": {
+            "mode": {"enum": ["dark", "light"]},
+            "scheme": {"enum": ["scheme-content", "scheme-expressive", "scheme-fidelity", "scheme-fruit-salad", "scheme-monochrome", "scheme-neutral", "scheme-rainbow", "scheme-tonal-spot", "scheme-vibrant"]},
+            "contrast": {"type": "number", "minimum": -1, "maximum": 1},
+            "source_colour_index": {"type": "integer", "minimum": 0, "maximum": 3},
+            "saturation": {"type": "number", "minimum": 0, "maximum": 1}
+          }
+        },
+        "wallpaper_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "overrides": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "ansi": {"$ref": "#/$defs/ansi"},
+        "gtk": {"$ref": "#/$defs/semanticOverride"},
+        "hyprlock": {"$ref": "#/$defs/semanticOverride"}
+      }
+    }
+  },
+  "$defs": {
+    "widget": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "name", "type", "enabled", "content_command", "left_click_command", "right_click_command", "interval_ms", "visibility", "anchor", "offset_x", "offset_y", "width", "height", "shape"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$", "maxLength": 64},
+        "name": {"type": "string", "minLength": 1, "maxLength": 80},
+        "type": {"enum": ["file", "music", "calendar", "clock", "aquarium", "pipes", "tree", "matrix", "fortune", "train", "custom"]},
+        "enabled": {"type": "boolean"},
+        "content_command": {"type": "string", "maxLength": 4096},
+        "left_click_command": {"type": "string", "maxLength": 4096},
+        "right_click_command": {"type": "string", "maxLength": 4096},
+        "interval_ms": {"type": "integer", "minimum": 250, "maximum": 86400000},
+        "visibility": {"enum": ["always", "empty-workspace"]},
+        "anchor": {"enum": ["top-left", "top-right", "bottom-left", "bottom-right", "centre"]},
+        "offset_x": {"type": "integer", "minimum": -10000, "maximum": 10000},
+        "offset_y": {"type": "integer", "minimum": -10000, "maximum": 10000},
+        "width": {"type": "integer", "minimum": 0, "maximum": 10000},
+        "height": {"type": "integer", "minimum": 0, "maximum": 10000},
+        "shape": {"enum": ["auto", "rectangle", "rounded", "circle"]},
+        "options": {"type": "object"}
+      }
+    },
+    "barItem": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "enabled", "region", "order"],
+      "properties": {
+        "id": {"enum": ["power", "notes", "workspaces", "clock", "active-window-title", "battery", "notifications", "wifi", "sound", "privacy", "awake", "display", "bt", "updates", "fan", "gpu", "touchpad", "tray", "application-tray"]},
+        "enabled": {"type": "boolean"},
+        "region": {"enum": ["start", "centre", "end", "hidden"]},
+        "order": {"type": "integer", "minimum": 0, "maximum": 99},
+        "display": {"enum": ["toggle", "numeric", "icon"]},
+        "orientation": {"enum": ["inward", "outward", "horizontal"]},
+        "titleLength": {"enum": ["truncate", "full"]},
+        "visibility": {"enum": ["always", "normal"]}
+      }
+    },
+    "position": {
+      "type": "object", "additionalProperties": false, "required": ["position", "offset_x", "offset_y"],
+      "properties": {
+        "position": {"enum": ["top-left", "top-right", "bottom-left", "bottom-right", "centre-top", "centre-bottom"]},
+        "offset_x": {"type": "integer"},
+        "offset_y": {"type": "integer"}
+      }
+    },
+    "colour": {"type": "string", "pattern": "^#[0-9a-fA-F]{6}$"},
+    "ansi": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "color0": {"$ref": "#/$defs/colour"}, "color1": {"$ref": "#/$defs/colour"}, "color2": {"$ref": "#/$defs/colour"}, "color3": {"$ref": "#/$defs/colour"},
+        "color4": {"$ref": "#/$defs/colour"}, "color5": {"$ref": "#/$defs/colour"}, "color6": {"$ref": "#/$defs/colour"}, "color7": {"$ref": "#/$defs/colour"},
+        "color8": {"$ref": "#/$defs/colour"}, "color9": {"$ref": "#/$defs/colour"}, "color10": {"$ref": "#/$defs/colour"}, "color11": {"$ref": "#/$defs/colour"},
+        "color12": {"$ref": "#/$defs/colour"}, "color13": {"$ref": "#/$defs/colour"}, "color14": {"$ref": "#/$defs/colour"}, "color15": {"$ref": "#/$defs/colour"}
+      }
+    },
+    "semanticOverride": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "background": {"$ref": "#/$defs/colour"}, "surface": {"$ref": "#/$defs/colour"}, "surface_alt": {"$ref": "#/$defs/colour"},
+        "foreground": {"$ref": "#/$defs/colour"}, "muted": {"$ref": "#/$defs/colour"}, "accent": {"$ref": "#/$defs/colour"},
+        "danger": {"$ref": "#/$defs/colour"}, "success": {"$ref": "#/$defs/colour"}, "warning": {"$ref": "#/$defs/colour"},
+        "info": {"$ref": "#/$defs/colour"}, "mauve": {"$ref": "#/$defs/colour"}, "teal": {"$ref": "#/$defs/colour"},
+        "selection_background": {"$ref": "#/$defs/colour"}, "selection_foreground": {"$ref": "#/$defs/colour"}, "border": {"$ref": "#/$defs/colour"}
+      }
+    }
+  }
+}

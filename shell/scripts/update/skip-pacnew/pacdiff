@@ -1,0 +1,8 @@
+#!/bin/bash
+set -euo pipefail
+
+if [[ "${1:-}" == "-o" || "${1:-}" == "--output" ]]; then
+	exit 0
+fi
+
+exec /usr/bin/pacdiff "$@"

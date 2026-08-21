@@ -1,0 +1,15 @@
+{
+  "colors": {
+    "background": {"dark": {"color": "#101114"}, "light": {"color": "#f8f8fc"}},
+    "surface_container": {"dark": {"color": "#1c1d20"}, "light": {"color": "#ececf0"}},
+    "surface_container_high": {"dark": {"color": "#27282b"}, "light": {"color": "#e2e2e6"}},
+    "on_surface": {"dark": {"color": "#e4e2e6"}, "light": {"color": "#1b1b1f"}},
+    "on_surface_variant": {"dark": {"color": "#c8c5cc"}, "light": {"color": "#47464d"}},
+    "primary": {"dark": {"color": "#b9c3ff"}, "light": {"color": "#485d92"}},
+    "on_primary": {"dark": {"color": "#172c60"}, "light": {"color": "#ffffff"}},
+    "error": {"dark": {"color": "#ffb4ab"}, "light": {"color": "#ba1a1a"}},
+    "secondary": {"dark": {"color": "#c4c6dd"}, "light": {"color": "#5c5e71"}},
+    "tertiary": {"dark": {"color": "#e5bad8"}, "light": {"color": "#75536c"}},
+    "outline": {"dark": {"color": "#919096"}, "light": {"color": "#77767d"}}
+  }
+}

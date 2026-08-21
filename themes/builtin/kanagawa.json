@@ -1,0 +1,264 @@
+{
+  "colours": {
+    "accent": "#7e9cd8",
+    "background": "#1f1f28",
+    "border": "#2a2a37",
+    "danger": "#e82424",
+    "foreground": "#dcd7ba",
+    "info": "#7fb4ca",
+    "mauve": "#957fb8",
+    "muted": "#c8c093",
+    "selection_background": "#2d4f67",
+    "selection_foreground": "#c8c093",
+    "success": "#98bb6c",
+    "surface": "#16161d",
+    "surface_alt": "#2a2a37",
+    "teal": "#7aa89f",
+    "warning": "#e6c384"
+  },
+  "cursor": {
+    "base": "Bibata-Modern-Classic",
+    "base_colour": "#7e9cd8",
+    "colour_source": "theme",
+    "handedness": "right",
+    "mode": "generated",
+    "outline_colour": "#16161d",
+    "sizes": [
+      22,
+      24
+    ],
+    "watch_background": "#1f1f28"
+  },
+  "fonts": {
+    "editor_size": 13,
+    "gtk_size": 11,
+    "mono": "CommitMono Nerd Font Mono",
+    "panel": "CommitMono Nerd Font Propo",
+    "terminal_size": 12,
+    "ui": "Noto Serif"
+  },
+  "gtk": {
+    "base_theme": "Graphite-Dark-compact",
+    "colour_source": "theme",
+    "mode": "generated"
+  },
+  "icons": {
+    "theme": "Adwaita"
+  },
+  "id": "kanagawa",
+  "name": "Kanagawa",
+  "overrides": {
+    "ansi": {
+      "color0": "#16161d",
+      "color1": "#c34043",
+      "color10": "#98bb6c",
+      "color11": "#e6c384",
+      "color12": "#7fb4ca",
+      "color13": "#938aa9",
+      "color14": "#7aa89f",
+      "color15": "#dcd7ba",
+      "color2": "#76946a",
+      "color3": "#c0a36e",
+      "color4": "#7e9cd8",
+      "color5": "#957fb8",
+      "color6": "#6a9589",
+      "color7": "#c8c093",
+      "color8": "#727169",
+      "color9": "#e82424"
+    }
+  },
+  "schema_version": 1,
+  "shell": {
+    "bar": {
+      "items": [
+        {
+          "enabled": true,
+          "id": "active-window-title",
+          "order": 0,
+          "orientation": "inward",
+          "region": "start"
+        },
+        {
+          "enabled": true,
+          "id": "workspaces",
+          "order": 1,
+          "region": "start"
+        },
+        {
+          "enabled": true,
+          "id": "notes",
+          "order": 2,
+          "region": "start"
+        },
+        {
+          "enabled": true,
+          "id": "power",
+          "order": 3,
+          "region": "start"
+        },
+        {
+          "enabled": true,
+          "id": "clock",
+          "order": 0,
+          "region": "centre"
+        },
+        {
+          "enabled": true,
+          "id": "tray",
+          "order": 0,
+          "region": "end"
+        },
+        {
+          "enabled": true,
+          "id": "notifications",
+          "order": 1,
+          "region": "end"
+        },
+        {
+          "enabled": true,
+          "id": "wifi",
+          "order": 2,
+          "region": "end"
+        },
+        {
+          "enabled": true,
+          "id": "sound",
+          "order": 3,
+          "region": "end"
+        },
+        {
+          "display": "icon",
+          "enabled": true,
+          "id": "battery",
+          "order": 4,
+          "region": "end"
+        },
+        {
+          "enabled": true,
+          "id": "application-tray",
+          "order": 0,
+          "region": "hidden"
+        },
+        {
+          "enabled": true,
+          "id": "privacy",
+          "order": 1,
+          "region": "hidden"
+        },
+        {
+          "enabled": true,
+          "id": "awake",
+          "order": 2,
+          "region": "hidden"
+        },
+        {
+          "enabled": true,
+          "id": "display",
+          "order": 3,
+          "region": "hidden"
+        },
+        {
+          "enabled": true,
+          "id": "bt",
+          "order": 4,
+          "region": "hidden"
+        },
+        {
+          "enabled": true,
+          "id": "updates",
+          "order": 5,
+          "region": "hidden"
+        },
+        {
+          "enabled": true,
+          "id": "fan",
+          "order": 6,
+          "region": "hidden",
+          "visibility": "normal"
+        },
+        {
+          "enabled": true,
+          "id": "gpu",
+          "order": 7,
+          "region": "hidden",
+          "visibility": "normal"
+        },
+        {
+          "enabled": true,
+          "id": "touchpad",
+          "order": 8,
+          "region": "hidden",
+          "visibility": "normal"
+        }
+      ],
+      "position": "bottom"
+    },
+    "notifications": {
+      "offset_x": 0,
+      "offset_y": 0,
+      "position": "bottom-right"
+    },
+    "osd": {
+      "offset_x": 0,
+      "offset_y": 0,
+      "position": "centre-bottom"
+    }
+  },
+  "targets": {
+    "btop": true,
+    "code": true,
+    "cursor": true,
+    "cursor_editor": true,
+    "glow": true,
+    "grub": false,
+    "gtk": true,
+    "hyprland": true,
+    "hyprlock": true,
+    "kitty": true,
+    "micro": true,
+    "obsidian": true,
+    "powerlevel10k": true,
+    "quickshell": true,
+    "sddm": false,
+    "stylus": true,
+
+    "wallpaper": true,
+    "widgets": true
+  },
+  "terminal": {
+    "ansi_source": "override",
+    "canvas": "#1f1f28",
+    "chrome_background": "#16161d"
+  },
+  "variant": "dark",
+  "wallpaper": {
+    "fit": "cover",
+    "path": "wallpapers/showcase/kanagawa.webp"
+  },
+  "widgets": {
+    "items": [
+      {
+        "anchor": "bottom-right",
+        "content_command": "asciiquarium",
+        "enabled": true,
+        "height": 0,
+        "id": "aquarium",
+        "interval_ms": 60000,
+        "left_click_command": "",
+        "name": "Aquarium",
+        "offset_x": 32,
+        "offset_y": 32,
+        "options": {
+          "auto_size": true,
+          "scale": 0.5
+        },
+        "right_click_command": "",
+        "shape": "auto",
+        "type": "aquarium",
+        "visibility": "empty-workspace",
+        "width": 0
+      }
+    ],
+    "profile": "comfortable"
+  }
+}

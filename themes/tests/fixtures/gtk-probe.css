@@ -1,0 +1,6 @@
+@define-color blox_probe #123456;
+
+.blox-probe {
+  color: #123456;
+  background-color: #234567;
+}

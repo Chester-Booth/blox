@@ -1,0 +1,178 @@
+{
+  "colours": {
+    "accent": "#88c0d0",
+    "background": "#2e3440",
+    "border": "#4c566a",
+    "danger": "#bf616a",
+    "foreground": "#eceff4",
+    "info": "#81a1c1",
+    "mauve": "#b48ead",
+    "muted": "#d8dee9",
+    "selection_background": "#81a1c1",
+    "selection_foreground": "#2e3440",
+    "success": "#a3be8c",
+    "surface": "#3b4252",
+    "surface_alt": "#434c5e",
+    "teal": "#8fbcbb",
+    "warning": "#ebcb8b"
+  },
+  "cursor": {
+    "base": "Bibata-Modern-Classic",
+    "base_colour": "#88c0d0",
+    "colour_source": "theme",
+    "handedness": "right",
+    "mode": "generated",
+    "outline_colour": "#2e3440",
+    "sizes": [
+      22,
+      24
+    ],
+    "watch_background": "#2e3440"
+  },
+  "fonts": {
+    "editor_size": 13,
+    "gtk_size": 11,
+    "mono": "Hack Nerd Font Mono",
+    "panel": "Hack Nerd Font Propo",
+    "terminal_size": 12,
+    "ui": "Atkinson Hyperlegible"
+  },
+  "gtk": {
+    "base_theme": "Graphite-Dark-compact",
+    "colour_source": "theme",
+    "mode": "generated"
+  },
+  "icons": {
+    "theme": "Adwaita"
+  },
+  "id": "nord",
+  "name": "Nord",
+  "overrides": {
+    "ansi": {
+      "color0": "#3b4252",
+      "color1": "#bf616a",
+      "color10": "#a3be8c",
+      "color11": "#ebcb8b",
+      "color12": "#5e81ac",
+      "color13": "#b48ead",
+      "color14": "#8fbcbb",
+      "color15": "#eceff4",
+      "color2": "#a3be8c",
+      "color3": "#ebcb8b",
+      "color4": "#81a1c1",
+      "color5": "#b48ead",
+      "color6": "#88c0d0",
+      "color7": "#e5e9f0",
+      "color8": "#4c566a",
+      "color9": "#bf616a"
+    }
+  },
+  "schema_version": 1,
+  "shell": {
+    "bar": {
+      "items": [
+        {
+          "enabled": true,
+          "id": "workspaces",
+          "order": 0,
+          "region": "start"
+        },
+        {
+          "enabled": true,
+          "id": "active-window-title",
+          "order": 1,
+          "orientation": "horizontal",
+          "region": "start"
+        },
+        {
+          "enabled": true,
+          "id": "clock",
+          "order": 0,
+          "region": "centre"
+        },
+        {
+          "enabled": true,
+          "id": "tray",
+          "order": 0,
+          "region": "end"
+        },
+        {
+          "enabled": true,
+          "id": "wifi",
+          "order": 1,
+          "region": "end"
+        },
+        {
+          "enabled": true,
+          "id": "sound",
+          "order": 2,
+          "region": "end"
+        },
+        {
+          "display": "icon",
+          "enabled": true,
+          "id": "battery",
+          "order": 3,
+          "region": "end"
+        },
+        {
+          "enabled": true,
+          "id": "power",
+          "order": 4,
+          "region": "end"
+        },
+        {
+          "enabled": true,
+          "id": "application-tray",
+          "order": 0,
+          "region": "hidden"
+        }
+      ],
+      "position": "left"
+    },
+    "notifications": {
+      "offset_x": 0,
+      "offset_y": 0,
+      "position": "top-right"
+    },
+    "osd": {
+      "offset_x": 0,
+      "offset_y": 0,
+      "position": "centre-top"
+    }
+  },
+  "targets": {
+    "btop": true,
+    "code": true,
+    "cursor": true,
+    "cursor_editor": true,
+    "glow": true,
+    "grub": false,
+    "gtk": true,
+    "hyprland": true,
+    "hyprlock": true,
+    "kitty": true,
+    "micro": true,
+    "obsidian": true,
+    "powerlevel10k": true,
+    "quickshell": true,
+    "sddm": false,
+    "stylus": true,
+
+    "wallpaper": true,
+    "widgets": true
+  },
+  "terminal": {
+    "ansi_source": "override",
+    "canvas": "#2e3440",
+    "chrome_background": "#2e3440"
+  },
+  "variant": "dark",
+  "wallpaper": {
+    "fit": "cover",
+    "path": "wallpapers/showcase/nord.webp"
+  },
+  "widgets": {
+    "profile": "minimal"
+  }
+}

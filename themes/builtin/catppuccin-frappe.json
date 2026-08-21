@@ -1,0 +1,171 @@
+{
+  "colours": {
+    "accent": "#8caaee",
+    "background": "#303446",
+    "border": "#737994",
+    "danger": "#e78284",
+    "foreground": "#c6d0f5",
+    "info": "#85c1dc",
+    "mauve": "#ca9ee6",
+    "muted": "#a5adce",
+    "selection_background": "#8caaee",
+    "selection_foreground": "#303446",
+    "success": "#a6d189",
+    "surface": "#414559",
+    "surface_alt": "#51576d",
+    "teal": "#81c8be",
+    "warning": "#e5c890"
+  },
+  "cursor": {
+    "base": "Bibata-Modern-Classic",
+    "base_colour": "#8caaee",
+    "colour_source": "theme",
+    "handedness": "right",
+    "mode": "generated",
+    "outline_colour": "#232634",
+    "sizes": [
+      22,
+      24
+    ],
+    "watch_background": "#303446"
+  },
+  "fonts": {
+    "editor_size": 13,
+    "gtk_size": 11,
+    "mono": "VictorMono Nerd Font Mono",
+    "panel": "VictorMono Nerd Font Propo",
+    "terminal_size": 12,
+    "ui": "Rubik"
+  },
+  "gtk": {
+    "base_theme": "Graphite-Dark-compact",
+    "colour_source": "theme",
+    "mode": "generated"
+  },
+  "icons": {
+    "theme": "Adwaita"
+  },
+  "id": "catppuccin-frappe",
+  "name": "Catppuccin Frappé",
+  "overrides": {
+    "ansi": {
+      "color0": "#51576d",
+      "color1": "#e78284",
+      "color10": "#a6d189",
+      "color11": "#e5c890",
+      "color12": "#8caaee",
+      "color13": "#f4b8e4",
+      "color14": "#81c8be",
+      "color15": "#c6d0f5",
+      "color2": "#a6d189",
+      "color3": "#e5c890",
+      "color4": "#8caaee",
+      "color5": "#f4b8e4",
+      "color6": "#81c8be",
+      "color7": "#b5bfe2",
+      "color8": "#626880",
+      "color9": "#e78284"
+    }
+  },
+  "schema_version": 1,
+  "shell": {
+    "bar": {
+      "items": [
+        {
+          "enabled": true,
+          "id": "power",
+          "order": 0,
+          "region": "start"
+        },
+        {
+          "enabled": true,
+          "id": "workspaces",
+          "order": 1,
+          "region": "start"
+        },
+        {
+          "enabled": true,
+          "id": "clock",
+          "order": 0,
+          "region": "centre"
+        },
+        {
+          "enabled": true,
+          "id": "tray",
+          "order": 0,
+          "region": "end"
+        },
+        {
+          "enabled": true,
+          "id": "wifi",
+          "order": 1,
+          "region": "end"
+        },
+        {
+          "enabled": true,
+          "id": "sound",
+          "order": 2,
+          "region": "end"
+        },
+        {
+          "display": "icon",
+          "enabled": true,
+          "id": "battery",
+          "order": 3,
+          "region": "end"
+        },
+        {
+          "enabled": true,
+          "id": "application-tray",
+          "order": 0,
+          "region": "hidden"
+        }
+      ],
+      "position": "left"
+    },
+    "notifications": {
+      "offset_x": 0,
+      "offset_y": 0,
+      "position": "top-right"
+    },
+    "osd": {
+      "offset_x": 0,
+      "offset_y": 0,
+      "position": "centre-bottom"
+    }
+  },
+  "targets": {
+    "btop": true,
+    "code": true,
+    "cursor": true,
+    "cursor_editor": true,
+    "glow": true,
+    "grub": false,
+    "gtk": true,
+    "hyprland": true,
+    "hyprlock": true,
+    "kitty": true,
+    "micro": true,
+    "obsidian": true,
+    "powerlevel10k": true,
+    "quickshell": true,
+    "sddm": false,
+    "stylus": true,
+
+    "wallpaper": true,
+    "widgets": true
+  },
+  "terminal": {
+    "ansi_source": "override",
+    "canvas": "#303446",
+    "chrome_background": "#292c3c"
+  },
+  "variant": "dark",
+  "wallpaper": {
+    "fit": "cover",
+    "path": "wallpapers/showcase/catppuccin-frappe.webp"
+  },
+  "widgets": {
+    "profile": "compact"
+  }
+}

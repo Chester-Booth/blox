@@ -1,0 +1,13 @@
+[Unit]
+Description=Update generated todo markdown files
+# Try to wait for network, but run anyway if it fails so we get cached data
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=-@CONFIG_ROOT@/env
+ExecStart=@PKG_ROOT@/shell/scripts/todo/generated-refresh.sh
+
+[Install]
+WantedBy=default.target

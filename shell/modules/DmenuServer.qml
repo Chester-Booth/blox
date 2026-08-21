@@ -6,7 +6,7 @@ Scope {
     id: root
 
     property bool busy: false
-    readonly property string scripts: Quickshell.env("HOME") + "/.config/quickshell/blox/scripts/launcher"
+    readonly property string scripts: Quickshell.shellDir + "/scripts/launcher"
 
     signal request(var options, string prompt, string query, var settings)
     signal updated(var options)

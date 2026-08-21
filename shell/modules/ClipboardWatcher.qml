@@ -5,9 +5,9 @@ import Quickshell.Io
 Scope {
     id: root
 
-    readonly property string ingest: Quickshell.env("HOME") + "/.config/quickshell/blox/scripts/launcher/clipboard-watch-ingest"
-    readonly property string guard: Quickshell.env("HOME") + "/.config/quickshell/blox/scripts/launcher/parent_guard.py"
-    readonly property string command: Quickshell.env("HOME") + "/.config/quickshell/blox/scripts/launcher/clipboardctl.py"
+    readonly property string ingest: Quickshell.shellDir + "/scripts/launcher/clipboard-watch-ingest"
+    readonly property string guard: Quickshell.shellDir + "/scripts/launcher/parent_guard.py"
+    readonly property string command: Quickshell.shellDir + "/scripts/launcher/clipboardctl.py"
     property bool storageHealthy: false
     property bool healthy: textWatcher.running && imageWatcher.running && filesWatcher.running && storageHealthy
 

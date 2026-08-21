@@ -18,7 +18,7 @@ Scope {
     property string pendingQuery: ""
     property var pendingCursor: null
     readonly property bool actionBusy: action.running
-    readonly property string command: Quickshell.env("HOME") + "/.config/quickshell/blox/scripts/launcher/clipboardctl.py"
+    readonly property string command: Quickshell.shellDir + "/scripts/launcher/clipboardctl.py"
 
     signal closeRequested()
     signal pasteRequested()

@@ -65,7 +65,7 @@ Scope {
     Process {
         id: windowState
 
-        readonly property string scripts: Quickshell.env("HOME") + "/.config/quickshell/blox/scripts/launcher"
+        readonly property string scripts: Quickshell.shellDir + "/scripts/launcher"
 
         command: ["python3", scripts + "/parent_guard.py", "python3", scripts + "/window_state.py"]
         running: true

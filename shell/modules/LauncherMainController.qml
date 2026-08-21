@@ -224,7 +224,7 @@ Scope {
 
         themesLoading = true;
         themesError = "";
-        themeListProcess.command = [Quickshell.env("HOME") + "/.config/quickshell/blox/scripts/theme/themectl.sh", "list", "--json"];
+        themeListProcess.command = [Quickshell.shellDir + "/scripts/theme/themectl.sh", "list", "--json"];
         themeListProcess.running = true;
     }
 
@@ -266,7 +266,7 @@ Scope {
         applyGuideTarget = "";
         applyWindowOpen = true;
         themeApplyProcess.cancelling = false;
-        themeApplyProcess.command = [Quickshell.env("HOME") + "/.config/quickshell/blox/scripts/theme/themectl.sh", "apply", entry.id, "--json", "--progress-ndjson"];
+        themeApplyProcess.command = [Quickshell.shellDir + "/scripts/theme/themectl.sh", "apply", entry.id, "--json", "--progress-ndjson"];
         themeApplyProcess.running = true;
         themeApplyStarted();
     }
@@ -299,7 +299,7 @@ Scope {
                 "message": "Retrying…"
             }) : row;
         });
-        themeApplyProcess.command = [Quickshell.env("HOME") + "/.config/quickshell/blox/scripts/theme/themectl.sh", "apply", applyingThemeId, "--targets", target, "--json", "--progress-ndjson"];
+        themeApplyProcess.command = [Quickshell.shellDir + "/scripts/theme/themectl.sh", "apply", applyingThemeId, "--targets", target, "--json", "--progress-ndjson"];
         themeApplyProcess.running = true;
     }
 
@@ -396,7 +396,7 @@ Scope {
         if (!missing.length)
             return ;
 
-        iconResolver.command = ["python3", Quickshell.env("HOME") + "/.config/quickshell/blox/scripts/launcher/icon_lookup.py"].concat(missing);
+        iconResolver.command = ["python3", Quickshell.shellDir + "/scripts/launcher/icon_lookup.py"].concat(missing);
         iconResolver.running = true;
     }
 
@@ -406,7 +406,7 @@ Scope {
             // DesktopEntries can retain an old Exec value after its source
             // file changes. Resolve the desktop file again at activation time,
             // so launcher clicks always use its current Exec.
-            desktopLauncher.command = [Quickshell.env("HOME") + "/.config/quickshell/blox/scripts/launcher/desktop_exec.py", desktopId];
+            desktopLauncher.command = [Quickshell.shellDir + "/scripts/launcher/desktop_exec.py", desktopId];
             desktopLauncher.running = true;
         } else {
             entry.execute();
@@ -568,7 +568,7 @@ Scope {
         } else if (result.kind === "app") {
             recordUse(result.entry);
             pendingEntry = result.entry;
-            focusApp.command = [Quickshell.env("HOME") + "/.config/quickshell/blox/scripts/launcher/appctl.py", result.entry.id || "", result.entry.startupClass || ""];
+            focusApp.command = [Quickshell.shellDir + "/scripts/launcher/appctl.py", result.entry.id || "", result.entry.startupClass || ""];
             focusApp.running = true;
         } else {
             dmenuSelected(result.title);

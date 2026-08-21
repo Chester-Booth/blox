@@ -698,7 +698,24 @@ def setup_gtk() -> dict[str, Any]:
         changed = False
         for version in ("3", "4"):
             config = gtk_config_path(version)
-            for name, entry in integration["loaders"][version].items():
+            for name, entry in list(integration["loaders"][version].items()):
+                if entry["kind"] == "absent":
+                    # Adoption: a loader slot recorded as absent may hold a
+                    # foreign symlink now (for example one into a personal
+                    # checkout). Record it before replacing so rollback can
+                    # restore the exact prior state.
+                    live = config / name
+                    if live.is_symlink():
+                        foreign = os.readlink(live)
+                        resolved = Path(foreign) if Path(foreign).is_absolute() else config / foreign
+                        if resolved.exists():
+                            integration["loaders"][version][name] = {"kind": "symlink", "target": foreign}
+                            _save_gtk_integration(root, integration)
+                            entry = integration["loaders"][version][name]
+                        else:
+                            continue
+                    else:
+                        continue
                 if entry["kind"] != "symlink":
                     continue
                 target = Path(entry["target"])

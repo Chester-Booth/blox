@@ -555,3 +555,39 @@ class RuntimeCliTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class GtkLoaderAdoptionTests(unittest.TestCase):
+    def test_setup_adopts_foreign_loader_and_records_prior_state(self):
+        previous = tempfile.TemporaryDirectory()
+        self.addCleanup(previous.cleanup)
+        root = Path(previous.name)
+        environment = mock.patch.dict(os.environ, {
+            "XDG_STATE_HOME": str(root / "state"),
+            "XDG_CONFIG_HOME": str(root / "config"),
+            "XDG_DATA_HOME": str(root / "data"),
+        })
+        foreign_dir = root / "foreign" / "gtk-3.0"
+        foreign_dir.mkdir(parents=True)
+        foreign_css = foreign_dir / "gtk.css"
+        foreign_css.write_text("/* foreign checkout loader */\n", encoding="utf-8")
+        with environment:
+            gtk3 = Path(os.environ["XDG_CONFIG_HOME"]) / "gtk-3.0"
+            gtk3.mkdir(parents=True, exist_ok=True)
+            (gtk3 / "gtk.css").symlink_to(foreign_css)
+
+            setup_gtk()
+
+            integration = json.loads((Path(os.environ["XDG_STATE_HOME"]) / "blox-theme/integration/gtk-loaders.json").read_text(encoding="utf-8"))
+            record = integration["loaders"]["3"]["gtk.css"]
+            self.assertEqual(record["kind"], "symlink")
+            self.assertEqual(Path(record["target"]).read_text(encoding="utf-8"), "/* foreign checkout loader */\n")
+            live = os.readlink(gtk3 / "gtk.css")
+            # The adopted link now targets the Blox-managed loader source,
+            # whether run from a checkout or the installed tree.
+            self.assertTrue(live.startswith(str(repository_root())), live)
+
+            # A second setup is stable and does not lose the original.
+            setup_gtk()
+            integration = json.loads((Path(os.environ["XDG_STATE_HOME"]) / "blox-theme/integration/gtk-loaders.json").read_text(encoding="utf-8"))
+            self.assertEqual(integration["loaders"]["3"]["gtk.css"]["target"], str(foreign_css))

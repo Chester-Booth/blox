@@ -493,8 +493,12 @@ class PreviousGenerationPreservationTests(unittest.TestCase):
 
 class ActiveThemeManifestMigrationTests(unittest.TestCase):
     def _seed_active_manifest(self, legacy_root):
+        # Real topology: active.json -> current/manifest.json and
+        # current -> generations/<id>, both relative links.
         state = Path(os.environ["XDG_STATE_HOME"]) / "blox-theme"
-        state.mkdir(parents=True, exist_ok=True)
+        generation_id = "20260820T122956Z-1a6d2fd2"
+        generations = state / "generations" / generation_id
+        generations.mkdir(parents=True, exist_ok=True)
         document = {
             "created_at": "2026-08-20T12:29:56+00:00",
             "source": str(legacy_root / "themes" / "default-many-widgets.json"),
@@ -505,22 +509,31 @@ class ActiveThemeManifestMigrationTests(unittest.TestCase):
                 "wallpaper": {"source": str(legacy_root / "themes" / "default-many-widgets.json")},
             },
         }
-        path = state / "active.json"
+        manifest_path = generations / "manifest.json"
         original = json.dumps(document, indent=2) + "\n"
-        path.write_text(original, encoding="utf-8")
-        return path, original
+        manifest_path.write_text(original, encoding="utf-8")
+        (state / "current").symlink_to(f"generations/{generation_id}")
+        active = state / "active.json"
+        active.symlink_to("current/manifest.json")
+        return active, manifest_path, original
 
     def test_active_manifest_paths_are_rewritten_with_pre_image(self):
         with Fixture() as roots:
             legacy_home = Path(os.environ["XDG_DATA_HOME"]) / "blox"
             (legacy_home / "themes").mkdir(parents=True, exist_ok=True)
             (legacy_home / "themes" / "default-many-widgets.json").write_text('{"id": "x"}\n', encoding="utf-8")
-            manifest_path, original = self._seed_active_manifest(legacy_home)
+            active_link, manifest_path, original = self._seed_active_manifest(legacy_home)
+            generation_id = "20260820T122956Z-1a6d2fd2"
+            current_link = manifest_path.parents[2] / "current"
 
             report = installer.install(roots)
             entry = next(e for e in report["migrations"] if e["migration"] == "active-theme-paths")
             self.assertEqual(entry["result"], "applied")
 
+            self.assertTrue(active_link.is_symlink() and current_link.is_symlink())
+            self.assertEqual(os.readlink(active_link), "current/manifest.json")
+            self.assertEqual(os.readlink(current_link), f"generations/{generation_id}")
+            self.assertEqual(active_link.resolve(), manifest_path)
             migrated = json.loads(manifest_path.read_text(encoding="utf-8"))
             new_prefix = str(roots.data / "themes")
             self.assertTrue(migrated["source"].startswith(new_prefix))
@@ -538,6 +551,9 @@ class ActiveThemeManifestMigrationTests(unittest.TestCase):
             ledger = migrations.read_ledger(roots)
             migrations.restore_ledger_after(roots, len(ledger) - 1)
             self.assertEqual(manifest_path.read_text(encoding="utf-8"), original)
+            self.assertTrue(active_link.is_symlink() and current_link.is_symlink())
+            self.assertEqual(os.readlink(active_link), "current/manifest.json")
+            self.assertEqual(os.readlink(current_link), f"generations/{generation_id}")
 
 
 if __name__ == "__main__":

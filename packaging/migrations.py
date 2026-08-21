@@ -103,19 +103,28 @@ def sha256_file(path: Path) -> str:
 def migrate_active_theme_paths(roots: Roots, backup_dir: Path) -> dict[str, Any]:
     """Repoint the active theme manifest at the relocated user-data root.
 
-    The manifest's top-level `source` and every `target_sources[*].source`
-    may reference the legacy directory that relocation empties. The file is
-    modified in place with a pre-image so rollback can restore it."""
+    active.json is a symlink (active.json -> current/manifest.json,
+    current -> generations/<id>). The migration resolves it, validates the
+    target is a regular file, and atomically updates the generation
+    manifest in its own directory; both symlinks stay byte-for-byte.
+    Top-level `source` and every `target_sources[*].source` referencing the
+    legacy directory are rewritten under a pre-image for rollback."""
     import json as _json
 
     state_home = Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local" / "state"))
     manifest_path = state_home / "blox-theme" / "active.json"
-    if not manifest_path.is_file():
+    if not manifest_path.is_symlink():
+        # Real topology: active.json is a symlink through current into the
+        # generation tree. Refuse anything else rather than replace it.
+        return {"moved": False}
+    target = manifest_path.resolve(strict=True)
+    if not target.is_file():
         return {"moved": False}
     legacy_root = str(_data_home() / "blox" / "themes")
     new_root = str(roots.data / "themes")
 
-    document = _json.loads(manifest_path.read_text(encoding="utf-8"))
+    original_bytes = target.read_bytes()
+    document = _json.loads(original_bytes.decode("utf-8"))
     changed: list[str] = []
 
     def rewrite(node: Any) -> Any:
@@ -133,15 +142,17 @@ def migrate_active_theme_paths(roots: Roots, backup_dir: Path) -> dict[str, Any]
         return {"moved": False}
 
     pre_image = backup_dir / "active.json"
-    shutil.copy2(manifest_path, pre_image)
-    temporary = manifest_path.with_suffix(".json.tmp")
+    pre_image.write_bytes(original_bytes)
+    # Atomically update the generation manifest in its own directory; the
+    # active.json and current symlinks are never touched.
+    temporary = target.parent / f".{target.name}.tmp-{os.getpid()}"
     temporary.write_text(_json.dumps(rewritten, indent=2) + "\n", encoding="utf-8")
-    shutil.copymode(str(pre_image), str(temporary))
-    os.replace(str(temporary), str(manifest_path))
+    shutil.copymode(str(target), str(temporary))
+    os.replace(str(temporary), str(target))
     return {
         "moved": True,
         "changed_count": len(changed),
-        "detail": {"destination": str(manifest_path)},
+        "detail": {"destination": str(target)},
         "pre_image_file": str(pre_image),
     }
 

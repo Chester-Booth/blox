@@ -316,8 +316,10 @@ def quickshell_config_path(read_cmdline: Callable[[int], list[str]] | None = Non
     """Locate the RUNNING shell so reload and widget IPC reach it.
 
     Preference order: an explicit BLOX_SHELL_DIR override, the supervised
-    service's own --path argument, the legacy checkout location when it
-    actually exists, otherwise the installed tree."""
+    service's own --path argument, the checkout location under
+    XDG_CONFIG_HOME when present, otherwise the installed tree."""
+    home = Path.home()
+    prefix_default = home / ".local"
     override = os.environ.get("BLOX_SHELL_DIR")
     if override:
         return Path(override).expanduser()
@@ -330,7 +332,7 @@ def quickshell_config_path(read_cmdline: Callable[[int], list[str]] | None = Non
     legacy = config_home / "quickshell/blox"
     if (legacy / "shell.qml").is_file():
         return legacy
-    installed = Path(os.environ.get("BLOX_PREFIX", Path.home() / ".local")).expanduser() / "share/blox/shell"
+    installed = Path(os.environ.get("BLOX_PREFIX", home)).expanduser() / "share/blox/shell"
     return installed
 
 

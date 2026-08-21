@@ -501,6 +501,7 @@ class RuntimeCliTests(unittest.TestCase):
                 "XDG_DATA_HOME": str(root / "data"),
                 "PATH": f"{fake_bin}:{environment['PATH']}",
                 "QUICKSHELL_IPC_PID": "4242",
+                "BLOX_SHELL_DIR": str(root / "config" / "quickshell" / "blox"),
             })
             quickshell_loader = root / "config/quickshell/blox/shared/Theme.qml"
             quickshell_loader.parent.mkdir(parents=True)
@@ -514,6 +515,8 @@ class RuntimeCliTests(unittest.TestCase):
                 return completed.returncode, json.loads(completed.stdout)
 
             apply_code, applied = invoke("apply", "catppuccin-mocha", "--targets", "quickshell,wallpaper")
+            if apply_code != 0:
+                print("APPLY ERRORS:", applied.get("errors"))
             self.assertEqual(0, apply_code)
             self.assertTrue(applied["ok"])
             first = applied["data"]["generation"]

@@ -17,7 +17,7 @@ import doctor  # noqa: E402
 
 class RedactionTests(unittest.TestCase):
     def test_home_paths_collapse(self):
-        self.assertEqual(doctor.redact({"path": "/home/blox/.config/blox"}, "/home/blox"), {"path": "~/.config/blox"})
+        self.assertEqual(doctor.redact({"path": "/home/someone/.config/blox"}, "/home/someone"), {"path": "~/.config/blox"})
 
     def test_mac_addresses_never_appear(self):
         redacted = doctor.redact({"device": "aa:bb:cc:dd:ee:ff"}, "/home/someone")

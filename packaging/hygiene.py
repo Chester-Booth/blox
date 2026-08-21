@@ -24,7 +24,9 @@ ALLOWED_MARKERS = (
 
 def tracked_files() -> list[Path]:
     completed = subprocess.run(["git", "-C", str(REPO_ROOT), "ls-files"], capture_output=True, text=True, check=True)
-    return [REPO_ROOT / line for line in completed.stdout.splitlines() if line]
+    files = [REPO_ROOT / line for line in completed.stdout.splitlines() if line]
+    # The scanner's own patterns would match themselves.
+    return [path for path in files if path != Path(__file__).resolve()]
 
 
 def main() -> int:

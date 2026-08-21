@@ -5,6 +5,7 @@ import os
 import shutil
 import sys
 import tempfile
+from unittest import mock
 import unittest
 from pathlib import Path
 
@@ -281,3 +282,143 @@ class InstallMigrationsTests(unittest.TestCase):
             self.assertTrue((roots.config / "env").is_file())
             ledger = json.loads(roots.generations.read_text(encoding="utf-8"))
             self.assertEqual(ledger[-1]["result"], "installed")
+
+
+class LegacyThemeMigrationTests(unittest.TestCase):
+    def _seed_legacy_themes(self):
+        legacy = Path(os.environ["XDG_DATA_HOME"]) / "blox" / "themes"
+        legacy.mkdir(parents=True)
+        (legacy / "imported.json").write_text('{"id": "old-import"}\n', encoding="utf-8")
+        (legacy / "nested").mkdir()
+        (legacy / "nested" / "deep.json").write_text('{"id": "deep"}\n', encoding="utf-8")
+        return legacy
+
+    def _assert_migrated(self, roots, legacy):
+        # Content is preserved byte-for-byte at the separated root; the
+        # contested legacy originals are removed once the install commits.
+        new_root = roots.data / "themes"
+        self.assertEqual((new_root / "imported.json").read_text(encoding="utf-8"), '{"id": "old-import"}\n')
+        self.assertEqual((new_root / "nested" / "deep.json").read_text(encoding="utf-8"), '{"id": "deep"}\n')
+
+    def test_first_install_relocates_legacy_themes(self):
+        with Fixture() as roots:
+            legacy = self._seed_legacy_themes()
+            report = installer.install(roots)
+            moved = next(entry for entry in report["migrations"] if entry["migration"] == "legacy-user-themes")
+            self.assertEqual(moved["result"], "applied")
+            self._assert_migrated(roots, legacy)
+
+    def test_migration_survives_update_rollback_and_uninstall(self):
+        with Fixture() as roots:
+            source_a = fake_source("0.1.0")
+            source_b = fake_source("0.1.1")
+            try:
+                legacy = self._seed_legacy_themes()
+                installer.install(roots, source_root=source_a)
+                installer.update(roots, source_root=source_b)
+                self._assert_migrated(roots, legacy)
+                installer.rollback(roots)
+                self._assert_migrated(roots, legacy)
+                installer.uninstall(roots)
+                self._assert_migrated(roots, legacy)
+            finally:
+                shutil.rmtree(source_a, ignore_errors=True)
+                shutil.rmtree(source_b, ignore_errors=True)
+
+    def test_conflicting_destination_is_left_untouched_and_reported(self):
+        with Fixture() as roots:
+            self._seed_legacy_themes()
+            conflicting = roots.data / "themes" / "imported.json"
+            conflicting.parent.mkdir(parents=True, exist_ok=True)
+            conflicting.write_text('{"id": "users-newer-version"}\n', encoding="utf-8")
+            report = installer.install(roots)
+            moved = next(entry for entry in report["migrations"] if entry["migration"] == "legacy-user-themes")
+            self.assertIn(str(conflicting), moved.get("conflicts", []))
+            self.assertEqual(conflicting.read_text(encoding="utf-8"), '{"id": "users-newer-version"}\n')
+
+
+class TransactionalFailureTests(unittest.TestCase):
+    def _snapshot_state(self, roots):
+        state = {}
+        for label, base in (("pkg", roots.pkg_root), ("units", roots.systemd_user), ("bins", roots.bins), ("data", roots.data)):
+            files = {}
+            if base.is_dir():
+                for path in sorted(base.rglob("*")):
+                    if path.is_file() or path.is_symlink():
+                        key = str(path.relative_to(base))
+                        if path.is_symlink():
+                            files[key] = "link:" + os.readlink(path)
+                        else:
+                            files[key] = installer.sha256(path)
+            state[label] = files
+        state["manifest"] = roots.manifest.read_bytes() if roots.manifest.exists() else None
+        return state
+
+    def test_failed_install_restores_exact_prior_state(self):
+        with Fixture() as roots:
+            before = self._snapshot_state(roots)
+            real_copy2 = shutil.copy2
+            calls = {"n": 0}
+
+            def exploding(source, destination, **kwargs):
+                if "/share/blox/" in str(destination):
+                    raise OSError("injected copy failure")
+                return real_copy2(source, destination, **kwargs)
+
+            with mock.patch.object(installer.shutil, "copy2", side_effect=exploding):
+                with self.assertRaises(OSError):
+                    installer.install(roots)
+            self.assertEqual(self._snapshot_state(roots), before)
+            ledger_lines = migrations.read_ledger(roots)
+            self.assertEqual(ledger_lines, [])
+
+    def test_failed_update_restores_previous_tree_and_ledger(self):
+        with Fixture() as roots:
+            source_a = fake_source("0.1.0")
+            source_b = fake_source("0.1.1")
+            try:
+                installer.install(roots, source_root=source_a)
+                before = self._snapshot_state(roots)
+                generations_before = roots.generations.read_bytes()
+
+                with mock.patch.object(migrations, "run_migrations", side_effect=OSError("injected migration failure")):
+                    with self.assertRaises(OSError):
+                        installer.update(roots, source_root=source_b)
+
+                after = self._snapshot_state(roots)
+                self.assertEqual(after["pkg"], before["pkg"])
+                self.assertFalse(roots.previous_pkg_root.exists())
+                manifest = json.loads(roots.manifest.read_text(encoding="utf-8"))
+                self.assertEqual(manifest["product_version"], "0.1.0")
+                self.assertEqual(roots.generations.read_bytes(), generations_before)
+            finally:
+                shutil.rmtree(source_a, ignore_errors=True)
+                shutil.rmtree(source_b, ignore_errors=True)
+
+    def test_failed_unit_render_restores_symlinked_units(self):
+        with Fixture() as roots:
+            dotfiles = Path(os.environ["BLOX_PREFIX"]).parent / "dotfiles" / "systemd"
+            dotfiles.mkdir(parents=True)
+            real = dotfiles / "quickshell.service"
+            original = "[Unit]\nDescription=checkout original\n"
+            real.write_text(original, encoding="utf-8")
+            live = roots.systemd_user / "quickshell.service"
+            live.parent.mkdir(parents=True, exist_ok=True)
+            live.symlink_to(real)
+
+            real_render = installer.render_unit
+
+            def exploding_render(template, *args, **kwargs):
+                raise OSError("injected render failure")
+
+            with mock.patch.object(installer, "render_unit", side_effect=exploding_render):
+                with self.assertRaises(OSError):
+                    installer.install(roots, force=True)
+
+            self.assertTrue(live.is_symlink())
+            self.assertEqual(os.readlink(live), str(real))
+            self.assertEqual(real.read_text(encoding="utf-8"), original)
+
+
+if __name__ == "__main__":
+    unittest.main()

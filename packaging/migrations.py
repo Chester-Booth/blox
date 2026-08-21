@@ -9,6 +9,7 @@ for every applied migration of the generation being rolled back.
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import time
 from pathlib import Path
@@ -18,10 +19,15 @@ from layout import Roots
 
 
 class Migration:
-    def __init__(self, identifier: str, description: str, run: Callable[[Roots, Path], dict[str, Any]]):
+    def __init__(self, identifier: str, description: str, run: Callable[[Roots, Path], dict[str, Any]], keep_on_rollback: bool = False):
         self.id = identifier
         self.description = description
         self.run = run
+        # Data relocations stay after a version rollback: the originals
+        # remain at the legacy path either way, and dropping the copies
+        # would cut the user off from their own content. Transaction
+        # failures still undo them because they are part of the install.
+        self.keep_on_rollback = keep_on_rollback
 
 
 def _legacy_config(name: str) -> Path:
@@ -49,11 +55,56 @@ def migrate_shell_env(roots: Roots, backup_dir: Path) -> dict[str, Any]:
     return {"moved": bool(detail), "detail": detail}
 
 
+def _data_home() -> Path:
+    return Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local" / "share"))
+
+
+def migrate_legacy_user_themes(roots: Roots, backup_dir: Path) -> dict[str, Any]:
+    """Copy $XDG_DATA_HOME/blox/themes to $XDG_DATA_HOME/blox-user/themes.
+
+    Per-file conflict checks: an existing differing destination is left
+    untouched and reported. Sources are recorded but NOT deleted here —
+    the legacy directory often sits inside what becomes the package tree,
+    so deletion happens only after the install commits
+    (see installer.finalise_legacy_user_themes)."""
+    legacy_root = _data_home() / "blox" / "themes"
+    target_root = roots.data / "themes"
+    sources: list[str] = []
+    created: list[str] = []
+    conflicts: list[str] = []
+    if not legacy_root.is_dir():
+        return {"moved": False}
+    for source in sorted(legacy_root.rglob("*")):
+        if not source.is_file():
+            continue
+        relative = source.relative_to(legacy_root)
+        destination = target_root / relative
+        if destination.exists():
+            if sha256_file(destination) != sha256_file(source):
+                conflicts.append(str(destination))
+            continue
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source, destination)
+        sources.append(str(source))
+        created.append(str(destination))
+    return {"moved": bool(created), "sources": sources, "created": created, "conflicts": conflicts}
+
+
+def sha256_file(path: Path) -> str:
+    import hashlib
+
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(131072), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 MIGRATIONS: list[Migration] = [
     Migration("calendar-config-xdg", "Move the calendar allow-list into $XDG_CONFIG_HOME/blox.", migrate_calendar_config),
     Migration("shell-env-config", "Move the personal shell environment file into $XDG_CONFIG_HOME/blox.", migrate_shell_env),
+    Migration("legacy-user-themes", "Relocate imported themes from $XDG_DATA_HOME/blox/themes into the separated user-data root.", migrate_legacy_user_themes, keep_on_rollback=True),
 ]
-
 
 def _append_ledger(roots: Roots, entry: dict[str, Any]) -> None:
     with roots.migrations_ledger.open("a", encoding="utf-8") as handle:
@@ -89,6 +140,10 @@ def run_migrations(roots: Roots, from_version: str, to_version: str) -> list[dic
             # rollback therefore removes them instead of copying back.
             "existed": False,
             "result": "applied" if detail.get("moved") else "nothing-to-do",
+            "created": detail.get("created", []),
+            "conflicts": detail.get("conflicts", []),
+            "sources": detail.get("sources", []),
+            "keep_on_rollback": migration.keep_on_rollback,
             "detail": detail.get("detail"),
         }
         _append_ledger(roots, entry)
@@ -96,29 +151,86 @@ def run_migrations(roots: Roots, from_version: str, to_version: str) -> list[dic
     return results
 
 
+def _prune_empty_dirs(target_root: Path, stop_at: Path) -> None:
+    """Remove directories that became empty up to (not including) stop_at."""
+    current = target_root
+    while current.is_dir() and current != stop_at and stop_at not in current.parents:
+        try:
+            next(current.iterdir())
+            return
+        except (OSError, StopIteration):
+            pass
+        try:
+            current.rmdir()
+        except OSError:
+            return
+        current = current.parent
+
+
+def restore_ledger_after(roots: Roots, lines_before: int) -> int:
+    """Undo every migration appended after `lines_before` and truncate.
+
+    Used by the lifecycle transactions: a failed install or update must
+    leave no migration effects behind."""
+    entries = read_ledger(roots)
+    if len(entries) <= lines_before:
+        return 0
+    undone = 0
+    for entry in reversed(entries[lines_before:]):
+        detail = entry.get("detail") or {}
+        created_list = entry.get("created") or []
+        single = detail.get("destination")
+        victims = [Path(text) for text in created_list]
+        if not victims and entry.get("result") == "applied" and single and not entry.get("existed", True):
+            victims = [Path(single)]
+        for victim in victims:
+            if victim.is_symlink() or victim.exists():
+                victim.unlink()
+                undone += 1
+        parent = victims[-1].parent if victims else None
+        while parent and parent != roots.data and roots.data in parent.parents:
+            try:
+                next(parent.iterdir())
+                break
+            except (OSError, StopIteration):
+                pass
+            try:
+                parent.rmdir()
+            except OSError:
+                break
+            parent = parent.parent
+    kept = entries[:lines_before]
+    with roots.migrations_ledger.open("w", encoding="utf-8") as handle:
+        for entry in kept:
+            handle.write(json.dumps(entry, sort_keys=True) + "\n")
+    return undone
+
+
 def restore_pre_images(roots: Roots) -> list[str]:
     """Undo applied migrations newest-first.
 
-    A migration only ever creates destinations that did not exist before
+    Migrations only ever create destinations that did not exist before
     (existing files are left untouched and recorded as nothing-to-do), so
-    restoring means removing what the migration created. The pre-image of
-    the copied source stays in the backup for audit.
+    restoring means removing what was created. Directory migrations record
+    every created file in `created`; single-file migrations use the
+    destination with `existed: false`.
     """
     restored: list[str] = []
     for entry in reversed(read_ledger(roots)):
-        if entry.get("result") != "applied":
+        if entry.get("result") != "applied" or entry.get("keep_on_rollback"):
             continue
         detail = entry.get("detail") or {}
+        created_list = list(entry.get("created") or [])
         destination = detail.get("destination")
-        if not destination:
-            continue
-        target = Path(destination)
-        existed_before = entry.get("existed", False)
-        if not existed_before:
-            # The migration created this file; rollback removes it again.
-            if target.is_symlink() or target.exists():
-                target.unlink()
-                restored.append(destination)
-        entry["result"] = "restored"
-        _append_ledger(roots, {**entry})
+        if not created_list and destination and not entry.get("existed", True):
+            created_list = [destination]
+        for text in created_list:
+            created_path = Path(text)
+            if created_path.is_symlink() or created_path.exists():
+                created_path.unlink()
+                restored.append(text)
+        if created_list:
+            _prune_empty_dirs(Path(created_list[-1]).parent, roots.data)
+            entry["result"] = "restored"
+            _append_ledger(roots, {**entry})
     return restored

@@ -252,7 +252,37 @@ def _require_external_source(roots: Roots, source_root: Path | None) -> Path:
     return root
 
 
+def _append_generation(roots: Roots, from_version: str, to_version: str, result: str) -> None:
+    ledger: list[dict[str, Any]] = []
+    if roots.generations.is_file():
+        try:
+            ledger = json.loads(roots.generations.read_text(encoding="utf-8"))
+        except ValueError:
+            ledger = []
+    ledger.append({"time": time.strftime("%Y-%m-%dT%H:%M:%S"), "from": from_version, "to": to_version, "result": result})
+    roots.generations.write_text(json.dumps(ledger, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def _read_generations(roots: Roots) -> bytes | None:
+    try:
+        return roots.generations.read_bytes()
+    except OSError:
+        return None
+
+
+def _write_generations(roots: Roots, payload: bytes | None) -> None:
+    if payload is None:
+        roots.generations.unlink(missing_ok=True)
+    else:
+        roots.generations.write_bytes(payload)
+
+
 def install(roots: Roots, dry_run: bool = False, force: bool = False, source_root: Path | None = None, migrate: bool = True) -> dict[str, Any]:
+    """Install the product transactionally.
+
+    Every mutation is journalled; any failure restores the exact prior
+    state, including symlinked units, the manifest, migration effects and
+    the generation ledger."""
     root = _require_external_source(roots, source_root)
     version = product_version(root)
     plan = build_plan(roots, root)
@@ -266,76 +296,157 @@ def install(roots: Roots, dry_run: bool = False, force: bool = False, source_roo
             {"conflicts": [conflict.as_json() for conflict in plan.conflicts]},
         )
 
+    from migrations import read_ledger, restore_ledger_after, run_migrations
+
     stamp = time.strftime("%Y%m%dT%H%M%S")
-    backed_up: list[str] = []
-    for action in plan.actions:
-        if action.kind == "mkdir":
-            action.target.mkdir(parents=True, exist_ok=True)
-        elif action.kind == "copy":
-            source = root / action.detail
-            action.target.parent.mkdir(parents=True, exist_ok=True)
-            if action.target.is_symlink() or action.target.exists():
-                _backup_conflict(roots, action.target, stamp)
-                backed_up.append(str(action.target))
-                action.target.unlink()
-            shutil.copy2(source, action.target, follow_symlinks=False)
-        elif action.kind == "copy-data":
-            source = root / "applications" / ".local" / "share" / action.detail
-            action.target.parent.mkdir(parents=True, exist_ok=True)
-            if action.target.is_symlink() or action.target.exists():
-                _backup_conflict(roots, action.target, stamp)
-                backed_up.append(str(action.target))
-                action.target.unlink()
-            shutil.copy2(source, action.target, follow_symlinks=False)
-        elif action.kind == "render-unit":
-            action.target.parent.mkdir(parents=True, exist_ok=True)
-            if action.target.is_symlink() or action.target.exists():
-                _backup_conflict(roots, action.target, stamp)
-                backed_up.append(str(action.target))
-                action.target.unlink()
-            action.target.write_text(render_unit(action.detail, roots, version, root), encoding="utf-8")
-            os.chmod(action.target, 0o644)
-        elif action.kind == "link-bin":
-            action.target.parent.mkdir(parents=True, exist_ok=True)
-            if action.target.is_symlink() or action.target.exists():
-                _backup_conflict(roots, action.target, stamp)
-                backed_up.append(str(action.target))
-                action.target.unlink()
-            os.symlink(_bin_link_target(roots, action.detail), action.target)
+    ledger_before = len(read_ledger(roots))
+    report_migrations = None
+    if migrate:
+        # Relocate legacy user data before the package claims its paths.
+        report_migrations = run_migrations(roots, from_version="fresh-install", to_version=version)
+        plan = build_plan(roots, root)
+        report["plan"] = plan.as_json()
+    journal: list[dict[str, Any]] = []
+    manifest_before = roots.manifest.read_bytes() if roots.manifest.exists() else None
 
-    # The version file is package metadata: the installed CLI reads it for
-    # update and rollback decisions, so it ships inside the package root.
-    version_source = root / "VERSION"
-    version_target = roots.pkg_root / "VERSION"
-    if version_source.is_file() and not (version_target.exists() and version_source.samefile(version_target)):
-        shutil.copy2(version_source, version_target)
+    def undo_journal() -> None:
+        for entry in reversed(journal):
+            target = Path(entry["target"])
+            backup = entry.get("backup")
+            if backup is not None:
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(Path(backup), target, follow_symlinks=False)
+            elif entry.get("created") and (target.is_symlink() or target.exists()):
+                target.unlink()
 
-    files = {rel: {"sha256": sha256(target)} for target, rel in _iter_source_pairs(root)}
-    if (roots.pkg_root / "VERSION").is_file():
-        files["VERSION"] = {"sha256": sha256(roots.pkg_root / "VERSION")}
-    data_home = roots.data.parent
-    data_files = {rel: {"sha256": sha256(data_home / rel)} for _, rel in _iter_data_pairs(root)}
-    manifest = {
-        "manifest_version": 1,
-        "product_version": version,
-        "prefix": str(roots.prefix),
-        "files": files,
-        "data_files": data_files,
-        "units": [template.removesuffix(".in") for template in UNIT_TEMPLATES],
-        "bins": list(INSTALLED_BINS),
-    }
-    roots.manifest.parent.mkdir(parents=True, exist_ok=True)
-    roots.manifest.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    report["backed_up"] = backed_up
-    report["installed"] = True
+    try:
+        backed_up: list[str] = []
+        for action in plan.actions:
+            if action.kind == "mkdir":
+                action.target.mkdir(parents=True, exist_ok=True)
+                continue
+            action.target.parent.mkdir(parents=True, exist_ok=True)
+            created = not (action.target.is_symlink() or action.target.exists())
+            backup_path: Path | None = None
+            if not created:
+                backup_path = _backup_conflict(roots, action.target, stamp)
+                backed_up.append(str(action.target))
+                action.target.unlink()
+            journal.append({"kind": action.kind, "target": str(action.target), "backup": str(backup_path) if backup_path else None, "created": created})
+
+            if action.kind == "copy":
+                shutil.copy2(root / action.detail, action.target, follow_symlinks=False)
+            elif action.kind == "copy-data":
+                shutil.copy2(root / "applications" / ".local" / "share" / action.detail, action.target, follow_symlinks=False)
+            elif action.kind == "render-unit":
+                action.target.write_text(render_unit(action.detail, roots, version, root), encoding="utf-8")
+                os.chmod(action.target, 0o644)
+            elif action.kind == "link-bin":
+                os.symlink(_bin_link_target(roots, action.detail), action.target)
+
+        version_source = root / "VERSION"
+        version_target = roots.pkg_root / "VERSION"
+        if version_source.is_file() and not (version_target.exists() and version_source.samefile(version_target)):
+            created_version = not version_target.exists()
+            if not created_version:
+                _backup_conflict(roots, version_target, stamp)
+                version_target.unlink()
+            journal.append({"kind": "copy", "target": str(version_target), "backup": None if created_version else "recorded", "created": created_version})
+            shutil.copy2(version_source, version_target)
+
+        files = {rel: {"sha256": sha256(target)} for target, rel in _iter_source_pairs(root)}
+        if (roots.pkg_root / "VERSION").is_file():
+            files["VERSION"] = {"sha256": sha256(roots.pkg_root / "VERSION")}
+        data_home = roots.data.parent
+        data_files = {rel: {"sha256": sha256(data_home / rel)} for _, rel in _iter_data_pairs(root)}
+        manifest_payload = json.dumps({
+            "manifest_version": 1,
+            "product_version": version,
+            "prefix": str(roots.prefix),
+            "files": files,
+            "data_files": data_files,
+            "units": [template.removesuffix(".in") for template in UNIT_TEMPLATES],
+            "bins": list(INSTALLED_BINS),
+        }, indent=2, sort_keys=True) + "\n"
+        roots.manifest.parent.mkdir(parents=True, exist_ok=True)
+        roots.manifest.write_text(manifest_payload, encoding="utf-8")
+
+        if report_migrations is not None:
+            report["migrations"] = report_migrations
+
+    except BaseException:
+        undo_journal()
+        restore_ledger_after(roots, ledger_before)
+        if roots.manifest.exists() and manifest_before is None:
+            roots.manifest.unlink()
+        elif manifest_before is not None:
+            roots.manifest.write_bytes(manifest_before)
+        if migrate:
+            restore_ledger_after(roots, ledger_before)
+            _write_generations(roots, None)
+        raise
 
     if migrate:
-        from migrations import run_migrations
-
-        report["migrations"] = run_migrations(roots, from_version="fresh-install", to_version=version)
         _append_generation(roots, "none", version, "installed")
+        finalise_legacy_user_themes(roots, report.get("migrations") or [])
 
+    report["backed_up"] = backed_up
+    report["installed"] = True
     return report
+
+
+def finalise_legacy_user_themes(roots: Roots, entries: list[dict[str, Any]]) -> int:
+    """Delete relocated theme sources once the install has committed."""
+    removed = 0
+    for entry in entries:
+        if entry.get("migration") != "legacy-user-themes":
+            continue
+        for text in entry.get("sources") or []:
+            source = Path(text)
+            if source.is_file():
+                source.unlink()
+                removed += 1
+    return removed
+
+
+def _salvage_foreign(roots: Roots, stamp: str) -> list[str]:
+    """Move files under pkg_root that no manifest owns out of harm's way.
+
+    Legacy user content can share the package directory when the prefix is
+    the user home. Removals of the package tree must not take those files
+    along."""
+    installed = _read_manifest(roots.manifest)
+    owned = set((installed or {}).get("files", {}))
+    salvaged: list[str] = []
+    if not roots.pkg_root.is_dir():
+        return salvaged
+    for path in sorted(roots.pkg_root.rglob("*")):
+        if not path.is_file() and not path.is_symlink():
+            continue
+        rel = path.relative_to(roots.pkg_root).as_posix()
+        if rel in owned or rel == "VERSION":
+            continue
+        destination = roots.backups / stamp / "pkg-leftovers" / rel
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.move(str(path), str(destination))
+        entry = {"time": stamp, "original": str(path), "backup": str(destination), "kind": "salvaged", "sha256": None}
+        with (roots.backups / "ledger.jsonl").open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(entry, sort_keys=True) + "\n")
+        salvaged.append(str(path))
+    return salvaged
+
+
+def _update_failed(roots: Roots, previous: Path, ledger_before: int, generations_before: bytes | None) -> None:
+    """Reinstall the snapshotted prior version over every mutated surface."""
+    from migrations import restore_ledger_after
+
+    try:
+        install(roots, source_root=previous, migrate=False)
+    finally:
+        restore_ledger_after(roots, ledger_before)
+        _write_generations(roots, generations_before)
+        if previous.exists():
+            shutil.rmtree(previous)
 
 
 def uninstall(roots: Roots, purge: bool = False, dry_run: bool = False) -> dict[str, Any]:
@@ -361,6 +472,7 @@ def uninstall(roots: Roots, purge: bool = False, dry_run: bool = False) -> dict[
     if dry_run:
         return {"dry_run": True, "removed": planned, "leftovers": [], "purged": purge}
 
+    _salvage_foreign(roots, time.strftime("%Y%m%dT%H%M%S"))
     for text in planned:
         path = Path(text)
         if path.is_symlink() or path.is_file():
@@ -382,7 +494,7 @@ def uninstall(roots: Roots, purge: bool = False, dry_run: bool = False) -> dict[
 
 
 def update(roots: Roots, dry_run: bool = False, source_root: Path | None = None) -> dict[str, Any]:
-    from migrations import run_migrations
+    from migrations import read_ledger, restore_ledger_after, run_migrations
 
     source_root = _require_external_source(roots, source_root)
     installed = _read_manifest(roots.manifest)
@@ -397,20 +509,18 @@ def update(roots: Roots, dry_run: bool = False, source_root: Path | None = None)
 
     if roots.previous_pkg_root.exists():
         shutil.rmtree(roots.previous_pkg_root)
-    shutil.move(str(roots.pkg_root), str(roots.previous_pkg_root))
+    shutil.copytree(roots.pkg_root, roots.previous_pkg_root, symlinks=True)
+
+    ledger_before = len(read_ledger(roots))
+    generations_before = _read_generations(roots)
     try:
         result = install(roots, source_root=source_root, migrate=False)
-    except Exception:
-        # Restore the previous generation without nesting it inside a
-        # partially written tree.
-        if roots.previous_pkg_root.exists():
-            if roots.pkg_root.exists():
-                shutil.rmtree(roots.pkg_root)
-            shutil.move(str(roots.previous_pkg_root), str(roots.pkg_root))
+        result["migrations"] = run_migrations(roots, from_version=current, to_version=version)
+        _append_generation(roots, current, version, "applied")
+    except BaseException:
+        _update_failed(roots, roots.previous_pkg_root, ledger_before, generations_before)
         raise
-    migration_result = run_migrations(roots, from_version=current, to_version=version)
-    _append_generation(roots, current, version, "applied")
-    result.update({"updated": True, "from": current, "to": version, "migrations": migration_result})
+    result.update({"updated": True, "from": current, "to": version})
     return result
 
 
@@ -422,21 +532,12 @@ def rollback(roots: Roots, dry_run: bool = False) -> dict[str, Any]:
     if dry_run:
         return {"rolled_back": True, "dry_run": True}
     restored = restore_pre_images(roots)
+    _salvage_foreign(roots, time.strftime("%Y%m%dT%H%M%S"))
     shutil.rmtree(roots.pkg_root)
-    shutil.move(str(roots.previous_pkg_root), str(roots.pkg_root))
+    shutil.copytree(roots.previous_pkg_root, roots.pkg_root, symlinks=True)
+    shutil.rmtree(roots.previous_pkg_root)
     _append_generation(roots, "current", "previous", "rolled-back")
     return {"rolled_back": True, "pre_images_restored": restored}
-
-
-def _append_generation(roots: Roots, from_version: str, to_version: str, result: str) -> None:
-    ledger: list[dict[str, Any]] = []
-    if roots.generations.is_file():
-        try:
-            ledger = json.loads(roots.generations.read_text(encoding="utf-8"))
-        except ValueError:
-            ledger = []
-    ledger.append({"time": time.strftime("%Y-%m-%dT%H:%M:%S"), "from": from_version, "to": to_version, "result": result})
-    roots.generations.write_text(json.dumps(ledger, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
 REQUIRED_COMMANDS = ("python3", "quickshell", "jq")

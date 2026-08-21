@@ -1,10 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Resolve the CLI implementation: an installed product tree wins, otherwise
-# run from this checkout. BLOX_INSTALL_ROOT overrides both for tests.
+# Lifecycle commands must run from the tree this wrapper lives in: install
+# and update need an external source artefact, never the installed copy.
+# Runtime groups (status, doctor) prefer the installed product when present.
+here="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+
+if [ "${1:-}" = "lifecycle" ]; then
+	exec python3 "${here}/shell/scripts/bloxctl.py" "$@"
+fi
+
 root="${BLOX_INSTALL_ROOT:-${HOME}/.local/share/blox}"
 if [ -f "${root}/shell/scripts/bloxctl.py" ]; then
 	exec python3 "${root}/shell/scripts/bloxctl.py" "$@"
 fi
-exec python3 "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)/shell/scripts/bloxctl.py" "$@"
+exec python3 "${here}/shell/scripts/bloxctl.py" "$@"

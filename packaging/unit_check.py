@@ -48,6 +48,9 @@ def main() -> int:
             capture_output=True,
             text=True,
             check=False,
+            # Job environments may omit the user runtime directory that
+            # systemd-analyze --user requires.
+            env={**os.environ, "XDG_RUNTIME_DIR": f"/run/user/{os.getuid()}"},
         )
         if completed.returncode != 0 or completed.stdout.strip():
             print(completed.stdout, end="")

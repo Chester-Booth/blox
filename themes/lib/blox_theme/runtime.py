@@ -688,7 +688,11 @@ def ensure_gtk_loaders(root: Path, active: bool) -> None:
             _replace_known_symlink(live_loader, source_loader, allowed_loaders)
             dynamic_css = config / dynamic_name
             css_target = generated_css if active and metadata and metadata["generated_css"] else original
-            _replace_known_symlink(dynamic_css, css_target, (original, generated_css))
+            # The neutral empty stylesheet is a legal prior state too (an
+            # earlier inactive generation may have written it), so replacing
+            # it must not refuse even though it is not the recorded target.
+            empty_original = gtk_source_path(version, "blox-theme-empty-dark.css" if dark else "blox-theme-empty.css")
+            _replace_known_symlink(dynamic_css, css_target, (original, generated_css, empty_original))
 
 
 def setup_gtk() -> dict[str, Any]:

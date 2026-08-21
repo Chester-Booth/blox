@@ -1,0 +1,18 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+
+# Fork pull requests never trigger this workflow: there is deliberately no
+# pull_request or pull_request_target trigger, so untrusted code cannot run
+# on the self-hosted runner.
+
+jobs:
+  ci:
+    runs-on: arch-blox
+    steps:
+      - uses: actions/checkout@v4
+      - name: make ci
+        run: make ci

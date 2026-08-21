@@ -501,7 +501,7 @@ class ActiveThemeManifestMigrationTests(unittest.TestCase):
             "enabled_targets": ["quickshell", "gtk", "wallpaper"],
             "target_sources": {
                 "quickshell": {"source": str(legacy_root / "themes" / "default-many-widgets.json")},
-                "code": {"source": "/home/someone/Code/personal/dotfiles/themes/builtin/catppuccin-frappe.json"},
+                "code": {"source": "/home/someone/code/personal-checkout/themes/builtin/frappe.json"},
                 "wallpaper": {"source": str(legacy_root / "themes" / "default-many-widgets.json")},
             },
         }
@@ -528,7 +528,7 @@ class ActiveThemeManifestMigrationTests(unittest.TestCase):
             # The checkout reference is machine policy and stays untouched.
             self.assertEqual(
                 migrated["target_sources"]["code"]["source"],
-                "/home/someone/Code/personal/dotfiles/themes/builtin/catppuccin-frappe.json",
+                "/home/someone/code/personal-checkout/themes/builtin/frappe.json",
             )
             # Pre-image preserves the exact original bytes.
             pre_image = Path(entry["pre_image_file"])

@@ -145,11 +145,14 @@ def build_plan(roots: Roots, source_root: Path | None = None) -> Plan:
             plan.actions.append(Action("copy", target, rel))
             continue
         current = sha256(target)
-        if current == sha256(source):
+        source_hash = sha256(source)
+        # The recorded manifest arbitrates ownership: a file that matches
+        # neither the manifest nor the incoming source is foreign, even when
+        # the installer runs from the installed tree itself.
+        recorded = installed.get("files", {}).get(rel, {}).get("sha256") if installed else None
+        if current == source_hash and (recorded is None or recorded == current):
             plan.unchanged += 1
-            continue
-        previous = installed.get("files", {}).get(rel, {}) if installed else {}
-        if previous.get("sha256") == current:
+        elif recorded is not None and recorded == current:
             plan.actions.append(Action("copy", target, rel))
         else:
             plan.conflicts.append(Conflict(target, "existing file is not owned by the recorded manifest"))
@@ -192,8 +195,23 @@ def _backup_conflict(roots: Roots, target: Path, stamp: str) -> Path:
     return destination
 
 
-def install(roots: Roots, dry_run: bool = False, force: bool = False, source_root: Path | None = None) -> dict[str, Any]:
+def _require_external_source(roots: Roots, source_root: Path | None) -> Path:
+    """Install and update need a source tree outside the installed root."""
     root = source_root or REPO_ROOT
+    try:
+        same = root.samefile(roots.pkg_root)
+    except OSError:
+        same = False
+    if same:
+        raise LifecycleError(
+            "unavailable",
+            "No source tree is available from the installed CLI. Run lifecycle install from a checkout or release artefact.",
+        )
+    return root
+
+
+def install(roots: Roots, dry_run: bool = False, force: bool = False, source_root: Path | None = None) -> dict[str, Any]:
+    root = _require_external_source(roots, source_root)
     version = product_version(root)
     plan = build_plan(roots, root)
     report: dict[str, Any] = {"version": version, "dry_run": dry_run, "plan": plan.as_json()}
@@ -234,7 +252,16 @@ def install(roots: Roots, dry_run: bool = False, force: bool = False, source_roo
                 action.target.unlink()
             os.symlink(_bin_link_target(roots, action.detail), action.target)
 
+    # The version file is package metadata: the installed CLI reads it for
+    # update and rollback decisions, so it ships inside the package root.
+    version_source = root / "VERSION"
+    version_target = roots.pkg_root / "VERSION"
+    if version_source.is_file() and not (version_target.exists() and version_source.samefile(version_target)):
+        shutil.copy2(version_source, version_target)
+
     files = {rel: {"sha256": sha256(target)} for target, rel in _iter_source_pairs(root)}
+    if (roots.pkg_root / "VERSION").is_file():
+        files["VERSION"] = {"sha256": sha256(roots.pkg_root / "VERSION")}
     manifest = {
         "manifest_version": 1,
         "product_version": version,
@@ -294,6 +321,7 @@ def uninstall(roots: Roots, purge: bool = False, dry_run: bool = False) -> dict[
 def update(roots: Roots, dry_run: bool = False, source_root: Path | None = None) -> dict[str, Any]:
     from migrations import run_migrations
 
+    source_root = _require_external_source(roots, source_root)
     installed = _read_manifest(roots.manifest)
     if not installed:
         raise LifecycleError("unavailable", "Blox is not installed; run lifecycle install first.")
@@ -310,7 +338,11 @@ def update(roots: Roots, dry_run: bool = False, source_root: Path | None = None)
     try:
         result = install(roots, source_root=source_root)
     except Exception:
+        # Restore the previous generation without nesting it inside a
+        # partially written tree.
         if roots.previous_pkg_root.exists():
+            if roots.pkg_root.exists():
+                shutil.rmtree(roots.pkg_root)
             shutil.move(str(roots.previous_pkg_root), str(roots.pkg_root))
         raise
     migration_result = run_migrations(roots, from_version=current, to_version=version)
@@ -364,8 +396,8 @@ def check_dependencies() -> list[dict[str, Any]]:
     font_ok = False
     fc_list = shutil.which("fc-list")
     if fc_list:
-        completed = subprocess.run([fc_list, ":family=Nerd Font Propo"], capture_output=True, text=True, check=False)
-        font_ok = completed.returncode == 0 and completed.stdout.strip() != ""
+        completed = subprocess.run([fc_list, ":"], capture_output=True, text=True, check=False)
+        font_ok = completed.returncode == 0 and "nerd font propo" in completed.stdout.lower()
     checks.append({
         "id": "font-nerd-propo",
         "severity": "info" if font_ok else "warn",

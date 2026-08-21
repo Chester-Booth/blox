@@ -103,7 +103,7 @@ def run_lifecycle(command: str, options: dict[str, Any]) -> dict[str, Any]:
     return result(True, "ok", "", report)
 
 
-def run_doctor(as_json: bool) -> tuple[int, dict[str, Any]]:
+def run_doctor(as_json: bool) -> tuple[int, dict[str, Any], bool]:
     import sys as _sys
 
     if str(SCRIPT_ROOT) not in _sys.path:
@@ -113,16 +113,28 @@ def run_doctor(as_json: bool) -> tuple[int, dict[str, Any]]:
     try:
         report = doctor.collect()
     except (OSError, ValueError) as error:
-        return EXIT_INTERNAL, result(False, "internal", f"Doctor failed: {error}")
+        return EXIT_INTERNAL, result(False, "internal", f"Doctor failed: {error}"), False
     from doctor import redact
 
     report["redacted"] = True
     report = redact(report, str(Path.home()))
-    return EXIT_OK, result(True, "ok", "", report)
+    if not as_json:
+        marks = {"info": "ok  ", "warn": "warn", "error": "FAIL"}
+        for check in report["checks"]:
+            line = f"[{marks[check['severity']]}] {check['id']}"
+            if check["detail"] is not None:
+                line += f": {json.dumps(check['detail'], sort_keys=True)}"
+            print(line)
+        print("healthy" if report["healthy"] else "unhealthy")
+        return EXIT_OK, result(True, "ok"), True
+    return EXIT_OK, result(True, "ok", "", report), False
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="bloxctl")
+    common = argparse.ArgumentParser(add_help=False)
+    common.add_argument("--json", action="store_true", dest="as_json")
+    common.add_argument("--prefix")
     groups = parser.add_subparsers(dest="group", required=True)
 
     status = groups.add_parser("status", help="typed status through the running shell")
@@ -136,44 +148,42 @@ def build_parser() -> argparse.ArgumentParser:
         reserved.add_argument("--json", action="store_true", dest="as_json")
 
     lifecycle = groups.add_parser("lifecycle", help="install, update, rollback and uninstall")
-    lifecycle.add_argument("--json", action="store_true", dest="as_json")
     commands = lifecycle.add_subparsers(dest="lifecycle_command", required=True)
 
-    install_parser = commands.add_parser("install")
+    install_parser = commands.add_parser("install", parents=[common])
     install_parser.add_argument("--dry-run", action="store_true")
     install_parser.add_argument("--force", action="store_true")
-    install_parser.add_argument("--prefix")
 
-    update_parser = commands.add_parser("update")
+    update_parser = commands.add_parser("update", parents=[common])
     update_parser.add_argument("--dry-run", action="store_true")
 
-    rollback_parser = commands.add_parser("rollback")
+    rollback_parser = commands.add_parser("rollback", parents=[common])
     rollback_parser.add_argument("--dry-run", action="store_true")
 
-    uninstall_parser = commands.add_parser("uninstall")
+    uninstall_parser = commands.add_parser("uninstall", parents=[common])
     uninstall_parser.add_argument("--dry-run", action="store_true")
     uninstall_parser.add_argument("--purge", action="store_true")
     return parser
 
 
-def run(argv: list[str]) -> tuple[int, dict[str, Any], bool]:
+def run(argv: list[str]) -> tuple[int, dict[str, Any], bool, bool]:
     try:
         args = build_parser().parse_args(argv)
     except SystemExit as error:
-        return int(error.code), result(False, "usage", "Use: bloxctl {status|doctor|settings|theme|lifecycle} --help."), "--json" in argv
+        return int(error.code), result(False, "usage", "Use: bloxctl {status|doctor|settings|theme|lifecycle} --help."), "--json" in argv, False
 
     as_json = getattr(args, "as_json", False)
 
     if args.group == "status":
         action = call_owner()
-        return exit_code(action), action, as_json
+        return exit_code(action), action, as_json, False
 
     if args.group == "doctor":
-        code, action = run_doctor(as_json)
-        return code, action, as_json
+        code, action, printed = run_doctor(as_json)
+        return code, action, as_json, printed
 
     if args.group in ("settings", "theme"):
-        return EXIT_UNAVAILABLE, result(False, "unavailable", f"The {args.group} commands belong to a later phase."), as_json
+        return EXIT_UNAVAILABLE, result(False, "unavailable", f"The {args.group} commands belong to a later phase."), as_json, False
 
     if args.group == "lifecycle":
         options = {
@@ -183,13 +193,15 @@ def run(argv: list[str]) -> tuple[int, dict[str, Any], bool]:
             "prefix": getattr(args, "prefix", None),
         }
         action = run_lifecycle(args.lifecycle_command, options)
-        return exit_code(action), action, as_json
+        return exit_code(action), action, as_json, False
 
-    return EXIT_USAGE, result(False, "usage", "Use: bloxctl status [--json]."), as_json
+    return EXIT_USAGE, result(False, "usage", "Use: bloxctl status [--json]."), as_json, False
 
 
 def main(argv: list[str] | None = None) -> int:
-    code, action, as_json = run(sys.argv[1:] if argv is None else argv)
+    code, action, as_json, printed = run(sys.argv[1:] if argv is None else argv)
+    if printed:
+        return code
     if as_json:
         print(json.dumps(action, separators=(",", ":"), sort_keys=True))
     elif action["ok"]:

@@ -31,7 +31,26 @@ class RedactionTests(unittest.TestCase):
 
 class DoctorReportTests(unittest.TestCase):
     def test_report_is_typed_and_redacted_when_not_installed(self):
-        report = doctor.collect()
+        # Isolate HOME so "not installed" holds on any machine, including one
+        # where Blox is currently installed.
+        import shutil
+        import tempfile
+
+        fixture = tempfile.mkdtemp(prefix="blox-doctor-")
+        saved = {key: os.environ.get(key) for key in ("HOME", "BLOX_PREFIX", "XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_STATE_HOME", "XDG_CACHE_HOME")}
+        try:
+            os.environ["HOME"] = fixture
+            os.environ["BLOX_PREFIX"] = os.path.join(fixture, ".local")
+            for key in ("XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_STATE_HOME", "XDG_CACHE_HOME"):
+                os.environ.pop(key, None)
+            report = doctor.collect()
+        finally:
+            for key, value in saved.items():
+                if value is None:
+                    os.environ.pop(key, None)
+                else:
+                    os.environ[key] = value
+            shutil.rmtree(fixture, ignore_errors=True)
         report["redacted"] = True
         payload = json.loads(json.dumps(report))
         self.assertEqual(payload["version"], 1)

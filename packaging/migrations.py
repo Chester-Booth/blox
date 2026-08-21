@@ -100,10 +100,57 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
+def migrate_active_theme_paths(roots: Roots, backup_dir: Path) -> dict[str, Any]:
+    """Repoint the active theme manifest at the relocated user-data root.
+
+    The manifest's top-level `source` and every `target_sources[*].source`
+    may reference the legacy directory that relocation empties. The file is
+    modified in place with a pre-image so rollback can restore it."""
+    import json as _json
+
+    state_home = Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local" / "state"))
+    manifest_path = state_home / "blox-theme" / "active.json"
+    if not manifest_path.is_file():
+        return {"moved": False}
+    legacy_root = str(_data_home() / "blox" / "themes")
+    new_root = str(roots.data / "themes")
+
+    document = _json.loads(manifest_path.read_text(encoding="utf-8"))
+    changed: list[str] = []
+
+    def rewrite(node: Any) -> Any:
+        if isinstance(node, dict):
+            return {key: rewrite(value) for key, value in node.items()}
+        if isinstance(node, list):
+            return [rewrite(item) for item in node]
+        if isinstance(node, str) and node.startswith(legacy_root + "/"):
+            changed.append(node)
+            return new_root + node[len(legacy_root):]
+        return node
+
+    rewritten = rewrite(document)
+    if not changed:
+        return {"moved": False}
+
+    pre_image = backup_dir / "active.json"
+    shutil.copy2(manifest_path, pre_image)
+    temporary = manifest_path.with_suffix(".json.tmp")
+    temporary.write_text(_json.dumps(rewritten, indent=2) + "\n", encoding="utf-8")
+    shutil.copymode(str(pre_image), str(temporary))
+    os.replace(str(temporary), str(manifest_path))
+    return {
+        "moved": True,
+        "changed_count": len(changed),
+        "detail": {"destination": str(manifest_path)},
+        "pre_image_file": str(pre_image),
+    }
+
+
 MIGRATIONS: list[Migration] = [
     Migration("calendar-config-xdg", "Move the calendar allow-list into $XDG_CONFIG_HOME/blox.", migrate_calendar_config),
     Migration("shell-env-config", "Move the personal shell environment file into $XDG_CONFIG_HOME/blox.", migrate_shell_env),
     Migration("legacy-user-themes", "Relocate imported themes from $XDG_DATA_HOME/blox/themes into the separated user-data root.", migrate_legacy_user_themes, keep_on_rollback=True),
+    Migration("active-theme-paths", "Repoint the active theme manifest at the relocated user-data root.", migrate_active_theme_paths, keep_on_rollback=True),
 ]
 
 def _append_ledger(roots: Roots, entry: dict[str, Any]) -> None:
@@ -141,8 +188,11 @@ def run_migrations(roots: Roots, from_version: str, to_version: str) -> list[dic
             "existed": False,
             "result": "applied" if detail.get("moved") else "nothing-to-do",
             "created": detail.get("created", []),
+            "pre_image_file": detail.get("pre_image_file"),
             "conflicts": detail.get("conflicts", []),
             "sources": detail.get("sources", []),
+            "modified": bool(detail.get("pre_image_file")),
+            "existed": bool(detail.get("pre_image_file")),
             "keep_on_rollback": migration.keep_on_rollback,
             "detail": detail.get("detail"),
         }
@@ -177,6 +227,13 @@ def restore_ledger_after(roots: Roots, lines_before: int) -> int:
         return 0
     undone = 0
     for entry in reversed(entries[lines_before:]):
+        if entry.get("modified"):
+            pre_image = entry.get("pre_image_file")
+            destination = (entry.get("detail") or {}).get("destination")
+            if pre_image and destination and Path(pre_image).is_file():
+                shutil.copy2(pre_image, destination)
+                undone += 1
+            continue
         detail = entry.get("detail") or {}
         created_list = entry.get("created") or []
         single = detail.get("destination")
@@ -218,6 +275,13 @@ def restore_pre_images(roots: Roots) -> list[str]:
     restored: list[str] = []
     for entry in reversed(read_ledger(roots)):
         if entry.get("result") != "applied" or entry.get("keep_on_rollback"):
+            continue
+        if entry.get("modified"):
+            pre_image = entry.get("pre_image_file")
+            destination = (entry.get("detail") or {}).get("destination")
+            if pre_image and destination and Path(pre_image).is_file():
+                shutil.copy2(pre_image, destination)
+                restored.append(destination)
             continue
         detail = entry.get("detail") or {}
         created_list = list(entry.get("created") or [])

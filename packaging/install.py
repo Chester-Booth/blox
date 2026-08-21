@@ -348,10 +348,16 @@ def install(roots: Roots, dry_run: bool = False, force: bool = False, source_roo
         version_target = roots.pkg_root / "VERSION"
         if version_source.is_file() and not (version_target.exists() and version_source.samefile(version_target)):
             created_version = not version_target.exists()
+            version_backup = None
             if not created_version:
-                _backup_conflict(roots, version_target, stamp)
+                version_backup = _backup_conflict(roots, version_target, stamp)
                 version_target.unlink()
-            journal.append({"kind": "copy", "target": str(version_target), "backup": None if created_version else "recorded", "created": created_version})
+            journal.append({
+                "kind": "copy",
+                "target": str(version_target),
+                "backup": str(version_backup) if version_backup else None,
+                "created": created_version,
+            })
             shutil.copy2(version_source, version_target)
 
         files = {rel: {"sha256": sha256(target)} for target, rel in _iter_source_pairs(root)}
@@ -507,9 +513,12 @@ def update(roots: Roots, dry_run: bool = False, source_root: Path | None = None)
     if dry_run:
         return {"updated": True, "from": current, "to": version, "dry_run": True}
 
-    if roots.previous_pkg_root.exists():
-        shutil.rmtree(roots.previous_pkg_root)
-    shutil.copytree(roots.pkg_root, roots.previous_pkg_root, symlinks=True)
+    # Snapshot into a temp tree first: an existing .previous generation
+    # belongs to the last successful update and must survive a failure.
+    had_previous = roots.previous_pkg_root.exists()
+    roots.state.mkdir(parents=True, exist_ok=True)
+    snapshot = roots.state / f".update-snapshot-{time.strftime('%Y%m%dT%H%M%S-%f')}"
+    shutil.copytree(roots.pkg_root, snapshot, symlinks=True)
 
     ledger_before = len(read_ledger(roots))
     generations_before = _read_generations(roots)
@@ -518,8 +527,20 @@ def update(roots: Roots, dry_run: bool = False, source_root: Path | None = None)
         result["migrations"] = run_migrations(roots, from_version=current, to_version=version)
         _append_generation(roots, current, version, "applied")
     except BaseException:
-        _update_failed(roots, roots.previous_pkg_root, ledger_before, generations_before)
+        # Reinstall the snapshot over every mutated surface, then drop it.
+        # A pre-existing .previous stays exactly as it was.
+        try:
+            install(roots, source_root=snapshot, migrate=False)
+        finally:
+            from migrations import restore_ledger_after
+
+            restore_ledger_after(roots, ledger_before)
+            _write_generations(roots, generations_before)
+            shutil.rmtree(snapshot, ignore_errors=True)
         raise
+    if had_previous:
+        shutil.rmtree(roots.previous_pkg_root)
+    shutil.move(str(snapshot), str(roots.previous_pkg_root))
     result.update({"updated": True, "from": current, "to": version})
     return result
 

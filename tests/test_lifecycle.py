@@ -337,26 +337,30 @@ class LegacyThemeMigrationTests(unittest.TestCase):
             self.assertEqual(conflicting.read_text(encoding="utf-8"), '{"id": "users-newer-version"}\n')
 
 
+def snapshot_state(roots):
+    state = {}
+    for label, base in (("pkg", roots.pkg_root), ("units", roots.systemd_user), ("bins", roots.bins), ("data", roots.data)):
+        files = {}
+        if base.is_dir():
+            for path in sorted(base.rglob("*")):
+                if path.is_file() or path.is_symlink():
+                    key = str(path.relative_to(base))
+                    if path.is_symlink():
+                        files[key] = "link:" + os.readlink(path)
+                    else:
+                        files[key] = installer.sha256(path)
+        state[label] = files
+    state["manifest"] = roots.manifest.read_bytes() if roots.manifest.exists() else None
+    return state
+
+
 class TransactionalFailureTests(unittest.TestCase):
     def _snapshot_state(self, roots):
-        state = {}
-        for label, base in (("pkg", roots.pkg_root), ("units", roots.systemd_user), ("bins", roots.bins), ("data", roots.data)):
-            files = {}
-            if base.is_dir():
-                for path in sorted(base.rglob("*")):
-                    if path.is_file() or path.is_symlink():
-                        key = str(path.relative_to(base))
-                        if path.is_symlink():
-                            files[key] = "link:" + os.readlink(path)
-                        else:
-                            files[key] = installer.sha256(path)
-            state[label] = files
-        state["manifest"] = roots.manifest.read_bytes() if roots.manifest.exists() else None
-        return state
+        return snapshot_state(roots)
 
     def test_failed_install_restores_exact_prior_state(self):
         with Fixture() as roots:
-            before = self._snapshot_state(roots)
+            before = snapshot_state(roots)
             real_copy2 = shutil.copy2
             calls = {"n": 0}
 
@@ -378,14 +382,14 @@ class TransactionalFailureTests(unittest.TestCase):
             source_b = fake_source("0.1.1")
             try:
                 installer.install(roots, source_root=source_a)
-                before = self._snapshot_state(roots)
+                before = snapshot_state(roots)
                 generations_before = roots.generations.read_bytes()
 
                 with mock.patch.object(migrations, "run_migrations", side_effect=OSError("injected migration failure")):
                     with self.assertRaises(OSError):
                         installer.update(roots, source_root=source_b)
 
-                after = self._snapshot_state(roots)
+                after = snapshot_state(roots)
                 self.assertEqual(after["pkg"], before["pkg"])
                 self.assertFalse(roots.previous_pkg_root.exists())
                 manifest = json.loads(roots.manifest.read_text(encoding="utf-8"))
@@ -418,6 +422,122 @@ class TransactionalFailureTests(unittest.TestCase):
             self.assertTrue(live.is_symlink())
             self.assertEqual(os.readlink(live), str(real))
             self.assertEqual(real.read_text(encoding="utf-8"), original)
+
+
+if __name__ == "__main__":
+    unittest.main()
+
+
+class VersionJournalTests(unittest.TestCase):
+    def test_failed_manifest_write_restores_version_units_and_links(self):
+        with Fixture() as roots:
+            source_a = fake_source("0.1.0")
+            try:
+                installer.install(roots, source_root=source_a)
+                before = snapshot_state(roots)
+
+                # Same version, different payload: every package file becomes
+                # an owned update, so the journal carries real backups.
+                (source_a / "shell" / "shell.qml").write_text("// changed\n", encoding="utf-8")
+
+                real_dumps = installer.json.dumps
+
+                def exploding(payload=None, **kwargs):
+                    if isinstance(payload, dict) and payload.get("manifest_version") == 1:
+                        raise OSError("injected manifest-write failure")
+                    return real_dumps(payload, **kwargs)
+
+                with mock.patch.object(installer.json, "dumps", side_effect=exploding):
+                    with self.assertRaises(OSError):
+                        installer.install(roots, source_root=source_a)
+
+                after = snapshot_state(roots)
+                self.assertEqual(after["pkg"], before["pkg"])
+                self.assertEqual(after["units"], before["units"])
+                self.assertEqual(after["bins"], before["bins"])
+                self.assertEqual(after["manifest"], before["manifest"])
+                # The VERSION backup was real, not a placeholder string.
+                ledger_lines = [json.loads(line) for line in (roots.backups / "ledger.jsonl").read_text(encoding="utf-8").strip().splitlines()]
+                version_entries = [e for e in ledger_lines if e["original"].endswith("/VERSION")]
+                self.assertTrue(version_entries)
+                self.assertTrue(Path(version_entries[-1]["backup"]).is_file())
+            finally:
+                shutil.rmtree(source_a, ignore_errors=True)
+
+
+class PreviousGenerationPreservationTests(unittest.TestCase):
+    def test_failed_update_keeps_current_and_previous_intact(self):
+        with Fixture() as roots:
+            sources = {v: fake_source(v) for v in ("0.1.0", "0.1.1", "0.1.2")}
+            try:
+                installer.install(roots, source_root=sources["0.1.0"])
+                installer.update(roots, source_root=sources["0.1.1"])
+
+                with mock.patch.object(migrations, "run_migrations", side_effect=OSError("injected")):
+                    with self.assertRaises(OSError):
+                        installer.update(roots, source_root=sources["0.1.2"])
+
+                manifest = json.loads(roots.manifest.read_text(encoding="utf-8"))
+                self.assertEqual(manifest["product_version"], "0.1.1", "current must remain B")
+                previous_manifest = json.loads((roots.previous_pkg_root / "manifest.json").read_text(encoding="utf-8"))
+                self.assertEqual(previous_manifest["product_version"], "0.1.0", "previous must remain A")
+                generations = json.loads(roots.generations.read_text(encoding="utf-8"))
+                self.assertEqual(generations[-1]["result"], "applied")
+                self.assertEqual(generations[-1]["to"], "0.1.1")
+                snapshots = list(roots.state.glob(".update-snapshot-*"))
+                self.assertEqual(snapshots, [])
+            finally:
+                for source in sources.values():
+                    shutil.rmtree(source, ignore_errors=True)
+
+
+class ActiveThemeManifestMigrationTests(unittest.TestCase):
+    def _seed_active_manifest(self, legacy_root):
+        state = Path(os.environ["XDG_STATE_HOME"]) / "blox-theme"
+        state.mkdir(parents=True, exist_ok=True)
+        document = {
+            "created_at": "2026-08-20T12:29:56+00:00",
+            "source": str(legacy_root / "themes" / "default-many-widgets.json"),
+            "enabled_targets": ["quickshell", "gtk", "wallpaper"],
+            "target_sources": {
+                "quickshell": {"source": str(legacy_root / "themes" / "default-many-widgets.json")},
+                "code": {"source": "/home/someone/Code/personal/dotfiles/themes/builtin/catppuccin-frappe.json"},
+                "wallpaper": {"source": str(legacy_root / "themes" / "default-many-widgets.json")},
+            },
+        }
+        path = state / "active.json"
+        original = json.dumps(document, indent=2) + "\n"
+        path.write_text(original, encoding="utf-8")
+        return path, original
+
+    def test_active_manifest_paths_are_rewritten_with_pre_image(self):
+        with Fixture() as roots:
+            legacy_home = Path(os.environ["XDG_DATA_HOME"]) / "blox"
+            (legacy_home / "themes").mkdir(parents=True, exist_ok=True)
+            (legacy_home / "themes" / "default-many-widgets.json").write_text('{"id": "x"}\n', encoding="utf-8")
+            manifest_path, original = self._seed_active_manifest(legacy_home)
+
+            report = installer.install(roots)
+            entry = next(e for e in report["migrations"] if e["migration"] == "active-theme-paths")
+            self.assertEqual(entry["result"], "applied")
+
+            migrated = json.loads(manifest_path.read_text(encoding="utf-8"))
+            new_prefix = str(roots.data / "themes")
+            self.assertTrue(migrated["source"].startswith(new_prefix))
+            self.assertTrue(migrated["target_sources"]["quickshell"]["source"].startswith(new_prefix))
+            # The checkout reference is machine policy and stays untouched.
+            self.assertEqual(
+                migrated["target_sources"]["code"]["source"],
+                "/home/someone/Code/personal/dotfiles/themes/builtin/catppuccin-frappe.json",
+            )
+            # Pre-image preserves the exact original bytes.
+            pre_image = Path(entry["pre_image_file"])
+            self.assertEqual(pre_image.read_text(encoding="utf-8"), original)
+
+            # Transactional undo of just this entry restores the original.
+            ledger = migrations.read_ledger(roots)
+            migrations.restore_ledger_after(roots, len(ledger) - 1)
+            self.assertEqual(manifest_path.read_text(encoding="utf-8"), original)
 
 
 if __name__ == "__main__":

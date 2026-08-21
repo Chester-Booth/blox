@@ -1,9 +1,9 @@
 SHELL := /usr/bin/env bash
 QS := shell
 
-.PHONY: check ci qmllint py-compile shellcheck test-launcher test-status-contracts test-bloxctl test-lifecycle test-doctor validate-status validate-themes unit-check diff-check hygiene
+.PHONY: check ci qmllint py-compile shellcheck test-launcher test-status-contracts test-bloxctl test-lifecycle test-doctor test-cutover validate-status validate-themes unit-check diff-check hygiene
 
-check: qmllint py-compile shellcheck test-launcher test-status-contracts test-bloxctl test-lifecycle test-doctor validate-status validate-themes unit-check diff-check
+check: qmllint py-compile shellcheck test-launcher test-status-contracts test-bloxctl test-lifecycle test-doctor test-cutover validate-status validate-themes unit-check diff-check
 
 ci: check hygiene
 
@@ -44,6 +44,9 @@ test-lifecycle:
 
 test-doctor:
 	@PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests/test_doctor.py -v
+
+test-cutover:
+	@bash tests/test_cutover.sh
 
 validate-status:
 	@$(QS)/scripts/validate-status.py --timeout 10

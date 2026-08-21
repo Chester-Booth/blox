@@ -1104,6 +1104,10 @@ Scope {
             if (!root.open || !root.rendered)
                 return ;
 
+            // Re-run recovery once the surface is mapped: the dispatch at
+            // open time races the Wayland map and can miss the window.
+            root.recoverPickerWorkspace("");
+
             // Floating windows keep their Hyprland workspace across hides.
             // Move a picker stranded by widget edit mode back to the workspace
             Qt.callLater(() => {

@@ -122,7 +122,7 @@ class PortabilityTests(unittest.TestCase):
             result, code = cli.run(cli.parser().parse_args(("import", str(source), "--json")))
             listed, list_code = cli.run(cli.parser().parse_args(("list", "--json")))
 
-        expected = data_home / "blox/themes/xdg-theme.json"
+        expected = data_home / "blox-user/themes/xdg-theme.json"
         self.assertEqual(0, code, result)
         self.assertEqual(0, list_code, listed)
         self.assertIn("xdg-theme", {entry["id"] for entry in listed["data"]})

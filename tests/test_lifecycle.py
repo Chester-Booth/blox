@@ -180,3 +180,104 @@ class DesktopEntryTests(unittest.TestCase):
                 self.assertFalse(installed_entry.exists())
             finally:
                 shutil.rmtree(source, ignore_errors=True)
+
+
+class SymlinkUnitTests(unittest.TestCase):
+    def test_unit_symlink_is_replaced_without_touching_its_target(self):
+        with Fixture() as roots:
+            # A mock dotfiles tree owns the real unit file; the live path is
+            # a symlink into it, exactly like the checkout machine.
+            dotfiles = Path(os.environ["BLOX_PREFIX"]).parent / "dotfiles" / "systemd"
+            dotfiles.mkdir(parents=True)
+            real = dotfiles / "quickshell.service"
+            real.write_text("[Unit]\nDescription=checkout original\n", encoding="utf-8")
+            live = roots.systemd_user / "quickshell.service"
+            live.parent.mkdir(parents=True, exist_ok=True)
+            live.symlink_to(real)
+
+            installer.install(roots, force=True)
+
+            # Target byte-identical, link replaced by an owned regular file.
+            self.assertEqual(real.read_text(encoding="utf-8"), "[Unit]\nDescription=checkout original\n")
+            self.assertFalse(live.is_symlink())
+            installed = live.read_text(encoding="utf-8")
+            self.assertIn("@PKG_ROOT@".replace("@PKG_ROOT@", str(roots.pkg_root)), installed)
+            entry = json.loads((roots.backups / "ledger.jsonl").read_text(encoding="utf-8").strip().splitlines()[-1])
+            self.assertEqual(entry["kind"], "symlink")
+            self.assertEqual(entry["target_of_link"], str(real))
+
+
+class DataSeparationTests(unittest.TestCase):
+    def _seed_imported_theme(self, roots):
+        imported = roots.data / "imported-themes"
+        imported.mkdir(parents=True, exist_ok=True)
+        theme = imported / "user-theme.json"
+        theme.write_text('{"id": "user-theme"}\n', encoding="utf-8")
+        return theme
+
+    def _assert_theme_survives(self, roots, theme):
+        self.assertTrue(theme.is_file())
+        self.assertEqual(theme.read_text(encoding="utf-8"), '{"id": "user-theme"}\n')
+
+    def test_user_data_survives_install_update_rollback_and_uninstall(self):
+        with Fixture() as roots:
+            source_a = fake_source("0.1.0")
+            source_b = fake_source("0.1.1")
+            try:
+                theme = self._seed_imported_theme(roots)
+                installer.install(roots, source_root=source_a)
+                self._assert_theme_survives(roots, theme)
+                installer.update(roots, source_root=source_b)
+                self._assert_theme_survives(roots, theme)
+                installer.rollback(roots)
+                self._assert_theme_survives(roots, theme)
+                installer.uninstall(roots)
+                self._assert_theme_survives(roots, theme)
+                # Immutable and mutable trees stay distinct directories.
+                self.assertNotEqual(roots.pkg_root, roots.data)
+                self.assertFalse(roots.pkg_root.exists())
+            finally:
+                shutil.rmtree(source_a, ignore_errors=True)
+                shutil.rmtree(source_b, ignore_errors=True)
+
+
+class MigrationRestoreTests(unittest.TestCase):
+    def test_restore_removes_destination_the_migration_created(self):
+        with Fixture() as roots:
+            legacy = Path(os.environ["XDG_CONFIG_HOME"]) / "quickshell" / "blox"
+            legacy.mkdir(parents=True)
+            (legacy / "calendar.json").write_text('{"writable_calendar_ids":["a"]}', encoding="utf-8")
+            migrations.run_migrations(roots, from_version="0.1.0", to_version="0.1.1")
+            migrated = roots.config / "calendar.json"
+            self.assertTrue(migrated.is_file())
+            migrations.restore_pre_images(roots)
+            # The destination did not exist before the migration; rollback
+            # removes it instead of recreating it.
+            self.assertFalse(migrated.exists())
+
+    def test_restore_leaves_pre_existing_destinations_alone(self):
+        with Fixture() as roots:
+            roots.config.mkdir(parents=True, exist_ok=True)
+            existing = roots.config / "calendar.json"
+            existing.write_text("{}", encoding="utf-8")
+            results = migrations.run_migrations(roots, from_version="0.1.0", to_version="0.1.1")
+            calendar = next(entry for entry in results if entry["migration"] == "calendar-config-xdg")
+            self.assertEqual(calendar["result"], "nothing-to-do")
+            migrations.restore_pre_images(roots)
+            self.assertEqual(existing.read_text(encoding="utf-8"), "{}")
+
+
+class InstallMigrationsTests(unittest.TestCase):
+    def test_first_install_runs_migrations_in_the_transaction(self):
+        with Fixture() as roots:
+            legacy = Path(os.environ["XDG_CONFIG_HOME"]) / "quickshell" / "blox"
+            legacy.mkdir(parents=True)
+            (legacy / "env").write_text("PERSONAL_TOKEN=abc\n", encoding="utf-8")
+
+            report = installer.install(roots)
+
+            migrated = [entry["migration"] for entry in report.get("migrations", [])]
+            self.assertIn("shell-env-config", migrated)
+            self.assertTrue((roots.config / "env").is_file())
+            ledger = json.loads(roots.generations.read_text(encoding="utf-8"))
+            self.assertEqual(ledger[-1]["result"], "installed")

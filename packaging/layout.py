@@ -67,7 +67,10 @@ def resolve_roots() -> Roots:
         prefix=prefix,
         pkg_root=prefix / "share" / "blox",
         config=config_home / "blox",
-        data=data_home / "blox",
+        # Mutable user data lives under its own top-level directory so it can
+        # never collide with the immutable package tree when the prefix is
+        # the user home (~/.local/share/blox vs ~/.local/share/blox-user).
+        data=data_home / "blox-user",
         state=state_home / "blox",
         cache=cache_home / "blox",
         runtime=Path(runtime_dir) / "blox",

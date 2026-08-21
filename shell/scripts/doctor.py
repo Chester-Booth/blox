@@ -86,6 +86,7 @@ def _path_checks(roots: layout.Roots) -> list[dict[str, Any]]:
     checks: list[dict[str, Any]] = []
     expected = {
         "paths-package-data": (roots.pkg_root, True),
+        "paths-user-data": (roots.data, False),
         "paths-config": (roots.config, False),
         "paths-state": (roots.state, False),
         "paths-cache": (roots.cache, False),

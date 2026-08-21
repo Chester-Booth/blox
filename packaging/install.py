@@ -219,11 +219,22 @@ def _backup_conflict(roots: Roots, target: Path, stamp: str) -> Path:
     else:
         destination = roots.backups / stamp / "misc" / target.name
     destination.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(target, destination)
-    entry = {"time": stamp, "original": str(target), "backup": str(destination), "sha256": sha256(target)}
+    # Never follow symlinks: a unit symlink into a dotfiles tree must be
+    # preserved as the link itself so its target stays byte-identical.
+    is_link = target.is_symlink()
+    shutil.copy2(target, destination, follow_symlinks=False)
+    entry = {
+        "time": stamp,
+        "original": str(target),
+        "backup": str(destination),
+        "kind": "symlink" if is_link else "file",
+        "target_of_link": os.readlink(target) if is_link else None,
+        "sha256": None if is_link else sha256(target),
+    }
     with (roots.backups / "ledger.jsonl").open("a", encoding="utf-8") as handle:
         handle.write(json.dumps(entry, sort_keys=True) + "\n")
     return destination
+
 
 
 def _require_external_source(roots: Roots, source_root: Path | None) -> Path:
@@ -241,7 +252,7 @@ def _require_external_source(roots: Roots, source_root: Path | None) -> Path:
     return root
 
 
-def install(roots: Roots, dry_run: bool = False, force: bool = False, source_root: Path | None = None) -> dict[str, Any]:
+def install(roots: Roots, dry_run: bool = False, force: bool = False, source_root: Path | None = None, migrate: bool = True) -> dict[str, Any]:
     root = _require_external_source(roots, source_root)
     version = product_version(root)
     plan = build_plan(roots, root)
@@ -263,24 +274,25 @@ def install(roots: Roots, dry_run: bool = False, force: bool = False, source_roo
         elif action.kind == "copy":
             source = root / action.detail
             action.target.parent.mkdir(parents=True, exist_ok=True)
-            if action.target.exists():
+            if action.target.is_symlink() or action.target.exists():
                 _backup_conflict(roots, action.target, stamp)
                 backed_up.append(str(action.target))
                 action.target.unlink()
-            shutil.copy2(source, action.target)
+            shutil.copy2(source, action.target, follow_symlinks=False)
         elif action.kind == "copy-data":
             source = root / "applications" / ".local" / "share" / action.detail
             action.target.parent.mkdir(parents=True, exist_ok=True)
-            if action.target.exists():
+            if action.target.is_symlink() or action.target.exists():
                 _backup_conflict(roots, action.target, stamp)
                 backed_up.append(str(action.target))
                 action.target.unlink()
-            shutil.copy2(source, action.target)
+            shutil.copy2(source, action.target, follow_symlinks=False)
         elif action.kind == "render-unit":
             action.target.parent.mkdir(parents=True, exist_ok=True)
-            if action.target.exists():
+            if action.target.is_symlink() or action.target.exists():
                 _backup_conflict(roots, action.target, stamp)
                 backed_up.append(str(action.target))
+                action.target.unlink()
             action.target.write_text(render_unit(action.detail, roots, version, root), encoding="utf-8")
             os.chmod(action.target, 0o644)
         elif action.kind == "link-bin":
@@ -316,6 +328,13 @@ def install(roots: Roots, dry_run: bool = False, force: bool = False, source_roo
     roots.manifest.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     report["backed_up"] = backed_up
     report["installed"] = True
+
+    if migrate:
+        from migrations import run_migrations
+
+        report["migrations"] = run_migrations(roots, from_version="fresh-install", to_version=version)
+        _append_generation(roots, "none", version, "installed")
+
     return report
 
 
@@ -380,7 +399,7 @@ def update(roots: Roots, dry_run: bool = False, source_root: Path | None = None)
         shutil.rmtree(roots.previous_pkg_root)
     shutil.move(str(roots.pkg_root), str(roots.previous_pkg_root))
     try:
-        result = install(roots, source_root=source_root)
+        result = install(roots, source_root=source_root, migrate=False)
     except Exception:
         # Restore the previous generation without nesting it inside a
         # partially written tree.

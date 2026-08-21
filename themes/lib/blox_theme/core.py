@@ -171,8 +171,14 @@ def is_builtin_theme_path(path: Path) -> bool:
 
 
 def user_theme_library() -> Path:
+    # Mutable user data stays out of the package tree: the packaging layer
+    # installs immutable files to <prefix>/share/blox, which under the
+    # default user prefix is ~/.local/share/blox.
+    override = os.environ.get("BLOX_USER_DATA_DIR")
+    if override:
+        return Path(override).expanduser()
     base = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local/share")).expanduser()
-    return base / "blox"
+    return base / "blox-user"
 
 
 def resolve_wallpaper_path(value: str, source_path: Path | None = None) -> Path:

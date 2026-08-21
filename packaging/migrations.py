@@ -85,6 +85,9 @@ def run_migrations(roots: Roots, from_version: str, to_version: str) -> list[dic
             "to": to_version,
             "migration": migration.id,
             "pre_image": str(backup_dir),
+            # Migrations only create destinations that were absent before;
+            # rollback therefore removes them instead of copying back.
+            "existed": False,
             "result": "applied" if detail.get("moved") else "nothing-to-do",
             "detail": detail.get("detail"),
         }
@@ -94,21 +97,28 @@ def run_migrations(roots: Roots, from_version: str, to_version: str) -> list[dic
 
 
 def restore_pre_images(roots: Roots) -> list[str]:
+    """Undo applied migrations newest-first.
+
+    A migration only ever creates destinations that did not exist before
+    (existing files are left untouched and recorded as nothing-to-do), so
+    restoring means removing what the migration created. The pre-image of
+    the copied source stays in the backup for audit.
+    """
     restored: list[str] = []
     for entry in reversed(read_ledger(roots)):
         if entry.get("result") != "applied":
             continue
         detail = entry.get("detail") or {}
-        pre_image = detail.get("pre_image")
         destination = detail.get("destination")
-        if not pre_image or not destination:
+        if not destination:
             continue
-        source = Path(pre_image)
         target = Path(destination)
-        if source.is_file():
-            target.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(source, target)
-            restored.append(destination)
+        existed_before = entry.get("existed", False)
+        if not existed_before:
+            # The migration created this file; rollback removes it again.
+            if target.is_symlink() or target.exists():
+                target.unlink()
+                restored.append(destination)
         entry["result"] = "restored"
         _append_ledger(roots, {**entry})
     return restored

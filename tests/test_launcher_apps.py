@@ -1,6 +1,11 @@
 import importlib.util
 import json
+import os
 import shlex
+import subprocess
+import shutil
+import sys
+import tempfile
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -9,6 +14,22 @@ from unittest import mock
 MODULE = Path(__file__).parents[1] / "shell/scripts/launcher/appctl.py"
 DESKTOP_EXEC_MODULE = Path(__file__).parents[1] / "shell/scripts/launcher/desktop_exec.py"
 ICON_LOOKUP_MODULE = Path(__file__).parents[1] / "shell/scripts/launcher/icon_lookup.py"
+DESKTOP_EXEC_PROBE = """
+import shlex
+import subprocess
+import sys
+
+sys.path.insert(0, str(%r))
+from desktop_exec import GioUnix, resolve_command
+
+entry = GioUnix.DesktopAppInfo.new("blox-theme-picker.desktop")
+assert entry is not None, "desktop entry was not resolved"
+command, working_directory = resolve_command("blox-theme-picker")
+assert command == shlex.split(entry.get_string("Exec")), command
+assert working_directory is None, working_directory
+""" % str(DESKTOP_EXEC_MODULE.parent)
+
+REPOSITORY = Path(__file__).parents[1]
 LAUNCHER = Path(__file__).parents[1] / "shell/modules/LauncherMainController.qml"
 SPEC = importlib.util.spec_from_file_location("appctl", MODULE)
 appctl = importlib.util.module_from_spec(SPEC)
@@ -59,11 +80,25 @@ class AppControllerTests(unittest.TestCase):
         self.assertIn("root.executeCurrentDesktopEntry(root.pendingEntry);", source)
         self.assertNotIn("root.pendingEntry.execute();", source)
 
-        entry = desktop_exec.GioUnix.DesktopAppInfo.new("blox-theme-picker.desktop")
-        self.assertIsNotNone(entry)
-        command, working_directory = desktop_exec.resolve_command("blox-theme-picker")
-        self.assertEqual(shlex.split(entry.get_string("Exec")), command)
-        self.assertIsNone(working_directory)
+        # Stage the shipped desktop entry into an isolated XDG data home so
+        # the test does not depend on machine state. The child process loads
+        # desktop_exec fresh against that environment.
+        data_home = Path(tempfile.mkdtemp(prefix="blox-desktop-"))
+        self.addCleanup(shutil.rmtree, data_home, ignore_errors=True)
+        for area in ("applications", "icons"):
+            shutil.copytree(
+                REPOSITORY / "applications/.local/share" / area,
+                data_home / area,
+                dirs_exist_ok=True,
+            )
+        probe = subprocess.run(
+            [sys.executable, "-c", DESKTOP_EXEC_PROBE],
+            env={**os.environ, "XDG_DATA_HOME": str(data_home)},
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(0, probe.returncode, probe.stderr or probe.stdout)
 
     def test_normalise_ignores_case_and_desktop_suffix(self):
         self.assertEqual("org.example.app", appctl.normalise("Org.Example.App.desktop"))

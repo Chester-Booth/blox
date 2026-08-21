@@ -336,14 +336,14 @@ def install(roots: Roots, dry_run: bool = False, force: bool = False, source_roo
 
             if action.kind == "copy":
                 shutil.copy2(root / action.detail, action.target, follow_symlinks=False)
+                if action.detail.startswith("bin/"):
+                    os.chmod(action.target, 0o755)
             elif action.kind == "copy-data":
                 shutil.copy2(root / "applications" / ".local" / "share" / action.detail, action.target, follow_symlinks=False)
             elif action.kind == "render-unit":
                 action.target.write_text(render_unit(action.detail, roots, version, root), encoding="utf-8")
                 os.chmod(action.target, 0o644)
-            elif action.kind == "copy" and action.detail.startswith("bin/"):
-                shutil.copy2(root / action.detail, action.target, follow_symlinks=False)
-                os.chmod(action.target, 0o755)
+            elif action.kind == "link-bin":
                 os.symlink(_bin_link_target(roots, action.detail), action.target)
 
         version_source = root / "VERSION"

@@ -17,6 +17,7 @@ THEMES = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(THEMES / "lib"))
 
 from blox_theme.core import load_theme, render_theme, validate_theme
+from blox_theme import cursor
 from blox_theme.cursor import CursorFailure, _extract_source, build_cursor_cache, cursor_manifest, cursor_metadata, setup_toolchain, toolchain_paths, validate_cursor_cache
 
 
@@ -179,8 +180,12 @@ class CursorSetupSafetyTests(unittest.TestCase):
             def bad_download(url: str, destination: Path) -> None:
                 destination.write_bytes(b"not the pinned archive")
 
-            with self.assertRaisesRegex(CursorFailure, "checksum mismatch"):
-                setup_toolchain(download=bad_download)
+            # Claim the toolchain executables exist so the checksum path is
+            # reached on machines without npm; the checksum must gate the
+            # install regardless of toolchain state.
+            with mock.patch.object(cursor.shutil, "which", return_value="/usr/bin/fake"):
+                with self.assertRaisesRegex(CursorFailure, "checksum mismatch"):
+                    setup_toolchain(download=bad_download)
             self.assertEqual([], list((Path(temporary) / "blox-theme/cursor-toolchain").glob(".*.tmp")))
 
 

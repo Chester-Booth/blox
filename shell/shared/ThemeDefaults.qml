@@ -155,9 +155,7 @@ QtObject {
         return (items || []).filter((item) => item.enabled && item.region === region).sort((left, right) => left.order - right.order);
     }
 
-    FileView {
-        id: defaultsFile
-
+    property FileView defaultsFile: FileView {
         path: root.path
         preload: true
         blockLoading: true

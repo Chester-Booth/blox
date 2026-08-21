@@ -156,3 +156,27 @@ class LifecycleTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class DesktopEntryTests(unittest.TestCase):
+    def test_desktop_entries_install_update_and_uninstall(self):
+        with Fixture() as roots:
+            source = fake_source("0.1.0")
+            try:
+                entry = source / "applications" / ".local" / "share" / "applications" / "blox-test.desktop"
+                entry.parent.mkdir(parents=True, exist_ok=True)
+                entry.write_text("[Desktop Entry]\nType=Application\nName=Blox Test\n", encoding="utf-8")
+                installer.install(roots, source_root=source)
+                data_home = roots.data.parent
+                installed_entry = data_home / "applications" / "blox-test.desktop"
+                self.assertTrue(installed_entry.is_file())
+                manifest = json.loads(roots.manifest.read_text(encoding="utf-8"))
+                self.assertIn("applications/blox-test.desktop", manifest["data_files"])
+                # idempotent repeat
+                plan = installer.build_plan(roots, source)
+                self.assertEqual(plan.actions, [])
+                # uninstall removes them
+                installer.uninstall(roots)
+                self.assertFalse(installed_entry.exists())
+            finally:
+                shutil.rmtree(source, ignore_errors=True)

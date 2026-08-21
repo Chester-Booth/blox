@@ -26,6 +26,7 @@ from layout import Roots
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SOURCE_AREAS = ("shell", "themes", "bin", "packaging")
+DATA_AREAS = ("applications",)  # desktop entries and icons, installed into $XDG_DATA_HOME
 COPY_EXCLUDE = {"__pycache__", ".git"}
 UNIT_TEMPLATES = ("quickshell.service.in", "gcal-update.service.in")
 INSTALLED_BINS = ("bloxctl", "themectl", "dmenu")
@@ -70,6 +71,20 @@ def _iter_source_pairs(source_root: Path) -> list[tuple[Path, str]]:
             if not path.is_file() or any(part in COPY_EXCLUDE for part in path.parts):
                 continue
             pairs.append((path, path.relative_to(source_root).as_posix()))
+    return pairs
+
+
+def _iter_data_pairs(source_root: Path) -> list[tuple[Path, str]]:
+    """Return (absolute file, data-home-relative posix path) for desktop entries."""
+    pairs: list[tuple[Path, str]] = []
+    for area in DATA_AREAS:
+        area_root = source_root / area / ".local" / "share"
+        if not area_root.is_dir():
+            continue
+        for path in sorted(area_root.rglob("*")):
+            if not path.is_file() or any(part in COPY_EXCLUDE for part in path.parts):
+                continue
+            pairs.append((path, path.relative_to(area_root).as_posix()))
     return pairs
 
 
@@ -159,6 +174,22 @@ def build_plan(roots: Roots, source_root: Path | None = None) -> Plan:
             # Planned as well so --force backs the foreign file up and replaces it.
             plan.actions.append(Action("copy", target, rel))
 
+    data_home = roots.data.parent
+    for source, rel in _iter_data_pairs(root):
+        target = data_home / rel
+        if not target.exists():
+            plan.actions.append(Action("copy-data", target, rel))
+            continue
+        current = sha256(target)
+        recorded = installed.get("data_files", {}).get(rel, {}).get("sha256") if installed else None
+        if current == sha256(source) and (recorded is None or recorded == current):
+            plan.unchanged += 1
+        elif recorded is not None and recorded == current:
+            plan.actions.append(Action("copy-data", target, rel))
+        else:
+            plan.conflicts.append(Conflict(target, "existing file is not owned by the recorded manifest"))
+            plan.actions.append(Action("copy-data", target, rel))
+
     version = product_version(root)
     for template in UNIT_TEMPLATES:
         target = roots.systemd_user / template.removesuffix(".in")
@@ -237,6 +268,14 @@ def install(roots: Roots, dry_run: bool = False, force: bool = False, source_roo
                 backed_up.append(str(action.target))
                 action.target.unlink()
             shutil.copy2(source, action.target)
+        elif action.kind == "copy-data":
+            source = root / "applications" / ".local" / "share" / action.detail
+            action.target.parent.mkdir(parents=True, exist_ok=True)
+            if action.target.exists():
+                _backup_conflict(roots, action.target, stamp)
+                backed_up.append(str(action.target))
+                action.target.unlink()
+            shutil.copy2(source, action.target)
         elif action.kind == "render-unit":
             action.target.parent.mkdir(parents=True, exist_ok=True)
             if action.target.exists():
@@ -262,11 +301,14 @@ def install(roots: Roots, dry_run: bool = False, force: bool = False, source_roo
     files = {rel: {"sha256": sha256(target)} for target, rel in _iter_source_pairs(root)}
     if (roots.pkg_root / "VERSION").is_file():
         files["VERSION"] = {"sha256": sha256(roots.pkg_root / "VERSION")}
+    data_home = roots.data.parent
+    data_files = {rel: {"sha256": sha256(data_home / rel)} for _, rel in _iter_data_pairs(root)}
     manifest = {
         "manifest_version": 1,
         "product_version": version,
         "prefix": str(roots.prefix),
         "files": files,
+        "data_files": data_files,
         "units": [template.removesuffix(".in") for template in UNIT_TEMPLATES],
         "bins": list(INSTALLED_BINS),
     }
@@ -289,6 +331,8 @@ def uninstall(roots: Roots, purge: bool = False, dry_run: bool = False) -> dict[
         planned.append(str(roots.bins / name))
     for unit in installed.get("units", []):
         planned.append(str(roots.systemd_user / unit))
+    for rel in sorted(installed.get("data_files", {})):
+        planned.append(str(roots.data.parent / rel))
     planned.extend([str(roots.previous_pkg_root), str(roots.pkg_root)])
     if purge:
         planned.extend([str(roots.config), str(roots.data), str(roots.state), str(roots.cache)])

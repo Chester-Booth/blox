@@ -673,7 +673,7 @@ class PickerIntegrationSourceTests(unittest.TestCase):
         for launcher in launchers:
             text = launcher.read_text(encoding="utf-8")
             self.assertIn("Type=Application", text)
-            self.assertIn("quickshell ipc -c blox call themePicker", text)
+            self.assertIn("Exec=blox-theme-ipc themePicker", text)
             icon = expected_icons[launcher.name]
             self.assertIn(f"Icon={icon}", text)
             self.assertTrue((icons / f"{icon}.svg").is_file())

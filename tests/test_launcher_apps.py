@@ -91,14 +91,21 @@ class AppControllerTests(unittest.TestCase):
                 data_home / area,
                 dirs_exist_ok=True,
             )
+        # gio resolves the Exec binary while building the entry; provide the
+        # shipped IPC passthrough exactly as an installed system would.
+        fake_bin = data_home / "bin"
+        fake_bin.mkdir()
+        (fake_bin / "blox-theme-ipc").write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+        (fake_bin / "blox-theme-ipc").chmod(0o755)
+        probe_env = {**os.environ, "XDG_DATA_HOME": str(data_home), "PATH": f"{fake_bin}:{os.environ['PATH']}"}
         probe = subprocess.run(
             [sys.executable, "-c", DESKTOP_EXEC_PROBE],
-            env={**os.environ, "XDG_DATA_HOME": str(data_home)},
+            env=probe_env,
             capture_output=True,
             text=True,
             check=False,
         )
-        self.assertEqual(0, probe.returncode, probe.stderr or probe.stdout)
+        self.assertEqual(0, probe.returncode, (probe.stderr or "") + (probe.stdout or ""))
 
     def test_normalise_ignores_case_and_desktop_suffix(self):
         self.assertEqual("org.example.app", appctl.normalise("Org.Example.App.desktop"))

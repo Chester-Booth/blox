@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Forward IPC calls to the RUNNING Blox shell, addressed by its supervised
+# PID rather than any filesystem path. Desktop launchers use this so the
+# product works identically from a checkout or the installed tree.
+root="${BLOX_INSTALL_ROOT:-${HOME}/.local/share/blox}"
+if [ -f "${root}/shell/scripts/ipc.sh" ]; then
+	exec bash "${root}/shell/scripts/ipc.sh" "$@"
+fi
+exec bash "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../shell/scripts" && pwd)/ipc.sh" "$@"

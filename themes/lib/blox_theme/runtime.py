@@ -288,9 +288,59 @@ def _run(command: list[str]) -> subprocess.CompletedProcess[str]:
         return subprocess.CompletedProcess(command, 127, "", str(error))
 
 
-def quickshell_config_path() -> Path:
+def _proc_main_pid() -> int:
+    try:
+        completed = subprocess.run(
+            ["systemctl", "--user", "show", "-p", "MainPID", "--value", "quickshell.service"],
+            capture_output=True, text=True, timeout=5, check=False,
+        )
+        return int((completed.stdout or "0").strip() or 0)
+    except (OSError, ValueError):
+        return 0
+
+
+def _pid_shell_path(pid: int, read_cmdline: Callable[[int], list[str]] | None = None) -> Path | None:
+    reader = read_cmdline or (lambda p: open(f"/proc/{p}/cmdline", "rb").read().decode().split("\0"))
+    try:
+        argv = reader(pid)
+    except (OSError, UnicodeDecodeError):
+        return None
+    if "--path" in argv:
+        candidate = Path(argv[argv.index("--path") + 1])
+        if candidate.is_dir():
+            return candidate
+    return None
+
+
+def quickshell_config_path(read_cmdline: Callable[[int], list[str]] | None = None) -> Path:
+    """Locate the RUNNING shell so reload and widget IPC reach it.
+
+    Preference order: an explicit BLOX_SHELL_DIR override, the supervised
+    service's own --path argument, the legacy checkout location when it
+    actually exists, otherwise the installed tree."""
+    override = os.environ.get("BLOX_SHELL_DIR")
+    if override:
+        return Path(override).expanduser()
+    main_pid = _proc_main_pid()
+    if main_pid > 0:
+        running = _pid_shell_path(main_pid, read_cmdline)
+        if running is not None:
+            return running
     config_home = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")).expanduser()
-    return config_home / "quickshell/blox"
+    legacy = config_home / "quickshell/blox"
+    if (legacy / "shell.qml").is_file():
+        return legacy
+    installed = Path(os.environ.get("BLOX_PREFIX", Path.home() / ".local")).expanduser() / "share/blox/shell"
+    return installed
+
+
+def _ipc_script() -> Path:
+    return repository_root() / "shell/scripts/ipc.sh"
+
+
+def _ipc_command(*arguments: str) -> list[str]:
+    """Address the RUNNING shell by its supervised PID, never by a path."""
+    return ["bash", str(_ipc_script()), *arguments]
 
 
 def kitty_config_path() -> Path:
@@ -851,7 +901,7 @@ def loader_checks(root: Path | None = None) -> dict[str, dict[str, Any]]:
 
 def _reload_quickshell(mode: str, run_command: Callable[[list[str]], subprocess.CompletedProcess[str]]) -> str | None:
     function = "reset" if mode == "reset" else "reload"
-    command = ["quickshell", "ipc", "--path", str(quickshell_config_path()), "call", "theme", function]
+    command = _ipc_command("theme", function)
     result = run_command(command)
     if result.returncode != 0:
         return f"Quickshell reload failed; run: {_command_text(command)}"
@@ -860,7 +910,7 @@ def _reload_quickshell(mode: str, run_command: Callable[[list[str]], subprocess.
 
 def _reload_widgets(mode: str, run_command: Callable[[list[str]], subprocess.CompletedProcess[str]]) -> str | None:
     function = "resetWidgets" if mode == "reset" else "reloadWidgets"
-    command = ["quickshell", "ipc", "--path", str(quickshell_config_path()), "call", "theme", function]
+    command = _ipc_command("theme", function)
     result = run_command(command)
     if result.returncode != 0:
         return f"Widget profile reload failed; run: {_command_text(command)}"
@@ -869,7 +919,7 @@ def _reload_widgets(mode: str, run_command: Callable[[list[str]], subprocess.Com
 
 def _reload_wallpaper(root: Path, mode: str, run_command: Callable[[list[str]], subprocess.CompletedProcess[str]]) -> str | None:
     function = "resetWallpaper" if mode == "reset" else "reloadWallpaper"
-    command = ["quickshell", "ipc", "--path", str(quickshell_config_path()), "call", "theme", function]
+    command = _ipc_command("theme", function)
     result = run_command(command)
     if result.returncode != 0:
         return f"Quickshell wallpaper reload failed; run: {_command_text(command)}"

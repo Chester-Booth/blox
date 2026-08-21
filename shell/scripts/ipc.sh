@@ -62,7 +62,11 @@ supervised_quickshell_pid() {
 	printf '%s\n' "$process_id"
 }
 
-main_pid="$(parent_quickshell_pid || supervised_quickshell_pid || registered_quickshell_pid)"
+if [[ -n "${QUICKSHELL_IPC_PID:-}" && "$QUICKSHELL_IPC_PID" =~ ^[0-9]+$ ]]; then
+	main_pid="$QUICKSHELL_IPC_PID"
+else
+	main_pid="$(parent_quickshell_pid || supervised_quickshell_pid || registered_quickshell_pid)"
+fi
 if [[ ! "$main_pid" =~ ^[0-9]+$ ]]; then
 	echo "The Blox Quickshell instance is not running" >&2
 	exit 1

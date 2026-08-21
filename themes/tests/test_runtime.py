@@ -16,7 +16,7 @@ THEMES = Path(__file__).resolve().parents[1]
 REPOSITORY = THEMES.parent
 sys.path.insert(0, str(THEMES / "lib"))
 
-from blox_theme.core import load_theme, render_theme, resolve_wallpaper_path
+from blox_theme.core import load_theme, render_theme, repository_root, resolve_wallpaper_path
 from blox_theme.runtime import ApplicationLock, LockContended, RuntimeFailure, TARGET_FILES, TARGET_NAMES, apply_theme, current_generation, cursor_icon_link, hyprtoolkit_theme_link, kitty_theme_link, phase7_loader_specs, reconcile, reset_target, rollback, setup_gtk, validate_generation
 
 PHASE2_TARGETS = ("quickshell", "kitty", "wallpaper")
@@ -45,6 +45,7 @@ class RuntimeTests(unittest.TestCase):
         self.temporary = tempfile.TemporaryDirectory()
         self.root = Path(self.temporary.name)
         self.environment = mock.patch.dict(os.environ, {
+            "BLOX_SHELL_DIR": str(self.root / "config" / "quickshell" / "blox"),
             "XDG_STATE_HOME": str(self.root / "state"),
             "XDG_CONFIG_HOME": str(self.root / "config"),
             "XDG_DATA_HOME": str(self.root / "data"),
@@ -102,8 +103,9 @@ class RuntimeTests(unittest.TestCase):
         self.assertEqual([], list((self.state / "generations").glob(".candidate-*")))
         self.assertEqual(generation, (self.state / "current").resolve())
         flattened = [part for command in runner.commands for part in command]
-        for executable in ("quickshell", "hyprctl", "kitty"):
+        for executable in ("hyprctl", "kitty"):
             self.assertIn(executable, flattened)
+        self.assertTrue(any("shell/scripts/ipc.sh" in part for part in flattened))
 
     def test_glow_style_uses_the_xdg_managed_loader(self) -> None:
         glow_link, _ = phase7_loader_specs(self.state)["glow"]
@@ -212,15 +214,7 @@ class RuntimeTests(unittest.TestCase):
         self.assertEqual(str(resolve_wallpaper_path(self.canonical["wallpaper"]["path"], self.canonical_path)), wallpaper["path"])
         self.assertEqual(self.canonical["wallpaper"]["fit"], wallpaper["fit"])
         self.assertIn(
-            [
-                "quickshell",
-                "ipc",
-                "--path",
-                str(self.root / "config/quickshell/blox"),
-                "call",
-                "theme",
-                "reloadWallpaper",
-            ],
+            ["bash", str(repository_root() / "shell/scripts/ipc.sh"), "theme", "reloadWallpaper"],
             runner.commands,
         )
 
@@ -506,6 +500,7 @@ class RuntimeCliTests(unittest.TestCase):
                 "XDG_CONFIG_HOME": str(root / "config"),
                 "XDG_DATA_HOME": str(root / "data"),
                 "PATH": f"{fake_bin}:{environment['PATH']}",
+                "QUICKSHELL_IPC_PID": "4242",
             })
             quickshell_loader = root / "config/quickshell/blox/shared/Theme.qml"
             quickshell_loader.parent.mkdir(parents=True)

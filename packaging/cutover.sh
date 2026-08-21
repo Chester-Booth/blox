@@ -14,7 +14,9 @@
 set -uo pipefail
 
 MODE="${1:-plan}"
-CHECKOUT_DIR="${CHECKOUT_DIR:-$HOME/Code/personal/dotfiles}"
+# The checkout location is machine-specific and deliberately has no
+# default: pass CHECKOUT_DIR=/path/to/dotfiles for every mode.
+CHECKOUT_DIR="${CHECKOUT_DIR:-}"
 STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
 BACKUP_ROOT="$STATE_HOME/blox/backups"
 UNITS=("$HOME/.config/systemd/user/quickshell.service" "$HOME/.config/systemd/user/gcal-update.service")
@@ -34,6 +36,7 @@ preflight() {
 	[ -n "${XDG_RUNTIME_DIR:-}" ] || fail "XDG_RUNTIME_DIR is not set; no user session?"
 	for tool in systemctl jq git sha256sum; do command -v "$tool" >/dev/null || fail "missing tool: $tool"; done
 	command -v hyprctl >/dev/null || say "note: hyprctl missing; window observation must be manual"
+	[ -n "$CHECKOUT_DIR" ] || fail "CHECKOUT_DIR is required (path to this machine's dotfiles checkout)"
 	[ -d "$CHECKOUT_DIR/.git" ] || fail "checkout not found: $CHECKOUT_DIR"
 	[ -f "$HOME/.local/bin/bloxctl" ] || say "note: product not installed yet (expected before first execute)"
 	if [ "$MODE" = "rollback-checkout" ]; then

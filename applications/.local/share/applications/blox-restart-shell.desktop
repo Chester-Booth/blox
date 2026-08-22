@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Restart Quickshell
+Comment=Restart the Blox Quickshell desktop shell service
+Exec=systemctl --user restart quickshell.service
+Icon=blox-restart-shell
+Terminal=false
+Categories=System;
+Keywords=quickshell;shell;restart;reload;blox;
+StartupNotify=false

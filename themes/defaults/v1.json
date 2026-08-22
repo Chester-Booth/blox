@@ -2,7 +2,7 @@
   "schema_version": 1,
   "defaults_version": 1,
   "theme": {
-    "id": "catppuccin-mocha",
+    "id": "catppuccin-frappe",
     "variant": "dark",
     "colours": {
       "background": "#1e1e2e",

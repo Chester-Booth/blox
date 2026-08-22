@@ -65,7 +65,9 @@
       "color7": "#c0caf5",
       "color8": "#414868",
       "color9": "#f7768e"
-    }
+    },
+    "gtk": {},
+    "hyprlock": {}
   },
   "schema_version": 1,
   "shell": {
@@ -145,7 +147,6 @@
     "quickshell": true,
     "sddm": false,
     "stylus": true,
-
     "wallpaper": true,
     "widgets": true
   },

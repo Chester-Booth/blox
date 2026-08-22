@@ -65,7 +65,9 @@
       "color7": "#b5bfe2",
       "color8": "#626880",
       "color9": "#e78284"
-    }
+    },
+    "gtk": {},
+    "hyprlock": {}
   },
   "schema_version": 1,
   "shell": {
@@ -151,7 +153,6 @@
     "quickshell": true,
     "sddm": false,
     "stylus": true,
-
     "wallpaper": true,
     "widgets": true
   },
@@ -166,6 +167,7 @@
     "path": "wallpapers/showcase/catppuccin-frappe.webp"
   },
   "widgets": {
+    "items": [],
     "profile": "compact"
   }
 }

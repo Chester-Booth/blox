@@ -65,7 +65,9 @@
       "color7": "#3c3836",
       "color8": "#928374",
       "color9": "#cc241d"
-    }
+    },
+    "gtk": {},
+    "hyprlock": {}
   },
   "schema_version": 1,
   "shell": {
@@ -221,7 +223,6 @@
     "quickshell": true,
     "sddm": false,
     "stylus": true,
-
     "wallpaper": true,
     "widgets": true
   },
@@ -236,6 +237,7 @@
     "path": "wallpapers/showcase/gruvbox-light.webp"
   },
   "widgets": {
+    "items": [],
     "profile": "minimal"
   }
 }

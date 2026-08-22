@@ -65,7 +65,9 @@
       "color7": "#586e75",
       "color8": "#93a1a1",
       "color9": "#cb4b16"
-    }
+    },
+    "gtk": {},
+    "hyprlock": {}
   },
   "schema_version": 1,
   "shell": {
@@ -221,7 +223,6 @@
     "quickshell": true,
     "sddm": false,
     "stylus": true,
-
     "wallpaper": true,
     "widgets": true
   },
@@ -236,6 +237,7 @@
     "path": "wallpapers/showcase/solarized-light.webp"
   },
   "widgets": {
+    "items": [],
     "profile": "comfortable"
   }
 }

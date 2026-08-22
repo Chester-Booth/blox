@@ -1,10 +1,8 @@
-"""Built-in truth baseline (Phase 3 step 01).
+"""Built-in truth contract (Phase 3 steps 01-02).
 
 Classifies schema leaves into authored options and derived provenance,
-then pins two contracts the release plan promises: no built-in omits an
-authored option, and the defaults document owns only paths the schema
-declares. The expectedFailure tests record today's red state; step 02
-fills the gaps and removes the markers.
+then enforces the release-plan promise permanently: no built-in omits an
+authored option, and the defaults document satisfies its own schema.
 """
 
 from __future__ import annotations
@@ -17,88 +15,45 @@ from pathlib import Path
 THEMES = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(THEMES / "lib"))
 
+from blox_theme.core import defaults_schema_errors  # noqa: E402
+
 SCHEMA = json.loads((THEMES / "schema" / "theme.schema.json").read_text(encoding="utf-8"))
+DEFAULTS_DOCUMENT = json.loads((THEMES / "defaults" / "v1.json").read_text(encoding="utf-8"))
 
 # Provenance stamped by generators.py onto generated themes only; hand
 # written built-ins must not fake it.
 DERIVED_PREFIXES = ("generator.",)
 
 
+def _resolve(node: dict) -> dict:
+    ref = node.get("$ref")
+    if isinstance(ref, str) and ref.startswith("#/$defs/"):
+        return SCHEMA["$defs"][ref.split("/")[-1]]
+    return node
+
+
 def _leaves(node: dict, path: str = "") -> dict[str, dict]:
     found: dict[str, dict] = {}
     for key, value in node.get("properties", {}).items():
         child = f"{path}.{key}" if path else key
-        if isinstance(value, dict) and "properties" in value:
+        resolved = _resolve(value)
+        if not isinstance(resolved, dict):
+            found[child] = value
+        elif "required" in resolved and "properties" in resolved:
+            # A record def: fixed-shape object whose fields are options.
+            found.update(_leaves(resolved, child))
+        elif "properties" in value:
+            # Inline container: recurse field by field.
             found.update(_leaves(value, child))
         else:
+            # A sparse optional map (semanticOverride and friends) stays a
+            # single leaf; stating it at all is the option.
             found[child] = value
     return found
 
 
-def _containers(node: dict, path: str = "", into: set[str] | None = None) -> set[str]:
-    into = set() if into is None else into
-    for key, value in node.get("properties", {}).items():
-        child = f"{path}.{key}" if path else key
-        if isinstance(value, dict) and "properties" in value:
-            into.add(child)
-            _containers(value, child, into)
-    return into
-
-
 ALL_LEAVES = _leaves(SCHEMA)
-CONTAINERS = _containers(SCHEMA)
 AUTHORED_LEAVES = {p: v for p, v in ALL_LEAVES.items() if not p.startswith(DERIVED_PREFIXES)}
-
-# Recorded on 22 August 2026 by the step 01 census. Step 02 empties this
-# table; changing it anywhere else must be a conscious decision.
-BASELINE_GAPS = {
-    name: ["overrides.gtk", "overrides.hyprlock"] + (["widgets.items"] if name not in {"dracula", "kanagawa", "tokyo-night"} else [])
-    for name in (
-        "catppuccin-frappe", "catppuccin-latte", "catppuccin-macchiato", "catppuccin-mocha",
-        "dracula", "gruvbox-dark", "gruvbox-light", "kanagawa",
-        "nord", "solarized-dark", "solarized-light", "tokyo-night",
-    )
-}
-
-# Defaults-document subtrees outside the schema contract, recorded by the
-# same audit. Step 02 either enumerates them in the schema or trims them.
-EXPECTED_DEFAULTS_VIOLATIONS = {
-    "colours.blue", "colours.green", "colours.red", "colours.yellow",
-    "shell.bar.reset_items",
-    "shell.notifications.position", "shell.notifications.offset_x", "shell.notifications.offset_y",
-    "shell.osd.position", "shell.osd.offset_x", "shell.osd.offset_y",
-    "widgets.profiles",
-}
-
-
-def _missing_authored(document: dict) -> list[str]:
-    gaps: list[str] = []
-    for path in AUTHORED_LEAVES:
-        node: object = document
-        for part in path.split("."):
-            if not isinstance(node, dict) or part not in node:
-                gaps.append(path)
-                break
-            node = node[part]
-    return sorted(gaps)
-
-
-def _defaults_violations(document: dict) -> list[str]:
-    tree = {**document["theme"], "widgets": document.get("widgets", {})}
-    offenders: list[str] = []
-
-    def walk(node: dict, path: str = "") -> None:
-        for key, value in node.items():
-            child = f"{path}.{key}" if path else key
-            if child in ("schema_version", "defaults_version"):
-                continue
-            if child not in ALL_LEAVES and child not in CONTAINERS:
-                offenders.append(child)
-            elif isinstance(value, dict):
-                walk(value, child)
-
-    walk(tree)
-    return sorted(p for p in offenders if "." not in p or p.rsplit(".", 1)[0] not in offenders)
 
 
 class BuiltinTruthTests(unittest.TestCase):
@@ -108,15 +63,9 @@ class BuiltinTruthTests(unittest.TestCase):
             for path in sorted(THEMES.glob("builtin/*.json"))
         ]
 
-    @unittest.expectedFailure
     def test_builtins_set_every_authored_option(self) -> None:
-        report = {name: _missing_authored(doc) for name, doc in self.documents()}
-        offending = {name: gaps for name, gaps in report.items() if gaps}
-        self.assertEqual(offending, {}, "built-ins omit authored schema options")
-
-    def test_gap_census_matches_recorded_baseline(self) -> None:
-        computed = {name: gaps for name, doc in self.documents() if (gaps := _missing_authored(doc))}
-        self.assertEqual(computed, BASELINE_GAPS)
+        report = {name: gaps for name, doc in self.documents() if (gaps := _missing_authored(doc))}
+        self.assertEqual(report, {}, "built-ins omit authored schema options")
 
     def test_derived_leaves_are_exactly_the_generator_block(self) -> None:
         derived = sorted(p for p in ALL_LEAVES if p.startswith(DERIVED_PREFIXES))
@@ -135,15 +84,8 @@ class BuiltinTruthTests(unittest.TestCase):
             ],
         )
 
-    @unittest.expectedFailure
-    def test_defaults_document_owns_only_schema_paths(self) -> None:
-        document = json.loads((THEMES / "defaults" / "v1.json").read_text(encoding="utf-8"))
-        violations = _defaults_violations(document)
-        self.assertEqual(violations, [], "defaults document owns paths outside the schema contract")
-
-    def test_defaults_violations_match_recorded_baseline(self) -> None:
-        document = json.loads((THEMES / "defaults" / "v1.json").read_text(encoding="utf-8"))
-        self.assertEqual(_defaults_violations(document), sorted(EXPECTED_DEFAULTS_VIOLATIONS))
+    def test_defaults_document_matches_its_own_schema(self) -> None:
+        self.assertEqual(defaults_schema_errors(DEFAULTS_DOCUMENT), [])
 
 
 class ConfiguredTargetsContractTests(unittest.TestCase):
@@ -162,6 +104,18 @@ class ConfiguredTargetsContractTests(unittest.TestCase):
         with self.assertRaises(RuntimeFailure) as caught:
             configured_targets(theme, "glow")
         self.assertIn("disabled by theme", str(caught.exception))
+
+
+def _missing_authored(document: dict) -> list[str]:
+    gaps: list[str] = []
+    for path in AUTHORED_LEAVES:
+        node: object = document
+        for part in path.split("."):
+            if not isinstance(node, dict) or part not in node:
+                gaps.append(path)
+                break
+            node = node[part]
+    return sorted(gaps)
 
 
 if __name__ == "__main__":

@@ -65,7 +65,9 @@
       "color7": "#acb0be",
       "color8": "#6c6f85",
       "color9": "#d20f39"
-    }
+    },
+    "gtk": {},
+    "hyprlock": {}
   },
   "schema_version": 1,
   "shell": {
@@ -164,7 +166,6 @@
     "quickshell": true,
     "sddm": false,
     "stylus": true,
-
     "wallpaper": true,
     "widgets": true
   },
@@ -179,6 +180,7 @@
     "path": "wallpapers/showcase/catppuccin-latte.webp"
   },
   "widgets": {
+    "items": [],
     "profile": "minimal"
   }
 }

@@ -65,7 +65,9 @@
       "color7": "#bac2de",
       "color8": "#585b70",
       "color9": "#f38ba8"
-    }
+    },
+    "gtk": {},
+    "hyprlock": {}
   },
   "schema_version": 1,
   "shell": {
@@ -152,7 +154,6 @@
     "quickshell": true,
     "sddm": false,
     "stylus": true,
-
     "wallpaper": true,
     "widgets": true
   },
@@ -167,6 +168,7 @@
     "path": "wallpapers/showcase/catppuccin-mocha.webp"
   },
   "widgets": {
+    "items": [],
     "profile": "comfortable"
   }
 }

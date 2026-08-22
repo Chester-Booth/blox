@@ -25,7 +25,7 @@ from typing import Any
 from layout import Roots
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-SOURCE_AREAS = ("shell", "themes", "bin", "packaging")
+SOURCE_AREAS = ("shell", "themes", "bin", "packaging", "gtk")
 DATA_AREAS = ("applications",)  # desktop entries and icons, installed into $XDG_DATA_HOME
 COPY_EXCLUDE = {"__pycache__", ".git"}
 UNIT_TEMPLATES = ("quickshell.service.in", "gcal-update.service.in")

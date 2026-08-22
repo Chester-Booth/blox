@@ -59,7 +59,7 @@ def _data_home() -> Path:
     return Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local" / "share"))
 
 
-def migrate_legacy_user_themes(roots: Roots, backup_dir: Path) -> dict[str, Any]:
+def migrate_legacy_user_themes(roots: Roots, backup_dir: Path, package_rels: set[str] | None = None) -> dict[str, Any]:
     """Copy $XDG_DATA_HOME/blox/themes to $XDG_DATA_HOME/blox-user/themes.
 
     Per-file conflict checks: an existing differing destination is left
@@ -72,12 +72,21 @@ def migrate_legacy_user_themes(roots: Roots, backup_dir: Path) -> dict[str, Any]
     sources: list[str] = []
     created: list[str] = []
     conflicts: list[str] = []
+    package_owned = 0
     if not legacy_root.is_dir():
         return {"moved": False}
     for source in sorted(legacy_root.rglob("*")):
         if not source.is_file():
             continue
         relative = source.relative_to(legacy_root)
+        # When the prefix is the user data home, the package tree itself
+        # lives inside the legacy directory. Files the incoming install
+        # owns are package content, not user data: skip them entirely so
+        # they are neither duplicated into the user library nor deleted
+        # from the package by the post-commit cleanup.
+        if package_rels and f"themes/{relative.as_posix()}" in package_rels:
+            package_owned += 1
+            continue
         destination = target_root / relative
         if destination.exists():
             if sha256_file(destination) != sha256_file(source):
@@ -87,7 +96,8 @@ def migrate_legacy_user_themes(roots: Roots, backup_dir: Path) -> dict[str, Any]
         shutil.copy2(source, destination)
         sources.append(str(source))
         created.append(str(destination))
-    return {"moved": bool(created), "sources": sources, "created": created, "conflicts": conflicts}
+    return {"moved": bool(created), "sources": sources, "created": created,
+            "conflicts": conflicts, "package_owned": package_owned}
 
 
 def sha256_file(path: Path) -> str:
@@ -181,13 +191,13 @@ def read_ledger(roots: Roots) -> list[dict[str, Any]]:
     return entries
 
 
-def run_migrations(roots: Roots, from_version: str, to_version: str) -> list[dict[str, Any]]:
+def run_migrations(roots: Roots, from_version: str, to_version: str, package_rels: set[str] | None = None) -> list[dict[str, Any]]:
     stamp = time.strftime("%Y%m%dT%H%M%S")
     results: list[dict[str, Any]] = []
     for migration in MIGRATIONS:
         backup_dir = roots.backups / stamp / "migrations" / migration.id
         backup_dir.mkdir(parents=True, exist_ok=True)
-        detail = migration.run(roots, backup_dir)
+        detail = migration.run(roots, backup_dir) if migration.id != "legacy-user-themes" else migration.run(roots, backup_dir, package_rels=package_rels)
         entry = {
             "time": time.strftime("%Y-%m-%dT%H:%M:%S"),
             "from": from_version,

@@ -165,7 +165,9 @@ def build_plan(roots: Roots, source_root: Path | None = None) -> Plan:
         # neither the manifest nor the incoming source is foreign, even when
         # the installer runs from the installed tree itself.
         recorded = installed.get("files", {}).get(rel, {}).get("sha256") if installed else None
-        if current == source_hash and (recorded is None or recorded == current):
+        # A stale manifest must not flag a target that already matches the
+        # incoming source (an out-of-band sync of identical content).
+        if current == source_hash:
             plan.unchanged += 1
         elif recorded is not None and recorded == current:
             plan.actions.append(Action("copy", target, rel))
@@ -182,7 +184,7 @@ def build_plan(roots: Roots, source_root: Path | None = None) -> Plan:
             continue
         current = sha256(target)
         recorded = installed.get("data_files", {}).get(rel, {}).get("sha256") if installed else None
-        if current == sha256(source) and (recorded is None or recorded == current):
+        if current == sha256(source):
             plan.unchanged += 1
         elif recorded is not None and recorded == current:
             plan.actions.append(Action("copy-data", target, rel))
@@ -302,8 +304,12 @@ def install(roots: Roots, dry_run: bool = False, force: bool = False, source_roo
     ledger_before = len(read_ledger(roots))
     report_migrations = None
     if migrate:
-        # Relocate legacy user data before the package claims its paths.
-        report_migrations = run_migrations(roots, from_version="fresh-install", to_version=version)
+        # Relocate legacy user data before the package claims its paths,
+        # telling the migration which relative paths the incoming package
+        # owns so package content is never mistaken for user data.
+        incoming = {rel for _, rel in _iter_source_pairs(root)}
+        report_migrations = run_migrations(roots, from_version="fresh-install",
+                                           to_version=version, package_rels=incoming)
         plan = build_plan(roots, root)
         report["plan"] = plan.as_json()
     journal: list[dict[str, Any]] = []
@@ -526,7 +532,10 @@ def update(roots: Roots, dry_run: bool = False, source_root: Path | None = None)
     generations_before = _read_generations(roots)
     try:
         result = install(roots, source_root=source_root, migrate=False)
-        result["migrations"] = run_migrations(roots, from_version=current, to_version=version)
+        result["migrations"] = run_migrations(
+            roots, from_version=current, to_version=version,
+            package_rels={rel for _, rel in _iter_source_pairs(source_root)},
+        )
         _append_generation(roots, current, version, "applied")
     except BaseException:
         # Reinstall the snapshot over every mutated surface, then drop it.

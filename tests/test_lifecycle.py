@@ -558,3 +558,48 @@ class ActiveThemeManifestMigrationTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class StaleManifestTests(unittest.TestCase):
+    def test_out_of_band_sync_of_identical_content_is_not_a_conflict(self):
+        with Fixture() as roots:
+            source_a = fake_source("0.1.0")
+            try:
+                installer.install(roots, source_root=source_a)
+                # Simulate an out-of-band sync that updates both the source
+                # tree and the installed copy while the manifest still
+                # records the previous checksums.
+                (source_a / "shell" / "shell.qml").write_text("// synced\n", encoding="utf-8")
+                shutil.copy2(source_a / "shell" / "shell.qml",
+                             roots.pkg_root / "shell" / "shell.qml")
+
+                report = installer.install(roots, source_root=source_a)
+                self.assertTrue(report["installed"])
+                self.assertEqual(report["plan"]["conflicts"], [])
+                plan_after = installer.build_plan(roots, source_a)
+                self.assertEqual(plan_after.conflicts, [])
+                self.assertEqual(plan_after.actions, [])
+            finally:
+                shutil.rmtree(source_a, ignore_errors=True)
+
+
+class PackageOverlapTests(unittest.TestCase):
+    def test_repeated_install_with_prefix_overlap_leaves_no_debris(self):
+        """Default prefix equals the legacy data home: the second install
+        must neither delete nor duplicate any packaged theme file."""
+        with Fixture() as roots:
+            source_a = fake_source("0.1.0")
+            try:
+                installer.install(roots, source_root=source_a)
+                manifest_files = set(installer._read_manifest(roots.manifest)["files"])
+                installer.install(roots, source_root=source_a)
+
+                missing = [rel for rel in manifest_files if not (roots.pkg_root / rel).exists()]
+                self.assertEqual([], missing)
+                plan_after = installer.build_plan(roots, source_a)
+                self.assertEqual(plan_after.actions, [])
+                # No package mirror leaked into the separated user library.
+                leaked = [p.name for p in (roots.data / "themes").rglob("*") if p.is_file()]
+                self.assertEqual([], [n for n in leaked if n == "v1.json"])
+            finally:
+                shutil.rmtree(source_a, ignore_errors=True)

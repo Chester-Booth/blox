@@ -640,14 +640,18 @@ def ensure_kitty_loader(root: Path) -> None:
     os.replace(temporary, link)
 
 
-def _replace_known_symlink(link: Path, expected: Path, allowed: Iterable[Path]) -> None:
+def _replace_known_symlink(link: Path, expected: Path, allowed: Iterable[Path], adopt_existing_file: bool = False) -> None:
     allowed_targets = {str(path) for path in allowed}
     if link.is_symlink():
         current = os.readlink(link)
         if current == str(expected):
             return
+        # A drifted link that still resolves to a real stylesheet can be
+        # adopted instead of refused (its content is preserved on disk and
+        # the swap is recorded by the caller's own flow).
         if current not in allowed_targets:
-            raise RuntimeFailure(f"refusing to replace unexpected theme loader: {link}")
+            if not (adopt_existing_file and Path(current).is_absolute() and Path(current).is_file()):
+                raise RuntimeFailure(f"refusing to replace unexpected theme loader: {link}")
     elif link.exists():
         raise RuntimeFailure(f"refusing to replace conflicting theme loader: {link}")
     link.parent.mkdir(parents=True, exist_ok=True)
@@ -694,7 +698,7 @@ def ensure_gtk_loaders(root: Path, active: bool) -> None:
             # earlier inactive generation may have written it), so replacing
             # it must not refuse even though it is not the recorded target.
             empty_original = gtk_source_path(version, "blox-theme-empty-dark.css" if dark else "blox-theme-empty.css")
-            _replace_known_symlink(dynamic_css, css_target, (original, generated_css, empty_original))
+            _replace_known_symlink(dynamic_css, css_target, (original, generated_css, empty_original), adopt_existing_file=True)
 
 
 def setup_gtk() -> dict[str, Any]:
@@ -705,7 +709,18 @@ def setup_gtk() -> dict[str, Any]:
         for version in ("3", "4"):
             config = gtk_config_path(version)
             for name, entry in list(integration["loaders"][version].items()):
-                if entry["kind"] == "absent":
+                # Snapshot whatever is actually live when it differs from
+                # the record (for example after the product repository moved):
+                # rollback must restore the immediate prior state. Broken
+                # symlinks keep their existing record so the discard flow
+                # can clean them up.
+                live = config / name
+                if live.is_symlink() and live.exists():
+                    actual = os.readlink(live)
+                    if entry.get("target") != actual or entry.get("kind") == "absent":
+                        integration["loaders"][version][name] = {"kind": "symlink", "target": actual}
+                        _save_gtk_integration(root, integration)
+                        changed = True
                     # Adoption: a loader slot recorded as absent may hold a
                     # foreign symlink now (for example one into a personal
                     # checkout). Record it before replacing so rollback can

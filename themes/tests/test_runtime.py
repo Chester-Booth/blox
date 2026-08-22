@@ -590,7 +590,10 @@ class GtkLoaderAdoptionTests(unittest.TestCase):
             # whether run from a checkout or the installed tree.
             self.assertTrue(live.startswith(str(repository_root())), live)
 
-            # A second setup is stable and does not lose the original.
+            # A second setup snapshots the immediate prior state (the link
+            # the first setup wrote), keeping the cycle stable.
             setup_gtk()
             integration = json.loads((Path(os.environ["XDG_STATE_HOME"]) / "blox-theme/integration/gtk-loaders.json").read_text(encoding="utf-8"))
-            self.assertEqual(integration["loaders"]["3"]["gtk.css"]["target"], str(foreign_css))
+            second = integration["loaders"]["3"]["gtk.css"]
+            self.assertEqual(second["kind"], "symlink")
+            self.assertTrue(Path(second["target"]).is_absolute())

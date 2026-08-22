@@ -251,7 +251,7 @@ FloatingWindow {
                                 background: Rectangle {
                                     implicitWidth: 8
                                     radius: 999
-                                    color: editorScrollbar.hovered || editorScrollbar.pressed ? Qt.rgba(1, 1, 1, 0.09) : Qt.rgba(1, 1, 1, 0.04)
+                                    color: editorScrollbar.hovered || editorScrollbar.pressed ? Theme.withAlpha(Theme.foreground, 0.09) : Theme.withAlpha(Theme.foreground, 0.04)
                                 }
 
                                 contentItem: Rectangle {

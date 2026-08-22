@@ -82,10 +82,11 @@ Rectangle {
 
     width: maximumWidth > 0 ? Math.min(requestedWidth, maximumWidth) : requestedWidth
     height: maximumHeight > 0 ? Math.min(requestedHeight, maximumHeight) : requestedHeight
-    // The terminal renderer maps ANSI black to Gruvbox's terminal black.  Use
-    // that same colour behind asciiquarium so its unpainted cells and the
-    // surrounding widget do not form two visibly different backgrounds.
-    color: widget.type === "clock" ? "transparent" : Theme.withAlpha(widget.type === "aquarium" ? "#1d2021" : Theme.background, backgroundOpacity)
+    // The terminal renderer maps ANSI black to the theme's terminal canvas.
+    // Use that same colour behind asciiquarium so its unpainted cells and the
+    // surrounding widget do not form two visibly different backgrounds, in
+    // every theme rather than one.
+    color: widget.type === "clock" ? "transparent" : Theme.withAlpha(widget.type === "aquarium" ? Theme.terminalCanvas : Theme.background, backgroundOpacity)
     radius: widget.shape === "circle" ? Math.min(width, height) / 2 : widget.shape === "rounded" ? Math.max(10, Theme.widgetRadius) : widget.shape === "rectangle" ? 0 : Theme.widgetRadius
 
     ScriptPoller {

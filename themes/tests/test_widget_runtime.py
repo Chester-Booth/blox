@@ -62,7 +62,7 @@ class WidgetRuntimeSourceTests(unittest.TestCase):
         self.assertIn('root.widget.type === "clock"', source)
         self.assertIn("root.clockFrame = frame", source)
         self.assertIn("Text.RichText", source)
-        self.assertIn('widget.type === "aquarium" ? "#1d2021"', source)
+        self.assertIn('widget.type === "aquarium" ? Theme.terminalCanvas', source)
 
     def test_oversized_widget_text_scrolls_within_the_screen(self) -> None:
         renderer = (ROOT / "shell/shared/DesktopWidget.qml").read_text(encoding="utf-8")

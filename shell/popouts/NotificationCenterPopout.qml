@@ -180,7 +180,7 @@ Rectangle {
         Rectangle {
             width: parent.width
             height: 1
-            color: Qt.rgba(1, 1, 1, 0.08)
+            color: Theme.withAlpha(Theme.foreground, 0.08)
         }
 
         Flickable {
@@ -250,7 +250,7 @@ Rectangle {
                 background: Rectangle {
                     implicitWidth: 8
                     radius: 999
-                    color: notificationScrollbar.hovered || notificationScrollbar.pressed ? Qt.rgba(1, 1, 1, 0.09) : Qt.rgba(1, 1, 1, 0.04)
+                    color: notificationScrollbar.hovered || notificationScrollbar.pressed ? Theme.withAlpha(Theme.foreground, 0.09) : Theme.withAlpha(Theme.foreground, 0.04)
                 }
 
                 contentItem: Rectangle {

@@ -25,6 +25,7 @@ Singleton {
     property color teal: defaults.colour("teal")
     property color selectionForeground: defaults.colour("selection_foreground")
     property color border: defaults.colour("border")
+    property color terminalCanvas: defaults.ready ? defaults.themeDocument().terminal.canvas : "transparent"
     readonly property int railWidth: 34
     readonly property int iconSize: 18
     readonly property int buttonSize: 30

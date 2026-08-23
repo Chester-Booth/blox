@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "id": "sparse",
+  "name": "Sparse",
+  "colours": {
+    "accent": "#010203"
+  },
+  "shell": {
+    "bar": {
+      "position": "top"
+    }
+  }
+}

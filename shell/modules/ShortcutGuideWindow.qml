@@ -155,7 +155,7 @@ PanelWindow {
                                     width: liveWorkspace.width
                                     height: liveWorkspace.height
                                     source: root.wallpaperSource
-                                    fillMode: root.wallpaperFit === "contain" ? Image.PreserveAspectFit : root.wallpaperFit === "stretch" ? Image.Stretch : Image.PreserveAspectCrop
+                                    fillMode: root.wallpaperFit === "contain" ? Image.PreserveAspectFit : root.wallpaperFit === "tile" ? Image.Tile : Image.PreserveAspectCrop
                                     asynchronous: true
                                     cache: true
                                 }

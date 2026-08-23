@@ -1,0 +1,181 @@
+{
+  "colours": {
+    "accent": "#010203",
+    "background": "#303446",
+    "border": "#737994",
+    "danger": "#e78284",
+    "foreground": "#c6d0f5",
+    "info": "#85c1dc",
+    "mauve": "#ca9ee6",
+    "muted": "#a5adce",
+    "selection_background": "#8caaee",
+    "selection_foreground": "#303446",
+    "success": "#a6d189",
+    "surface": "#414559",
+    "surface_alt": "#51576d",
+    "teal": "#81c8be",
+    "warning": "#e5c890"
+  },
+  "fonts": {
+    "editor_size": 13,
+    "gtk_size": 11,
+    "mono": "VictorMono Nerd Font Mono",
+    "panel": "VictorMono Nerd Font Propo",
+    "terminal_size": 12,
+    "ui": "Rubik"
+  },
+  "id": "sparse",
+  "name": "Sparse",
+  "schema_version": 1,
+  "shell": {
+    "bar": {
+      "items": [
+        {
+          "enabled": true,
+          "id": "power",
+          "order": 0,
+          "region": "start"
+        },
+        {
+          "enabled": true,
+          "id": "notes",
+          "order": 1,
+          "region": "start"
+        },
+        {
+          "enabled": true,
+          "id": "workspaces",
+          "order": 2,
+          "region": "start"
+        },
+        {
+          "enabled": true,
+          "id": "clock",
+          "order": 0,
+          "region": "centre"
+        },
+        {
+          "enabled": false,
+          "id": "active-window-title",
+          "order": 1,
+          "orientation": "inward",
+          "region": "centre",
+          "titleLength": "truncate"
+        },
+        {
+          "display": "toggle",
+          "enabled": true,
+          "id": "battery",
+          "order": 0,
+          "region": "end"
+        },
+        {
+          "enabled": true,
+          "id": "tray",
+          "order": 1,
+          "region": "end"
+        },
+        {
+          "enabled": true,
+          "id": "notifications",
+          "order": 2,
+          "region": "end"
+        },
+        {
+          "enabled": true,
+          "id": "wifi",
+          "order": 3,
+          "region": "end"
+        },
+        {
+          "enabled": true,
+          "id": "sound",
+          "order": 4,
+          "region": "end"
+        },
+        {
+          "enabled": true,
+          "id": "privacy",
+          "order": 0,
+          "region": "hidden",
+          "visibility": "normal"
+        },
+        {
+          "enabled": true,
+          "id": "awake",
+          "order": 1,
+          "region": "hidden"
+        },
+        {
+          "enabled": true,
+          "id": "display",
+          "order": 2,
+          "region": "hidden"
+        },
+        {
+          "enabled": true,
+          "id": "bt",
+          "order": 3,
+          "region": "hidden"
+        },
+        {
+          "enabled": true,
+          "id": "updates",
+          "order": 4,
+          "region": "hidden"
+        },
+        {
+          "enabled": true,
+          "id": "fan",
+          "order": 5,
+          "region": "hidden",
+          "visibility": "normal"
+        },
+        {
+          "enabled": true,
+          "id": "gpu",
+          "order": 6,
+          "region": "hidden",
+          "visibility": "normal"
+        },
+        {
+          "enabled": true,
+          "id": "application-tray",
+          "order": 7,
+          "region": "hidden"
+        },
+        {
+          "enabled": true,
+          "id": "touchpad",
+          "order": 8,
+          "region": "hidden",
+          "visibility": "normal"
+        }
+      ],
+      "position": "top"
+    },
+    "notifications": {
+      "offset_x": 0,
+      "offset_y": 0,
+      "position": "top-right"
+    },
+    "osd": {
+      "offset_x": 0,
+      "offset_y": 0,
+      "position": "centre-bottom"
+    }
+  },
+  "terminal": {
+    "ansi_source": "override",
+    "canvas": "#303446",
+    "chrome_background": "#292c3c"
+  },
+  "variant": "dark",
+  "wallpaper": {
+    "fit": "cover",
+    "path": "wallpapers/showcase/catppuccin-frappe.webp"
+  },
+  "widgets": {
+    "profile": "compact"
+  }
+}

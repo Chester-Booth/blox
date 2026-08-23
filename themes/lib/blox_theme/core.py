@@ -268,12 +268,14 @@ def apply_theme_defaults(theme: dict[str, Any]) -> dict[str, Any]:
             "info": colours["blue"],
             "mauve": colours["mauve"],
             "teal": colours["teal"],
+            "selection_background": colours["selection_background"],
             "selection_foreground": colours["selection_foreground"],
             "border": colours["border"],
         },
         "fonts": copy.deepcopy(defaults["fonts"]),
         "shell": copy.deepcopy(defaults["shell"]),
         "wallpaper": copy.deepcopy(defaults["wallpaper"]),
+        "terminal": copy.deepcopy(defaults["terminal"]),
         "widgets": {"profile": document["widgets"]["profile"]},
     }
     fragment["shell"]["bar"].pop("reset_items", None)
@@ -578,6 +580,7 @@ def render_quickshell(theme: dict[str, Any], ansi: dict[str, str]) -> str:
         "colours": colours,
         "compatibility": {"red": colours["danger"], "green": colours["success"], "yellow": colours["warning"], "blue": colours["info"], "mauve": colours["mauve"], "teal": colours["teal"]},
         "fonts": {"ui": theme["fonts"]["ui"], "mono": theme["fonts"]["mono"], "panel": theme["fonts"]["panel"]},
+        "terminal": copy.deepcopy(theme["terminal"]),
         "ansi": ansi,
         "shell": shell,
     }

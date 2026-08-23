@@ -15,10 +15,11 @@ from pathlib import Path
 THEMES = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(THEMES / "lib"))
 
-from blox_theme.core import defaults_schema_errors  # noqa: E402
+from blox_theme.core import apply_theme_defaults, defaults_schema_errors  # noqa: E402
 
 SCHEMA = json.loads((THEMES / "schema" / "theme.schema.json").read_text(encoding="utf-8"))
 DEFAULTS_DOCUMENT = json.loads((THEMES / "defaults" / "v1.json").read_text(encoding="utf-8"))
+CANONICAL_THEME = json.loads((THEMES / "builtin" / "catppuccin-frappe.json").read_text(encoding="utf-8"))
 
 # Provenance stamped by generators.py onto generated themes only; hand
 # written built-ins must not fake it.
@@ -86,6 +87,56 @@ class BuiltinTruthTests(unittest.TestCase):
 
     def test_defaults_document_matches_its_own_schema(self) -> None:
         self.assertEqual(defaults_schema_errors(DEFAULTS_DOCUMENT), [])
+
+    def test_defaults_match_the_canonical_frappe_theme(self) -> None:
+        defaults = DEFAULTS_DOCUMENT["theme"]
+        canonical = CANONICAL_THEME
+        colour_roles = {
+            "background": "background",
+            "surface": "surface",
+            "surface_alt": "surface_alt",
+            "foreground": "foreground",
+            "muted": "muted",
+            "red": "danger",
+            "green": "success",
+            "yellow": "warning",
+            "accent": "accent",
+            "blue": "info",
+            "mauve": "mauve",
+            "teal": "teal",
+            "selection_background": "selection_background",
+            "selection_foreground": "selection_foreground",
+            "border": "border",
+        }
+
+        self.assertEqual(defaults["id"], canonical["id"])
+        self.assertEqual(defaults["variant"], canonical["variant"])
+        self.assertEqual(
+            defaults["colours"],
+            {default: canonical["colours"][source] for default, source in colour_roles.items()},
+        )
+        self.assertEqual(defaults["fonts"], canonical["fonts"])
+        self.assertEqual(defaults["shell"]["bar"]["position"], canonical["shell"]["bar"]["position"])
+        self.assertEqual(defaults["shell"]["bar"]["reset_items"], canonical["shell"]["bar"]["items"])
+        self.assertEqual(defaults["shell"]["osd"], canonical["shell"]["osd"])
+        self.assertEqual(defaults["shell"]["notifications"], canonical["shell"]["notifications"])
+        self.assertEqual(defaults["wallpaper"], canonical["wallpaper"])
+        self.assertEqual(defaults["terminal"], canonical["terminal"])
+        self.assertEqual(DEFAULTS_DOCUMENT["widgets"]["profile"], canonical["widgets"]["profile"])
+
+    def test_sparse_theme_uses_the_canonical_fallback_values(self) -> None:
+        source = json.loads((THEMES.parent / "tests" / "qml" / "fixtures" / "sparse-theme.json").read_text(encoding="utf-8"))
+        expected = json.loads((THEMES.parent / "tests" / "qml" / "fixtures" / "resolved-sparse-theme.json").read_text(encoding="utf-8"))
+        resolved = apply_theme_defaults(source)
+        defaults = DEFAULTS_DOCUMENT["theme"]
+
+        self.assertEqual(resolved, expected)
+        self.assertEqual(resolved["id"], "sparse")
+        self.assertEqual(resolved["variant"], defaults["variant"])
+        self.assertEqual(resolved["fonts"], defaults["fonts"])
+        self.assertEqual(resolved["wallpaper"], defaults["wallpaper"])
+        self.assertEqual(resolved["terminal"], defaults["terminal"])
+        self.assertEqual(resolved["widgets"]["profile"], DEFAULTS_DOCUMENT["widgets"]["profile"])
 
 
 class ConfiguredTargetsContractTests(unittest.TestCase):

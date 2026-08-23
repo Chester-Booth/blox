@@ -198,16 +198,6 @@ class ThemeSchemaTests(unittest.TestCase):
         self.assertFalse(any("cursor base" in error for error in result.errors))
         self.assertTrue(any("cursor toolchain" in warning for warning in result.warnings))
 
-    def test_canonical_palette_matches_live_quickshell_fallback(self) -> None:
-        _, theme = load_theme("catppuccin-mocha")
-        qml = (REPOSITORY / "shell/shared/Theme.qml").read_text(encoding="utf-8")
-        defaults = (REPOSITORY / "themes/defaults/v1.json").read_text(encoding="utf-8")
-        self.assertIn('property color background: defaults.colour("background")', qml)
-        self.assertIn('property string fontFamily: defaults.font("panel")', qml)
-        self.assertIn('"defaults_version": 1', defaults)
-        self.assertIn(theme["colours"]["background"].lower(), defaults.lower())
-
-
 class RendererTests(unittest.TestCase):
     def setUp(self) -> None:
         self.path, self.theme = load_theme("catppuccin-mocha")
@@ -234,6 +224,7 @@ class RendererTests(unittest.TestCase):
         files, _ = render_theme(self.theme)
         quickshell = json.loads(files["quickshell/theme.json"])
         self.assertEqual(self.theme["colours"], quickshell["colours"])
+        self.assertEqual(self.theme["terminal"], quickshell["terminal"])
         self.assertEqual(derive_ansi(self.theme), quickshell["ansi"])
         wallpaper = json.loads(files["hypr/wallpaper.json"])
         self.assertEqual(str(resolve_wallpaper_path(self.theme["wallpaper"]["path"], self.path)), wallpaper["path"])

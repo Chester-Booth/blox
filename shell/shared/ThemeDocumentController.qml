@@ -6,6 +6,58 @@ QtObject {
     required property var theme
     required property ThemeDefaults defaults
 
+    function merge(base, value) {
+        const merged = JSON.parse(JSON.stringify(base || { }));
+        const source = value || { };
+        for (const key of Object.keys(source)) {
+            const item = source[key];
+            if (item && typeof item === "object" && !Array.isArray(item)
+                    && merged[key] && typeof merged[key] === "object" && !Array.isArray(merged[key]))
+                merged[key] = merge(merged[key], item);
+            else
+                merged[key] = JSON.parse(JSON.stringify(item));
+        }
+        return merged;
+    }
+
+    function sourceFallback() {
+        const defaultsDocument = root.defaults.themeDocument();
+        const colours = defaultsDocument.colours;
+        const shell = JSON.parse(JSON.stringify(defaultsDocument.shell));
+        delete shell.bar.reset_items;
+        return {
+            "schema_version": 1,
+            "id": defaultsDocument.id,
+            "variant": defaultsDocument.variant,
+            "colours": {
+                "background": colours.background,
+                "surface": colours.surface,
+                "surface_alt": colours.surface_alt,
+                "foreground": colours.foreground,
+                "muted": colours.muted,
+                "danger": colours.red,
+                "success": colours.green,
+                "warning": colours.yellow,
+                "accent": colours.accent,
+                "info": colours.blue,
+                "mauve": colours.mauve,
+                "teal": colours.teal,
+                "selection_background": colours.selection_background,
+                "selection_foreground": colours.selection_foreground,
+                "border": colours.border
+            },
+            "fonts": JSON.parse(JSON.stringify(defaultsDocument.fonts)),
+            "shell": shell,
+            "wallpaper": JSON.parse(JSON.stringify(defaultsDocument.wallpaper)),
+            "terminal": JSON.parse(JSON.stringify(defaultsDocument.terminal)),
+            "widgets": {"profile": root.defaults.document.widgets.profile}
+        };
+    }
+
+    function resolvedSource(data) {
+        return merge(sourceFallback(), data);
+    }
+
     function reset() {
         const fallback = root.defaults.themeDocument();
         const colours = fallback.colours;
@@ -30,6 +82,7 @@ QtObject {
         theme.teal = colours.teal;
         theme.selectionForeground = colours.selection_foreground;
         theme.border = colours.border;
+        theme.terminalCanvas = fallback.terminal.canvas;
         theme.fontFamily = fonts.panel;
         theme.monoFontFamily = fonts.mono;
         theme.bodyFontFamily = fonts.ui;
@@ -77,7 +130,7 @@ QtObject {
     function loadJson(raw) {
         try {
             const data = JSON.parse(raw);
-            if (data.schema_version !== 1 || !data.id || !data.colours || !data.compatibility || !data.fonts)
+            if (data.schema_version !== 1 || !data.id || !data.colours || !data.compatibility || !data.fonts || !data.terminal)
                 throw new Error("unsupported or incomplete theme document");
 
             theme.themeId = data.id;
@@ -97,6 +150,7 @@ QtObject {
             theme.teal = data.compatibility.teal;
             theme.selectionForeground = data.colours.selection_foreground;
             theme.border = data.colours.border;
+            theme.terminalCanvas = data.terminal.canvas;
             theme.fontFamily = data.fonts.panel;
             theme.monoFontFamily = data.fonts.mono;
             theme.bodyFontFamily = data.fonts.ui;
@@ -160,8 +214,9 @@ QtObject {
 
     function previewSource(raw) {
         try {
-            const data = typeof raw === "string" ? JSON.parse(raw) : raw;
-            if (data.schema_version !== 1 || !data.id || !data.colours || !data.fonts)
+            const source = typeof raw === "string" ? JSON.parse(raw) : raw;
+            const data = resolvedSource(source);
+            if (data.schema_version !== 1 || !data.id || !data.colours || !data.fonts || !data.terminal)
                 throw new Error("unsupported or incomplete source theme");
 
             theme.previewActive = true;
@@ -182,6 +237,7 @@ QtObject {
             theme.teal = data.colours.teal;
             theme.selectionForeground = data.colours.selection_foreground;
             theme.border = data.colours.border;
+            theme.terminalCanvas = data.terminal.canvas;
             theme.fontFamily = data.fonts.panel;
             theme.monoFontFamily = data.fonts.mono;
             theme.bodyFontFamily = data.fonts.ui;

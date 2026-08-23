@@ -17,7 +17,7 @@ class WidgetRuntimeSourceTests(unittest.TestCase):
         self.assertNotIn("exclusiveZone:", source)
         self.assertIn("Image.PreserveAspectCrop", source)
         self.assertIn("Image.PreserveAspectFit", source)
-        self.assertIn("Image.Stretch", source)
+        self.assertIn("Image.Tile", source)
         self.assertEqual(2, source.count("asynchronous: true"))
         self.assertIn("image.status !== Image.Ready", source)
         self.assertIn("Wallpaper {", shell)
@@ -63,6 +63,10 @@ class WidgetRuntimeSourceTests(unittest.TestCase):
         self.assertIn("root.clockFrame = frame", source)
         self.assertIn("Text.RichText", source)
         self.assertIn('widget.type === "aquarium" ? Theme.terminalCanvas', source)
+        theme = (ROOT / "shell/shared/ThemeDocumentController.qml").read_text(encoding="utf-8")
+        self.assertEqual(3, theme.count("theme.terminalCanvas ="))
+        self.assertIn("theme.terminalCanvas = fallback.terminal.canvas", theme)
+        self.assertIn("theme.terminalCanvas = data.terminal.canvas", theme)
 
     def test_oversized_widget_text_scrolls_within_the_screen(self) -> None:
         renderer = (ROOT / "shell/shared/DesktopWidget.qml").read_text(encoding="utf-8")

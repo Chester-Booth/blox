@@ -5,29 +5,33 @@
     "id": "catppuccin-frappe",
     "variant": "dark",
     "colours": {
-      "background": "#1e1e2e",
-      "surface": "#313244",
-      "surface_alt": "#45475a",
-      "foreground": "#cdd6f4",
-      "muted": "#a6adc8",
-      "red": "#f38ba8",
-      "green": "#a6e3a1",
-      "yellow": "#f9e2af",
-      "accent": "#89b4fa",
-      "blue": "#74c7ec",
-      "mauve": "#cba6f7",
-      "teal": "#94e2d5",
-      "selection_foreground": "#1e1e2e",
-      "border": "#6c7086"
+      "background": "#303446",
+      "surface": "#414559",
+      "surface_alt": "#51576d",
+      "foreground": "#c6d0f5",
+      "muted": "#a5adce",
+      "red": "#e78284",
+      "green": "#a6d189",
+      "yellow": "#e5c890",
+      "accent": "#8caaee",
+      "blue": "#85c1dc",
+      "mauve": "#ca9ee6",
+      "teal": "#81c8be",
+      "selection_background": "#8caaee",
+      "selection_foreground": "#303446",
+      "border": "#737994"
     },
     "fonts": {
-      "panel": "FiraCode Nerd Font Propo",
-      "mono": "FiraCode Nerd Font Mono",
-      "ui": "Outfit"
+      "panel": "VictorMono Nerd Font Propo",
+      "mono": "VictorMono Nerd Font Mono",
+      "ui": "Rubik",
+      "terminal_size": 12,
+      "editor_size": 13,
+      "gtk_size": 11
     },
     "shell": {
       "bar": {
-        "position": "right",
+        "position": "left",
         "items": [
           {"id": "power", "enabled": true, "region": "start", "order": 0},
           {"id": "notes", "enabled": true, "region": "start", "order": 1},
@@ -50,23 +54,28 @@
           {"id": "touchpad", "enabled": true, "region": "hidden", "order": 8, "visibility": "normal"}
         ],
         "reset_items": [
-          {"id": "active-window-title", "enabled": true, "region": "start", "order": 0, "orientation": "inward"},
-          {"id": "workspaces", "enabled": true, "region": "centre", "order": 0},
+          {"id": "power", "enabled": true, "region": "start", "order": 0},
+          {"id": "workspaces", "enabled": true, "region": "start", "order": 1},
+          {"id": "clock", "enabled": true, "region": "centre", "order": 0},
           {"id": "tray", "enabled": true, "region": "end", "order": 0},
-          {"id": "sound", "enabled": true, "region": "end", "order": 1},
-          {"id": "wifi", "enabled": true, "region": "end", "order": 2},
+          {"id": "wifi", "enabled": true, "region": "end", "order": 1},
+          {"id": "sound", "enabled": true, "region": "end", "order": 2},
           {"id": "battery", "enabled": true, "region": "end", "order": 3, "display": "icon"},
-          {"id": "power", "enabled": true, "region": "end", "order": 4},
           {"id": "application-tray", "enabled": true, "region": "hidden", "order": 0}
         ]
       },
-      "osd": {"position": "centre-top", "offset_x": 0, "offset_y": 0},
-      "notifications": {"position": "top-left", "offset_x": 0, "offset_y": 0}
+      "osd": {"position": "centre-bottom", "offset_x": 0, "offset_y": 0},
+      "notifications": {"position": "top-right", "offset_x": 0, "offset_y": 0}
     },
-    "wallpaper": {"path": "wallpapers/showcase/catppuccin-mocha.webp", "fit": "cover"}
+    "wallpaper": {"path": "wallpapers/showcase/catppuccin-frappe.webp", "fit": "cover"},
+    "terminal": {
+      "canvas": "#303446",
+      "chrome_background": "#292c3c",
+      "ansi_source": "override"
+    }
   },
   "widgets": {
-    "profile": "minimal",
+    "profile": "compact",
     "profiles": {
       "minimal": {"opacity": 0.3, "margin": 20, "padding": 20, "radius": 0, "font_size": 14},
       "compact": {"opacity": 0.52, "margin": 12, "padding": 12, "radius": 6, "font_size": 12},

@@ -11,14 +11,14 @@
     "theme": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "variant", "colours", "fonts", "shell", "wallpaper"],
+      "required": ["id", "variant", "colours", "fonts", "shell", "wallpaper", "terminal"],
       "properties": {
         "id": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
         "variant": {"enum": ["dark", "light"]},
         "colours": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["background", "surface", "surface_alt", "foreground", "muted", "red", "green", "yellow", "accent", "blue", "mauve", "teal", "selection_foreground", "border"],
+          "required": ["background", "surface", "surface_alt", "foreground", "muted", "red", "green", "yellow", "accent", "blue", "mauve", "teal", "selection_background", "selection_foreground", "border"],
           "properties": {
             "background": {"$ref": "#/$defs/colour"},
             "surface": {"$ref": "#/$defs/colour"},
@@ -32,6 +32,7 @@
             "blue": {"$ref": "#/$defs/colour"},
             "mauve": {"$ref": "#/$defs/colour"},
             "teal": {"$ref": "#/$defs/colour"},
+            "selection_background": {"$ref": "#/$defs/colour"},
             "selection_foreground": {"$ref": "#/$defs/colour"},
             "border": {"$ref": "#/$defs/colour"}
           }
@@ -39,11 +40,14 @@
         "fonts": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["panel", "mono", "ui"],
+          "required": ["panel", "mono", "ui", "terminal_size", "editor_size", "gtk_size"],
           "properties": {
             "panel": {"type": "string", "minLength": 1},
             "mono": {"type": "string", "minLength": 1},
-            "ui": {"type": "string", "minLength": 1}
+            "ui": {"type": "string", "minLength": 1},
+            "terminal_size": {"type": "number", "minimum": 6, "maximum": 48},
+            "editor_size": {"type": "number", "minimum": 6, "maximum": 48},
+            "gtk_size": {"type": "number", "minimum": 6, "maximum": 48}
           }
         },
         "shell": {
@@ -62,7 +66,17 @@
           "required": ["path", "fit"],
           "properties": {
             "path": {"type": "string", "minLength": 1},
-            "fit": {"enum": ["cover", "contain", "stretch"]}
+            "fit": {"enum": ["cover", "contain", "tile"]}
+          }
+        },
+        "terminal": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["canvas", "chrome_background", "ansi_source"],
+          "properties": {
+            "canvas": {"$ref": "#/$defs/colour"},
+            "chrome_background": {"$ref": "#/$defs/colour"},
+            "ansi_source": {"enum": ["derived", "override"]}
           }
         }
       }

@@ -11,8 +11,8 @@ Scope {
         if (fit === "contain")
             return Image.PreserveAspectFit;
 
-        if (fit === "stretch")
-            return Image.Stretch;
+        if (fit === "tile")
+            return Image.Tile;
 
         return Image.PreserveAspectCrop;
     }

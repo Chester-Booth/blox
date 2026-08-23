@@ -17,7 +17,7 @@ THEMES = Path(__file__).resolve().parents[1]
 REPOSITORY = THEMES.parent
 sys.path.insert(0, str(THEMES / "lib"))
 
-from blox_theme.core import DEFAULT_BAR_ITEMS, dependency_checks, derive_ansi, derive_shape, list_themes, load_theme, render_manifest, render_theme, resolve_wallpaper_path, resolved_bar_items, schema_errors, themes_dir, validate_theme
+from blox_theme.core import DEFAULT_BAR_ITEMS, contrast_ratio, dependency_checks, derive_ansi, derive_shape, list_themes, load_theme, render_manifest, render_theme, resolve_wallpaper_path, resolved_bar_items, schema_errors, themes_dir, validate_theme
 
 
 def run_cli(*arguments: str, environment: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
@@ -502,6 +502,26 @@ class RendererTests(unittest.TestCase):
         self.assertIn("switch:checked", gtk4)
         self.assertIn("\nwindow {\n", gtk4)
         self.assertNotIn("\n.background {\n", gtk4)
+
+    def test_generated_gtk_keeps_browser_tabs_distinct(self) -> None:
+        for path in sorted((THEMES / "builtin").glob("*.json")):
+            with self.subTest(theme=path.stem):
+                _, theme = load_theme(path.stem)
+                files, _ = render_theme(theme)
+                for name in ("gtk/gtk-3.0/gtk.css", "gtk/gtk-4.0/gtk.css"):
+                    css = files[name]
+                    toolbar_selector = "toolbar,\nmenubar,\nmenu" if "gtk-3.0" in name else "toolbar,\npopover > contents,\nmenu"
+                    frame = re.search(r"@define-color blox_frame (#[0-9a-f]{6});", css)
+                    surface = re.search(r"@define-color blox_surface (#[0-9a-f]{6});", css)
+                    foreground = re.search(r"@define-color blox_fg (#[0-9a-f]{6});", css)
+                    self.assertIsNotNone(frame)
+                    self.assertIsNotNone(surface)
+                    self.assertIsNotNone(foreground)
+                    assert frame and surface and foreground
+                    self.assertNotEqual(frame.group(1), surface.group(1))
+                    self.assertGreaterEqual(contrast_ratio(frame.group(1), foreground.group(1)), 4.5)
+                    self.assertIn("headerbar,\n.titlebar {\n  background-color: @blox_frame;", css)
+                    self.assertIn(f"{toolbar_selector} {{\n  background-color: @blox_surface;", css)
 
     def test_installed_gtk_mode_emits_no_generated_css(self) -> None:
         theme = copy.deepcopy(self.theme)

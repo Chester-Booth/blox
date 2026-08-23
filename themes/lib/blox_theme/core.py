@@ -449,6 +449,27 @@ def contrast_ratio(first: str, second: str) -> float:
     return (high + 0.05) / (low + 0.05)
 
 
+def _mix_colour(first: str, second: str, amount: float) -> str:
+    first_channels = [int(first[index:index + 2], 16) for index in (1, 3, 5)]
+    second_channels = [int(second[index:index + 2], 16) for index in (1, 3, 5)]
+    channels = [round(start + (end - start) * amount) for start, end in zip(first_channels, second_channels)]
+    return "#" + "".join(f"{channel:02x}" for channel in channels)
+
+
+def derive_gtk_frame_colour(colours: dict[str, str]) -> str:
+    """Keep browser chrome distinct when a theme gives the background and
+    surface roles the same value. The small fallback tint retains readable
+    header-bar text in light themes such as Solarized Light."""
+    if colours["background"] != colours["surface"]:
+        return colours["background"]
+
+    for percentage in range(10, 0, -1):
+        candidate = _mix_colour(colours["surface"], colours["surface_alt"], percentage / 100)
+        if candidate != colours["surface"] and contrast_ratio(candidate, colours["foreground"]) >= 4.5:
+            return candidate
+    return colours["background"]
+
+
 def _named_asset_exists(name: str, roots: tuple[Path, ...]) -> bool:
     return any((root / name).exists() for root in roots)
 
@@ -665,6 +686,7 @@ def _gtk_definitions(theme: dict[str, Any]) -> str:
     colours = target_colours(theme, "gtk")
     roles = {
         "blox_bg": colours["background"],
+        "blox_frame": derive_gtk_frame_colour(colours),
         "blox_surface": colours["surface"],
         "blox_surface_alt": colours["surface_alt"],
         "blox_fg": colours["foreground"],
@@ -708,7 +730,12 @@ window,
 }
 
 headerbar,
-.titlebar,
+.titlebar {
+  background-color: @blox_frame;
+  color: @blox_fg;
+  border-color: @blox_border;
+}
+
 toolbar,
 menubar,
 menu {
@@ -787,7 +814,12 @@ window {
 }
 
 headerbar,
-.titlebar,
+.titlebar {
+  background-color: @blox_frame;
+  color: @blox_fg;
+  border-color: @blox_border;
+}
+
 toolbar,
 popover > contents,
 menu {

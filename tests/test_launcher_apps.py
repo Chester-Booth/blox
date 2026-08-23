@@ -67,6 +67,54 @@ class FakeIconTheme:
 
 
 class AppControllerTests(unittest.TestCase):
+    def test_helium_launcher_loads_the_active_blox_theme(self):
+        root = Path(tempfile.mkdtemp(prefix="blox-helium-launcher-"))
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        state = root / "state"
+        theme = state / "blox-theme/current/gtk/helium"
+        theme.mkdir(parents=True)
+        (theme / "manifest.json").write_text("{}\n", encoding="utf-8")
+        browser = root / "browser"
+        browser.write_text("#!/bin/sh\nprintf '%s\\n' \"$@\"\n", encoding="utf-8")
+        browser.chmod(0o755)
+
+        result = subprocess.run(
+            [str(REPOSITORY / "bin/blox-helium-browser"), "https://example.test"],
+            env={**os.environ, "XDG_STATE_HOME": str(state), "BLOX_HELIUM_BINARY": str(browser)},
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual(
+            [f"--load-extension={theme}", "https://example.test"],
+            result.stdout.splitlines(),
+        )
+
+    def test_helium_launcher_preserves_normal_start_without_a_theme(self):
+        root = Path(tempfile.mkdtemp(prefix="blox-helium-fallback-"))
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        browser = root / "browser"
+        browser.write_text("#!/bin/sh\nprintf '%s\\n' \"$@\"\n", encoding="utf-8")
+        browser.chmod(0o755)
+
+        result = subprocess.run(
+            [str(REPOSITORY / "bin/blox-helium-browser"), "--incognito"],
+            env={**os.environ, "XDG_STATE_HOME": str(root / "state"), "BLOX_HELIUM_BINARY": str(browser)},
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual(["--incognito"], result.stdout.splitlines())
+
+    def test_helium_desktop_entry_uses_the_blox_launcher(self):
+        entry = (REPOSITORY / "applications/.local/share/applications/helium-browser.desktop").read_text(encoding="utf-8")
+        self.assertIn("Exec=blox-helium-browser %U", entry)
+        self.assertIn("Exec=blox-helium-browser --incognito", entry)
+
     def test_icon_lookup_returns_fresh_theme_paths(self):
         self.assertEqual(
             {"new-app": "/icons/new-app.svg"},

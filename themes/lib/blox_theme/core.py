@@ -456,18 +456,16 @@ def _mix_colour(first: str, second: str, amount: float) -> str:
     return "#" + "".join(f"{channel:02x}" for channel in channels)
 
 
-def derive_gtk_frame_colour(colours: dict[str, str]) -> str:
-    """Keep browser chrome distinct when a theme gives the background and
-    surface roles the same value. The small fallback tint retains readable
-    header-bar text in light themes such as Solarized Light."""
+def derive_helium_frame_colour(colours: dict[str, str]) -> str:
+    """Return an inactive-tab fill distinct from the active tab."""
     if colours["background"] != colours["surface"]:
-        return colours["background"]
+        return colours["surface"]
 
     for percentage in range(10, 0, -1):
-        candidate = _mix_colour(colours["surface"], colours["surface_alt"], percentage / 100)
-        if candidate != colours["surface"] and contrast_ratio(candidate, colours["foreground"]) >= 4.5:
+        candidate = _mix_colour(colours["background"], colours["surface_alt"], percentage / 100)
+        if candidate != colours["background"] and contrast_ratio(candidate, colours["foreground"]) >= 4.5:
             return candidate
-    return colours["background"]
+    return colours["surface_alt"]
 
 
 def _named_asset_exists(name: str, roots: tuple[Path, ...]) -> bool:
@@ -686,7 +684,6 @@ def _gtk_definitions(theme: dict[str, Any]) -> str:
     colours = target_colours(theme, "gtk")
     roles = {
         "blox_bg": colours["background"],
-        "blox_frame": derive_gtk_frame_colour(colours),
         "blox_surface": colours["surface"],
         "blox_surface_alt": colours["surface_alt"],
         "blox_fg": colours["foreground"],
@@ -730,12 +727,7 @@ window,
 }
 
 headerbar,
-.titlebar {
-  background-color: @blox_frame;
-  color: @blox_fg;
-  border-color: @blox_border;
-}
-
+.titlebar,
 toolbar,
 menubar,
 menu {
@@ -814,12 +806,7 @@ window {
 }
 
 headerbar,
-.titlebar {
-  background-color: @blox_frame;
-  color: @blox_fg;
-  border-color: @blox_border;
-}
-
+.titlebar,
 toolbar,
 popover > contents,
 menu {
@@ -897,16 +884,55 @@ def render_gtk(theme: dict[str, Any]) -> dict[str, str]:
         "generated_css": theme["gtk"]["mode"] == "generated",
         "restart_required": True,
         "libadwaita_support": "partial-user-css",
+        "helium_theme": "gtk/helium/manifest.json",
     }
     files = {
         "gtk/gtk-3.0/settings.ini": settings,
         "gtk/gtk-4.0/settings.ini": settings,
         "gtk/metadata.json": canonical_json(metadata),
+        "gtk/helium/manifest.json": render_helium_theme(theme),
     }
     if theme["gtk"]["mode"] == "generated":
         files["gtk/gtk-3.0/gtk.css"] = render_gtk3(theme)
         files["gtk/gtk-4.0/gtk.css"] = render_gtk4(theme)
     return files
+
+
+def render_helium_theme(theme: dict[str, Any]) -> str:
+    colours = target_colours(theme, "gtk")
+
+    def rgb(role: str) -> list[int]:
+        colour = colours[role]
+        return [int(colour[index:index + 2], 16) for index in (1, 3, 5)]
+
+    frame = derive_helium_frame_colour(colours)
+    frame_rgb = [int(frame[index:index + 2], 16) for index in (1, 3, 5)]
+    manifest = {
+        "manifest_version": 3,
+        "name": "Blox Helium theme",
+        "version": "1.0",
+        # A fixed public key keeps the extension ID stable across generations.
+        "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAoLDs7yzNkzRrnbnWZSys0JALYg6nvhlYNbRjqEdmte+RABd5QPN6zZMSTgE+BvkdCqXtdOHzq5iNwrWaAdFfsdAT9D2S7rcUzd8Fzl+3PyMJE4uslqkNzIYxHAnkNvmgJKoIrvFG/WUMUno04zUevKtO/+LTDGBocw8Mxgpq3UopSWtRcyGodRCoemor94ejCA7c9wxqko4duDidHZP8S2Ll2D1A/Fvqrp/JhCPNgu5pMMFiuUJAccxoMNY9CFax+HlAcWnsVPQxKkZ9/4JA63jb+oWyDG5rFRcUsppgxTCdu/g98XZD/8JO99Zu2LYNBwY3OH3CIUlfxlfzPrjtgQIDAQAB",
+        "theme": {
+            "colors": {
+                "frame": frame_rgb,
+                "frame_inactive": frame_rgb,
+                "toolbar": rgb("background"),
+                "tab_text": rgb("foreground"),
+                "tab_background_text": rgb("foreground"),
+                "bookmark_text": rgb("foreground"),
+                "toolbar_button_icon": rgb("foreground"),
+                "omnibox_background": rgb("surface_alt"),
+                "omnibox_text": rgb("foreground"),
+                "omnibox_results_bg": rgb("surface"),
+                "omnibox_results_text": rgb("foreground"),
+                "ntp_background": rgb("background"),
+                "ntp_text": rgb("foreground"),
+                "button_background": rgb("accent"),
+            }
+        },
+    }
+    return canonical_json(manifest)
 
 
 def _rgba(colour: str, alpha: str = "ff") -> str:

@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+browser="${BLOX_HELIUM_BINARY:-/usr/bin/helium-browser}"
+state_root="${XDG_STATE_HOME:-${HOME}/.local/state}/blox-theme"
+theme_dir="${state_root}/current/gtk/helium"
+
+if [ -f "${theme_dir}/manifest.json" ]; then
+	exec "${browser}" --load-extension="${theme_dir}" "$@"
+fi
+exec "${browser}" "$@"

@@ -29,7 +29,7 @@ SOURCE_AREAS = ("shell", "themes", "bin", "packaging", "gtk")
 DATA_AREAS = ("applications",)  # desktop entries and icons, installed into $XDG_DATA_HOME
 COPY_EXCLUDE = {"__pycache__", ".git"}
 UNIT_TEMPLATES = ("quickshell.service.in", "gcal-update.service.in")
-INSTALLED_BINS = ("bloxctl", "blox-theme-ipc", "themectl", "dmenu")
+INSTALLED_BINS = ("bloxctl", "blox-helium-browser", "blox-theme-ipc", "themectl", "dmenu")
 
 EXIT_OK = 0
 EXIT_INTERNAL = 1
@@ -133,6 +133,7 @@ def render_unit(template: str, roots: Roots, version: str, source_root: Path | N
     text = (root / "packaging" / "units" / template).read_text(encoding="utf-8")
     for key, value in {
         "@PKG_ROOT@": str(roots.pkg_root),
+        "@BIN_ROOT@": str(roots.bins),
         "@CONFIG_ROOT@": str(roots.config),
         "@VERSION@": version,
     }.items():

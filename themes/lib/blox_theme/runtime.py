@@ -23,7 +23,7 @@ TARGET_FILES = {
     "widgets": ("widgets/profile.json",),
     "kitty": ("kitty/theme.conf",),
     "wallpaper": ("hypr/wallpaper.json",),
-    "gtk": ("gtk/gtk-3.0/settings.ini", "gtk/gtk-3.0/gtk.css", "gtk/gtk-4.0/settings.ini", "gtk/gtk-4.0/gtk.css", "gtk/metadata.json"),
+    "gtk": ("gtk/gtk-3.0/settings.ini", "gtk/gtk-3.0/gtk.css", "gtk/gtk-4.0/settings.ini", "gtk/gtk-4.0/gtk.css", "gtk/metadata.json", "gtk/helium/manifest.json"),
     "cursor": ("cursor/metadata.json",),
     "hyprland": ("hyprland/theme.lua", "hyprland/hyprtoolkit.conf"),
     "hyprlock": ("hyprlock/theme.conf",),
@@ -38,7 +38,7 @@ TARGET_FILES = {
 }
 TARGET_REQUIRED_FILES = {
     **{target: files for target, files in TARGET_FILES.items() if target != "gtk"},
-    "gtk": ("gtk/gtk-3.0/settings.ini", "gtk/gtk-4.0/settings.ini", "gtk/metadata.json"),
+    "gtk": ("gtk/gtk-3.0/settings.ini", "gtk/gtk-4.0/settings.ini", "gtk/metadata.json", "gtk/helium/manifest.json"),
 }
 LEGACY_TARGET_FILES = {"obsidian/blox-theme.css": "obsidian"}
 TARGET_NAMES = tuple(TARGET_FILES)
@@ -175,7 +175,8 @@ def validate_generation(path: Path) -> dict[str, Any]:
         raise RuntimeFailure(f"generation manifest types are invalid: {manifest_path}")
     if len(set(manifest["enabled_targets"])) != len(manifest["enabled_targets"]) or not set(manifest["enabled_targets"]).issubset(TARGET_FILES):
         raise RuntimeFailure(f"generation targets are invalid: {manifest_path}")
-    actual_files = sorted(str(item.relative_to(path)) for item in path.rglob("*") if item.is_file() and item.name != "manifest.json")
+    generation_manifest = path / "manifest.json"
+    actual_files = sorted(str(item.relative_to(path)) for item in path.rglob("*") if item.is_file() and item != generation_manifest)
     if actual_files != sorted(manifest["files"]):
         raise RuntimeFailure(f"generation file list does not match its manifest: {path.name}")
     for name, expected in manifest["files"].items():
@@ -238,7 +239,8 @@ def _remove_target(candidate: Path, target: str) -> None:
 
 
 def _manifest_files(candidate: Path) -> dict[str, str]:
-    return {str(path.relative_to(candidate)): _file_sha256(path) for path in sorted(candidate.rglob("*")) if path.is_file() and path.name != "manifest.json"}
+    generation_manifest = candidate / "manifest.json"
+    return {str(path.relative_to(candidate)): _file_sha256(path) for path in sorted(candidate.rglob("*")) if path.is_file() and path != generation_manifest}
 
 
 def _target_sources(previous_manifest: dict[str, Any] | None, selected: Iterable[str], theme_path: Path, theme: dict[str, Any]) -> dict[str, Any]:

@@ -503,25 +503,20 @@ class RendererTests(unittest.TestCase):
         self.assertIn("\nwindow {\n", gtk4)
         self.assertNotIn("\n.background {\n", gtk4)
 
-    def test_generated_gtk_keeps_browser_tabs_distinct(self) -> None:
+    def test_gtk_target_keeps_helium_tabs_distinct(self) -> None:
         for path in sorted((THEMES / "builtin").glob("*.json")):
             with self.subTest(theme=path.stem):
                 _, theme = load_theme(path.stem)
                 files, _ = render_theme(theme)
-                for name in ("gtk/gtk-3.0/gtk.css", "gtk/gtk-4.0/gtk.css"):
-                    css = files[name]
-                    toolbar_selector = "toolbar,\nmenubar,\nmenu" if "gtk-3.0" in name else "toolbar,\npopover > contents,\nmenu"
-                    frame = re.search(r"@define-color blox_frame (#[0-9a-f]{6});", css)
-                    surface = re.search(r"@define-color blox_surface (#[0-9a-f]{6});", css)
-                    foreground = re.search(r"@define-color blox_fg (#[0-9a-f]{6});", css)
-                    self.assertIsNotNone(frame)
-                    self.assertIsNotNone(surface)
-                    self.assertIsNotNone(foreground)
-                    assert frame and surface and foreground
-                    self.assertNotEqual(frame.group(1), surface.group(1))
-                    self.assertGreaterEqual(contrast_ratio(frame.group(1), foreground.group(1)), 4.5)
-                    self.assertIn("headerbar,\n.titlebar {\n  background-color: @blox_frame;", css)
-                    self.assertIn(f"{toolbar_selector} {{\n  background-color: @blox_surface;", css)
+                manifest = json.loads(files["gtk/helium/manifest.json"])
+                colours = manifest["theme"]["colors"]
+                self.assertEqual(3, manifest["manifest_version"])
+                self.assertRegex(manifest["key"], r"^[A-Za-z0-9+/]+=*$")
+                self.assertNotEqual(colours["frame"], colours["toolbar"])
+                self.assertEqual(colours["frame"], colours["frame_inactive"])
+                self.assertEqual(colours["toolbar"], [int(theme["colours"]["background"][index:index + 2], 16) for index in (1, 3, 5)])
+                frame = "#" + "".join(f"{channel:02x}" for channel in colours["frame"])
+                self.assertGreaterEqual(contrast_ratio(frame, theme["colours"]["foreground"]), 4.5)
 
     def test_installed_gtk_mode_emits_no_generated_css(self) -> None:
         theme = copy.deepcopy(self.theme)
@@ -529,6 +524,7 @@ class RendererTests(unittest.TestCase):
         files, _ = render_theme(theme)
         self.assertNotIn("gtk/gtk-3.0/gtk.css", files)
         self.assertNotIn("gtk/gtk-4.0/gtk.css", files)
+        self.assertIn("gtk/helium/manifest.json", files)
         self.assertIn("gtk-theme-name=Adwaita", files["gtk/gtk-3.0/settings.ini"])
         self.assertFalse(json.loads(files["gtk/metadata.json"])["generated_css"])
 

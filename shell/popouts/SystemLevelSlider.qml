@@ -18,13 +18,13 @@ RowLayout {
     signal dragStarted()
     signal dragFinished()
 
-    spacing: 8
+    spacing: Theme.scaledSpacing(8)
     opacity: interactive ? 1 : 0.55
 
     Rectangle {
         Layout.fillWidth: true
         Layout.preferredHeight: 14
-        radius: 7
+        radius: Theme.scaledRadius(7)
         color: Theme.surface
 
         Rectangle {
@@ -53,7 +53,7 @@ RowLayout {
         Rectangle {
             width: 18
             height: 18
-            radius: 9
+            radius: Theme.scaledRadius(9)
             x: Math.max(0, Math.min(parent.width - width, parent.width * Math.max(0, Math.min(root.maxValue, root.value)) / root.maxValue - width / 2))
             y: -2
             color: root.knobColor

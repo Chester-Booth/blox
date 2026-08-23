@@ -77,8 +77,8 @@ Scope {
 
         Rectangle {
             anchors.fill: parent
-            anchors.margins: 1
-            radius: 12
+            anchors.margins: Theme.scaledSpacing(1)
+            radius: Theme.scaledRadius(12)
             color: Theme.surface
             border.color: Theme.border
             clip: true
@@ -86,8 +86,8 @@ Scope {
 
             ColumnLayout {
                 anchors.fill: parent
-                anchors.margins: 14
-                spacing: 10
+                anchors.margins: Theme.scaledSpacing(14)
+                spacing: Theme.scaledSpacing(10)
 
                 RowLayout {
                     Layout.fillWidth: true
@@ -243,7 +243,7 @@ Scope {
                     Rectangle {
                         width: 8
                         height: 8
-                        radius: 4
+                        radius: Theme.scaledRadius(4)
                         color: root.controller.activeEvent && root.controller.activeEvent.colour ? root.controller.activeEvent.colour.display : Theme.accent
                     }
 
@@ -334,7 +334,7 @@ Scope {
 
         Loader {
             anchors.fill: parent
-            anchors.margins: 1
+            anchors.margins: Theme.scaledSpacing(1)
             active: true
             sourceComponent: confirmOverlay
             opacity: root.controller.childPositionReady ? 1 : 0
@@ -502,8 +502,8 @@ Scope {
 
         Rectangle {
             anchors.fill: parent
-            anchors.margins: 1
-            radius: 12
+            anchors.margins: Theme.scaledSpacing(1)
+            radius: Theme.scaledRadius(12)
             color: Theme.surface
             border.color: Theme.border
             clip: true
@@ -511,8 +511,8 @@ Scope {
 
             ColumnLayout {
                 anchors.fill: parent
-                anchors.margins: 14
-                spacing: 9
+                anchors.margins: Theme.scaledSpacing(14)
+                spacing: Theme.scaledSpacing(9)
                 enabled: !root.controller.editorSaving
 
                 RowLayout {
@@ -583,7 +583,7 @@ Scope {
                         anchors.left: parent.left
                         anchors.right: parent.right
                         anchors.top: parent.top
-                        spacing: 4
+                        spacing: Theme.scaledSpacing(4)
 
                         BloxButton {
                             id: dateButton
@@ -672,12 +672,12 @@ Scope {
                         anchors.left: parent.left
                         anchors.right: parent.right
                         anchors.bottom: parent.bottom
-                        spacing: 8
+                        spacing: Theme.scaledSpacing(8)
 
                         Rectangle {
                             width: 18
                             height: 18
-                            radius: 3
+                            radius: Theme.scaledRadius(3)
                             color: editor.allDay ? Theme.accent : "transparent"
                             border.color: editor.allDay ? Theme.accent : Theme.muted
                             border.width: 2
@@ -732,11 +732,11 @@ Scope {
                         x: endButton.width - width
                         y: endButton.height + 4
                         width: 190
-                        padding: 4
+                        padding: Theme.scaledSpacing(4)
                         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
 
                         background: Rectangle {
-                            radius: 7
+                            radius: Theme.scaledRadius(7)
                             color: Theme.background
                             border.color: Theme.border
                         }
@@ -773,11 +773,11 @@ Scope {
                         dim: false
                         y: startButton.height + 4
                         width: 120
-                        padding: 4
+                        padding: Theme.scaledSpacing(4)
                         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
 
                         background: Rectangle {
-                            radius: 7
+                            radius: Theme.scaledRadius(7)
                             color: Theme.background
                             border.color: Theme.border
                         }
@@ -816,11 +816,11 @@ Scope {
                         x: repeatButton.width - width
                         y: repeatButton.height + 4
                         width: 190
-                        padding: 4
+                        padding: Theme.scaledSpacing(4)
                         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
 
                         background: Rectangle {
-                            radius: 7
+                            radius: Theme.scaledRadius(7)
                             color: Theme.background
                             border.color: Theme.border
                         }
@@ -873,7 +873,7 @@ Scope {
                         dim: false
                         y: dateButton.height + 4
                         width: 206
-                        padding: 8
+                        padding: Theme.scaledSpacing(8)
                         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
                         onOpened: {
                             dateMenuGuard.stop();
@@ -882,13 +882,13 @@ Scope {
                         onClosed: dateMenuGuard.restart()
 
                         background: Rectangle {
-                            radius: 7
+                            radius: Theme.scaledRadius(7)
                             color: Theme.background
                             border.color: Theme.border
                         }
 
                         contentItem: ColumnLayout {
-                            spacing: 4
+                            spacing: Theme.scaledSpacing(4)
 
                             RowLayout {
                                 Layout.fillWidth: true
@@ -952,7 +952,7 @@ Scope {
 
                                         Layout.preferredWidth: 24
                                         Layout.preferredHeight: 23
-                                        radius: 5
+                                        radius: Theme.scaledRadius(5)
                                         color: Qt.formatDate(day, "yyyyMMdd") === Qt.formatDate(editor.chosenDate, "yyyyMMdd") ? Theme.accent : hovered ? Theme.surfaceAlt : Theme.surface
                                         border.color: hovered ? Theme.withAlpha(Theme.foreground, 0.34) : "transparent"
                                         border.width: hovered ? 1 : 0
@@ -1026,7 +1026,7 @@ Scope {
                     color: Theme.foreground
                     font.family: Theme.bodyFontFamily
                     font.pixelSize: 12
-                    padding: 10
+                    padding: Theme.scaledSpacing(10)
                     wrapMode: TextEdit.Wrap
                     Keys.onTabPressed: function(event) {
                         calendarButton.forceActiveFocus();
@@ -1038,7 +1038,7 @@ Scope {
                     }
 
                     background: Rectangle {
-                        radius: 8
+                        radius: Theme.scaledRadius(8)
                         color: Theme.background
                         border.color: Theme.border
                     }
@@ -1051,7 +1051,7 @@ Scope {
 
                     ColumnLayout {
                         Layout.fillWidth: true
-                        spacing: 4
+                        spacing: Theme.scaledSpacing(4)
 
                         Text {
                             text: "Calendar"
@@ -1090,11 +1090,11 @@ Scope {
                             dim: false
                             y: -height - 4
                             width: 180
-                            padding: 4
+                            padding: Theme.scaledSpacing(4)
                             closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
 
                             background: Rectangle {
-                                radius: 7
+                                radius: Theme.scaledRadius(7)
                                 color: Theme.background
                                 border.color: Theme.border
                             }
@@ -1134,7 +1134,7 @@ Scope {
 
                     ColumnLayout {
                         Layout.preferredWidth: 112
-                        spacing: 4
+                        spacing: Theme.scaledSpacing(4)
 
                         Text {
                             text: "Colour"
@@ -1198,7 +1198,7 @@ Scope {
 
                                     Layout.preferredWidth: 18
                                     Layout.preferredHeight: 18
-                                    radius: 9
+                                    radius: Theme.scaledRadius(9)
                                     color: modelData.c
                                     border.color: activeFocus || editor.chosenColourId === modelData.id ? Theme.foreground : Theme.withAlpha(Theme.foreground, 0.2)
                                     border.width: activeFocus || editor.chosenColourId === modelData.id ? 3 : 1
@@ -1324,7 +1324,7 @@ Scope {
             readonly property bool recurring: !!(root.controller.deleteEvent && root.controller.deleteEvent.recurrence && root.controller.deleteEvent.recurrence.master_id)
 
             color: embedded ? Theme.withAlpha(Theme.background, 0.86) : Theme.surface
-            radius: embedded ? 0 : 12
+            radius: embedded ? 0 : Theme.scaledRadius(12)
             border.color: embedded ? "transparent" : Theme.border
             z: 100
 
@@ -1332,14 +1332,14 @@ Scope {
                 anchors.centerIn: parent
                 width: confirmation.embedded ? parent.width - 28 : parent.width
                 height: confirmation.embedded ? (confirmation.recurring ? 184 : 142) + (root.controller.deleteNotice ? 74 : 0) : parent.height
-                radius: confirmation.embedded ? 10 : confirmation.radius
+                radius: confirmation.embedded ? Theme.scaledRadius(10) : confirmation.radius
                 color: confirmation.embedded ? Theme.surface : "transparent"
                 border.color: confirmation.embedded ? Theme.border : "transparent"
 
                 ColumnLayout {
                     anchors.fill: parent
-                    anchors.margins: 14
-                    spacing: 9
+                    anchors.margins: Theme.scaledSpacing(14)
+                    spacing: Theme.scaledSpacing(9)
 
                     Text {
                         Layout.fillWidth: true

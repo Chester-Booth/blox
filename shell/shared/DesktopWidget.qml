@@ -87,7 +87,7 @@ Rectangle {
     // surrounding widget do not form two visibly different backgrounds, in
     // every theme rather than one.
     color: widget.type === "clock" ? "transparent" : Theme.withAlpha(widget.type === "aquarium" ? Theme.terminalCanvas : Theme.background, backgroundOpacity)
-    radius: widget.shape === "circle" ? Math.min(width, height) / 2 : widget.shape === "rounded" ? Math.max(10, Theme.widgetRadius) : widget.shape === "rectangle" ? 0 : Theme.widgetRadius
+    radius: widget.shape === "circle" ? Math.min(width, height) / 2 : widget.shape === "rounded" ? Math.max(Theme.scaledRadius(10), Theme.widgetRadius) : widget.shape === "rectangle" ? 0 : Theme.widgetRadius
 
     ScriptPoller {
         id: contentPoller

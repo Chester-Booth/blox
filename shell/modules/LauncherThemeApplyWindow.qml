@@ -22,8 +22,8 @@ FloatingWindow {
 
     Rectangle {
         anchors.fill: parent
-        anchors.margins: 1
-        radius: 9
+        anchors.margins: Theme.scaledSpacing(1)
+        radius: Theme.scaledRadius(9)
         color: Theme.background
         border.color: Theme.border
         border.width: 1
@@ -49,7 +49,7 @@ FloatingWindow {
 
             Text {
                 anchors.left: parent.left
-                anchors.leftMargin: 20
+                anchors.leftMargin: Theme.scaledSpacing(20)
                 anchors.verticalCenter: parent.verticalCenter
                 text: "Theme application"
                 color: Theme.muted
@@ -59,7 +59,7 @@ FloatingWindow {
 
             BloxButton {
                 anchors.right: parent.right
-                anchors.rightMargin: 12
+                anchors.rightMargin: Theme.scaledSpacing(12)
                 anchors.verticalCenter: parent.verticalCenter
                 text: controller.applyGuideTarget.length ? "Back" : controller.applyingTheme ? "Cancel" : "Close"
                 onClicked: {
@@ -85,7 +85,7 @@ FloatingWindow {
             anchors.right: parent.right
             anchors.top: titleBar.bottom
             anchors.bottom: parent.bottom
-            anchors.margins: 28
+            anchors.margins: Theme.scaledSpacing(28)
             visible: !controller.applyGuideTarget.length
             themeName: controller.applyingThemeName
             stages: controller.applyProgressStages
@@ -109,8 +109,8 @@ FloatingWindow {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: titleBar.bottom
-            anchors.margins: 28
-            spacing: 16
+            anchors.margins: Theme.scaledSpacing(28)
+            spacing: Theme.scaledSpacing(16)
             visible: controller.applyGuideTarget.length > 0
 
             Text {

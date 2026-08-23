@@ -38,7 +38,7 @@ Rectangle {
         anchors.centerIn: parent
         width: Math.min(parent.width - 160, 820)
         height: Math.min(parent.height - 160, 420)
-        spacing: 18
+        spacing: Theme.scaledSpacing(18)
 
         Text {
             Layout.fillWidth: true
@@ -113,7 +113,7 @@ Rectangle {
                         hideAnimation.restart();
                     }
 
-                    radius: 8
+                    radius: Theme.scaledRadius(8)
                     color: powerMouse.containsMouse ? Theme.withAlpha(Theme.surfaceAlt, 0.93) : Theme.withAlpha(Theme.surface, 0.87)
                     border.color: modelData.danger ? Theme.red : Theme.surfaceAlt
                     border.width: 1
@@ -142,7 +142,7 @@ Rectangle {
 
                     Column {
                         anchors.centerIn: parent
-                        spacing: 8
+                        spacing: Theme.scaledSpacing(8)
 
                         Text {
                             anchors.horizontalCenter: parent.horizontalCenter

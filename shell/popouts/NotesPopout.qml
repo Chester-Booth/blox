@@ -65,7 +65,7 @@ Rectangle {
     // After that, grow by the measured line width until the screen limit.
     width: Math.min(maxPopoutWidth, Math.max(320, Math.ceil(longestLineWidth) + 30))
     height: Math.min(maxPopoutHeight, Math.max(96, (editing ? lineCount * 15 : editor.contentHeight) + 74 + (actionError.length > 0 ? 24 : 0)))
-    radius: 8
+    radius: Theme.scaledRadius(8)
     color: Theme.background
     border.color: Theme.surfaceAlt
     border.width: 1
@@ -79,16 +79,16 @@ Rectangle {
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: 10
-        spacing: 8
+        anchors.margins: Theme.scaledSpacing(10)
+        spacing: Theme.scaledSpacing(8)
 
         RowLayout {
             Layout.fillWidth: true
-            spacing: 8
+            spacing: Theme.scaledSpacing(8)
             layoutDirection: root.headerActionsOnRight ? Qt.RightToLeft : Qt.LeftToRight
 
             Row {
-                spacing: 8
+                spacing: Theme.scaledSpacing(8)
 
                 Repeater {
                     model: [{
@@ -109,7 +109,7 @@ Rectangle {
                         width: modelData.icon === "" ? 0 : 30
                         height: 30
                         visible: modelData.icon !== ""
-                        radius: 5
+                        radius: Theme.scaledRadius(5)
                         color: (root.editing && (modelData.action === "prev" || modelData.action === "next")) ? "transparent" : noteMouse.containsMouse ? Theme.surfaceAlt : Theme.surface
                         border.color: Theme.surfaceAlt
                         border.width: 1
@@ -179,7 +179,7 @@ Rectangle {
         Rectangle {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            radius: 6
+            radius: Theme.scaledRadius(6)
             color: Theme.surface
             border.color: Theme.surfaceAlt
             border.width: 1
@@ -200,7 +200,7 @@ Rectangle {
                 }
 
                 anchors.fill: parent
-                anchors.margins: 4
+                anchors.margins: Theme.scaledSpacing(4)
                 contentWidth: Math.max(width, editor.contentWidth)
                 contentHeight: Math.max(height, editor.contentHeight)
                 clip: true

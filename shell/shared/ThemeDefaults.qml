@@ -33,7 +33,7 @@ QtObject {
             if (data.schema_version !== 1 || data.defaults_version !== 1 || !data.theme || !data.widgets)
                 throw new Error("unsupported or incomplete defaults document");
 
-            if (!data.theme.colours || !data.theme.fonts || !data.theme.shell || !data.theme.wallpaper || !data.theme.terminal)
+            if (!data.theme.colours || !data.theme.fonts || !data.theme.shape || !data.theme.shell || !data.theme.wallpaper || !data.theme.terminal)
                 throw new Error("defaults document has incomplete theme values");
 
             if (!data.theme.shell.bar || !Array.isArray(data.theme.shell.bar.items) || !Array.isArray(data.theme.shell.bar.reset_items))

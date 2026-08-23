@@ -34,5 +34,7 @@ ThemeApplyProgress 1.0 ThemeApplyProgress.qml
 PhosphorIcon 1.0 PhosphorIcon.qml
 BloxComboBox 1.0 BloxComboBox.qml
 BloxCheckBox 1.0 BloxCheckBox.qml
+BloxSlider 1.0 BloxSlider.qml
 BloxFontPicker 1.0 BloxFontPicker.qml
 DesktopWidget 1.0 DesktopWidget.qml
+Shape 1.0 Shape.js

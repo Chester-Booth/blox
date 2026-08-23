@@ -9,14 +9,14 @@ Rectangle {
 
     Layout.preferredWidth: 265
     Layout.fillHeight: true
-    radius: 8
+    radius: Theme.scaledRadius(8)
     color: Theme.surface
     border.color: Theme.border
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: 10
-        spacing: 8
+        anchors.margins: Theme.scaledSpacing(10)
+        spacing: Theme.scaledSpacing(8)
 
         BloxTextField {
             Layout.fillWidth: true
@@ -38,12 +38,12 @@ Rectangle {
 
                 y: parent.height + 5
                 width: parent.width
-                padding: 5
+                padding: Theme.scaledSpacing(5)
                 modal: false
                 closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
 
                 contentItem: Column {
-                    spacing: 4
+                    spacing: Theme.scaledSpacing(4)
 
                     BloxButton {
                         width: parent.width
@@ -66,7 +66,7 @@ Rectangle {
                 }
 
                 background: Rectangle {
-                    radius: 10
+                    radius: Theme.scaledRadius(10)
                     color: Theme.surfaceAlt
                     border.color: Theme.border
                 }
@@ -77,7 +77,7 @@ Rectangle {
 
         RowLayout {
             Layout.fillWidth: true
-            spacing: 6
+            spacing: Theme.scaledSpacing(6)
 
             BloxButton {
                 Layout.fillWidth: true
@@ -103,7 +103,7 @@ Rectangle {
             Layout.fillWidth: true
             Layout.fillHeight: true
             clip: true
-            spacing: 4
+            spacing: Theme.scaledSpacing(4)
             model: controller.filteredThemes()
             boundsBehavior: Flickable.StopAtBounds
 
@@ -125,7 +125,7 @@ Rectangle {
 
                 contentItem: Rectangle {
                     implicitWidth: 6
-                    radius: 3
+                    radius: Theme.scaledRadius(3)
                     color: Theme.withAlpha(Theme.muted, 0.68)
                 }
 
@@ -155,7 +155,7 @@ Rectangle {
 
                 width: themeList.width - (themeList.contentHeight > themeList.height ? 10 : 0)
                 height: 82
-                radius: 10
+                radius: Theme.scaledRadius(10)
                 color: selected ? previewSurface : mouse.containsMouse ? Qt.lighter(previewBackground, 1.13) : previewBackground
                 border.color: modelData.unsaved ? previewWarning : selected ? previewAccent : mouse.containsMouse ? previewForeground : modelData.id === Theme.activeThemeId ? previewAccent : previewSurfaceAlt
                 border.width: selected ? 2 : 1
@@ -169,13 +169,13 @@ Rectangle {
                     y: 8
                     width: themeDelegate.previewWidth
                     height: themeDelegate.height - 16
-                    radius: 7
+                    radius: Theme.scaledRadius(7)
                     color: themeDelegate.previewSurface
                     clip: true
 
                     Image {
                         anchors.fill: parent
-                        anchors.margins: 3
+                        anchors.margins: Theme.scaledSpacing(3)
                         source: themeDelegate.modelData.preview && themeDelegate.modelData.preview.wallpaper ? controller.localFileUrl(themeDelegate.modelData.preview.wallpaper) : ""
                         fillMode: Image.PreserveAspectCrop
                         visible: source.toString().length > 0
@@ -183,8 +183,8 @@ Rectangle {
 
                     Rectangle {
                         anchors.fill: parent
-                        anchors.margins: 3
-                        radius: 5
+                        anchors.margins: Theme.scaledSpacing(3)
+                        radius: Theme.scaledRadius(5)
                         color: "#18000000"
                     }
 
@@ -199,9 +199,9 @@ Rectangle {
 
                         Row {
                             anchors.left: parent.left
-                            anchors.leftMargin: 2
+                            anchors.leftMargin: Theme.scaledSpacing(2)
                             anchors.verticalCenter: parent.verticalCenter
-                            spacing: 1
+                            spacing: Theme.scaledSpacing(1)
                             visible: !themeDelegate.verticalBar
 
                             Repeater {
@@ -210,7 +210,7 @@ Rectangle {
                                 Rectangle {
                                     width: 2
                                     height: 2
-                                    radius: 1
+                                    radius: Theme.scaledRadius(1)
                                     color: themeDelegate.previewForeground
                                 }
 
@@ -220,7 +220,7 @@ Rectangle {
 
                         Row {
                             anchors.centerIn: parent
-                            spacing: 1
+                            spacing: Theme.scaledSpacing(1)
                             visible: !themeDelegate.verticalBar
 
                             Repeater {
@@ -229,7 +229,7 @@ Rectangle {
                                 Rectangle {
                                     width: 2
                                     height: 2
-                                    radius: 1
+                                    radius: Theme.scaledRadius(1)
                                     color: themeDelegate.previewAccent
                                 }
 
@@ -239,9 +239,9 @@ Rectangle {
 
                         Row {
                             anchors.right: parent.right
-                            anchors.rightMargin: 2
+                            anchors.rightMargin: Theme.scaledSpacing(2)
                             anchors.verticalCenter: parent.verticalCenter
-                            spacing: 1
+                            spacing: Theme.scaledSpacing(1)
                             visible: !themeDelegate.verticalBar
 
                             Repeater {
@@ -250,7 +250,7 @@ Rectangle {
                                 Rectangle {
                                     width: 2
                                     height: 2
-                                    radius: 1
+                                    radius: Theme.scaledRadius(1)
                                     color: themeDelegate.previewForeground
                                 }
 
@@ -260,9 +260,9 @@ Rectangle {
 
                         Column {
                             anchors.top: parent.top
-                            anchors.topMargin: 2
+                            anchors.topMargin: Theme.scaledSpacing(2)
                             anchors.horizontalCenter: parent.horizontalCenter
-                            spacing: 1
+                            spacing: Theme.scaledSpacing(1)
                             visible: themeDelegate.verticalBar
 
                             Repeater {
@@ -271,7 +271,7 @@ Rectangle {
                                 Rectangle {
                                     width: 2
                                     height: 2
-                                    radius: 1
+                                    radius: Theme.scaledRadius(1)
                                     color: themeDelegate.previewForeground
                                 }
 
@@ -281,7 +281,7 @@ Rectangle {
 
                         Column {
                             anchors.centerIn: parent
-                            spacing: 1
+                            spacing: Theme.scaledSpacing(1)
                             visible: themeDelegate.verticalBar
 
                             Repeater {
@@ -290,7 +290,7 @@ Rectangle {
                                 Rectangle {
                                     width: 2
                                     height: 2
-                                    radius: 1
+                                    radius: Theme.scaledRadius(1)
                                     color: themeDelegate.previewAccent
                                 }
 
@@ -300,9 +300,9 @@ Rectangle {
 
                         Column {
                             anchors.bottom: parent.bottom
-                            anchors.bottomMargin: 2
+                            anchors.bottomMargin: Theme.scaledSpacing(2)
                             anchors.horizontalCenter: parent.horizontalCenter
-                            spacing: 1
+                            spacing: Theme.scaledSpacing(1)
                             visible: themeDelegate.verticalBar
 
                             Repeater {
@@ -311,7 +311,7 @@ Rectangle {
                                 Rectangle {
                                     width: 2
                                     height: 2
-                                    radius: 1
+                                    radius: Theme.scaledRadius(1)
                                     color: themeDelegate.previewForeground
                                 }
 
@@ -354,7 +354,7 @@ Rectangle {
 
                         anchors.left: parent.left
                         anchors.bottom: parent.bottom
-                        spacing: 5
+                        spacing: Theme.scaledSpacing(5)
 
                         Repeater {
                             model: [themeDelegate.previewAccent, themeDelegate.previewSuccess, themeDelegate.previewWarning, themeDelegate.previewForeground]
@@ -364,7 +364,7 @@ Rectangle {
 
                                 width: Math.max(14, Math.min(24, (themeIdentity.width - 15) / 4))
                                 height: 6
-                                radius: 3
+                                radius: Theme.scaledRadius(3)
                                 color: modelData
                             }
 
@@ -375,9 +375,9 @@ Rectangle {
                     Text {
                         anchors.left: parent.left
                         anchors.right: parent.right
-                        anchors.rightMargin: 33
+                        anchors.rightMargin: Theme.scaledSpacing(33)
                         anchors.bottom: themePalette.top
-                        anchors.bottomMargin: 4
+                        anchors.bottomMargin: Theme.scaledSpacing(4)
                         height: 42
                         text: themeDelegate.modelData.name
                         color: themeDelegate.previewForeground
@@ -398,11 +398,11 @@ Rectangle {
                 Rectangle {
                     z: 2
                     anchors.right: parent.right
-                    anchors.rightMargin: 7
+                    anchors.rightMargin: Theme.scaledSpacing(7)
                     anchors.verticalCenter: parent.verticalCenter
                     width: 30
                     height: 34
-                    radius: 8
+                    radius: Theme.scaledRadius(8)
                     color: kebabMouse.containsMouse || themeActions.visible ? Theme.withAlpha(themeDelegate.previewAccent, 0.22) : "transparent"
 
                     PhosphorIcon {
@@ -428,7 +428,7 @@ Rectangle {
                     id: mouse
 
                     anchors.fill: parent
-                    anchors.rightMargin: 38
+                    anchors.rightMargin: Theme.scaledSpacing(38)
                     hoverEnabled: true
                     acceptedButtons: Qt.LeftButton | Qt.RightButton
                     onClicked: (event) => {
@@ -450,13 +450,13 @@ Rectangle {
                     y: 48
                     width: 154
                     height: actionColumn.implicitHeight + 8
-                    padding: 4
+                    padding: Theme.scaledSpacing(4)
                     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
 
                     contentItem: Column {
                         id: actionColumn
 
-                        spacing: 4
+                        spacing: Theme.scaledSpacing(4)
 
                         BloxButton {
                             width: parent.width
@@ -492,7 +492,7 @@ Rectangle {
                     }
 
                     background: Rectangle {
-                        radius: 10
+                        radius: Theme.scaledRadius(10)
                         color: Theme.surfaceAlt
                         border.color: Theme.border
                     }

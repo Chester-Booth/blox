@@ -13,7 +13,7 @@ Rectangle {
     signal actionTriggered()
 
     implicitHeight: content.implicitHeight + 20
-    radius: 8
+    radius: Theme.scaledRadius(8)
     color: Theme.withAlpha(tone, 0.12)
     border.color: tone
 
@@ -23,19 +23,19 @@ Rectangle {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
-        anchors.margins: 10
-        spacing: 9
+        anchors.margins: Theme.scaledSpacing(10)
+        spacing: Theme.scaledSpacing(9)
 
         Rectangle {
             Layout.preferredWidth: 7
             Layout.preferredHeight: 7
-            radius: 4
+            radius: Theme.scaledRadius(4)
             color: root.tone
         }
 
         ColumnLayout {
             Layout.fillWidth: true
-            spacing: 2
+            spacing: Theme.scaledSpacing(2)
 
             Text {
                 Layout.fillWidth: true

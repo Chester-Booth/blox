@@ -11,11 +11,11 @@ ColumnLayout {
 
     visible: controller.editorMode === "overview"
     Layout.fillWidth: true
-    spacing: 14
+    spacing: Theme.scaledSpacing(14)
 
     ColumnLayout {
         Layout.fillWidth: true
-        spacing: 6
+        spacing: Theme.scaledSpacing(6)
 
         Label {
             text: "Theme name"
@@ -27,7 +27,7 @@ ColumnLayout {
 
         RowLayout {
             Layout.fillWidth: true
-            spacing: 10
+            spacing: Theme.scaledSpacing(10)
 
             BloxTextField {
                 Layout.fillWidth: true
@@ -52,6 +52,151 @@ ColumnLayout {
                 Layout.maximumWidth: 260
             }
 
+        }
+
+        Label {
+            text: "Style"
+            color: Theme.foreground
+            font.family: Theme.bodyFontFamily
+            font.pixelSize: 17
+            font.bold: true
+        }
+
+        GridLayout {
+            Layout.fillWidth: true
+            columns: 3
+            columnSpacing: 10
+
+            Repeater {
+                model: [
+                    {"label": "Round", "value": 1.25},
+                    {"label": "Slightly round", "value": 0.65},
+                    {"label": "Square", "value": 0}
+                ]
+
+                Rectangle {
+                    id: styleChoice
+
+                    required property var modelData
+                    readonly property bool selected: Math.abs(controller.shapeValue("radius_scale", 1.25) - modelData.value) < 0.001
+
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 116
+                    radius: Theme.cardRadius
+                    color: selected ? Theme.withAlpha(Theme.accent, 0.14) : Theme.background
+                    border.color: selected ? Theme.accent : styleHover.hovered ? Theme.foreground : Theme.border
+                    border.width: selected ? 2 : 1
+
+                    ColumnLayout {
+                        anchors.fill: parent
+                        anchors.margins: Theme.scaledSpacing(8)
+                        spacing: Theme.scaledSpacing(6)
+
+                        Label {
+                            text: styleChoice.modelData.label
+                            color: Theme.foreground
+                            font.family: Theme.bodyFontFamily
+                            font.bold: true
+                        }
+
+                        ThemeShapePreview {
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            radiusScale: styleChoice.modelData.value
+                            densityScale: controller.shapeValue("density_scale", 1.0)
+                            windowGap: controller.effectiveWindowGap()
+                        }
+                    }
+
+                    HoverHandler {
+                        id: styleHover
+
+                        cursorShape: Qt.PointingHandCursor
+                    }
+
+                    TapHandler {
+                        onTapped: controller.setShapeValue("radius_scale", styleChoice.modelData.value)
+                    }
+                }
+            }
+        }
+
+        Label {
+            text: "Density"
+            color: Theme.foreground
+            font.family: Theme.bodyFontFamily
+            font.pixelSize: 17
+            font.bold: true
+        }
+
+        GridLayout {
+            Layout.fillWidth: true
+            columns: 3
+            columnSpacing: 10
+
+            Repeater {
+                model: [
+                    {"label": "Compact", "value": 0.75, "gap": 0},
+                    {"label": "Comfortable", "value": 1.0, "gap": 5},
+                    {"label": "Spacious", "value": 1.5, "gap": 15}
+                ]
+
+                Rectangle {
+                    id: densityChoice
+
+                    required property var modelData
+                    readonly property bool selected: Math.abs(controller.shapeValue("density_scale", 1.0) - modelData.value) < 0.001
+
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 116
+                    radius: Theme.cardRadius
+                    color: selected ? Theme.withAlpha(Theme.accent, 0.14) : Theme.background
+                    border.color: selected ? Theme.accent : densityHover.hovered ? Theme.foreground : Theme.border
+                    border.width: selected ? 2 : 1
+
+                    ColumnLayout {
+                        anchors.fill: parent
+                        anchors.margins: Theme.scaledSpacing(8)
+                        spacing: Theme.scaledSpacing(6)
+
+                        Label {
+                            text: densityChoice.modelData.label
+                            color: Theme.foreground
+                            font.family: Theme.bodyFontFamily
+                            font.bold: true
+                        }
+
+                        ThemeShapePreview {
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            radiusScale: controller.shapeValue("radius_scale", 1.25)
+                            densityScale: densityChoice.modelData.value
+                            windowGap: controller.candidate && controller.candidate.shape && controller.candidate.shape.window_gap !== undefined
+                                ? controller.candidate.shape.window_gap
+                                : densityChoice.modelData.gap
+                        }
+                    }
+
+                    HoverHandler {
+                        id: densityHover
+
+                        cursorShape: Qt.PointingHandCursor
+                    }
+
+                    TapHandler {
+                        onTapped: controller.setShapeValue("density_scale", densityChoice.modelData.value)
+                    }
+                }
+            }
+        }
+
+        Label {
+            text: "Hyprland rounding " + Math.round(12 * controller.shapeValue("radius_scale", 1.25))
+                + " px · gaps " + controller.effectiveWindowGap() + " px · GTK radius "
+                + Math.round(12 * controller.shapeValue("radius_scale", 1.25)) + " px"
+            color: Theme.muted
+            font.family: Theme.bodyFontFamily
+            font.pixelSize: 11
         }
 
         Label {
@@ -116,7 +261,7 @@ ColumnLayout {
 
     ColumnLayout {
         Layout.fillWidth: true
-        spacing: 12
+        spacing: Theme.scaledSpacing(12)
 
         Label {
             text: "Wallpaper"
@@ -168,7 +313,7 @@ ColumnLayout {
 
         Flow {
             Layout.fillWidth: true
-            spacing: 8
+            spacing: Theme.scaledSpacing(8)
 
             Repeater {
                 model: controller.semanticKeys
@@ -180,7 +325,7 @@ ColumnLayout {
 
                     width: 112
                     height: 72
-                    radius: 6
+                    radius: Theme.scaledRadius(6)
                     color: controller.candidate && controller.candidate.colours ? controller.validColour(controller.candidate.colours[modelData], "transparent") : "transparent"
                     border.color: Theme.withAlpha(Theme.foreground, 0.45)
 
@@ -205,7 +350,7 @@ ColumnLayout {
                         anchors.left: parent.left
                         anchors.right: parent.right
                         anchors.bottom: parent.bottom
-                        anchors.margins: 6
+                        anchors.margins: Theme.scaledSpacing(6)
                         text: modelData.replace(/_/g, " ")
                         color: controller.swatchText(parent.color)
                         font.family: Theme.fontFamily
@@ -230,7 +375,7 @@ ColumnLayout {
 
         Flow {
             Layout.fillWidth: true
-            spacing: 6
+            spacing: Theme.scaledSpacing(6)
 
             Repeater {
                 model: controller.ansiKeys
@@ -240,7 +385,7 @@ ColumnLayout {
 
                     width: 58
                     height: 34
-                    radius: 5
+                    radius: Theme.scaledRadius(5)
                     color: controller.previewData && controller.previewData.ansi ? controller.previewData.ansi[modelData] : "transparent"
                     border.color: Theme.border
 
@@ -310,14 +455,14 @@ ColumnLayout {
         Rectangle {
             Layout.fillWidth: true
             height: 116
-            radius: 7
+            radius: Theme.scaledRadius(7)
             color: Theme.background
             border.color: Theme.border
 
             Column {
                 anchors.fill: parent
-                anchors.margins: 12
-                spacing: 7
+                anchors.margins: Theme.scaledSpacing(12)
+                spacing: Theme.scaledSpacing(7)
 
                 Text {
                     text: "Interface — Notifications and theme picker 0123456789"

@@ -64,9 +64,9 @@ Item {
 
     Column {
         anchors.fill: parent
-        anchors.leftMargin: 8
-        anchors.rightMargin: 4
-        anchors.topMargin: 2
+        anchors.leftMargin: Theme.scaledSpacing(8)
+        anchors.rightMargin: Theme.scaledSpacing(4)
+        anchors.topMargin: Theme.scaledSpacing(2)
 
         Text {
             width: parent.width
@@ -103,7 +103,7 @@ Item {
 
     Item {
         anchors.fill: parent
-        anchors.bottomMargin: root.directManipulation && root.event && root.event.can_edit ? 8 : 0
+        anchors.bottomMargin: root.directManipulation && root.event && root.event.can_edit ? Theme.scaledSpacing(8) : 0
 
         TapHandler {
             id: bodyTap

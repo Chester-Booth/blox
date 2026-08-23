@@ -48,7 +48,7 @@ Rectangle {
 
     width: 360
     height: viewIndex === 0 ? monthViewHeight : dayViewHeight
-    radius: 9
+    radius: Theme.scaledRadius(9)
     color: Theme.background
     border.color: Theme.surfaceAlt
     clip: true
@@ -74,8 +74,8 @@ Rectangle {
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: 12
-        spacing: 8
+        anchors.margins: Theme.scaledSpacing(12)
+        spacing: Theme.scaledSpacing(8)
         opacity: root.transitionOpacity
 
         RowLayout {
@@ -111,7 +111,7 @@ Rectangle {
 
             ColumnLayout {
                 Layout.fillWidth: true
-                spacing: 0
+                spacing: Theme.scaledSpacing(0)
 
                 Text {
                     Layout.fillWidth: true

@@ -11,7 +11,7 @@ Rectangle {
 
     width: 34
     height: 34
-    radius: 8
+    radius: Theme.scaledRadius(8)
     color: active ? Theme.withAlpha(Theme.surfaceAlt, 0.33) : mouseArea.containsMouse ? Theme.surfaceAlt : "transparent"
 
     Text {

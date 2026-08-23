@@ -58,7 +58,7 @@ Item {
 
         x: 0
         width: root.toastWidth
-        spacing: 8
+        spacing: Theme.scaledSpacing(8)
 
         Repeater {
             model: root.toasts
@@ -113,7 +113,7 @@ Item {
                 width: root.toastWidth
                 height: toastBody.implicitHeight + 18
                 opacity: dismissing ? 0 : 1
-                radius: 8
+                radius: Theme.scaledRadius(8)
                 color: Theme.surface
                 border.color: notification && notification.urgency === NotificationUrgency.Critical ? Theme.red : Theme.surfaceAlt
                 border.width: 1
@@ -179,7 +179,7 @@ Item {
 
                     z: 1
                     anchors.fill: parent
-                    anchors.margins: 9
+                    anchors.margins: Theme.scaledSpacing(9)
                     notification: toast.notification
                     meta: toast.notification && toast.notification.appName ? toast.notification.appName + " • now" : "notification • now"
                     maximumBodyLineCount: 4
@@ -194,12 +194,12 @@ Item {
 
                     anchors.top: parent.top
                     anchors.right: parent.right
-                    anchors.topMargin: 9
-                    anchors.rightMargin: 9
+                    anchors.topMargin: Theme.scaledSpacing(9)
+                    anchors.rightMargin: Theme.scaledSpacing(9)
                     z: 4
                     width: 24
                     height: 24
-                    radius: 6
+                    radius: Theme.scaledRadius(6)
                     color: closeMouse.containsMouse ? Theme.surfaceAlt : "transparent"
 
                     Text {
@@ -216,7 +216,7 @@ Item {
                     id: toastMouse
 
                     anchors.fill: parent
-                    anchors.rightMargin: 42
+                    anchors.rightMargin: Theme.scaledSpacing(42)
                     z: 0
                     acceptedButtons: Qt.LeftButton
                     drag.target: toast
@@ -253,8 +253,8 @@ Item {
 
                     anchors.top: parent.top
                     anchors.right: parent.right
-                    anchors.topMargin: 6
-                    anchors.rightMargin: 6
+                    anchors.topMargin: Theme.scaledSpacing(6)
+                    anchors.rightMargin: Theme.scaledSpacing(6)
                     width: 36
                     height: 36
                     z: 5

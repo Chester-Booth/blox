@@ -250,10 +250,10 @@ PanelWindow {
             id: buttonRow
 
             anchors.right: parent.right
-            anchors.rightMargin: 10
+            anchors.rightMargin: Theme.scaledSpacing(10)
             anchors.top: parent.top
-            anchors.topMargin: 8
-            spacing: 8
+            anchors.topMargin: Theme.scaledSpacing(8)
+            spacing: Theme.scaledSpacing(8)
 
             BloxButton {
                 text: "Exit"
@@ -277,9 +277,9 @@ PanelWindow {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: buttonRow.bottom
-            anchors.leftMargin: 12
-            anchors.rightMargin: 12
-            anchors.topMargin: 14
+            anchors.leftMargin: Theme.scaledSpacing(12)
+            anchors.rightMargin: Theme.scaledSpacing(12)
+            anchors.topMargin: Theme.scaledSpacing(14)
             columns: 2
             columnSpacing: 10
             rowSpacing: 8
@@ -444,9 +444,9 @@ PanelWindow {
 
         PhosphorIcon {
             anchors.left: parent.left
-            anchors.leftMargin: 12
+            anchors.leftMargin: Theme.scaledSpacing(12)
             anchors.top: parent.top
-            anchors.topMargin: 17
+            anchors.topMargin: Theme.scaledSpacing(17)
             width: 18
             height: 18
             iconName: "dots-six-vertical"

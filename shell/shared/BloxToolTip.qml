@@ -15,7 +15,7 @@ Popup {
     dim: false
     focus: false
     closePolicy: Popup.NoAutoClose
-    padding: 7
+    padding: Theme.scaledSpacing(7)
     width: Math.max(40, Math.min(320, hostWindow ? hostWindow.width - 8 : 320, tooltipLabel.implicitWidth + leftPadding + rightPadding))
     onShownChanged: {
         if (shown) {
@@ -64,7 +64,7 @@ Popup {
     }
 
     background: Rectangle {
-        radius: 7
+        radius: Theme.scaledRadius(7)
         color: Theme.surfaceAlt
         border.color: Theme.border
         border.width: 1

@@ -70,8 +70,8 @@ FloatingWindow {
         id: card
 
         anchors.fill: parent
-        anchors.margins: 1
-        radius: 12
+        anchors.margins: Theme.scaledSpacing(1)
+        radius: Theme.scaledRadius(12)
         color: Theme.surface
         border.color: Theme.border
         clip: true
@@ -83,13 +83,13 @@ FloatingWindow {
 
         Column {
             anchors.fill: parent
-            anchors.margins: 10
-            spacing: 8
+            anchors.margins: Theme.scaledSpacing(10)
+            spacing: Theme.scaledSpacing(8)
 
             Row {
                 width: parent.width
                 height: 38
-                spacing: 8
+                spacing: Theme.scaledSpacing(8)
 
                 Text {
                     width: parent.width - searchButton.width - clearButton.width - 16
@@ -150,7 +150,7 @@ FloatingWindow {
 
                     PhosphorIcon {
                         anchors.left: parent.left
-                        anchors.leftMargin: 10
+                        anchors.leftMargin: Theme.scaledSpacing(10)
                         anchors.verticalCenter: parent.verticalCenter
                         width: 16
                         height: 16
@@ -185,7 +185,7 @@ FloatingWindow {
                 model: controller.items
                 clip: true
                 currentIndex: controller.selectedIndex
-                spacing: 7
+                spacing: Theme.scaledSpacing(7)
                 section.property: "group"
                 section.criteria: ViewSection.FullString
                 onContentYChanged: {
@@ -243,7 +243,7 @@ FloatingWindow {
 
                     width: ListView.view.width - (clipboardScrollbar.policy === ScrollBar.AlwaysOn ? 12 : 0)
                     height: modelData.payload_uri.length > 0 ? 190 : modelData.file_path.length > 0 ? 102 : Math.max(44, Math.min(300, itemText.implicitHeight + 22))
-                    radius: 9
+                    radius: Theme.scaledRadius(9)
                     color: itemCard.activeFocus || (itemHover.hovered && !menuHover.hovered) ? Theme.surfaceAlt : Theme.background
                     border.color: itemCard.activeFocus ? Theme.accent : itemHover.hovered && !menuHover.hovered ? Theme.withAlpha(Theme.foreground, 0.32) : Theme.border
                     border.width: itemCard.activeFocus ? 2 : 1
@@ -262,10 +262,10 @@ FloatingWindow {
                         anchors.right: parent.right
                         anchors.top: menuButton.bottom
                         anchors.bottom: parent.bottom
-                        anchors.leftMargin: 7
-                        anchors.rightMargin: 7
-                        anchors.topMargin: 7
-                        anchors.bottomMargin: 7
+                        anchors.leftMargin: Theme.scaledSpacing(7)
+                        anchors.rightMargin: Theme.scaledSpacing(7)
+                        anchors.topMargin: Theme.scaledSpacing(7)
+                        anchors.bottomMargin: Theme.scaledSpacing(7)
                         visible: modelData.payload_uri.length > 0
                         source: modelData.payload_uri
                         sourceSize.width: Math.min(1024, Math.ceil(width * Screen.devicePixelRatio))
@@ -280,9 +280,9 @@ FloatingWindow {
                         anchors.right: parent.right
                         anchors.top: menuButton.bottom
                         anchors.bottom: parent.bottom
-                        anchors.margins: 7
+                        anchors.margins: Theme.scaledSpacing(7)
                         visible: modelData.file_path.length > 0
-                        radius: 7
+                        radius: Theme.scaledRadius(7)
                         color: Theme.surface
                         border.color: Theme.border
 
@@ -290,7 +290,7 @@ FloatingWindow {
                             id: fileIcon
 
                             anchors.left: parent.left
-                            anchors.leftMargin: 10
+                            anchors.leftMargin: Theme.scaledSpacing(10)
                             anchors.verticalCenter: parent.verticalCenter
                             width: 20
                             height: 20
@@ -300,9 +300,9 @@ FloatingWindow {
 
                         Text {
                             anchors.left: fileIcon.right
-                            anchors.leftMargin: 8
+                            anchors.leftMargin: Theme.scaledSpacing(8)
                             anchors.right: parent.right
-                            anchors.rightMargin: 9
+                            anchors.rightMargin: Theme.scaledSpacing(9)
                             anchors.verticalCenter: parent.verticalCenter
                             text: modelData.file_path
                             color: Theme.foreground
@@ -315,9 +315,9 @@ FloatingWindow {
 
                     Text {
                         anchors.left: parent.left
-                        anchors.leftMargin: 11
+                        anchors.leftMargin: Theme.scaledSpacing(11)
                         anchors.right: menuButton.left
-                        anchors.rightMargin: 8
+                        anchors.rightMargin: Theme.scaledSpacing(8)
                         anchors.verticalCenter: menuButton.verticalCenter
                         visible: modelData.payload_uri.length > 0 || modelData.file_path.length > 0
                         text: (modelData.payload_uri.length > 0 ? "Image" : "File") + "  •  " + root.formatBytes(modelData.payload_uri.length > 0 ? modelData.size : modelData.file_size)
@@ -334,7 +334,7 @@ FloatingWindow {
                         anchors.right: menuButton.left
                         anchors.top: parent.top
                         anchors.bottom: parent.bottom
-                        anchors.margins: 11
+                        anchors.margins: Theme.scaledSpacing(11)
                         visible: modelData.payload_uri.length === 0 && modelData.file_path.length === 0
                         text: modelData.preview
                         color: Theme.foreground
@@ -350,10 +350,10 @@ FloatingWindow {
 
                         anchors.right: parent.right
                         anchors.top: parent.top
-                        anchors.margins: 7
+                        anchors.margins: Theme.scaledSpacing(7)
                         width: 32
                         height: 30
-                        radius: 7
+                        radius: Theme.scaledRadius(7)
                         color: menuHover.hovered ? Theme.surfaceAlt : Theme.surface
                         border.color: Theme.border
                         activeFocusOnTab: true
@@ -394,11 +394,11 @@ FloatingWindow {
                         x: itemCard.width - width - 6
                         y: windowPosition.y + menuButton.y + menuButton.height + height <= root.height - 6 ? menuButton.y + menuButton.height : menuButton.y - height
                         width: 142
-                        padding: 4
+                        padding: Theme.scaledSpacing(4)
                         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
 
                         contentItem: Column {
-                            spacing: 4
+                            spacing: Theme.scaledSpacing(4)
 
                             BloxButton {
                                 width: parent.width
@@ -411,7 +411,7 @@ FloatingWindow {
 
                                 PhosphorIcon {
                                     anchors.left: parent.left
-                                    anchors.leftMargin: 9
+                                    anchors.leftMargin: Theme.scaledSpacing(9)
                                     anchors.verticalCenter: parent.verticalCenter
                                     width: 15
                                     height: 15
@@ -433,7 +433,7 @@ FloatingWindow {
 
                                 PhosphorIcon {
                                     anchors.left: parent.left
-                                    anchors.leftMargin: 9
+                                    anchors.leftMargin: Theme.scaledSpacing(9)
                                     anchors.verticalCenter: parent.verticalCenter
                                     width: 15
                                     height: 15
@@ -446,7 +446,7 @@ FloatingWindow {
                         }
 
                         background: Rectangle {
-                            radius: 10
+                            radius: Theme.scaledRadius(10)
                             color: Theme.surfaceAlt
                             border.color: Theme.border
                         }

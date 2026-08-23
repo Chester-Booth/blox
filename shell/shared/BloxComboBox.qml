@@ -38,7 +38,7 @@ Rectangle {
 
     implicitHeight: 38
     implicitWidth: 132
-    radius: 9
+    radius: Theme.scaledRadius(9)
     color: pointer.pressed || popup.visible ? Theme.surfaceAlt : hovered ? Theme.withAlpha(Theme.surfaceAlt, 0.72) : Theme.background
     border.color: activeFocus || popup.visible ? Theme.blue : Theme.border
     border.width: activeFocus || popup.visible ? 2 : 1
@@ -65,8 +65,8 @@ Rectangle {
         anchors.left: parent.left
         anchors.right: indicator.left
         anchors.verticalCenter: parent.verticalCenter
-        anchors.leftMargin: 11
-        anchors.rightMargin: 8
+        anchors.leftMargin: Theme.scaledSpacing(11)
+        anchors.rightMargin: Theme.scaledSpacing(8)
         text: root.currentText
         color: Theme.foreground
         font.family: Theme.bodyFontFamily
@@ -80,7 +80,7 @@ Rectangle {
         property color strokeColour: root.hovered || popup.visible ? Theme.foreground : Theme.muted
 
         anchors.right: parent.right
-        anchors.rightMargin: 11
+        anchors.rightMargin: Theme.scaledSpacing(11)
         anchors.verticalCenter: parent.verticalCenter
         width: 18
         height: 18
@@ -130,7 +130,7 @@ Rectangle {
         y: root.height + 5
         width: root.width
         height: Math.min(260, list.contentHeight + 8)
-        padding: 4
+        padding: Theme.scaledSpacing(4)
         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
         onOpened: {
             list.currentIndex = Math.max(0, Math.min(root.model.length - 1, root.currentIndex));
@@ -167,14 +167,14 @@ Rectangle {
 
                 width: list.width
                 height: 36
-                radius: 7
+                radius: Theme.scaledRadius(7)
                 color: optionHover.hovered || index === list.currentIndex || index === root.currentIndex ? Theme.surfaceAlt : "transparent"
 
                 Text {
                     anchors.left: parent.left
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
-                    anchors.margins: 10
+                    anchors.margins: Theme.scaledSpacing(10)
                     text: modelData
                     color: index === root.currentIndex ? Theme.blue : Theme.foreground
                     font.family: Theme.bodyFontFamily
@@ -203,7 +203,7 @@ Rectangle {
         }
 
         background: Rectangle {
-            radius: 9
+            radius: Theme.scaledRadius(9)
             color: Theme.surface
             border.color: Theme.border
         }

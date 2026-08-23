@@ -28,6 +28,7 @@ from .core import (
     contrast_ratio,
     dependency_checks,
     derive_ansi,
+    derive_shape,
     list_themes,
     load_theme,
     is_builtin_theme_path,
@@ -604,6 +605,7 @@ def run(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     data = {
         "id": theme["id"], "name": theme["name"], "variant": theme["variant"],
         "colours": colours, "ansi": derive_ansi(theme), "fonts": theme["fonts"],
+        "shape": theme["shape"], "derived_shape": derive_shape(theme),
         "contrast": pairs, "enabled_targets": [name for name, enabled in theme["targets"].items() if enabled],
         "rendered_files": list(files),
     }

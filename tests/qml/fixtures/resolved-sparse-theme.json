@@ -27,6 +27,10 @@
   "id": "sparse",
   "name": "Sparse",
   "schema_version": 1,
+  "shape": {
+    "density_scale": 1.0,
+    "radius_scale": 1.25
+  },
   "shell": {
     "bar": {
       "items": [

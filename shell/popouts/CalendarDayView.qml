@@ -146,7 +146,7 @@ ColumnLayout {
     ListModel { id: timedEventModel; dynamicRoles: true }
     ListModel { id: allDayEventModel; dynamicRoles: true }
 
-    spacing: 5
+    spacing: Theme.scaledSpacing(5)
     onEditorOpenChanged: {
         if (!editorOpen && !draftSelecting) {
             draftVisible = false;
@@ -165,7 +165,7 @@ ColumnLayout {
         Layout.preferredHeight: 36
         Layout.minimumHeight: 36
         Layout.maximumHeight: 36
-        spacing: 3
+        spacing: Theme.scaledSpacing(3)
 
         Repeater {
             model: 7
@@ -177,7 +177,7 @@ ColumnLayout {
 
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                radius: 5
+                radius: Theme.scaledRadius(5)
                 color: chosen ? Theme.accent : Theme.surface
 
                 Column {
@@ -216,7 +216,7 @@ ColumnLayout {
         Layout.fillWidth: true
         Layout.preferredHeight: root.allDay.length ? root.allDay.length * 27 - 3 : 0
         visible: root.allDay.length > 0
-        spacing: 3
+        spacing: Theme.scaledSpacing(3)
 
         Repeater {
             model: allDayEventModel
@@ -328,16 +328,16 @@ ColumnLayout {
             width: root.draftSelecting ? timeline.width - 32 : laneWidth
             y: LayoutMath.timeToY(root.draftStart, root.bounds.start, root.bounds.end, timeline.height)
             height: Math.max(12, LayoutMath.timeToY(root.draftEnd - root.draftStart, 0, root.bounds.end - root.bounds.start, timeline.height))
-            radius: 5
+            radius: Theme.scaledRadius(5)
             color: Theme.withAlpha(Theme.accent, 0.18)
             border.color: Theme.accent
             z: 8
 
             Text {
                 anchors.left: parent.left
-                anchors.leftMargin: 5
+                anchors.leftMargin: Theme.scaledSpacing(5)
                 anchors.top: parent.top
-                anchors.topMargin: 3
+                anchors.topMargin: Theme.scaledSpacing(3)
                 text: root.time12(root.draftStart) + "–" + root.time12(root.draftEnd)
                 color: Theme.foreground
                 font.family: Theme.bodyFontFamily
@@ -429,7 +429,7 @@ ColumnLayout {
                 anchors.verticalCenter: parent.verticalCenter
                 width: 7
                 height: 7
-                radius: 4
+                radius: Theme.scaledRadius(4)
                 color: Theme.red
             }
 

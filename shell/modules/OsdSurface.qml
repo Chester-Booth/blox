@@ -59,7 +59,7 @@ Scope {
                     id: osdCard
 
                     anchors.fill: parent
-                    radius: 8
+                    radius: Theme.scaledRadius(8)
                     color: Theme.background
                     border.color: Theme.surfaceAlt
                     border.width: 1
@@ -67,8 +67,8 @@ Scope {
 
                     RowLayout {
                         anchors.fill: parent
-                        anchors.margins: 12
-                        spacing: 12
+                        anchors.margins: Theme.scaledSpacing(12)
+                        spacing: Theme.scaledSpacing(12)
 
                         Text {
                             Layout.preferredWidth: 34
@@ -81,11 +81,11 @@ Scope {
 
                         ColumnLayout {
                             Layout.fillWidth: true
-                            spacing: 8
+                            spacing: Theme.scaledSpacing(8)
 
                             RowLayout {
                                 Layout.fillWidth: true
-                                spacing: 8
+                                spacing: Theme.scaledSpacing(8)
                                 visible: !root.controller.noticeMode
 
                                 Text {
@@ -111,7 +111,7 @@ Scope {
 
                             ColumnLayout {
                                 Layout.fillWidth: true
-                                spacing: 1
+                                spacing: Theme.scaledSpacing(1)
                                 visible: root.controller.noticeMode
 
                                 Text {
@@ -138,14 +138,14 @@ Scope {
                             Rectangle {
                                 Layout.fillWidth: true
                                 Layout.preferredHeight: 8
-                                radius: 4
+                                radius: Theme.scaledRadius(4)
                                 color: Theme.surface
                                 visible: !root.controller.segmented
 
                                 Rectangle {
                                     width: Math.round(parent.width * root.controller.fillValue / 100)
                                     height: parent.height
-                                    radius: 4
+                                    radius: Theme.scaledRadius(4)
                                     color: root.controller.volumeOverdriven ? Theme.red : root.controller.muted ? Theme.yellow : root.controller.noticeMode ? root.controller.noticeAccent : Theme.blue
                                 }
 
@@ -153,7 +153,7 @@ Scope {
 
                             RowLayout {
                                 Layout.fillWidth: true
-                                spacing: 7
+                                spacing: Theme.scaledSpacing(7)
                                 visible: root.controller.segmented
 
                                 Repeater {
@@ -162,7 +162,7 @@ Scope {
                                     Rectangle {
                                         Layout.fillWidth: true
                                         Layout.preferredHeight: 8
-                                        radius: 4
+                                        radius: Theme.scaledRadius(4)
                                         color: index < root.controller.activeSegments ? Theme.blue : Theme.surface
                                     }
 

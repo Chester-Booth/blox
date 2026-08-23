@@ -17,7 +17,7 @@ THEMES = Path(__file__).resolve().parents[1]
 REPOSITORY = THEMES.parent
 sys.path.insert(0, str(THEMES / "lib"))
 
-from blox_theme.core import DEFAULT_BAR_ITEMS, dependency_checks, derive_ansi, list_themes, load_theme, render_manifest, render_theme, resolve_wallpaper_path, resolved_bar_items, schema_errors, themes_dir, validate_theme
+from blox_theme.core import DEFAULT_BAR_ITEMS, dependency_checks, derive_ansi, derive_shape, list_themes, load_theme, render_manifest, render_theme, resolve_wallpaper_path, resolved_bar_items, schema_errors, themes_dir, validate_theme
 
 
 def run_cli(*arguments: str, environment: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
@@ -114,6 +114,23 @@ class ThemeSchemaTests(unittest.TestCase):
             with self.subTest(name=name):
                 theme = copy.deepcopy(source)
                 mutate(theme)
+                self.assertTrue(schema_errors(theme))
+
+    def test_shape_bounds_fail_closed(self) -> None:
+        _, source = load_theme("catppuccin-mocha")
+        mutations = {
+            "negative radius": lambda shape: shape.update(radius_scale=-0.01),
+            "large radius": lambda shape: shape.update(radius_scale=2.01),
+            "small density": lambda shape: shape.update(density_scale=0.74),
+            "large density": lambda shape: shape.update(density_scale=1.51),
+            "negative gap": lambda shape: shape.update(window_gap=-1),
+            "large gap": lambda shape: shape.update(window_gap=31),
+            "fractional gap": lambda shape: shape.update(window_gap=2.5),
+        }
+        for name, mutate in mutations.items():
+            with self.subTest(name=name):
+                theme = copy.deepcopy(source)
+                mutate(theme["shape"])
                 self.assertTrue(schema_errors(theme))
 
     def test_widget_schema_rejects_invalid_identifiers_and_unknown_fields(self) -> None:
@@ -225,6 +242,7 @@ class RendererTests(unittest.TestCase):
         quickshell = json.loads(files["quickshell/theme.json"])
         self.assertEqual(self.theme["colours"], quickshell["colours"])
         self.assertEqual(self.theme["terminal"], quickshell["terminal"])
+        self.assertEqual(self.theme["shape"], quickshell["shape"])
         self.assertEqual(derive_ansi(self.theme), quickshell["ansi"])
         wallpaper = json.loads(files["hypr/wallpaper.json"])
         self.assertEqual(str(resolve_wallpaper_path(self.theme["wallpaper"]["path"], self.path)), wallpaper["path"])
@@ -242,6 +260,33 @@ class RendererTests(unittest.TestCase):
         }
         self.assertTrue(phase7.issubset(files))
         self.assertIn("code/settings.json", files)
+
+    def test_shape_derivation_drives_quickshell_hyprland_and_gtk(self) -> None:
+        cases = (
+            (0, 0.75, None, 0, 0),
+            (0.65, 1.0, None, 8, 5),
+            (1.25, 1.5, None, 15, 15),
+            (2, 1.0, 30, 24, 30),
+        )
+        for radius_scale, density_scale, window_gap, expected_radius, expected_gap in cases:
+            with self.subTest(radius=radius_scale, density=density_scale, gap=window_gap):
+                theme = copy.deepcopy(self.theme)
+                theme["shape"] = {"radius_scale": radius_scale, "density_scale": density_scale}
+                if window_gap is not None:
+                    theme["shape"]["window_gap"] = window_gap
+
+                derived = derive_shape(theme)
+                self.assertEqual(expected_radius, derived["hyprland_rounding"])
+                self.assertEqual(expected_radius, derived["gtk_radius"])
+                self.assertEqual(expected_gap, derived["hyprland_gap"])
+
+                files, _ = render_theme(theme)
+                self.assertEqual(theme["shape"], json.loads(files["quickshell/theme.json"])["shape"])
+                self.assertIn(f"gaps_in = {expected_gap},", files["hyprland/theme.lua"])
+                self.assertIn(f"gaps_out = {expected_gap},", files["hyprland/theme.lua"])
+                self.assertIn(f"rounding = {expected_radius},", files["hyprland/theme.lua"])
+                self.assertIn(f"border-radius: {expected_radius}px;", files["gtk/gtk-3.0/gtk.css"])
+                self.assertIn(f"border-radius: {expected_radius}px;", files["gtk/gtk-4.0/gtk.css"])
 
     def test_code_target_renders_complete_extension(self) -> None:
         self.theme["targets"]["code"] = True

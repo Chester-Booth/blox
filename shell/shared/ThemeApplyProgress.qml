@@ -86,14 +86,14 @@ Item {
 
     ColumnLayout {
         anchors.fill: parent
-        spacing: 12
+        spacing: Theme.scaledSpacing(12)
 
         RowLayout {
             Layout.fillWidth: true
 
             ColumnLayout {
                 Layout.fillWidth: true
-                spacing: 2
+                spacing: Theme.scaledSpacing(2)
 
                 Text {
                     text: root.complete ? root.themeName + " applied" : "Applying " + root.themeName
@@ -127,7 +127,7 @@ Item {
         Rectangle {
             Layout.fillWidth: true
             Layout.preferredHeight: 10
-            radius: 5
+            radius: Theme.scaledRadius(5)
             color: Theme.surfaceAlt
 
             Rectangle {
@@ -164,7 +164,7 @@ Item {
 
                     Layout.fillWidth: true
                     Layout.preferredHeight: 82
-                    radius: 8
+                    radius: Theme.scaledRadius(8)
                     color: modelData.state === "active" ? Theme.surfaceAlt : Theme.surface
                     border.color: modelData.state === "active" ? Theme.blue : Theme.border
                     border.width: modelData.state === "active" ? 2 : 1
@@ -174,7 +174,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         width: 30
                         height: 30
-                        radius: 15
+                        radius: Theme.scaledRadius(15)
                         color: Theme.withAlpha(root.stateColour(modelData.state), 0.16)
 
                         PhosphorIcon {
@@ -253,7 +253,7 @@ Item {
 
                         Layout.fillWidth: true
                         Layout.preferredHeight: 49
-                        radius: 7
+                        radius: Theme.scaledRadius(7)
                         color: modelData.state === "active" ? Theme.surfaceAlt : Theme.surface
                         border.color: modelData.state === "active" ? Theme.blue : Theme.border
                         border.width: modelData.state === "active" ? 2 : 1
@@ -263,7 +263,7 @@ Item {
                             anchors.verticalCenter: parent.verticalCenter
                             width: 26
                             height: 26
-                            radius: 13
+                            radius: Theme.scaledRadius(13)
                             color: Theme.withAlpha(root.stateColour(modelData.state), 0.16)
 
                             PhosphorIcon {
@@ -316,7 +316,7 @@ Item {
                         BloxButton {
                             visible: modelData.state === "manual" || root.complete && modelData.state === "failed"
                             anchors.right: parent.right
-                            anchors.rightMargin: 8
+                            anchors.rightMargin: Theme.scaledSpacing(8)
                             anchors.verticalCenter: parent.verticalCenter
                             height: 27
                             text: modelData.state === "failed" ? "Retry" : "Guide"

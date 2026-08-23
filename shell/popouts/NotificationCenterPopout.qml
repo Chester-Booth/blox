@@ -51,7 +51,7 @@ Rectangle {
 
     width: 360
     height: Math.min(root.maxPopoutHeight, Math.max(220, content.implicitHeight + 26))
-    radius: 8
+    radius: Theme.scaledRadius(8)
     color: Theme.background
     border.color: Theme.surfaceAlt
     border.width: 1
@@ -67,13 +67,13 @@ Rectangle {
         id: content
 
         anchors.fill: parent
-        anchors.margins: 12
-        spacing: 10
+        anchors.margins: Theme.scaledSpacing(12)
+        spacing: Theme.scaledSpacing(10)
 
         Row {
             width: parent.width
             height: 34
-            spacing: 8
+            spacing: Theme.scaledSpacing(8)
 
             Item {
                 width: 22
@@ -92,7 +92,7 @@ Rectangle {
             Column {
                 width: parent.width - clearButton.width - dndSwitch.width - 46
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: 1
+                spacing: Theme.scaledSpacing(1)
 
                 Text {
                     width: parent.width
@@ -144,7 +144,7 @@ Rectangle {
 
                 width: 30
                 height: 30
-                radius: 7
+                radius: Theme.scaledRadius(7)
                 color: clearMouse.containsMouse ? Theme.surfaceAlt : Theme.surface
                 border.color: Theme.surfaceAlt
                 border.width: 1
@@ -213,7 +213,7 @@ Rectangle {
                 id: listContent
 
                 width: notificationList.width - (notificationList.needsScrollbar ? notificationList.scrollbarGutter : 0)
-                spacing: 8
+                spacing: Theme.scaledSpacing(8)
 
                 Text {
                     width: parent.width
@@ -223,8 +223,8 @@ Rectangle {
                     font.family: Theme.bodyFontFamily
                     font.pixelSize: 13
                     horizontalAlignment: Text.AlignHCenter
-                    topPadding: 22
-                    bottomPadding: 22
+                    topPadding: Theme.scaledSpacing(22)
+                    bottomPadding: Theme.scaledSpacing(22)
                 }
 
                 Repeater {
@@ -295,7 +295,7 @@ Rectangle {
         scale: removing ? 0.985 : 1
         opacity: removing ? 0 : 1
         transformOrigin: Item.Right
-        radius: 8
+        radius: Theme.scaledRadius(8)
         color: Theme.surface
         border.color: notification && notification.urgency === NotificationUrgency.Critical ? Theme.red : Theme.surfaceAlt
         border.width: 1
@@ -332,7 +332,7 @@ Rectangle {
 
             z: 1
             anchors.fill: parent
-            anchors.margins: 9
+            anchors.margins: Theme.scaledSpacing(9)
             notification: card.notification
             meta: root.notificationMeta(card.notification)
             maximumBodyLineCount: 4
@@ -347,12 +347,12 @@ Rectangle {
 
             anchors.top: parent.top
             anchors.right: parent.right
-            anchors.topMargin: 9
-            anchors.rightMargin: 9
+            anchors.topMargin: Theme.scaledSpacing(9)
+            anchors.rightMargin: Theme.scaledSpacing(9)
             z: 4
             width: 24
             height: 24
-            radius: 6
+            radius: Theme.scaledRadius(6)
             color: closeMouse.containsMouse ? Theme.surfaceAlt : "transparent"
 
             Text {

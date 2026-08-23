@@ -85,7 +85,7 @@ Column {
         return Quickshell.iconPath(action.identifier, true);
     }
 
-    spacing: 6
+    spacing: Theme.scaledSpacing(6)
     onNotificationChanged: refreshActions()
     Component.onCompleted: refreshActions()
 
@@ -102,7 +102,7 @@ Column {
         id: notificationRow
 
         width: parent.width
-        spacing: notificationThumbnail.visible ? 8 : 0
+        spacing: notificationThumbnail.visible ? Theme.scaledSpacing(8) : 0
 
         Image {
             id: notificationThumbnail
@@ -126,11 +126,11 @@ Column {
 
         Column {
             width: parent.width - notificationThumbnail.width - parent.spacing
-            spacing: 6
+            spacing: Theme.scaledSpacing(6)
 
             Row {
                 width: parent.width - root.headerRightPadding
-                spacing: appIconSlot.visible ? 8 : 0
+                spacing: appIconSlot.visible ? Theme.scaledSpacing(8) : 0
 
                 Item {
                     id: appIconSlot
@@ -179,7 +179,7 @@ Column {
     Flow {
         width: parent.width
         visible: root.hasActions
-        spacing: 6
+        spacing: Theme.scaledSpacing(6)
 
         Repeater {
             model: root.actionItems
@@ -189,7 +189,7 @@ Column {
 
                 width: Math.min(parent.width, Math.max(76, actionRow.implicitWidth + 20))
                 height: 28
-                radius: 7
+                radius: Theme.scaledRadius(7)
                 color: actionMouse.containsMouse ? Theme.surfaceAlt : Theme.background
                 border.color: Theme.surfaceAlt
                 border.width: 1
@@ -198,7 +198,7 @@ Column {
                     id: actionRow
 
                     anchors.centerIn: parent
-                    spacing: actionIcon.visible ? 5 : 0
+                    spacing: actionIcon.visible ? Theme.scaledSpacing(5) : 0
 
                     Image {
                         id: actionIcon

@@ -35,7 +35,7 @@ Rectangle {
 
     width: 330
     height: Math.min(520, Math.max(178, content.implicitHeight + 24))
-    radius: 8
+    radius: Theme.scaledRadius(8)
     color: Theme.background
     border.color: Theme.surfaceAlt
     border.width: 1
@@ -55,12 +55,12 @@ Rectangle {
         id: content
 
         anchors.fill: parent
-        anchors.margins: 12
-        spacing: 12
+        anchors.margins: Theme.scaledSpacing(12)
+        spacing: Theme.scaledSpacing(12)
 
         Column {
             Layout.preferredWidth: 38
-            spacing: 8
+            spacing: Theme.scaledSpacing(8)
 
             Repeater {
                 model: [{
@@ -91,16 +91,16 @@ Rectangle {
 
         ColumnLayout {
             Layout.fillWidth: true
-            spacing: 10
+            spacing: Theme.scaledSpacing(10)
 
             RowLayout {
                 Layout.fillWidth: true
-                spacing: 10
+                spacing: Theme.scaledSpacing(10)
 
                 Rectangle {
                     width: 30
                     height: 30
-                    radius: 7
+                    radius: Theme.scaledRadius(7)
                     color: controller.currentMode() === "audio" && headerIconMouse.containsMouse ? Theme.surfaceAlt : "transparent"
 
                     Text {
@@ -125,7 +125,7 @@ Rectangle {
 
                 ColumnLayout {
                     Layout.fillWidth: true
-                    spacing: 2
+                    spacing: Theme.scaledSpacing(2)
 
                     Text {
                         Layout.fillWidth: true
@@ -150,7 +150,7 @@ Rectangle {
                 Rectangle {
                     width: 30
                     height: 30
-                    radius: 7
+                    radius: Theme.scaledRadius(7)
                     color: cogMouse.containsMouse ? Theme.surfaceAlt : Theme.surface
                     border.color: Theme.surfaceAlt
                     border.width: 1

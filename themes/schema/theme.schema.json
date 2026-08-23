@@ -4,12 +4,21 @@
   "title": "Blox theme",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "id", "name", "variant", "targets", "fonts", "colours", "wallpaper", "gtk", "icons", "cursor", "terminal"],
+  "required": ["schema_version", "id", "name", "variant", "shape", "targets", "fonts", "colours", "wallpaper", "gtk", "icons", "cursor", "terminal"],
   "properties": {
     "schema_version": {"const": 1},
     "id": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$", "minLength": 1, "maxLength": 64},
     "name": {"type": "string", "minLength": 1, "maxLength": 80},
     "variant": {"enum": ["dark", "light"]},
+    "shape": {
+      "type": "object", "additionalProperties": false,
+      "required": ["radius_scale", "density_scale"],
+      "properties": {
+        "radius_scale": {"type": "number", "minimum": 0, "maximum": 2},
+        "density_scale": {"type": "number", "minimum": 0.75, "maximum": 1.5},
+        "window_gap": {"type": "integer", "minimum": 0, "maximum": 30}
+      }
+    },
     "shell": {
       "type": "object", "additionalProperties": false,
       "required": ["bar", "osd", "notifications"],

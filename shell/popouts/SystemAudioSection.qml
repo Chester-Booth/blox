@@ -9,7 +9,7 @@ ColumnLayout {
 
     Layout.fillWidth: true
     visible: controller.currentMode() === "audio"
-    spacing: 10
+    spacing: Theme.scaledSpacing(10)
 
     SystemLevelSlider {
         Layout.fillWidth: true

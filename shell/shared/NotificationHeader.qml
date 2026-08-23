@@ -6,7 +6,7 @@ Column {
     property string summary: ""
     property string meta: ""
 
-    spacing: 1
+    spacing: Theme.scaledSpacing(1)
 
     Text {
         width: parent.width

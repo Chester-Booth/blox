@@ -2,6 +2,7 @@ import "../shared"
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import "../shared/Shape.js" as Shape
 
 Scope {
     id: root
@@ -541,6 +542,40 @@ Scope {
         const next = cloneCandidate();
         next.fonts[key] = value;
         markCandidate(next);
+    }
+
+    function shapeValue(key, fallback) {
+        return candidate && candidate.shape && candidate.shape[key] !== undefined
+            ? candidate.shape[key]
+            : fallback;
+    }
+
+    function effectiveWindowGap() {
+        return candidate && candidate.shape ? Shape.effectiveWindowGap(candidate.shape) : 5;
+    }
+
+    function setShapeValue(key, value) {
+        if (!candidate)
+            return;
+
+        const next = cloneCandidate();
+        next.shape = next.shape || {"radius_scale": 1.25, "density_scale": 1.0};
+        if (value === null || value === undefined)
+            delete next.shape[key];
+        else
+            next.shape[key] = value;
+        markCandidate(next);
+    }
+
+    function setAutomaticWindowGap(automatic) {
+        if (!candidate)
+            return;
+
+        if (automatic) {
+            setShapeValue("window_gap", null);
+            return;
+        }
+        setShapeValue("window_gap", effectiveWindowGap());
     }
 
     function setWidgetProfile(value) {

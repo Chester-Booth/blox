@@ -13,7 +13,7 @@ Rectangle {
 
     width: 240
     height: Math.min(420, Math.max(44, trayMenuContent.implicitHeight + 16))
-    radius: 8
+    radius: Theme.scaledRadius(8)
     color: Theme.background
     border.color: Theme.surfaceAlt
     border.width: 1
@@ -29,8 +29,8 @@ Rectangle {
         id: trayMenuContent
 
         anchors.fill: parent
-        anchors.margins: 8
-        spacing: 2
+        anchors.margins: Theme.scaledSpacing(8)
+        spacing: Theme.scaledSpacing(2)
 
         Text {
             width: parent.width
@@ -49,7 +49,7 @@ Rectangle {
             Rectangle {
                 width: parent.width
                 height: modelData.isSeparator ? 7 : 28
-                radius: 5
+                radius: Theme.scaledRadius(5)
                 color: !modelData.isSeparator && trayEntryMouse.containsMouse && modelData.enabled ? Theme.surfaceAlt : "transparent"
                 opacity: modelData.enabled ? 1 : 0.45
 
@@ -64,9 +64,9 @@ Rectangle {
 
                 Text {
                     anchors.left: parent.left
-                    anchors.leftMargin: 8
+                    anchors.leftMargin: Theme.scaledSpacing(8)
                     anchors.right: parent.right
-                    anchors.rightMargin: 8
+                    anchors.rightMargin: Theme.scaledSpacing(8)
                     anchors.verticalCenter: parent.verticalCenter
                     text: modelData.text || ""
                     color: Theme.foreground

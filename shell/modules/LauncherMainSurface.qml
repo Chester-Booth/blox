@@ -59,7 +59,7 @@ PanelWindow {
         height: controller.query.startsWith("%") ? 650 : controller.query.length || (controller.dmenuMode && controller.results.length) ? (controller.dmenuMode && controller.dmenuLimit > 0 ? Math.min(520, 78 + controller.dmenuLimit * 58) : 520) : 62
         x: (root.width - width) / 2
         y: controller.dmenuMode && controller.dmenuBottom ? root.height - height - 20 : controller.query.startsWith("%") ? (root.height - height) / 2 : (root.height - 520) / 2
-        radius: 9
+        radius: Theme.scaledRadius(9)
         color: Theme.background
         border.color: Theme.withAlpha(Theme.foreground, 0.2)
         border.width: 1
@@ -76,8 +76,8 @@ PanelWindow {
             anchors.right: parent.right
             anchors.top: parent.top
             height: 61
-            leftPadding: 16
-            rightPadding: 16
+            leftPadding: Theme.scaledSpacing(16)
+            rightPadding: Theme.scaledSpacing(16)
             color: Theme.foreground
             selectionColor: Theme.withAlpha(Theme.blue, 0.5)
             selectedTextColor: Theme.foreground
@@ -135,8 +135,8 @@ PanelWindow {
             anchors.right: parent.right
             anchors.top: controller.calculation.length ? calculator.bottom : search.bottom
             anchors.bottom: parent.bottom
-            anchors.margins: 8
-            spacing: 3
+            anchors.margins: Theme.scaledSpacing(8)
+            spacing: Theme.scaledSpacing(3)
             clip: true
             model: controller.results
             visible: !controller.themesLoading && controller.themesError.length === 0
@@ -194,7 +194,7 @@ PanelWindow {
 
                 width: ListView.view.width - (resultScrollbar.policy === ScrollBar.AlwaysOn ? 12 : 0)
                 height: themeResult ? 106 : 55
-                radius: 7
+                radius: Theme.scaledRadius(7)
                 color: themeResult ? previewBackground : (!controller.calculationSelected && index === controller.selectedIndex) || resultHover.hovered ? Theme.surfaceAlt : Theme.surface
                 border.width: themeResult && index === controller.selectedIndex ? 2 : 1
                 border.color: themeResult ? index === controller.selectedIndex || themeData.id === Theme.activeThemeId ? previewAccent : resultHover.hovered ? previewForeground : previewSurfaceAlt : resultHover.hovered ? Theme.withAlpha(Theme.foreground, 0.32) : Theme.border
@@ -203,9 +203,9 @@ PanelWindow {
                 Row {
                     visible: !resultCard.themeResult
                     anchors.fill: parent
-                    anchors.leftMargin: 10
-                    anchors.rightMargin: 12
-                    spacing: modelData.kind === "dmenu" ? 0 : 12
+                    anchors.leftMargin: Theme.scaledSpacing(10)
+                    anchors.rightMargin: Theme.scaledSpacing(12)
+                    spacing: modelData.kind === "dmenu" ? 0 : Theme.scaledSpacing(12)
 
                     Item {
                         width: modelData.kind === "dmenu" ? 0 : 34
@@ -236,7 +236,7 @@ PanelWindow {
                     Column {
                         width: modelData.kind === "dmenu" ? parent.width : parent.width - 142
                         anchors.verticalCenter: parent.verticalCenter
-                        spacing: 2
+                        spacing: Theme.scaledSpacing(2)
 
                         Text {
                             width: parent.width
@@ -264,7 +264,7 @@ PanelWindow {
                 Text {
                     visible: !resultCard.themeResult && modelData.kind !== "dmenu"
                     anchors.right: parent.right
-                    anchors.rightMargin: 12
+                    anchors.rightMargin: Theme.scaledSpacing(12)
                     anchors.verticalCenter: parent.verticalCenter
                     text: modelData.kind === "category" ? "Category" : modelData.kind === "theme-action" ? "Settings" : modelData.kind === "command" ? "Command" : "Application"
                     color: Theme.muted
@@ -280,7 +280,7 @@ PanelWindow {
                     y: 9
                     width: 208
                     height: 88
-                    radius: 7
+                    radius: Theme.scaledRadius(7)
                     color: resultCard.previewSurface
                     border.color: resultCard.previewSurfaceAlt
                     border.width: 1
@@ -288,7 +288,7 @@ PanelWindow {
 
                     Image {
                         anchors.fill: parent
-                        anchors.margins: 3
+                        anchors.margins: Theme.scaledSpacing(3)
                         source: resultCard.themeResult && resultCard.themeData.preview ? controller.localFileUrl(resultCard.themeData.preview.wallpaper) : ""
                         fillMode: Image.PreserveAspectCrop
                         asynchronous: true
@@ -296,7 +296,7 @@ PanelWindow {
 
                     Rectangle {
                         anchors.fill: parent
-                        anchors.margins: 3
+                        anchors.margins: Theme.scaledSpacing(3)
                         color: "#18000000"
                     }
 
@@ -311,9 +311,9 @@ PanelWindow {
 
                         Row {
                             anchors.left: parent.left
-                            anchors.leftMargin: 2
+                            anchors.leftMargin: Theme.scaledSpacing(2)
                             anchors.verticalCenter: parent.verticalCenter
-                            spacing: 1
+                            spacing: Theme.scaledSpacing(1)
                             visible: !resultCard.verticalBar
 
                             Repeater {
@@ -322,7 +322,7 @@ PanelWindow {
                                 Rectangle {
                                     width: 2
                                     height: 2
-                                    radius: 1
+                                    radius: Theme.scaledRadius(1)
                                     color: resultCard.previewForeground
                                 }
 
@@ -332,7 +332,7 @@ PanelWindow {
 
                         Row {
                             anchors.centerIn: parent
-                            spacing: 1
+                            spacing: Theme.scaledSpacing(1)
                             visible: !resultCard.verticalBar
 
                             Repeater {
@@ -341,7 +341,7 @@ PanelWindow {
                                 Rectangle {
                                     width: 2
                                     height: 2
-                                    radius: 1
+                                    radius: Theme.scaledRadius(1)
                                     color: resultCard.previewAccent
                                 }
 
@@ -351,9 +351,9 @@ PanelWindow {
 
                         Row {
                             anchors.right: parent.right
-                            anchors.rightMargin: 2
+                            anchors.rightMargin: Theme.scaledSpacing(2)
                             anchors.verticalCenter: parent.verticalCenter
-                            spacing: 1
+                            spacing: Theme.scaledSpacing(1)
                             visible: !resultCard.verticalBar
 
                             Repeater {
@@ -362,7 +362,7 @@ PanelWindow {
                                 Rectangle {
                                     width: 2
                                     height: 2
-                                    radius: 1
+                                    radius: Theme.scaledRadius(1)
                                     color: resultCard.previewForeground
                                 }
 
@@ -372,9 +372,9 @@ PanelWindow {
 
                         Column {
                             anchors.top: parent.top
-                            anchors.topMargin: 2
+                            anchors.topMargin: Theme.scaledSpacing(2)
                             anchors.horizontalCenter: parent.horizontalCenter
-                            spacing: 1
+                            spacing: Theme.scaledSpacing(1)
                             visible: resultCard.verticalBar
 
                             Repeater {
@@ -383,7 +383,7 @@ PanelWindow {
                                 Rectangle {
                                     width: 2
                                     height: 2
-                                    radius: 1
+                                    radius: Theme.scaledRadius(1)
                                     color: resultCard.previewForeground
                                 }
 
@@ -393,7 +393,7 @@ PanelWindow {
 
                         Column {
                             anchors.centerIn: parent
-                            spacing: 1
+                            spacing: Theme.scaledSpacing(1)
                             visible: resultCard.verticalBar
 
                             Repeater {
@@ -402,7 +402,7 @@ PanelWindow {
                                 Rectangle {
                                     width: 2
                                     height: 2
-                                    radius: 1
+                                    radius: Theme.scaledRadius(1)
                                     color: resultCard.previewAccent
                                 }
 
@@ -412,9 +412,9 @@ PanelWindow {
 
                         Column {
                             anchors.bottom: parent.bottom
-                            anchors.bottomMargin: 2
+                            anchors.bottomMargin: Theme.scaledSpacing(2)
                             anchors.horizontalCenter: parent.horizontalCenter
-                            spacing: 1
+                            spacing: Theme.scaledSpacing(1)
                             visible: resultCard.verticalBar
 
                             Repeater {
@@ -423,7 +423,7 @@ PanelWindow {
                                 Rectangle {
                                     width: 2
                                     height: 2
-                                    radius: 1
+                                    radius: Theme.scaledRadius(1)
                                     color: resultCard.previewForeground
                                 }
 
@@ -462,7 +462,7 @@ PanelWindow {
                     visible: resultCard.themeResult
                     x: 234
                     y: 76
-                    spacing: 5
+                    spacing: Theme.scaledSpacing(5)
 
                     Repeater {
                         model: [resultCard.previewAccent, resultCard.previewSuccess, resultCard.previewWarning, resultCard.previewForeground]
@@ -472,7 +472,7 @@ PanelWindow {
 
                             width: 24
                             height: 6
-                            radius: 3
+                            radius: Theme.scaledRadius(3)
                             color: modelData
                         }
 
@@ -483,7 +483,7 @@ PanelWindow {
                 Text {
                     visible: resultCard.themeResult
                     anchors.right: parent.right
-                    anchors.rightMargin: 16
+                    anchors.rightMargin: Theme.scaledSpacing(16)
                     y: 18
                     text: resultCard.themeData.id === Theme.activeThemeId ? "✓  Active" : String(resultCard.themeData.variant || "").replace(/^./, (letter) => {
                         return letter.toUpperCase();
@@ -496,7 +496,7 @@ PanelWindow {
                 Text {
                     visible: resultCard.themeResult
                     anchors.right: parent.right
-                    anchors.rightMargin: 16
+                    anchors.rightMargin: Theme.scaledSpacing(16)
                     y: 45
                     text: resultCard.previewBarPosition.replace(/^./, (letter) => {
                         return letter.toUpperCase();
@@ -511,7 +511,7 @@ PanelWindow {
 
                     visible: resultCard.themeResult
                     anchors.right: parent.right
-                    anchors.rightMargin: 16
+                    anchors.rightMargin: Theme.scaledSpacing(16)
                     y: 64
                     text: widgetCount + (widgetCount === 1 ? " widget" : " widgets")
                     color: resultCard.previewMuted
@@ -540,8 +540,8 @@ PanelWindow {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: search.bottom
-            anchors.margins: 28
-            spacing: 14
+            anchors.margins: Theme.scaledSpacing(28)
+            spacing: Theme.scaledSpacing(14)
             visible: controller.query.startsWith("%") && (controller.themesLoading || controller.themesError.length > 0)
 
             Text {
@@ -583,8 +583,8 @@ PanelWindow {
             anchors.top: search.bottom
             visible: controller.calculation.length > 0
             height: visible ? 132 : 0
-            padding: 8
-            spacing: 7
+            padding: Theme.scaledSpacing(8)
+            spacing: Theme.scaledSpacing(7)
 
             Text {
                 text: "Calculator"
@@ -598,14 +598,14 @@ PanelWindow {
 
                 width: parent.width - 16
                 height: 88
-                radius: 8
+                radius: Theme.scaledRadius(8)
                 color: controller.calculationSelected || calculatorHover.hovered ? Theme.surfaceAlt : Theme.surface
                 border.width: controller.calculationSelected ? 2 : 1
                 border.color: controller.calculationSelected ? Theme.accent : calculatorHover.hovered ? Theme.withAlpha(Theme.foreground, 0.32) : Theme.border
 
                 Row {
                     anchors.fill: parent
-                    anchors.margins: 16
+                    anchors.margins: Theme.scaledSpacing(16)
 
                     Column {
                         width: (parent.width - arrow.width) / 2

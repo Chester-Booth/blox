@@ -1,5 +1,6 @@
 {
   "schema_version": 1,
+  "shape": {"radius_scale": 1.25, "density_scale": 1.0},
   "id": "gtk-installed",
   "name": "GTK Installed Mode",
   "variant": "dark",

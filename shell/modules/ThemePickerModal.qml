@@ -46,7 +46,7 @@ FocusScope {
         width: controller.modalKind === "progress" ? Math.min(770, modalFocusScope.width - 80) : 500
         height: Math.min(modalFocusScope.height - 80, implicitHeight)
         implicitHeight: modalColumn.implicitHeight + 40
-        radius: 10
+        radius: Theme.scaledRadius(10)
         color: Theme.surface
         border.color: Theme.border
 
@@ -65,8 +65,8 @@ FocusScope {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
-            anchors.margins: 20
-            spacing: 12
+            anchors.margins: Theme.scaledSpacing(20)
+            spacing: Theme.scaledSpacing(12)
 
             Label {
                 visible: controller.modalKind !== "progress"

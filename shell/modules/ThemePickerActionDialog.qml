@@ -15,7 +15,7 @@ ColumnLayout {
 
     visible: controller.modalKind === "duplicate" || controller.modalKind === "rename" || controller.modalKind === "export"
     Layout.fillWidth: true
-    spacing: 12
+    spacing: Theme.scaledSpacing(12)
 
     BloxTextField {
         id: duplicateNameField

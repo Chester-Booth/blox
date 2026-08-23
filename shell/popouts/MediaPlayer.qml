@@ -62,7 +62,7 @@ Column {
         return minutes + ":" + (rest < 10 ? "0" : "") + rest;
     }
 
-    spacing: 6
+    spacing: Theme.scaledSpacing(6)
     Component.onCompleted: refreshPlayers()
 
     Connections {
@@ -95,7 +95,7 @@ Column {
 
         width: parent.width
         height: 108
-        radius: 8
+        radius: Theme.scaledRadius(8)
         color: Theme.surface
         border.color: Theme.surfaceAlt
         border.width: 1
@@ -188,15 +188,15 @@ Column {
             id: mediaBody
 
             anchors.fill: parent
-            anchors.margins: 8
-            spacing: 10
+            anchors.margins: Theme.scaledSpacing(8)
+            spacing: Theme.scaledSpacing(10)
             visible: root.hasPlayers
             transformOrigin: Item.Center
 
             Rectangle {
                 width: height
                 height: parent.height
-                radius: 6
+                radius: Theme.scaledRadius(6)
                 color: Theme.background
                 border.color: Qt.rgba(1, 1, 1, 0.1)
                 border.width: 1
@@ -206,7 +206,7 @@ Column {
                     id: albumImage
 
                     anchors.fill: parent
-                    anchors.margins: 1
+                    anchors.margins: Theme.scaledSpacing(1)
                     source: media.player && media.player.trackArtUrl ? media.player.trackArtUrl : ""
                     fillMode: Image.PreserveAspectCrop
                     visible: status === Image.Ready
@@ -225,7 +225,7 @@ Column {
 
             Column {
                 width: parent.width - parent.spacing - parent.children[0].width
-                spacing: 5
+                spacing: Theme.scaledSpacing(5)
                 anchors.verticalCenter: parent.verticalCenter
 
                 Text {
@@ -320,7 +320,7 @@ Column {
         width: parent.width
         height: visible ? 10 : 0
         visible: root.players().length > 1
-        spacing: 6
+        spacing: Theme.scaledSpacing(6)
 
         Item {
             width: Math.max(0, (parent.width - dots.count * 6 - Math.max(0, dots.count - 1) * parent.spacing) / 2)

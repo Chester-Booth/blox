@@ -9,7 +9,7 @@ ColumnLayout {
 
     Layout.fillWidth: true
     visible: controller.currentMode() === "network" || controller.currentMode() === "bluetooth"
-    spacing: 10
+    spacing: Theme.scaledSpacing(10)
 
     PillSelector {
         Layout.fillWidth: true

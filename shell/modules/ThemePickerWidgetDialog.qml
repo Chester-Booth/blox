@@ -270,7 +270,7 @@ GridLayout {
     RowLayout {
         visible: controller.widgetDraft && controller.widgetDraft.type === "file"
         Layout.fillWidth: true
-        Layout.rightMargin: 10
+        Layout.rightMargin: Theme.scaledSpacing(10)
 
         BloxCheckBox {
             text: "Show filename"

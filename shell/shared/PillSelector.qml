@@ -32,7 +32,7 @@ ColumnLayout {
         return index >= 0 && options.length > index ? options[index].label || "" : "";
     }
 
-    spacing: showHeader ? 4 : 0
+    spacing: showHeader ? Theme.scaledSpacing(4) : 0
     implicitHeight: (showHeader ? header.implicitHeight + spacing : 0) + control.implicitHeight
     opacity: enabled ? 1 : 0.55
     onCurrentIdChanged: {
@@ -86,7 +86,7 @@ ColumnLayout {
         Layout.fillWidth: true
         Layout.preferredHeight: 32
         implicitHeight: 32
-        radius: 16
+        radius: Theme.scaledRadius(16)
         color: Theme.surface
         border.color: Theme.surfaceAlt
         border.width: 1
@@ -97,7 +97,7 @@ ColumnLayout {
             y: 3
             width: (parent.width - 6) / Math.max(1, root.options.length)
             height: parent.height - 6
-            radius: 13
+            radius: Theme.scaledRadius(13)
             color: Theme.withAlpha(Theme.surfaceAlt, 0.4)
             visible: root.selectedIndex >= 0
 
@@ -113,8 +113,8 @@ ColumnLayout {
 
         RowLayout {
             anchors.fill: parent
-            anchors.margins: 3
-            spacing: 0
+            anchors.margins: Theme.scaledSpacing(3)
+            spacing: Theme.scaledSpacing(0)
 
             Repeater {
                 model: root.options
@@ -122,7 +122,7 @@ ColumnLayout {
                 Rectangle {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    radius: 13
+                    radius: Theme.scaledRadius(13)
                     color: optionMouse.containsMouse ? Theme.withAlpha(Theme.surfaceAlt, 0.2) : "transparent"
 
                     Text {

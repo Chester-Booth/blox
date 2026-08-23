@@ -11,10 +11,20 @@
     "theme": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "variant", "colours", "fonts", "shell", "wallpaper", "terminal"],
+      "required": ["id", "variant", "colours", "fonts", "shape", "shell", "wallpaper", "terminal"],
       "properties": {
         "id": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
         "variant": {"enum": ["dark", "light"]},
+        "shape": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["radius_scale", "density_scale"],
+          "properties": {
+            "radius_scale": {"type": "number", "minimum": 0, "maximum": 2},
+            "density_scale": {"type": "number", "minimum": 0.75, "maximum": 1.5},
+            "window_gap": {"type": "integer", "minimum": 0, "maximum": 30}
+          }
+        },
         "colours": {
           "type": "object",
           "additionalProperties": false,

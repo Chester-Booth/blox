@@ -55,19 +55,19 @@ Rectangle {
 
     width: 268
     height: (status.vramTotal ? 517 : 465) + (visibleError.length > 0 ? Math.max(26, errorText.implicitHeight) : 0)
-    radius: 8
+    radius: Theme.scaledRadius(8)
     color: Theme.background
     border.color: Theme.surfaceAlt
     border.width: 1
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: 12
-        spacing: 10
+        anchors.margins: Theme.scaledSpacing(12)
+        spacing: Theme.scaledSpacing(10)
 
         RowLayout {
             Layout.fillWidth: true
-            spacing: 9
+            spacing: Theme.scaledSpacing(9)
 
             Item {
                 width: 30
@@ -154,7 +154,7 @@ Rectangle {
 
         ColumnLayout {
             Layout.fillWidth: true
-            spacing: 7
+            spacing: Theme.scaledSpacing(7)
 
             MetricBar {
                 icon: "󰘚"
@@ -194,7 +194,7 @@ Rectangle {
 
         ColumnLayout {
             Layout.fillWidth: true
-            spacing: 6
+            spacing: Theme.scaledSpacing(6)
 
             PillSelector {
                 Layout.fillWidth: true
@@ -274,16 +274,16 @@ Rectangle {
 
         Layout.fillWidth: true
         Layout.preferredHeight: 36
-        radius: 6
+        radius: Theme.scaledRadius(6)
         color: Theme.surface
         border.color: Theme.surfaceAlt
         border.width: 1
 
         RowLayout {
             anchors.fill: parent
-            anchors.leftMargin: 8
-            anchors.rightMargin: 8
-            spacing: 6
+            anchors.leftMargin: Theme.scaledSpacing(8)
+            anchors.rightMargin: Theme.scaledSpacing(8)
+            spacing: Theme.scaledSpacing(6)
 
             Text {
                 text: pill.icon
@@ -296,7 +296,7 @@ Rectangle {
 
             ColumnLayout {
                 Layout.fillWidth: true
-                spacing: 0
+                spacing: Theme.scaledSpacing(0)
 
                 Text {
                     Layout.fillWidth: true
@@ -334,22 +334,22 @@ Rectangle {
 
         Layout.fillWidth: true
         Layout.preferredHeight: 45
-        radius: 6
+        radius: Theme.scaledRadius(6)
         color: Theme.surface
         border.color: Theme.surfaceAlt
         border.width: 1
 
         ColumnLayout {
             anchors.fill: parent
-            anchors.leftMargin: 9
-            anchors.rightMargin: 9
-            anchors.topMargin: 7
-            anchors.bottomMargin: 7
-            spacing: 5
+            anchors.leftMargin: Theme.scaledSpacing(9)
+            anchors.rightMargin: Theme.scaledSpacing(9)
+            anchors.topMargin: Theme.scaledSpacing(7)
+            anchors.bottomMargin: Theme.scaledSpacing(7)
+            spacing: Theme.scaledSpacing(5)
 
             RowLayout {
                 Layout.fillWidth: true
-                spacing: 7
+                spacing: Theme.scaledSpacing(7)
 
                 Text {
                     text: metric.icon
@@ -383,7 +383,7 @@ Rectangle {
             Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 5
-                radius: 2
+                radius: Theme.scaledRadius(2)
                 color: Theme.background
 
                 Rectangle {

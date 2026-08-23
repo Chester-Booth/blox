@@ -12,7 +12,7 @@ ColumnLayout {
 
     visible: controller.editorMode === "widgets"
     Layout.fillWidth: true
-    spacing: 12
+    spacing: Theme.scaledSpacing(12)
 
     Label {
         text: "Style"
@@ -86,13 +86,13 @@ ColumnLayout {
 
             Layout.fillWidth: true
             height: 54
-            radius: 8
+            radius: Theme.scaledRadius(8)
             color: Theme.background
             border.color: Theme.border
 
             RowLayout {
                 anchors.fill: parent
-                anchors.margins: 8
+                anchors.margins: Theme.scaledSpacing(8)
 
                 BloxCheckBox {
                     checked: modelData.enabled
@@ -159,7 +159,7 @@ ColumnLayout {
         Layout.fillWidth: true
         Layout.preferredHeight: Math.min(520, width * 9 / 16)
         clip: true
-        radius: 12
+        radius: Theme.scaledRadius(12)
         color: Theme.background
         border.color: Theme.border
 
@@ -329,7 +329,7 @@ ColumnLayout {
                 height: Math.max(32, virtualHeight * widgetCanvas.height / 1080)
                 x: modelData.anchor.indexOf("right") >= 0 ? widgetCanvas.width - width - modelData.offset_x * widgetCanvas.width / 1920 : modelData.anchor === "centre" ? (widgetCanvas.width - width) / 2 + modelData.offset_x * widgetCanvas.width / 1920 : modelData.offset_x * widgetCanvas.width / 1920
                 y: modelData.anchor.indexOf("bottom") >= 0 ? widgetCanvas.height - height - modelData.offset_y * widgetCanvas.height / 1080 : modelData.anchor === "centre" ? (widgetCanvas.height - height) / 2 + modelData.offset_y * widgetCanvas.height / 1080 : modelData.offset_y * widgetCanvas.height / 1080
-                radius: modelData.shape === "circle" ? Math.min(width, height) / 2 : modelData.shape === "square" ? 0 : 8
+                radius: modelData.shape === "circle" ? Math.min(width, height) / 2 : modelData.shape === "square" ? 0 : Theme.scaledRadius(8)
                 color: Theme.withAlpha(Theme.surface, 0.88)
                 border.width: controller.selectedWidgetIndex === index ? 2 : 1
                 border.color: controller.selectedWidgetIndex === index ? Theme.blue : Theme.border
@@ -366,7 +366,7 @@ ColumnLayout {
                     height: 18
                     anchors.right: parent.right
                     anchors.bottom: parent.bottom
-                    radius: 4
+                    radius: Theme.scaledRadius(4)
                     color: Theme.blue
                     border.color: Theme.background
 

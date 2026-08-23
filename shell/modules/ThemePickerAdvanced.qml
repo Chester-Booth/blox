@@ -11,7 +11,73 @@ ColumnLayout {
 
     visible: controller.editorMode === "advanced"
     Layout.fillWidth: true
-    spacing: 12
+    spacing: Theme.scaledSpacing(12)
+
+    Label {
+        text: "Shape & density"
+        color: Theme.foreground
+        font.family: Theme.bodyFontFamily
+        font.pixelSize: 17
+        font.bold: true
+    }
+
+    Rectangle {
+        Layout.fillWidth: true
+        Layout.preferredHeight: 230
+        radius: Theme.cardRadius
+        color: Theme.withAlpha(Theme.foreground, 0.03)
+        border.color: Theme.border
+
+        ThemeShapePreview {
+            width: Math.min(560, parent.width - 32)
+            height: width * 96 / 260
+            anchors.centerIn: parent
+            radiusScale: controller.shapeValue("radius_scale", 1.25)
+            densityScale: controller.shapeValue("density_scale", 1.0)
+            windowGap: controller.effectiveWindowGap()
+        }
+    }
+
+    BloxSlider {
+        Layout.fillWidth: true
+        label: "Style"
+        from: 0
+        to: 2
+        value: controller.shapeValue("radius_scale", 1.25)
+        onMoved: value => controller.setShapeValue("radius_scale", value)
+    }
+
+    BloxSlider {
+        Layout.fillWidth: true
+        label: "Density"
+        from: 0.75
+        to: 1.5
+        value: controller.shapeValue("density_scale", 1.0)
+        onMoved: value => controller.setShapeValue("density_scale", value)
+    }
+
+    RowLayout {
+        Layout.fillWidth: true
+        spacing: Theme.scaledSpacing(12)
+
+        BloxCheckBox {
+            Layout.alignment: Qt.AlignBottom
+            text: "Automatic"
+            checked: !controller.candidate || !controller.candidate.shape || controller.candidate.shape.window_gap === undefined
+            onToggled: checked => controller.setAutomaticWindowGap(checked)
+        }
+
+        BloxSlider {
+            Layout.fillWidth: true
+            enabled: controller.candidate && controller.candidate.shape && controller.candidate.shape.window_gap !== undefined
+            label: "Window gap"
+            from: 0
+            to: 30
+            decimals: 0
+            value: controller.effectiveWindowGap()
+            onMoved: value => controller.setShapeValue("window_gap", Math.round(value))
+        }
+    }
 
     Label {
         text: "Semantic colours"
@@ -45,7 +111,7 @@ ColumnLayout {
                 Rectangle {
                     Layout.fillWidth: true
                     height: 38
-                    radius: 9
+                    radius: Theme.scaledRadius(9)
                     color: controller.candidate ? controller.validColour(controller.candidate.colours[modelData], "transparent") : "transparent"
                     border.color: colourHover.hovered ? Theme.foreground : Theme.border
                     border.width: colourHover.hovered ? 2 : 1
@@ -54,7 +120,7 @@ ColumnLayout {
                         anchors.left: parent.left
                         anchors.right: parent.right
                         anchors.bottom: parent.bottom
-                        anchors.margins: 7
+                        anchors.margins: Theme.scaledSpacing(7)
                         text: controller.candidate ? controller.candidate.colours[modelData] : ""
                         color: controller.swatchText(parent.color)
                         font.family: Theme.fontFamily
@@ -112,7 +178,7 @@ ColumnLayout {
                 Rectangle {
                     Layout.fillWidth: true
                     height: 38
-                    radius: 9
+                    radius: Theme.scaledRadius(9)
                     color: controller.previewData && controller.previewData.ansi ? controller.previewData.ansi[modelData] : "transparent"
                     border.color: ansiColourHover.hovered ? Theme.foreground : Theme.border
                     border.width: ansiColourHover.hovered ? 2 : 1
@@ -121,7 +187,7 @@ ColumnLayout {
                         anchors.left: parent.left
                         anchors.right: parent.right
                         anchors.bottom: parent.bottom
-                        anchors.margins: 7
+                        anchors.margins: Theme.scaledSpacing(7)
                         text: controller.previewData && controller.previewData.ansi ? controller.previewData.ansi[modelData] : ""
                         color: controller.swatchText(parent.color)
                         font.family: Theme.fontFamily
@@ -165,7 +231,7 @@ ColumnLayout {
 
     ColumnLayout {
         Layout.fillWidth: true
-        spacing: 10
+        spacing: Theme.scaledSpacing(10)
 
         Repeater {
             model: ["start", "centre", "end", "hidden"]
@@ -176,7 +242,7 @@ ColumnLayout {
                 required property string modelData
 
                 Layout.fillWidth: true
-                spacing: 5
+                spacing: Theme.scaledSpacing(5)
 
                 Label {
                     text: regionSection.modelData === "hidden" ? "Tray" : regionSection.modelData.charAt(0).toUpperCase() + regionSection.modelData.slice(1)
@@ -200,7 +266,7 @@ ColumnLayout {
                         anchors.right: parent.right
                         anchors.verticalCenter: parent.verticalCenter
                         height: 3
-                        radius: 2
+                        radius: Theme.scaledRadius(2)
                         visible: controller.barDragActive && controller.barDropTarget === "start:" + regionSection.modelData
                         color: Theme.blue
                     }
@@ -228,15 +294,15 @@ ColumnLayout {
 
                         Layout.fillWidth: true
                         implicitHeight: 48
-                        radius: 8
+                        radius: Theme.scaledRadius(8)
                         color: handleDrag.active || emptyDrag.active ? Theme.withAlpha(Theme.blue, 0.15) : Theme.background
                         border.color: handleDrag.active || emptyDrag.active ? Theme.blue : Theme.border
                         z: handleDrag.active || emptyDrag.active ? 20 : 0
 
                         RowLayout {
                             anchors.fill: parent
-                            anchors.margins: 8
-                            spacing: 9
+                            anchors.margins: Theme.scaledSpacing(8)
+                            spacing: Theme.scaledSpacing(9)
 
                             Item {
                                 Layout.preferredWidth: 18
@@ -274,7 +340,7 @@ ColumnLayout {
 
                             RowLayout {
                                 Layout.alignment: Qt.AlignVCenter
-                                spacing: 9
+                                spacing: Theme.scaledSpacing(9)
 
                                 BloxCheckBox {
                                     text: controller.barItemLabel(barItemRow.modelData.id)
@@ -420,7 +486,7 @@ ColumnLayout {
                             anchors.top: controller.barDropIndex === barItemRow.index ? parent.top : undefined
                             anchors.bottom: controller.barDropIndex === barItemRow.index + 1 ? parent.bottom : undefined
                             height: 3
-                            radius: 2
+                            radius: Theme.scaledRadius(2)
                             z: 40
                             visible: controller.barDragActive && controller.barDropTarget === barItemRow.barItemId
                             color: Theme.blue
@@ -590,7 +656,7 @@ ColumnLayout {
 
     Flow {
         Layout.fillWidth: true
-        spacing: 8
+        spacing: Theme.scaledSpacing(8)
 
         Repeater {
             model: controller.coreTargetKeys
@@ -600,13 +666,13 @@ ColumnLayout {
 
                 width: 250
                 height: 54
-                radius: 8
+                radius: Theme.scaledRadius(8)
                 color: Theme.background
                 border.color: Theme.border
 
                 RowLayout {
                     anchors.fill: parent
-                    anchors.margins: 7
+                    anchors.margins: Theme.scaledSpacing(7)
 
                     BloxCheckBox {
                         Layout.fillWidth: true
@@ -646,7 +712,7 @@ ColumnLayout {
 
     Flow {
         Layout.fillWidth: true
-        spacing: 8
+        spacing: Theme.scaledSpacing(8)
 
         Repeater {
             model: controller.applicationTargetKeys
@@ -656,13 +722,13 @@ ColumnLayout {
 
                 width: 250
                 height: 54
-                radius: 8
+                radius: Theme.scaledRadius(8)
                 color: Theme.background
                 border.color: Theme.border
 
                 RowLayout {
                     anchors.fill: parent
-                    anchors.margins: 7
+                    anchors.margins: Theme.scaledSpacing(7)
 
                     BloxCheckBox {
                         Layout.fillWidth: true
@@ -714,7 +780,7 @@ ColumnLayout {
 
     Flow {
         Layout.fillWidth: true
-        spacing: 8
+        spacing: Theme.scaledSpacing(8)
 
         Repeater {
             model: controller.unavailableTargetKeys
@@ -749,7 +815,7 @@ ColumnLayout {
 
     ColumnLayout {
         Layout.fillWidth: true
-        spacing: 8
+        spacing: Theme.scaledSpacing(8)
 
         Repeater {
             model: {
@@ -761,7 +827,7 @@ ColumnLayout {
                 required property var modelData
 
                 Layout.fillWidth: true
-                spacing: 6
+                spacing: Theme.scaledSpacing(6)
 
                 RowLayout {
                     Layout.fillWidth: true
@@ -786,7 +852,7 @@ ColumnLayout {
 
                 Flow {
                     Layout.fillWidth: true
-                    spacing: 8
+                    spacing: Theme.scaledSpacing(8)
 
                     Repeater {
                         model: modelData.files
@@ -861,14 +927,14 @@ ColumnLayout {
                             Rectangle {
                                 Layout.fillWidth: true
                                 height: 38
-                                radius: 9
+                                radius: Theme.scaledRadius(9)
                                 color: overrideEditor.overrideValue || Theme.background
                                 border.color: overrideHover.hovered ? Theme.foreground : Theme.border
                                 border.width: overrideHover.hovered ? 2 : 1
 
                                 Text {
                                     anchors.fill: parent
-                                    anchors.margins: 9
+                                    anchors.margins: Theme.scaledSpacing(9)
                                     text: overrideEditor.overrideValue || "inherit"
                                     color: overrideEditor.overrideValue ? controller.swatchText(parent.color) : Theme.muted
                                     font.family: Theme.fontFamily

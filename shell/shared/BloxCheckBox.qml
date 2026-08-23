@@ -25,7 +25,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         width: 19
         height: 19
-        radius: 6
+        radius: Theme.scaledRadius(6)
         color: root.checked ? Theme.withAlpha(Theme.blue, 0.22) : Theme.background
         border.color: root.activeFocus || root.checked ? Theme.blue : hover.hovered ? Theme.withAlpha(Theme.foreground, 0.36) : Theme.border
         border.width: root.activeFocus ? 2 : 1
@@ -61,7 +61,7 @@ Item {
         id: label
 
         anchors.left: box.right
-        anchors.leftMargin: 8
+        anchors.leftMargin: Theme.scaledSpacing(8)
         anchors.verticalCenter: parent.verticalCenter
         text: root.text
         color: root.enabled ? Theme.foreground : Theme.muted

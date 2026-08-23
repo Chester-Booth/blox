@@ -51,7 +51,7 @@ Rectangle {
 
     Text {
         anchors.top: iconText.bottom
-        anchors.topMargin: -2
+        anchors.topMargin: Theme.scaledSpacing(-2)
         anchors.horizontalCenter: parent.horizontalCenter
         text: root.label
         color: root.accent

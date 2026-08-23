@@ -201,6 +201,38 @@ class RuntimeTests(unittest.TestCase):
         for name in changed_files:
             self.assertNotEqual(before[name], (after_path / name).read_bytes(), name)
 
+    def test_shape_apply_and_rollback_switch_exact_files(self) -> None:
+        first, _ = self.apply_canonical()
+        first_path, _ = current_generation(self.state)
+        before = {
+            name: (first_path / name).read_bytes()
+            for name in (
+                "quickshell/theme.json",
+                "hyprland/theme.lua",
+                "gtk/gtk-3.0/gtk.css",
+                "gtk/gtk-4.0/gtk.css",
+            )
+        }
+        changed = copy.deepcopy(self.canonical)
+        changed["shape"] = {"radius_scale": 0.65, "density_scale": 0.75}
+
+        apply_theme(
+            self.canonical_path,
+            changed,
+            ("quickshell", "hyprland", "gtk"),
+            run_command=FakeCommands(),
+        )
+        active, _ = current_generation(self.state)
+        self.assertEqual(changed["shape"], json.loads((active / "quickshell/theme.json").read_text())["shape"])
+        self.assertIn("gaps_in = 0,", (active / "hyprland/theme.lua").read_text())
+        self.assertIn("rounding = 8,", (active / "hyprland/theme.lua").read_text())
+        self.assertIn("border-radius: 8px;", (active / "gtk/gtk-4.0/gtk.css").read_text())
+
+        rollback(first["generation_id"], run_command=FakeCommands())
+        restored, _ = current_generation(self.state)
+        for name, content in before.items():
+            self.assertEqual(content, (restored / name).read_bytes(), name)
+
     def test_wallpaper_apply_reloads_the_quickshell_surface(self) -> None:
         runner = FakeCommands()
         apply_theme(

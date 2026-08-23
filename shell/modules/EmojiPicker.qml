@@ -269,8 +269,8 @@ FloatingWindow {
         id: card
 
         anchors.fill: parent
-        anchors.margins: 1
-        radius: 12
+        anchors.margins: Theme.scaledSpacing(1)
+        radius: Theme.scaledRadius(12)
         color: Theme.surface
         border.color: Theme.border
         clip: true
@@ -292,8 +292,8 @@ FloatingWindow {
 
         Row {
             anchors.fill: parent
-            anchors.margins: 10
-            spacing: 8
+            anchors.margins: Theme.scaledSpacing(10)
+            spacing: Theme.scaledSpacing(8)
 
             Item {
                 width: 44
@@ -306,9 +306,9 @@ FloatingWindow {
                     anchors.right: parent.right
                     anchors.top: parent.top
                     anchors.bottom: categoryToneSeparator.top
-                    anchors.bottomMargin: 5
+                    anchors.bottomMargin: Theme.scaledSpacing(5)
                     model: controller.categories
-                    spacing: 5
+                    spacing: Theme.scaledSpacing(5)
                     clip: true
                     boundsBehavior: Flickable.StopAtBounds
 
@@ -329,7 +329,7 @@ FloatingWindow {
 
                         width: 40
                         height: 40
-                        radius: 8
+                        radius: Theme.scaledRadius(8)
                         color: controller.category === modelData ? Theme.surfaceAlt : categoryHover.hovered ? Theme.withAlpha(Theme.foreground, 0.1) : "transparent"
                         border.width: controller.category === modelData || categoryHover.hovered ? 1 : 0
                         border.color: controller.category === modelData ? Theme.accent : Theme.withAlpha(Theme.foreground, 0.4)
@@ -373,7 +373,7 @@ FloatingWindow {
                     anchors.left: parent.left
                     anchors.right: parent.right
                     anchors.bottom: toneButton.top
-                    anchors.bottomMargin: 5
+                    anchors.bottomMargin: Theme.scaledSpacing(5)
                     height: 1
                     color: Theme.border
                 }
@@ -385,14 +385,14 @@ FloatingWindow {
                     anchors.bottom: parent.bottom
                     width: 40
                     height: 40
-                    radius: 8
+                    radius: Theme.scaledRadius(8)
                     color: toneHover.hovered ? Theme.surfaceAlt : "transparent"
 
                     Rectangle {
                         anchors.centerIn: parent
                         width: 20
                         height: 20
-                        radius: 10
+                        radius: Theme.scaledRadius(10)
                         color: root.toneColours[LauncherState.emojiTone]
                         border.color: Theme.border
                     }
@@ -423,7 +423,7 @@ FloatingWindow {
                         y: (toneButton.height - height) / 2
                         width: toneRow.implicitWidth + 12
                         height: 46
-                        padding: 6
+                        padding: Theme.scaledSpacing(6)
                         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
                         onOpened: root.popupOpened()
                         onClosed: root.popupClosed()
@@ -431,7 +431,7 @@ FloatingWindow {
                         contentItem: Row {
                             id: toneRow
 
-                            spacing: 5
+                            spacing: Theme.scaledSpacing(5)
 
                             Repeater {
                                 model: root.toneColours
@@ -444,7 +444,7 @@ FloatingWindow {
 
                                     width: 30
                                     height: 30
-                                    radius: 15
+                                    radius: Theme.scaledRadius(15)
                                     color: modelData
                                     border.width: LauncherState.emojiTone === index || toneChoiceHover.hovered ? 3 : 1
                                     border.color: LauncherState.emojiTone === index || toneChoiceHover.hovered ? Theme.accent : Theme.border
@@ -475,7 +475,7 @@ FloatingWindow {
                         }
 
                         background: Rectangle {
-                            radius: 9
+                            radius: Theme.scaledRadius(9)
                             color: Theme.surfaceAlt
                             border.color: Theme.border
                         }
@@ -495,7 +495,7 @@ FloatingWindow {
             Column {
                 width: parent.width - 61
                 height: parent.height
-                spacing: 8
+                spacing: Theme.scaledSpacing(8)
 
                 BloxTextField {
                     id: search
@@ -518,7 +518,7 @@ FloatingWindow {
                     width: parent.width
                     height: visible ? 36 : 0
                     visible: controller.category === "Symbols" || controller.category === "Nerd Fonts"
-                    spacing: 6
+                    spacing: Theme.scaledSpacing(6)
 
                     BloxButton {
                         id: nerdFontSourceButton
@@ -539,7 +539,7 @@ FloatingWindow {
 
                         Row {
                             anchors.centerIn: parent
-                            spacing: 7
+                            spacing: Theme.scaledSpacing(7)
 
                             PhosphorIcon {
                                 anchors.verticalCenter: parent.verticalCenter
@@ -572,14 +572,14 @@ FloatingWindow {
                             y: nerdFontSourceButton.height + 4
                             width: 240
                             height: Math.min(360, nerdFontSourceList.contentHeight + 8)
-                            padding: 4
+                            padding: Theme.scaledSpacing(4)
                             closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
 
                             contentItem: ListView {
                                 id: nerdFontSourceList
 
                                 clip: true
-                                spacing: 3
+                                spacing: Theme.scaledSpacing(3)
                                 boundsBehavior: Flickable.StopAtBounds
                                 model: controller.nerdFontSources
 
@@ -620,7 +620,7 @@ FloatingWindow {
                             }
 
                             background: Rectangle {
-                                radius: 9
+                                radius: Theme.scaledRadius(9)
                                 color: Theme.surfaceAlt
                                 border.color: Theme.border
                             }
@@ -645,7 +645,7 @@ FloatingWindow {
                         width: parent.width - nerdFontSourceButton.width - nerdFontSectionDivider.width - (nerdFontSourceButton.visible ? parent.spacing * 2 : 0)
                         height: 36
                         orientation: ListView.Horizontal
-                        spacing: 6
+                        spacing: Theme.scaledSpacing(6)
                         clip: true
                         boundsBehavior: Flickable.StopAtBounds
                         model: controller.category === "Symbols" ? root.symbolSections : controller.nerdFontPurposes
@@ -793,13 +793,13 @@ FloatingWindow {
 
                         width: 48
                         height: 48
-                        radius: 8
+                        radius: Theme.scaledRadius(8)
                         z: modelData.kind === "heading" ? 2 : 0
                         color: modelData.kind === "emoji" && modelData.itemIndex === controller.selectedIndex ? Theme.surfaceAlt : emojiHover.hovered ? Theme.withAlpha(Theme.foreground, 0.07) : "transparent"
 
                         Text {
                             anchors.left: parent.left
-                            anchors.leftMargin: 4
+                            anchors.leftMargin: Theme.scaledSpacing(4)
                             anchors.verticalCenter: parent.verticalCenter
                             visible: modelData.kind === "heading"
                             width: emojiGrid.width - emojiGrid.rightMargin - 8
@@ -821,9 +821,9 @@ FloatingWindow {
 
                         PhosphorIcon {
                             anchors.right: parent.right
-                            anchors.rightMargin: 3
+                            anchors.rightMargin: Theme.scaledSpacing(3)
                             anchors.top: parent.top
-                            anchors.topMargin: 3
+                            anchors.topMargin: Theme.scaledSpacing(3)
                             width: 12
                             height: 12
                             visible: modelData.kind === "emoji" && modelData.item && modelData.item.pinned
@@ -833,9 +833,9 @@ FloatingWindow {
 
                         Item {
                             anchors.left: parent.left
-                            anchors.leftMargin: 3
+                            anchors.leftMargin: Theme.scaledSpacing(3)
                             anchors.bottom: parent.bottom
-                            anchors.bottomMargin: 3
+                            anchors.bottomMargin: Theme.scaledSpacing(3)
                             width: 18
                             height: 11
                             visible: modelData.kind === "emoji" && modelData.item && modelData.item.hasMixedTones && (emojiHover.hovered || modelData.itemIndex === controller.selectedIndex)
@@ -845,7 +845,7 @@ FloatingWindow {
                                 anchors.verticalCenter: parent.verticalCenter
                                 width: 10
                                 height: 10
-                                radius: 5
+                                radius: Theme.scaledRadius(5)
                                 color: root.toneColours[controller.preferredTonePair(modelData.item)[0]]
                                 border.color: Theme.surface
                             }
@@ -855,7 +855,7 @@ FloatingWindow {
                                 anchors.verticalCenter: parent.verticalCenter
                                 width: 10
                                 height: 10
-                                radius: 5
+                                radius: Theme.scaledRadius(5)
                                 color: root.toneColours[controller.preferredTonePair(modelData.item)[1]]
                                 border.color: Theme.surface
                             }
@@ -901,13 +901,13 @@ FloatingWindow {
                             x: Math.max(6, Math.min(root.width - width - 6, root.contextAnchor.x - width))
                             y: root.contextAnchor.y + height <= root.height - 6 ? root.contextAnchor.y : Math.max(6, root.contextAnchor.y - emojiCell.height - height)
                             width: 168
-                            padding: 4
+                            padding: Theme.scaledSpacing(4)
                             closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
                             onOpened: root.popupOpened()
                             onClosed: root.popupClosed()
 
                             contentItem: Column {
-                                spacing: 3
+                                spacing: Theme.scaledSpacing(3)
 
                                 BloxButton {
                                     visible: modelData.item && modelData.item.hasMixedTones
@@ -933,7 +933,7 @@ FloatingWindow {
 
                                     PhosphorIcon {
                                         anchors.left: parent.left
-                                        anchors.leftMargin: 9
+                                        anchors.leftMargin: Theme.scaledSpacing(9)
                                         anchors.verticalCenter: parent.verticalCenter
                                         width: 15
                                         height: 15
@@ -946,7 +946,7 @@ FloatingWindow {
                             }
 
                             background: Rectangle {
-                                radius: 9
+                                radius: Theme.scaledRadius(9)
                                 color: Theme.surfaceAlt
                                 border.color: Theme.border
                             }
@@ -983,13 +983,13 @@ FloatingWindow {
                             y: root.contextAnchor.y + height <= root.height - 6 ? root.contextAnchor.y : Math.max(6, root.contextAnchor.y - emojiCell.height - height)
                             width: 264
                             height: 226
-                            padding: 10
+                            padding: Theme.scaledSpacing(10)
                             closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
                             onOpened: root.popupOpened()
                             onClosed: root.popupClosed()
 
                             contentItem: Column {
-                                spacing: 8
+                                spacing: Theme.scaledSpacing(8)
 
                                 Text {
                                     width: parent.width
@@ -1003,7 +1003,7 @@ FloatingWindow {
                                 Rectangle {
                                     width: parent.width
                                     height: 54
-                                    radius: 8
+                                    radius: Theme.scaledRadius(8)
                                     color: Theme.withAlpha(Theme.foreground, 0.06)
 
                                     Text {
@@ -1018,7 +1018,7 @@ FloatingWindow {
                                 Row {
                                     width: parent.width
                                     height: 30
-                                    spacing: 7
+                                    spacing: Theme.scaledSpacing(7)
 
                                     Text {
                                         anchors.verticalCenter: parent.verticalCenter
@@ -1040,7 +1040,7 @@ FloatingWindow {
                                             activeFocusOnTab: true
                                             width: 28
                                             height: 28
-                                            radius: 14
+                                            radius: Theme.scaledRadius(14)
                                             color: root.toneColours[index + 1]
                                             border.width: !toneComposer.defaultSelected && toneComposer.firstTone === index + 1 ? 3 : 1
                                             border.color: !toneComposer.defaultSelected && toneComposer.firstTone === index + 1 || activeFocus ? Theme.accent : Theme.border
@@ -1077,7 +1077,7 @@ FloatingWindow {
                                 Row {
                                     width: parent.width
                                     height: 30
-                                    spacing: 7
+                                    spacing: Theme.scaledSpacing(7)
 
                                     Text {
                                         anchors.verticalCenter: parent.verticalCenter
@@ -1099,7 +1099,7 @@ FloatingWindow {
                                             activeFocusOnTab: true
                                             width: 28
                                             height: 28
-                                            radius: 14
+                                            radius: Theme.scaledRadius(14)
                                             color: root.toneColours[index + 1]
                                             border.width: !toneComposer.defaultSelected && toneComposer.secondTone === index + 1 ? 3 : 1
                                             border.color: !toneComposer.defaultSelected && toneComposer.secondTone === index + 1 || activeFocus ? Theme.accent : Theme.border
@@ -1136,7 +1136,7 @@ FloatingWindow {
                                 Row {
                                     width: parent.width
                                     height: 34
-                                    spacing: 7
+                                    spacing: Theme.scaledSpacing(7)
 
                                     BloxButton {
                                         width: (parent.width - parent.spacing) / 2
@@ -1167,7 +1167,7 @@ FloatingWindow {
                             }
 
                             background: Rectangle {
-                                radius: 10
+                                radius: Theme.scaledRadius(10)
                                 color: Theme.surfaceAlt
                                 border.color: Theme.border
                             }

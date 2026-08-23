@@ -16,7 +16,7 @@ ColumnLayout {
 
     visible: controller.modalKind === "new"
     Layout.fillWidth: true
-    spacing: 12
+    spacing: Theme.scaledSpacing(12)
 
     Label {
         visible: controller.modalKind === "new" && !controller.creationBusy
@@ -53,7 +53,7 @@ ColumnLayout {
     RowLayout {
         visible: controller.modalKind === "new" && !controller.creationBusy && controller.newFlowPage === "blank"
         Layout.fillWidth: true
-        spacing: 0
+        spacing: Theme.scaledSpacing(0)
 
         Repeater {
             model: ["dark", "light"]
@@ -141,7 +141,7 @@ ColumnLayout {
 
                 Layout.fillWidth: true
                 Layout.preferredHeight: 132
-                radius: 9
+                radius: Theme.scaledRadius(9)
                 color: modelData.colours.background || Theme.background
                 border.color: activeFocus || selected ? Theme.blue : (modelData.colours.border || Theme.border)
                 border.width: activeFocus || selected ? 2 : 1
@@ -157,7 +157,7 @@ ColumnLayout {
                     y: 9
                     width: 16
                     height: 16
-                    radius: 8
+                    radius: Theme.scaledRadius(8)
                     color: "transparent"
                     border.color: palettePill.selected ? Theme.blue : (palettePill.modelData.colours.muted || Theme.muted)
                     border.width: 2
@@ -167,7 +167,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         width: 7
                         height: 7
-                        radius: 4
+                        radius: Theme.scaledRadius(4)
                         color: Theme.blue
                     }
 
@@ -188,7 +188,7 @@ ColumnLayout {
                     y: 32
                     width: parent.width - 20
                     height: 74
-                    radius: 6
+                    radius: Theme.scaledRadius(6)
                     color: modelData.colours.background || Theme.background
                     border.color: modelData.colours.border || Theme.border
                     clip: true
@@ -207,14 +207,14 @@ ColumnLayout {
                         y: 0
                         width: parent.width * 0.49
                         height: 10
-                        radius: 0
+                        radius: Theme.scaledRadius(0)
                         color: palettePill.modelData.colours.surface_alt || Theme.surfaceAlt
 
                         Row {
                             anchors.right: parent.right
-                            anchors.rightMargin: 5
+                            anchors.rightMargin: Theme.scaledSpacing(5)
                             anchors.verticalCenter: parent.verticalCenter
-                            spacing: 3
+                            spacing: Theme.scaledSpacing(3)
 
                             Repeater {
                                 model: [palettePill.modelData.colours.accent, palettePill.modelData.colours.success, palettePill.modelData.colours.warning]
@@ -224,7 +224,7 @@ ColumnLayout {
 
                                     width: 5
                                     height: 5
-                                    radius: 3
+                                    radius: Theme.scaledRadius(3)
                                     color: modelData
                                 }
 
@@ -239,7 +239,7 @@ ColumnLayout {
                         y: 5
                         width: parent.width * 0.45
                         height: 64
-                        radius: 5
+                        radius: Theme.scaledRadius(5)
                         color: palettePill.modelData.colours.surface || Theme.surface
                         border.color: palettePill.modelData.colours.border || Theme.border
 
@@ -248,7 +248,7 @@ ColumnLayout {
                             y: 7
                             width: parent.width - 12
                             height: 20
-                            radius: 5
+                            radius: Theme.scaledRadius(5)
                             color: palettePill.modelData.colours.selection_background || Theme.accent
 
                             Rectangle {
@@ -256,7 +256,7 @@ ColumnLayout {
                                 anchors.verticalCenter: parent.verticalCenter
                                 width: 8
                                 height: 8
-                                radius: 2
+                                radius: Theme.scaledRadius(2)
                                 color: palettePill.modelData.colours.selection_foreground || Theme.background
                             }
 
@@ -265,7 +265,7 @@ ColumnLayout {
                                 anchors.verticalCenter: parent.verticalCenter
                                 width: parent.width - 38
                                 height: 4
-                                radius: 2
+                                radius: Theme.scaledRadius(2)
                                 color: palettePill.modelData.colours.selection_foreground || Theme.background
                             }
 
@@ -281,7 +281,7 @@ ColumnLayout {
                                 y: 35 + index * 12
                                 width: index === 0 ? parent.width - 24 : parent.width * 0.52
                                 height: 4
-                                radius: 2
+                                radius: Theme.scaledRadius(2)
                                 color: index === 0 ? (palettePill.modelData.colours.foreground || Theme.foreground) : (palettePill.modelData.colours.muted || Theme.muted)
                             }
 
@@ -295,7 +295,7 @@ ColumnLayout {
                     x: 10
                     y: 112
                     width: parent.width - 20
-                    spacing: 3
+                    spacing: Theme.scaledSpacing(3)
 
                     Repeater {
                         model: palettePill.colourRoles
@@ -305,7 +305,7 @@ ColumnLayout {
 
                             width: (palettePill.width - 20 - 42) / 15
                             height: 10
-                            radius: 3
+                            radius: Theme.scaledRadius(3)
                             color: palettePill.modelData.colours[modelData] || "transparent"
                             border.color: palettePill.modelData.colours.border || Theme.border
                         }

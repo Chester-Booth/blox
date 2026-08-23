@@ -1,4 +1,5 @@
 import "../../shell/shared" as Shared
+import "../../shell/shared/Shape.js" as Shape
 import QtQuick
 import QtTest
 
@@ -21,6 +22,7 @@ TestCase {
                 "blue": "#0000ff", "mauve": "#ff00ff", "teal": "#00ffff"
             },
             "fonts": {"panel": "Panel", "mono": "Mono", "ui": "UI"},
+            "shape": {"radius_scale": 1.25, "density_scale": 1.0},
             "terminal": {"canvas": canvas, "chrome_background": "#222222", "ansi_source": "derived"}
         });
     }
@@ -82,6 +84,23 @@ TestCase {
         compare(target.terminalCanvas, "#654321");
     }
 
+    function test_shape_derivation_matches_python_cases() {
+        const cases = [
+            {"radius": 0, "density": 0.75, "gap": undefined, "derivedRadius": 0, "derivedGap": 0},
+            {"radius": 0.65, "density": 1.0, "gap": undefined, "derivedRadius": 8, "derivedGap": 5},
+            {"radius": 1.25, "density": 1.5, "gap": undefined, "derivedRadius": 15, "derivedGap": 15},
+            {"radius": 2, "density": 1.0, "gap": 30, "derivedRadius": 24, "derivedGap": 30}
+        ];
+        for (const entry of cases) {
+            const shape = {"radius_scale": entry.radius, "density_scale": entry.density};
+            if (entry.gap !== undefined)
+                shape.window_gap = entry.gap;
+            compare(Shape.roundScaled(Shape.HYPRLAND_RADIUS_BASE, entry.radius), entry.derivedRadius);
+            compare(Shape.roundScaled(Shape.GTK_RADIUS_BASE, entry.radius), entry.derivedRadius);
+            compare(Shape.effectiveWindowGap(shape), entry.derivedGap);
+        }
+    }
+
     Shared.ThemeDefaults {
         id: defaults
     }
@@ -109,6 +128,9 @@ TestCase {
         property var selectionForeground
         property var border
         property var terminalCanvas
+        property var radiusScale
+        property var densityScale
+        property var windowGap
         property var fontFamily
         property var monoFontFamily
         property var bodyFontFamily
@@ -124,6 +146,8 @@ TestCase {
         property var widgetOpacity
         property var widgetPadding
         property var widgetRadius
+        property var widgetBasePadding
+        property var widgetBaseRadius
         property var widgetFontSize
         property var widgetItems: []
 

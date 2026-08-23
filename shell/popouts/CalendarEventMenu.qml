@@ -16,21 +16,21 @@ Popup {
     modal: true
     dim: false
     width: 174
-    padding: 8
+    padding: Theme.scaledSpacing(8)
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
 
     background: Rectangle {
-        radius: 12
+        radius: Theme.scaledRadius(12)
         color: Theme.surface
         border.color: Theme.border
     }
 
     contentItem: ColumnLayout {
-        spacing: 8
+        spacing: Theme.scaledSpacing(8)
 
         RowLayout {
             Layout.alignment: Qt.AlignHCenter
-            spacing: 6
+            spacing: Theme.scaledSpacing(6)
 
             BloxButton {
                 Layout.preferredWidth: 64
@@ -113,7 +113,7 @@ Popup {
 
                     Layout.preferredWidth: 24
                     Layout.preferredHeight: 24
-                    radius: 12
+                    radius: Theme.scaledRadius(12)
                     color: modelData.c
                     border.color: root.event && root.event.colour && root.event.colour.event_id === modelData.id ? Theme.foreground : Theme.withAlpha(Theme.foreground, 0.18)
                     border.width: root.event && root.event.colour && root.event.colour.event_id === modelData.id ? 3 : 1

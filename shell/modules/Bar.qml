@@ -210,7 +210,7 @@ Scope {
                     }
 
                     anchors.fill: parent
-                    anchors.margins: 4
+                    anchors.margins: Theme.scaledSpacing(4)
 
                     BarRegion {
                         id: verticalStartRegion
@@ -327,7 +327,7 @@ Scope {
                         z: 100
                         x: configuredRail.verticalTrayPoint.x
                         y: configuredRail.verticalTrayToggleItem && configuredRail.verticalTrayToggleItem.trayOpensForward ? configuredRail.verticalTrayPoint.y + configuredRail.verticalTrayToggleItem.height + spacing : configuredRail.verticalTrayPoint.y - height - spacing
-                        spacing: 2
+                        spacing: Theme.scaledSpacing(2)
 
                         HoverHandler {
                             margin: configuredRail.anchors.margins
@@ -362,7 +362,7 @@ Scope {
                         z: 100
                         x: configuredRail.horizontalTrayToggleItem && configuredRail.horizontalTrayToggleItem.trayOpensForward ? configuredRail.horizontalTrayPoint.x + configuredRail.horizontalTrayToggleItem.width + spacing : configuredRail.horizontalTrayPoint.x - width - spacing
                         y: configuredRail.horizontalTrayPoint.y
-                        spacing: 2
+                        spacing: Theme.scaledSpacing(2)
 
                         HoverHandler {
                             margin: configuredRail.anchors.margins

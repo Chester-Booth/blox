@@ -9,7 +9,7 @@ ColumnLayout {
 
     visible: controller.modalKind === "progress" || controller.modalKind === "guide"
     Layout.fillWidth: true
-    spacing: 12
+    spacing: Theme.scaledSpacing(12)
 
     ThemeApplyProgress {
         visible: controller.modalKind === "progress"

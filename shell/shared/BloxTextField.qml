@@ -23,7 +23,7 @@ Rectangle {
 
     implicitHeight: 38
     implicitWidth: 180
-    radius: 9
+    radius: Theme.scaledRadius(9)
     color: readOnly ? Theme.withAlpha(Theme.background, 0.58) : Theme.background
     border.color: editor.activeFocus ? Theme.blue : hovered ? Theme.withAlpha(Theme.foreground, 0.34) : Theme.border
     border.width: editor.activeFocus ? 2 : 1
@@ -34,8 +34,8 @@ Rectangle {
 
         activeFocusOnTab: root.enabled && !root.readOnly
         anchors.fill: parent
-        anchors.leftMargin: 11
-        anchors.rightMargin: root.suffix.length > 0 ? suffixLabel.implicitWidth + 18 : 11
+        anchors.leftMargin: Theme.scaledSpacing(11)
+        anchors.rightMargin: root.suffix.length > 0 ? suffixLabel.implicitWidth + Theme.scaledSpacing(18) : Theme.scaledSpacing(11)
         color: root.enabled ? Theme.foreground : Theme.muted
         selectionColor: Theme.withAlpha(Theme.blue, 0.5)
         selectedTextColor: Theme.foreground
@@ -63,7 +63,7 @@ Rectangle {
         id: suffixLabel
 
         anchors.right: parent.right
-        anchors.rightMargin: 10
+        anchors.rightMargin: Theme.scaledSpacing(10)
         anchors.verticalCenter: parent.verticalCenter
         visible: root.suffix.length > 0
         text: root.suffix

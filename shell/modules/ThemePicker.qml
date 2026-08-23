@@ -76,8 +76,8 @@ FloatingWindow {
 
         Rectangle {
             anchors.fill: parent
-            anchors.margins: 1
-            radius: 8
+            anchors.margins: Theme.scaledSpacing(1)
+            radius: Theme.scaledRadius(8)
             clip: true
             color: Theme.background
             border.color: Theme.border
@@ -87,13 +87,13 @@ FloatingWindow {
                 id: pickerContent
 
                 anchors.fill: parent
-                anchors.margins: 18
-                spacing: 12
+                anchors.margins: Theme.scaledSpacing(18)
+                spacing: Theme.scaledSpacing(12)
                 enabled: pickerController.modalKind.length === 0 && !pickerController.colourPickerOpen && (!pickerController.busy || pickerController.action === "preview-edit")
 
                 RowLayout {
                     Layout.fillWidth: true
-                    spacing: 12
+                    spacing: Theme.scaledSpacing(12)
 
                     DragHandler {
                         target: null
@@ -186,7 +186,7 @@ FloatingWindow {
                 RowLayout {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    spacing: 14
+                    spacing: Theme.scaledSpacing(14)
 
                     ThemePickerLibrary {
                         controller: pickerController
@@ -195,7 +195,7 @@ FloatingWindow {
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
-                        radius: 8
+                        radius: Theme.scaledRadius(8)
                         color: Theme.surface
                         border.color: Theme.border
 
@@ -203,7 +203,7 @@ FloatingWindow {
                             id: editorScroll
 
                             anchors.fill: parent
-                            anchors.margins: 14
+                            anchors.margins: Theme.scaledSpacing(14)
                             clip: true
                             contentWidth: width
                             contentHeight: editorContent.implicitHeight
@@ -225,7 +225,7 @@ FloatingWindow {
                                 id: editorContent
 
                                 width: editorScroll.width - 16
-                                spacing: 14
+                                spacing: Theme.scaledSpacing(14)
 
                                 ThemePickerOverview {
                                     controller: pickerController
@@ -285,7 +285,7 @@ FloatingWindow {
 
                 ColumnLayout {
                     Layout.fillWidth: true
-                    spacing: 5
+                    spacing: Theme.scaledSpacing(5)
 
                     Repeater {
                         model: pickerController.validationErrors
@@ -370,7 +370,7 @@ FloatingWindow {
 
                 z: 1000
                 visible: pickerController.barDragActive
-                radius: 8
+                radius: Theme.scaledRadius(8)
                 color: Theme.withAlpha(Theme.surface, 0.98)
                 border.color: Theme.blue
                 border.width: 2

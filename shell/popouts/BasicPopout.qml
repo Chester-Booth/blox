@@ -18,7 +18,7 @@ Rectangle {
 
     width: 340
     height: Math.min(520, Math.max(root.title === "Awake" ? 110 : 140, content.implicitHeight + 28))
-    radius: 8
+    radius: Theme.scaledRadius(8)
     color: Theme.background
     border.color: Theme.surfaceAlt
     border.width: 1
@@ -27,7 +27,7 @@ Rectangle {
         id: content
 
         anchors.fill: parent
-        anchors.margins: 12
+        anchors.margins: Theme.scaledSpacing(12)
         implicitHeight: headerRow.height + bodyText.implicitHeight + (root.title === "Awake" ? awakeSlider.height + 6 : actionFlow.implicitHeight + 20)
 
         Item {
@@ -52,11 +52,11 @@ Rectangle {
                 id: titleBlock
 
                 anchors.left: titleIcon.right
-                anchors.leftMargin: 8
+                anchors.leftMargin: Theme.scaledSpacing(8)
                 anchors.right: headerAction.left
-                anchors.rightMargin: headerAction.visible || headerStatusText.visible ? 8 : 0
+                anchors.rightMargin: headerAction.visible || headerStatusText.visible ? Theme.scaledSpacing(8) : 0
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: 1
+                spacing: Theme.scaledSpacing(1)
 
                 Text {
                     width: parent.width
@@ -84,12 +84,12 @@ Rectangle {
                 id: headerAction
 
                 anchors.right: headerStatusText.visible ? headerStatusText.left : parent.right
-                anchors.rightMargin: visible && headerStatusText.visible ? 8 : 0
+                anchors.rightMargin: visible && headerStatusText.visible ? Theme.scaledSpacing(8) : 0
                 anchors.verticalCenter: parent.verticalCenter
                 visible: root.headerActionCommand.length > 0
                 width: visible ? 28 : 0
                 height: 28
-                radius: 6
+                radius: Theme.scaledRadius(6)
                 color: headerActionMouse.containsMouse ? Theme.surfaceAlt : Theme.surface
                 border.color: Theme.surfaceAlt
                 border.width: 1
@@ -132,7 +132,7 @@ Rectangle {
             id: bodyText
 
             anchors.top: headerRow.bottom
-            anchors.topMargin: 8
+            anchors.topMargin: Theme.scaledSpacing(8)
             width: parent.width
             text: root.statusError.length > 0 ? "Status error: " + root.statusError + (root.body.length > 0 ? "\n\n" + root.body : "") : root.body
             color: root.statusError.length > 0 ? Theme.red : Theme.foreground
@@ -148,7 +148,7 @@ Rectangle {
             anchors.right: parent.right
             anchors.bottom: parent.bottom
             width: parent.width
-            spacing: 8
+            spacing: Theme.scaledSpacing(8)
             visible: root.title !== "Awake"
 
             Repeater {
@@ -157,7 +157,7 @@ Rectangle {
                 Rectangle {
                     width: root.title === "Updates" ? Math.floor((parent.width - 8) / 2) : Math.max(96, actionContent.implicitWidth + 22)
                     height: 34
-                    radius: 7
+                    radius: Theme.scaledRadius(7)
                     color: actionMouse.containsMouse ? Theme.surfaceAlt : Theme.surface
                     border.color: modelData.danger ? Theme.red : Theme.surfaceAlt
                     border.width: 1
@@ -166,7 +166,7 @@ Rectangle {
                         id: actionContent
 
                         anchors.centerIn: parent
-                        spacing: 7
+                        spacing: Theme.scaledSpacing(7)
 
                         Text {
                             visible: !!modelData.icon

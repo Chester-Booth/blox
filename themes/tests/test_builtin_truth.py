@@ -1,8 +1,9 @@
 """Built-in truth contract (Phase 3 steps 01-02).
 
-Classifies schema leaves into authored options and derived provenance,
-then enforces the release-plan promise permanently: no built-in omits an
-authored option, and the defaults document satisfies its own schema.
+Classifies schema leaves into authored options, explicit absence states and
+derived provenance, then enforces the release-plan promise permanently: no
+built-in omits an authored option, and the defaults document satisfies its own
+schema.
 """
 
 from __future__ import annotations
@@ -24,6 +25,7 @@ CANONICAL_THEME = json.loads((THEMES / "builtin" / "catppuccin-frappe.json").rea
 # Provenance stamped by generators.py onto generated themes only; hand
 # written built-ins must not fake it.
 DERIVED_PREFIXES = ("generator.",)
+OPTIONAL_STATE_LEAVES = {"shape.window_gap"}
 
 
 def _resolve(node: dict) -> dict:
@@ -54,7 +56,11 @@ def _leaves(node: dict, path: str = "") -> dict[str, dict]:
 
 
 ALL_LEAVES = _leaves(SCHEMA)
-AUTHORED_LEAVES = {p: v for p, v in ALL_LEAVES.items() if not p.startswith(DERIVED_PREFIXES)}
+AUTHORED_LEAVES = {
+    path: value
+    for path, value in ALL_LEAVES.items()
+    if not path.startswith(DERIVED_PREFIXES) and path not in OPTIONAL_STATE_LEAVES
+}
 
 
 class BuiltinTruthTests(unittest.TestCase):
@@ -84,6 +90,12 @@ class BuiltinTruthTests(unittest.TestCase):
                 "generator.wallpaper_sha256",
             ],
         )
+
+    def test_optional_absence_has_one_named_meaning(self) -> None:
+        self.assertEqual(OPTIONAL_STATE_LEAVES, {"shape.window_gap"})
+        for name, document in self.documents():
+            with self.subTest(theme=name):
+                self.assertNotIn("window_gap", document["shape"])
 
     def test_defaults_document_matches_its_own_schema(self) -> None:
         self.assertEqual(defaults_schema_errors(DEFAULTS_DOCUMENT), [])
@@ -116,6 +128,7 @@ class BuiltinTruthTests(unittest.TestCase):
             {default: canonical["colours"][source] for default, source in colour_roles.items()},
         )
         self.assertEqual(defaults["fonts"], canonical["fonts"])
+        self.assertEqual(defaults["shape"], canonical["shape"])
         self.assertEqual(defaults["shell"]["bar"]["position"], canonical["shell"]["bar"]["position"])
         self.assertEqual(defaults["shell"]["bar"]["reset_items"], canonical["shell"]["bar"]["items"])
         self.assertEqual(defaults["shell"]["osd"], canonical["shell"]["osd"])
@@ -134,6 +147,7 @@ class BuiltinTruthTests(unittest.TestCase):
         self.assertEqual(resolved["id"], "sparse")
         self.assertEqual(resolved["variant"], defaults["variant"])
         self.assertEqual(resolved["fonts"], defaults["fonts"])
+        self.assertEqual(resolved["shape"], defaults["shape"])
         self.assertEqual(resolved["wallpaper"], defaults["wallpaper"])
         self.assertEqual(resolved["terminal"], defaults["terminal"])
         self.assertEqual(resolved["widgets"]["profile"], DEFAULTS_DOCUMENT["widgets"]["profile"])

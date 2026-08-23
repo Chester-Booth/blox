@@ -58,7 +58,7 @@ Item {
 
     ColumnLayout {
         anchors.fill: parent
-        spacing: 6
+        spacing: Theme.scaledSpacing(6)
 
         GridLayout {
             id: grid
@@ -107,7 +107,7 @@ Item {
 
                     Layout.preferredWidth: grid.cellWidth(index % 7)
                     Layout.preferredHeight: 34
-                    radius: 6
+                    radius: Theme.scaledRadius(6)
                     color: chosen ? Theme.accent : hover.hovered ? Theme.surfaceAlt : Theme.surface
                     opacity: inMonth ? 1 : 0.38
 
@@ -123,8 +123,8 @@ Item {
                     Row {
                         anchors.horizontalCenter: parent.horizontalCenter
                         anchors.bottom: parent.bottom
-                        anchors.bottomMargin: 3
-                        spacing: 2
+                        anchors.bottomMargin: Theme.scaledSpacing(3)
+                        spacing: Theme.scaledSpacing(2)
 
                         Repeater {
                             model: parent.parent.marks
@@ -134,7 +134,7 @@ Item {
 
                                 width: 4
                                 height: 4
-                                radius: 2
+                                radius: Theme.scaledRadius(2)
                                 color: modelData
                             }
 
@@ -161,7 +161,7 @@ Item {
         Flow {
             Layout.fillWidth: true
             Layout.preferredHeight: implicitHeight
-            spacing: 7
+            spacing: Theme.scaledSpacing(7)
 
             Repeater {
                 model: root.visibleCalendars()
@@ -169,7 +169,7 @@ Item {
                 Row {
                     required property var modelData
 
-                    spacing: 4
+                    spacing: Theme.scaledSpacing(4)
                     height: 12
                     width: Math.min(implicitWidth, root.width)
 
@@ -177,7 +177,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         width: 7
                         height: 7
-                        radius: 4
+                        radius: Theme.scaledRadius(4)
                         color: modelData.colour
                     }
 

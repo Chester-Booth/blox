@@ -35,7 +35,7 @@ FocusScope {
         anchors.centerIn: parent
         width: 620
         height: 500
-        radius: 14
+        radius: Theme.scaledRadius(14)
         color: Theme.surface
         border.color: Theme.border
         border.width: 1
@@ -51,14 +51,14 @@ FocusScope {
 
         ColumnLayout {
             anchors.fill: parent
-            anchors.margins: 20
-            spacing: 14
+            anchors.margins: Theme.scaledSpacing(20)
+            spacing: Theme.scaledSpacing(14)
 
             RowLayout {
                 Layout.fillWidth: true
 
                 ColumnLayout {
-                    spacing: 2
+                    spacing: Theme.scaledSpacing(2)
 
                     Text {
                         text: "Choose " + controller.colourPickerKey.replace(/_/g, " ")
@@ -94,19 +94,19 @@ FocusScope {
             RowLayout {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                spacing: 16
+                spacing: Theme.scaledSpacing(16)
 
                 ColumnLayout {
                     Layout.preferredWidth: 344
                     Layout.minimumWidth: 300
                     Layout.fillHeight: true
-                    spacing: 10
+                    spacing: Theme.scaledSpacing(10)
 
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         Layout.minimumHeight: 230
-                        radius: 9
+                        radius: Theme.scaledRadius(9)
                         color: controller.hsvHex(controller.colourHue, 1, 1)
                         clip: true
 
@@ -155,7 +155,7 @@ FocusScope {
                             y: (1 - controller.colourValue) * parent.height - height / 2
                             width: 14
                             height: 14
-                            radius: 7
+                            radius: Theme.scaledRadius(7)
                             color: "transparent"
                             border.color: Theme.foreground
                             border.width: 2
@@ -186,14 +186,14 @@ FocusScope {
                         Layout.preferredHeight: 22
                         Layout.minimumHeight: 22
                         Layout.maximumHeight: 22
-                        radius: 7
+                        radius: Theme.scaledRadius(7)
 
                         Rectangle {
                             x: controller.colourHue * parent.width - width / 2
                             y: -3
                             width: 6
                             height: parent.height + 6
-                            radius: 3
+                            radius: Theme.scaledRadius(3)
                             color: Theme.foreground
                             border.color: Theme.background
                         }
@@ -261,12 +261,12 @@ FocusScope {
                 ColumnLayout {
                     Layout.preferredWidth: 220
                     Layout.fillHeight: true
-                    spacing: 10
+                    spacing: Theme.scaledSpacing(10)
 
                     Rectangle {
                         Layout.fillWidth: true
                         height: 74
-                        radius: 10
+                        radius: Theme.scaledRadius(10)
                         color: controller.colourHex
                         border.color: Theme.border
 
@@ -290,7 +290,7 @@ FocusScope {
 
                     Flow {
                         Layout.fillWidth: true
-                        spacing: 6
+                        spacing: Theme.scaledSpacing(6)
 
                         Repeater {
                             model: controller.semanticKeys
@@ -300,7 +300,7 @@ FocusScope {
 
                                 width: 34
                                 height: 34
-                                radius: 8
+                                radius: Theme.scaledRadius(8)
                                 color: controller.candidate ? controller.validColour(controller.candidate.colours[modelData], "transparent") : "transparent"
                                 border.color: presetHover.hovered ? Theme.foreground : Theme.border
 

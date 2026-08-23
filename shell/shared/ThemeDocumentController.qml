@@ -47,6 +47,7 @@ QtObject {
                 "border": colours.border
             },
             "fonts": JSON.parse(JSON.stringify(defaultsDocument.fonts)),
+            "shape": JSON.parse(JSON.stringify(defaultsDocument.shape)),
             "shell": shell,
             "wallpaper": JSON.parse(JSON.stringify(defaultsDocument.wallpaper)),
             "terminal": JSON.parse(JSON.stringify(defaultsDocument.terminal)),
@@ -62,6 +63,7 @@ QtObject {
         const fallback = root.defaults.themeDocument();
         const colours = fallback.colours;
         const fonts = fallback.fonts;
+        const shape = fallback.shape;
         const shell = fallback.shell;
         theme.previewActive = false;
         theme.previewThemeId = "";
@@ -83,6 +85,9 @@ QtObject {
         theme.selectionForeground = colours.selection_foreground;
         theme.border = colours.border;
         theme.terminalCanvas = fallback.terminal.canvas;
+        theme.radiusScale = shape.radius_scale;
+        theme.densityScale = shape.density_scale;
+        theme.windowGap = shape.window_gap === undefined ? null : shape.window_gap;
         theme.fontFamily = fonts.panel;
         theme.monoFontFamily = fonts.mono;
         theme.bodyFontFamily = fonts.ui;
@@ -101,8 +106,8 @@ QtObject {
         const profile = root.defaults.widgetProfile();
         theme.widgetProfile = root.defaults.document.widgets.profile;
         theme.widgetOpacity = profile.opacity;
-        theme.widgetPadding = profile.padding;
-        theme.widgetRadius = profile.radius;
+        theme.widgetBasePadding = profile.padding;
+        theme.widgetBaseRadius = profile.radius;
         theme.widgetFontSize = profile.font_size;
         theme.widgetItems = [];
         return theme.widgetProfile;
@@ -116,8 +121,8 @@ QtObject {
 
             theme.widgetProfile = data.profile;
             theme.widgetOpacity = data.opacity;
-            theme.widgetPadding = data.padding;
-            theme.widgetRadius = data.radius;
+            theme.widgetBasePadding = data.padding;
+            theme.widgetBaseRadius = data.radius;
             theme.widgetFontSize = data.font_size;
             theme.widgetItems = data.items || [];
             return true;
@@ -130,7 +135,7 @@ QtObject {
     function loadJson(raw) {
         try {
             const data = JSON.parse(raw);
-            if (data.schema_version !== 1 || !data.id || !data.colours || !data.compatibility || !data.fonts || !data.terminal)
+            if (data.schema_version !== 1 || !data.id || !data.colours || !data.compatibility || !data.fonts || !data.shape || !data.terminal)
                 throw new Error("unsupported or incomplete theme document");
 
             theme.themeId = data.id;
@@ -151,6 +156,9 @@ QtObject {
             theme.selectionForeground = data.colours.selection_foreground;
             theme.border = data.colours.border;
             theme.terminalCanvas = data.terminal.canvas;
+            theme.radiusScale = data.shape.radius_scale;
+            theme.densityScale = data.shape.density_scale;
+            theme.windowGap = data.shape.window_gap === undefined ? null : data.shape.window_gap;
             theme.fontFamily = data.fonts.panel;
             theme.monoFontFamily = data.fonts.mono;
             theme.bodyFontFamily = data.fonts.ui;
@@ -216,7 +224,7 @@ QtObject {
         try {
             const source = typeof raw === "string" ? JSON.parse(raw) : raw;
             const data = resolvedSource(source);
-            if (data.schema_version !== 1 || !data.id || !data.colours || !data.fonts || !data.terminal)
+            if (data.schema_version !== 1 || !data.id || !data.colours || !data.fonts || !data.shape || !data.terminal)
                 throw new Error("unsupported or incomplete source theme");
 
             theme.previewActive = true;
@@ -238,6 +246,9 @@ QtObject {
             theme.selectionForeground = data.colours.selection_foreground;
             theme.border = data.colours.border;
             theme.terminalCanvas = data.terminal.canvas;
+            theme.radiusScale = data.shape.radius_scale;
+            theme.densityScale = data.shape.density_scale;
+            theme.windowGap = data.shape.window_gap === undefined ? null : data.shape.window_gap;
             theme.fontFamily = data.fonts.panel;
             theme.monoFontFamily = data.fonts.mono;
             theme.bodyFontFamily = data.fonts.ui;

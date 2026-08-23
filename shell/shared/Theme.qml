@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import "Shape.js" as Shape
 pragma Singleton
 
 Singleton {
@@ -26,18 +27,28 @@ Singleton {
     property color selectionForeground: defaults.colour("selection_foreground")
     property color border: defaults.colour("border")
     property color terminalCanvas: defaults.ready ? defaults.themeDocument().terminal.canvas : "transparent"
+    property real radiusScale: defaults.ready ? defaults.themeDocument().shape.radius_scale : 1.25
+    property real densityScale: defaults.ready ? defaults.themeDocument().shape.density_scale : 1.0
+    property var windowGap: defaults.ready && defaults.themeDocument().shape.window_gap !== undefined ? defaults.themeDocument().shape.window_gap : null
     readonly property int railWidth: 34
     readonly property int iconSize: 18
     readonly property int buttonSize: 30
-    readonly property int radius: 4
+    readonly property int radius: Shape.roundScaled(4, radiusScale)
+    readonly property int cardRadius: Shape.roundScaled(8, radiusScale)
+    readonly property int popoutRadius: Shape.roundScaled(12, radiusScale)
+    readonly property int surfacePadding: Shape.roundScaled(12, densityScale)
+    readonly property int controlSpacing: Shape.roundScaled(8, densityScale)
+    readonly property int effectiveWindowGap: windowGap === null ? Shape.automaticWindowGap(densityScale) : windowGap
     property string fontFamily: defaults.font("panel")
     property string monoFontFamily: defaults.font("mono")
     property string bodyFontFamily: defaults.font("ui")
     property bool previewActive: false
     property string widgetProfile: defaults.ready ? defaults.document.widgets.profile : ""
     property real widgetOpacity: defaults.ready && defaults.widgetProfile(widgetProfile) ? defaults.widgetProfile(widgetProfile).opacity : 0
-    property int widgetPadding: defaults.ready && defaults.widgetProfile(widgetProfile) ? defaults.widgetProfile(widgetProfile).padding : 0
-    property int widgetRadius: defaults.ready && defaults.widgetProfile(widgetProfile) ? defaults.widgetProfile(widgetProfile).radius : 0
+    property int widgetBasePadding: defaults.ready && defaults.widgetProfile(widgetProfile) ? defaults.widgetProfile(widgetProfile).padding : 0
+    property int widgetBaseRadius: defaults.ready && defaults.widgetProfile(widgetProfile) ? defaults.widgetProfile(widgetProfile).radius : 0
+    readonly property int widgetPadding: Shape.roundScaled(widgetBasePadding, densityScale)
+    readonly property int widgetRadius: Shape.roundScaled(widgetBaseRadius, radiusScale)
     property int widgetFontSize: defaults.ready && defaults.widgetProfile(widgetProfile) ? defaults.widgetProfile(widgetProfile).font_size : 0
     property var widgetItems: []
     property string barPosition: defaults.ready ? defaults.themeDocument().shell.bar.position : ""
@@ -55,6 +66,14 @@ Singleton {
     readonly property string stateRoot: {
         const configured = Quickshell.env("XDG_STATE_HOME") || "";
         return configured.length > 0 ? configured : Quickshell.env("HOME") + "/.local/state";
+    }
+
+    function scaledRadius(base) {
+        return Shape.roundScaled(base, radiusScale);
+    }
+
+    function scaledSpacing(base) {
+        return Shape.roundScaled(base, densityScale);
     }
     readonly property string themePath: stateRoot + "/blox-theme/current/quickshell/theme.json"
     readonly property string widgetPath: stateRoot + "/blox-theme/current/widgets/profile.json"

@@ -90,14 +90,14 @@ PanelWindow {
             Column {
                 width: 600
                 height: parent.height
-                spacing: 24
+                spacing: Theme.scaledSpacing(24)
 
                 Rectangle {
                     id: previewFrame
 
                     width: parent.width
                     height: root.captureMonitor && root.captureMonitor.width > 0 ? Math.round(width * root.captureMonitor.height / root.captureMonitor.width) : 338
-                    radius: 0
+                    radius: Theme.scaledRadius(0)
                     color: Theme.background
                     opacity: 1
                     clip: true
@@ -225,11 +225,11 @@ PanelWindow {
 
                 Row {
                     width: parent.width
-                    spacing: 32
+                    spacing: Theme.scaledSpacing(32)
 
                     Column {
                         width: 316
-                        spacing: 14
+                        spacing: Theme.scaledSpacing(14)
 
                         Text {
                             anchors.horizontalCenter: parent.horizontalCenter
@@ -242,10 +242,10 @@ PanelWindow {
 
                         Row {
                             anchors.horizontalCenter: parent.horizontalCenter
-                            spacing: 16
+                            spacing: Theme.scaledSpacing(16)
 
                             Column {
-                                spacing: 8
+                                spacing: Theme.scaledSpacing(8)
 
                                 Item {
                                     width: 184
@@ -294,11 +294,11 @@ PanelWindow {
                             id: moveWindowShortcuts
 
                             anchors.horizontalCenter: parent.horizontalCenter
-                            spacing: 6
+                            spacing: Theme.scaledSpacing(6)
 
                             Row {
                                 anchors.horizontalCenter: parent.horizontalCenter
-                                spacing: 9
+                                spacing: Theme.scaledSpacing(9)
 
                                 Item {
                                     width: root.keySize
@@ -375,7 +375,7 @@ PanelWindow {
 
                     Column {
                         width: 252
-                        spacing: 14
+                        spacing: Theme.scaledSpacing(14)
 
                         Text {
                             anchors.horizontalCenter: parent.horizontalCenter
@@ -391,7 +391,7 @@ PanelWindow {
 
                             anchors.horizontalCenter: parent.horizontalCenter
                             columns: 3
-                            spacing: 8
+                            spacing: Theme.scaledSpacing(8)
 
                             Repeater {
                                 model: [{
@@ -462,12 +462,12 @@ PanelWindow {
                 x: 660
                 width: 1100
                 height: parent.height
-                spacing: 56
+                spacing: Theme.scaledSpacing(56)
 
                 // Explicit mirror of the Super binds in hypr/conf.d/binds.lua.
                 Column {
                     width: 500
-                    spacing: 26
+                    spacing: Theme.scaledSpacing(26)
 
                     ShortcutGroup {
                         width: parent.width
@@ -518,7 +518,7 @@ PanelWindow {
 
                 Column {
                     width: 544
-                    spacing: 26
+                    spacing: Theme.scaledSpacing(26)
 
                     ShortcutGroup {
                         width: parent.width
@@ -627,7 +627,7 @@ PanelWindow {
 
         implicitWidth: root.keySize * widthUnits
         implicitHeight: root.keySize
-        radius: 4
+        radius: Theme.scaledRadius(4)
         color: Theme.accent
 
         Text {
@@ -658,13 +658,13 @@ PanelWindow {
         required property string action
         property real actionWidth: 280
 
-        spacing: 10
+        spacing: Theme.scaledSpacing(10)
         height: root.keySize
 
         Row {
             id: keySequence
 
-            spacing: 8
+            spacing: Theme.scaledSpacing(8)
 
             Repeater {
                 model: shortcutRow.keys
@@ -673,7 +673,7 @@ PanelWindow {
                     required property int index
                     required property string modelData
 
-                    spacing: 8
+                    spacing: Theme.scaledSpacing(8)
 
                     Text {
                         visible: index > 0
@@ -715,7 +715,7 @@ PanelWindow {
         required property var shortcuts
         property real actionWidth: 290
 
-        spacing: 4
+        spacing: Theme.scaledSpacing(4)
 
         Text {
             text: shortcutGroup.heading
@@ -777,7 +777,7 @@ PanelWindow {
 
         required property string iconName
 
-        spacing: 10
+        spacing: Theme.scaledSpacing(10)
         height: root.keySize
 
         KeyCap {
@@ -804,7 +804,7 @@ PanelWindow {
         required property string iconName
         required property string action
 
-        spacing: 10
+        spacing: Theme.scaledSpacing(10)
         height: root.keySize
 
         PointerShortcutKeys {

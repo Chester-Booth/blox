@@ -1,5 +1,5 @@
-import "."
-import "../shared"
+import qs.popouts
+import qs.shared
 import QtQuick
 import Quickshell
 import Quickshell.Wayland

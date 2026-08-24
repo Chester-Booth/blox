@@ -1,4 +1,4 @@
-import "../shared"
+import qs.shared
 import QtQuick
 import Quickshell.Services.Notifications
 

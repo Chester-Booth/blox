@@ -1,5 +1,5 @@
-import "."
-import "../shared"
+import qs.modules
+import qs.shared
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts

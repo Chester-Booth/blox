@@ -1,6 +1,6 @@
-import "../popouts"
-import "../services"
-import "../shared"
+import qs.popouts
+import qs.services
+import qs.shared
 import QtQuick
 import Quickshell
 import Quickshell.Io

@@ -1,4 +1,4 @@
-import "."
+import qs.shared
 import QtQuick
 
 Rectangle {

@@ -1,6 +1,6 @@
-import "."
-import "../services"
-import "../shared"
+import qs.modules
+import qs.services
+import qs.shared
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts

@@ -1,4 +1,4 @@
-import "."
+import qs.services
 import QtQuick
 import Quickshell
 import Quickshell.Io

@@ -1,4 +1,4 @@
-import "../shared"
+import qs.shared
 import "../shared/Fuzzy.js" as Fuzzy
 import "../shared/LauncherLogic.js" as LauncherLogic
 import QtQml.WorkerScript

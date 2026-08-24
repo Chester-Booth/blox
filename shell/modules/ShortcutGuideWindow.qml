@@ -1,4 +1,4 @@
-import "../shared"
+import qs.shared
 import QtQuick
 import QtQuick.Effects
 import Quickshell
@@ -532,6 +532,9 @@ PanelWindow {
                         }, {
                             "keys": ["Shift", "T"],
                             "action": "Copy text from region"
+                        }, {
+                            "keys": ["Alt", "T"],
+                            "action": "Copy text from frozen region"
                         }, {
                             "keys": ["Shift", "C"],
                             "action": "Colour picker"

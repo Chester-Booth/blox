@@ -1,4 +1,4 @@
-import "../shared"
+import qs.shared
 import "CalendarLayout.js" as LayoutMath
 import QtQuick
 import QtQuick.Layouts

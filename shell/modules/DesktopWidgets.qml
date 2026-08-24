@@ -1,6 +1,6 @@
-import "../services"
-import "../shared"
-import "../shared" as Shared
+import qs.services
+import qs.shared
+import qs.shared as Shared
 import QtQuick
 import Quickshell
 import Quickshell.Hyprland

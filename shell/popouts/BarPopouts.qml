@@ -1,4 +1,4 @@
-import "../services"
+import qs.services
 import QtQuick
 
 Item {

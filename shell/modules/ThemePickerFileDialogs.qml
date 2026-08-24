@@ -1,4 +1,4 @@
-import "."
+import qs.modules
 import QtQuick
 import QtQuick.Dialogs
 

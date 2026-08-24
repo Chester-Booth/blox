@@ -1,5 +1,5 @@
-import "../services"
-import "../shared"
+import qs.services
+import qs.shared
 import QtQuick
 
 Item {

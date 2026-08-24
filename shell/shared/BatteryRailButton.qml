@@ -1,4 +1,4 @@
-import "."
+import qs.shared
 
 RailButton {
     id: root

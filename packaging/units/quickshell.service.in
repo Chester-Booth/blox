@@ -12,7 +12,7 @@ Environment=QS_DISABLE_CRASH_HANDLER=1
 Environment=PATH=@BIN_ROOT@:/usr/local/sbin:/usr/local/bin:/usr/bin
 Environment=BLOX_DATA_DIR=@PKG_ROOT@/themes
 Environment=BLOX_SHELL_LAYOUT=installed
-ExecStart=/usr/bin/quickshell --no-duplicate --path @PKG_ROOT@/shell
+ExecStart=@PKG_ROOT@/shell/scripts/theme/start-quickshell.sh --no-duplicate --path @PKG_ROOT@/shell
 Restart=on-failure
 RestartSec=2
 

@@ -204,8 +204,12 @@ class AppControllerTests(unittest.TestCase):
         path.mkdir()
 
         result = subprocess.run(
-            [str(REPOSITORY / "bin/blox-chromium-browser")],
-            env={**os.environ, "PATH": f"{path}:/usr/bin:/bin", "XDG_STATE_HOME": str(root / "state")},
+            ["/usr/bin/bash", str(REPOSITORY / "bin/blox-chromium-browser")],
+            # Keep host browser packages out of this absence test. The
+            # launcher must report the missing-browser contract, not try to
+            # start whatever the runner happens to have installed. Invoke
+            # Bash directly because the launcher shebang uses env from PATH.
+            env={**os.environ, "PATH": str(path), "XDG_STATE_HOME": str(root / "state")},
             capture_output=True,
             text=True,
             check=False,

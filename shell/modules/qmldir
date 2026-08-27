@@ -16,6 +16,7 @@ ThemePickerController 1.0 ThemePickerController.qml
 ThemePickerCreationFlow 1.0 ThemePickerCreationFlow.qml
 ThemePickerFileDialogs 1.0 ThemePickerFileDialogs.qml
 ThemePickerGenerationController 1.0 ThemePickerGenerationController.qml
+ThemePickerIconTheme 1.0 ThemePickerIconTheme.qml
 ThemePickerLibrary 1.0 ThemePickerLibrary.qml
 ThemePickerModal 1.0 ThemePickerModal.qml
 ThemePickerOverview 1.0 ThemePickerOverview.qml

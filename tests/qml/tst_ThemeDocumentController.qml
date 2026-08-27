@@ -112,6 +112,7 @@ TestCase {
         property var previewThemeId: ""
         property var themeId: ""
         property var activeThemeId: ""
+        property var activeIconTheme: ""
         property var variant: ""
         property var background
         property var surface

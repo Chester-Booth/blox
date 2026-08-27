@@ -10,6 +10,10 @@ Singleton {
     property bool ready: false
     property string themeId: ""
     property string activeThemeId: ""
+    // Quickshell reads its icon theme when the process starts. Keep this as
+    // the loaded process value so a deferred Apply does not look active
+    // before Complete restarts the service.
+    property string activeIconTheme: Quickshell.env("QS_ICON_THEME") || ""
     property string previewThemeId: ""
     property string variant: ""
     property color background: defaults.colour("background")
@@ -248,6 +252,18 @@ Singleton {
     // Cursor images belong to each Wayland client. Recreate Blox's windows so
     // they request the cursor image from the newly selected theme.
     function reloadCursor() : string {
+        let generatedIconTheme = "";
+        try {
+            const generated = JSON.parse(themeFile.text());
+            generatedIconTheme = generated.icons && generated.icons.theme ? generated.icons.theme : "";
+        } catch (error) {
+        }
+
+        if (generatedIconTheme.length > 0 && generatedIconTheme !== activeIconTheme) {
+            Quickshell.execDetached(["systemctl", "--user", "restart", "quickshell.service"]);
+            return "restarting";
+        }
+
         Quickshell.reload(true);
         return "reloading";
     }

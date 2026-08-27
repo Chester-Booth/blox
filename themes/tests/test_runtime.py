@@ -263,6 +263,56 @@ class RuntimeTests(unittest.TestCase):
         self.assertEqual(["active", "restart"], [event["state"] for event in cursor_events])
         self.assertEqual("Complete to reload Blox surfaces", cursor_events[-1]["message"])
 
+    def test_icon_theme_apply_can_defer_the_quickshell_restart(self) -> None:
+        self.apply_canonical()
+        changed = copy.deepcopy(self.canonical)
+        changed["icons"]["theme"] = "Breeze"
+        runner = FakeCommands()
+        events: list[dict] = []
+        manifest, warnings = apply_theme(
+            self.canonical_path,
+            changed,
+            ("quickshell",),
+            run_command=runner,
+            progress=events.append,
+            defer_quickshell_restart=True,
+        )
+        self.assertEqual([], warnings)
+        application_event = next(event for event in events if event["kind"] == "stage" and event["stage"] == "applications")
+        self.assertEqual(["quickshell"], application_event["pending_reloads"])
+        self.assertIn(
+            ["bash", str(repository_root() / "shell/scripts/ipc.sh"), "theme", "reload"],
+            runner.commands,
+        )
+        self.assertNotIn(
+            ["bash", str(repository_root() / "shell/scripts/ipc.sh"), "theme", "reloadCursor"],
+            runner.commands,
+        )
+        quickshell_events = [event for event in events if event["kind"] == "target" and event["target"] == "quickshell"]
+        self.assertEqual(["active", "restart"], [event["state"] for event in quickshell_events])
+        self.assertEqual("Complete to reload Blox surfaces", quickshell_events[-1]["message"])
+
+    def test_icon_theme_apply_recreates_quickshell_without_defer(self) -> None:
+        self.apply_canonical()
+        changed = copy.deepcopy(self.canonical)
+        changed["icons"]["theme"] = "Breeze"
+        runner = FakeCommands()
+        _, warnings = apply_theme(
+            self.canonical_path,
+            changed,
+            ("quickshell",),
+            run_command=runner,
+        )
+        self.assertEqual([], warnings)
+        self.assertIn(
+            ["bash", str(repository_root() / "shell/scripts/ipc.sh"), "theme", "reloadCursor"],
+            runner.commands,
+        )
+        self.assertNotIn(
+            ["bash", str(repository_root() / "shell/scripts/ipc.sh"), "theme", "reload"],
+            runner.commands,
+        )
+
     def test_cursor_apply_reports_when_blox_shell_cannot_reload(self) -> None:
         runner = FakeCommands()
         runner.returncode = 1

@@ -220,7 +220,7 @@ QtObject {
                     "message": "Unchanged"
                 };
 
-                if (pendingReloads.indexOf("quickshell") >= 0 && entry.target === "cursor")
+                if (pendingReloads.indexOf("quickshell") >= 0 && (entry.target === "cursor" || entry.target === "quickshell"))
                     return {
                     "target": entry.target,
                     "state": "restart",

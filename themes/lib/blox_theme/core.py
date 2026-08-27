@@ -580,7 +580,7 @@ def dependency_checks(theme: dict[str, Any], targets: set[str] | None = None, so
     icon_roots = (Path.home() / ".local/share/icons", Path.home() / ".icons", Path("/usr/local/share/icons"), Path("/usr/share/icons"))
     if enabled("gtk") and not _named_asset_exists(theme["gtk"]["base_theme"], theme_roots):
         asset_findings.append(f"GTK base theme is not installed: {theme['gtk']['base_theme']}")
-    if enabled("gtk") and not _named_asset_exists(theme["icons"]["theme"], icon_roots):
+    if (enabled("gtk") or enabled("quickshell")) and not _named_asset_exists(theme["icons"]["theme"], icon_roots):
         asset_findings.append(f"icon theme is not installed: {theme['icons']['theme']}")
     cursor = theme["cursor"]
     if enabled("cursor"):
@@ -721,6 +721,7 @@ def render_quickshell(theme: dict[str, Any], ansi: dict[str, str]) -> str:
         "compatibility": {"red": colours["danger"], "green": colours["success"], "yellow": colours["warning"], "blue": colours["info"], "mauve": colours["mauve"], "teal": colours["teal"]},
         "fonts": {"ui": theme["fonts"]["ui"], "mono": theme["fonts"]["mono"], "panel": theme["fonts"]["panel"]},
         "shape": copy.deepcopy(theme["shape"]),
+        "icons": copy.deepcopy(theme["icons"]),
         "terminal": copy.deepcopy(theme["terminal"]),
         "ansi": ansi,
         "shell": shell,

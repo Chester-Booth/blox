@@ -640,6 +640,12 @@ ColumnLayout {
 
     }
 
+    ThemePickerIconTheme {
+        controller: section.controller
+        gtkDetail: "File manager and settings"
+        quickshellDetail: "Launcher and notifications"
+    }
+
     Label {
         text: "Theme targets"
         color: Theme.foreground

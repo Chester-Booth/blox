@@ -186,6 +186,10 @@ class ThemeSchemaTests(unittest.TestCase):
                 candidate["targets"][target] = True
                 self.assertTrue(any(message in error for error in dependency_checks(candidate).errors))
 
+        candidate = copy.deepcopy(theme)
+        candidate["targets"]["quickshell"] = True
+        self.assertTrue(any("icon theme is not installed" in error for error in dependency_checks(candidate).errors))
+
     def test_builtin_data_relative_wallpaper_paths_resolve_for_checks_and_rendering(self) -> None:
         path, source = load_theme("catppuccin-mocha")
         theme = copy.deepcopy(source)
@@ -243,6 +247,7 @@ class RendererTests(unittest.TestCase):
         self.assertEqual(self.theme["colours"], quickshell["colours"])
         self.assertEqual(self.theme["terminal"], quickshell["terminal"])
         self.assertEqual(self.theme["shape"], quickshell["shape"])
+        self.assertEqual(self.theme["icons"], quickshell["icons"])
         self.assertEqual(derive_ansi(self.theme), quickshell["ansi"])
         wallpaper = json.loads(files["hypr/wallpaper.json"])
         self.assertEqual(str(resolve_wallpaper_path(self.theme["wallpaper"]["path"], self.path)), wallpaper["path"])

@@ -313,6 +313,7 @@ class PickerIntegrationSourceTests(unittest.TestCase):
     def test_theme_cursor_reload_recreates_blox_windows(self) -> None:
         theme = (REPOSITORY / "shell/shared/Theme.qml").read_text(encoding="utf-8")
         self.assertIn("function reloadCursor() : string", theme)
+        self.assertIn('Quickshell.execDetached(["systemctl", "--user", "restart", "quickshell.service"]);', theme)
         self.assertIn("Quickshell.reload(true);", theme)
         self.assertIn('function reloadCursor() : string {\n            return root.reloadCursor();', theme)
 
@@ -336,6 +337,33 @@ class PickerIntegrationSourceTests(unittest.TestCase):
         self.assertIn('iconName: controller.modalKind === "guide" ? "x" : ""', modal)
         self.assertNotIn('iconName: controller.modalKind === "progress" || controller.modalKind === "guide" ? "x" : ""', modal)
         self.assertIn("controller.completeApply()", modal)
+
+    def test_icon_theme_picker_uses_the_shared_compact_target_block(self) -> None:
+        controller = qml_source("Controller")
+        overview = (REPOSITORY / "shell/modules/ThemePickerOverview.qml").read_text(encoding="utf-8")
+        advanced = (REPOSITORY / "shell/modules/ThemePickerAdvanced.qml").read_text(encoding="utf-8")
+        icon_picker = (REPOSITORY / "shell/modules/ThemePickerIconTheme.qml").read_text(encoding="utf-8")
+
+        self.assertNotIn("ThemePickerIconTheme", overview)
+        self.assertIn("ThemePickerIconTheme", advanced)
+        for source in (controller, icon_picker):
+            self.assertIn("iconTheme", source)
+        self.assertIn('text: "GTK applications"', icon_picker)
+        self.assertIn('text: "Quickshell"', icon_picker)
+        self.assertIn('property string quickshellDetail: "Launcher and notifications"', icon_picker)
+        self.assertNotIn("Blox bar and popouts", icon_picker)
+        self.assertIn('text: "Icon Theme"', icon_picker)
+        self.assertNotIn('text: "ICONS"', icon_picker)
+        self.assertNotIn('text: "Icon theme"', icon_picker)
+        self.assertIn('text: "Sample"', icon_picker)
+        self.assertIn("controller.iconSampleKeys", icon_picker)
+        self.assertIn('return entry.name + (entry.id === active ? " • active" : "")', controller)
+        self.assertNotIn('text: controller.iconThemePending() ? "PENDING" : "ACTIVE"', icon_picker)
+        self.assertNotIn('text: "Active now: "', icon_picker)
+        self.assertLess(icon_picker.index('text: "Icon Theme"'), icon_picker.index("id: iconThemeChoice"))
+        self.assertLess(icon_picker.index("id: iconThemeChoice"), icon_picker.index('text: "Sample"'))
+        self.assertLess(icon_picker.index('text: "Sample"'), icon_picker.index('text: "GTK applications"'))
+        self.assertLess(icon_picker.index('text: "GTK applications"'), icon_picker.index('text: "Quickshell"'))
 
     def test_widget_style_selector_preserves_widget_items(self) -> None:
         controller = qml_source("Controller")

@@ -167,6 +167,8 @@ QtObject {
             theme.fontFamily = data.fonts.panel;
             theme.monoFontFamily = data.fonts.mono;
             theme.bodyFontFamily = data.fonts.ui;
+            if (!theme.activeIconTheme)
+                theme.activeIconTheme = data.icons && data.icons.theme ? data.icons.theme : root.defaults.themeDocument().icons.theme;
             loadShell(data.shell);
             if (data.widgets)
                 loadWidgetSource(data.widgets.profile);

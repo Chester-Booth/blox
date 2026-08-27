@@ -971,13 +971,33 @@ def loader_checks(root: Path | None = None) -> dict[str, dict[str, Any]]:
     return checks
 
 
-def _reload_quickshell(mode: str, run_command: Callable[[list[str]], subprocess.CompletedProcess[str]]) -> str | None:
+def _reload_quickshell(mode: str, run_command: Callable[[list[str]], subprocess.CompletedProcess[str]], restart: bool = False) -> str | None:
+    if restart:
+        command = _ipc_command("theme", "reloadCursor")
+        result = run_command(command)
+        if result.returncode != 0:
+            return f"Quickshell restart failed; run: {_command_text(command)}"
+        return None
+
     function = "reset" if mode == "reset" else "reload"
     command = _ipc_command("theme", function)
     result = run_command(command)
     if result.returncode != 0:
         return f"Quickshell reload failed; run: {_command_text(command)}"
     return None
+
+
+def _quickshell_icon_theme_changed(previous_path: Path | None, theme: dict[str, Any]) -> bool:
+    requested = theme.get("icons", {}).get("theme")
+    if not requested:
+        return False
+    if previous_path is None:
+        return True
+    try:
+        previous = json.loads((previous_path / "quickshell/theme.json").read_text(encoding="utf-8"))
+        return previous.get("icons", {}).get("theme") != requested
+    except (OSError, json.JSONDecodeError, TypeError):
+        return True
 
 
 def _reload_widgets(mode: str, run_command: Callable[[list[str]], subprocess.CompletedProcess[str]]) -> str | None:
@@ -1090,14 +1110,18 @@ def _check_browser_targets(targets: Iterable[str]) -> None:
             raise RuntimeFailure(f"{availability['label']} target is unavailable: {availability['reason']}")
 
 
-def run_reload_actions(root: Path, targets: Iterable[str], mode: str = "reload", run_command: Callable[[list[str]], subprocess.CompletedProcess[str]] = _run, progress: Callable[[str, str, str], None] | None = None, defer_quickshell_restart: bool = False) -> list[str]:
+def run_reload_actions(root: Path, targets: Iterable[str], mode: str = "reload", run_command: Callable[[list[str]], subprocess.CompletedProcess[str]] = _run, progress: Callable[[str, str, str], None] | None = None, defer_quickshell_restart: bool = False, quickshell_restart_pending: bool = False) -> list[str]:
     warnings = []
     for target in targets:
         if progress is not None:
             progress(target, "active", "Applying…")
         warning_start = len(warnings)
         if target == "quickshell":
-            warning = _reload_quickshell(mode, run_command)
+            warning = _reload_quickshell(
+                mode,
+                run_command,
+                restart=quickshell_restart_pending and not defer_quickshell_restart and mode != "reset",
+            )
             if warning:
                 warnings.append(warning)
         elif target == "widgets":
@@ -1167,6 +1191,8 @@ def run_reload_actions(root: Path, targets: Iterable[str], mode: str = "reload",
             elif target in ("stylus", "obsidian"):
                 progress(target, "manual", "Apply manually")
             elif target == "cursor" and defer_quickshell_restart and mode != "reset":
+                progress(target, "restart", "Complete to reload Blox surfaces")
+            elif target == "quickshell" and quickshell_restart_pending and defer_quickshell_restart and mode != "reset":
                 progress(target, "restart", "Complete to reload Blox surfaces")
             elif target in ("gtk", "helium", "chromium", "hyprlock", "btop", "micro", "glow", "code", "cursor_editor", "powerlevel10k"):
                 progress(target, "restart", "Restart needed" if target not in ("code", "cursor_editor") else "Reload Window")
@@ -1256,7 +1282,8 @@ def apply_theme(theme_path: Path, theme: dict[str, Any], targets: Iterable[str],
                         _write_text(candidate / name, files[name])
             changed_targets = tuple(target for target in selected if _target_changed(previous_path, previous_manifest, candidate, target))
             unchanged_targets = tuple(target for target in selected if target not in changed_targets)
-            pending_reloads = ("quickshell",) if defer_quickshell_restart and "cursor" in changed_targets else ()
+            icon_theme_changed = "quickshell" in changed_targets and _quickshell_icon_theme_changed(previous_path, theme)
+            pending_reloads = ("quickshell",) if defer_quickshell_restart and ("cursor" in changed_targets or icon_theme_changed) else ()
             sources = _target_sources(previous_manifest, selected, theme_path, theme)
             enabled = sorted(target for target, names in TARGET_FILES.items() if any((candidate / name).is_file() for name in names))
             sources = {target: sources[target] for target in enabled}
@@ -1325,6 +1352,7 @@ def apply_theme(theme_path: Path, theme: dict[str, Any], targets: Iterable[str],
                 run_command=run_command,
                 progress=report_target,
                 defer_quickshell_restart=defer_quickshell_restart,
+                quickshell_restart_pending="cursor" in changed_targets or icon_theme_changed,
             )
             report("stage", "applications", "done", "Application targets finished", progress_total)
             _prune_generations(root, final)

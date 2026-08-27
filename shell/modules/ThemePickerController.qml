@@ -34,6 +34,9 @@ Scope {
     property var browserTargets: []
     property bool browserTargetsLoaded: false
     property string browserTargetOutput: ""
+    property var iconThemes: []
+    property bool iconThemesLoaded: false
+    property string iconThemeOutput: ""
     property var previewData: ({
     })
     property var apiWarnings: []
@@ -115,6 +118,23 @@ Scope {
         return entry.supported && entry.installed && entry.available;
     }).map((entry) => {
         return entry.target;
+    })
+    readonly property var iconSampleKeys: ["folder", "document", "network", "audio"]
+    readonly property var iconThemeOptions: {
+        const entries = iconThemes.slice();
+        const known = entries.map((entry) => entry.id);
+        const values = [Theme.activeIconTheme || "Adwaita", candidate && candidate.icons ? candidate.icons.theme : ""];
+        values.forEach((value) => {
+            if (value && known.indexOf(value) < 0) {
+                entries.push({"id": value, "name": value, "samples": {}});
+                known.push(value);
+            }
+        });
+        return entries;
+    }
+    readonly property var iconThemeNames: iconThemeOptions.map((entry) => {
+        const active = Theme.activeIconTheme || "Adwaita";
+        return entry.name + (entry.id === active ? " • active" : "");
     })
     readonly property var barRegions: ["start", "centre", "end", "tray"]
 
@@ -455,6 +475,66 @@ Scope {
         return null;
     }
 
+    function iconThemeInfo(id) {
+        for (const entry of iconThemeOptions) {
+            if (entry.id === id)
+                return entry;
+        }
+        return null;
+    }
+
+    function iconThemeValue() {
+        return candidate && candidate.icons && candidate.icons.theme ? candidate.icons.theme : (Theme.activeIconTheme || "Adwaita");
+    }
+
+    function iconThemeIndex() {
+        return iconThemeOptions.findIndex((entry) => entry.id === iconThemeValue());
+    }
+
+    function iconThemeIdAt(index) {
+        return index >= 0 && index < iconThemeOptions.length ? iconThemeOptions[index].id : "";
+    }
+
+    function iconThemeSampleSource(id, sample) {
+        const entry = iconThemeInfo(id);
+        return entry && entry.samples ? entry.samples[sample] || "" : "";
+    }
+
+    function setIconTheme(value) {
+        if (!candidate || !value || !iconThemeInfo(value) || iconThemeValue() === value)
+            return ;
+
+        const next = cloneCandidate();
+        next.icons = next.icons || {};
+        next.icons.theme = value;
+        markCandidate(next, "icons.theme");
+    }
+
+    function refreshIconThemes() {
+        if (iconThemesProcess.running)
+            return ;
+
+        iconThemesLoaded = false;
+        iconThemeOutput = "";
+        iconThemesProcess.running = true;
+    }
+
+    function loadIconThemes() {
+        let response = null;
+        try {
+            response = JSON.parse(iconThemeOutput.trim());
+        } catch (error) {
+        }
+        const entries = response && Array.isArray(response.themes) ? response.themes.filter((entry) => {
+            return entry && entry.id && entry.name && entry.samples;
+        }) : [];
+        const active = Theme.activeIconTheme || "Adwaita";
+        if (!entries.some((entry) => entry.id === active))
+            entries.unshift({"id": active, "name": active, "samples": {}});
+        iconThemes = entries;
+        iconThemesLoaded = true;
+    }
+
     function refreshBrowserTargets() {
         if (browserTargetsProcess.running)
             return ;
@@ -501,6 +581,7 @@ Scope {
         revealTimer.restart();
         statusMessage = "Loading themes…";
         refreshBrowserTargets();
+        refreshIconThemes();
         refreshThemes(false);
         return "open";
     }
@@ -1284,6 +1365,17 @@ Scope {
 
         stdout: StdioCollector {
             onStreamFinished: root.browserTargetOutput = this.text
+        }
+    }
+
+    Process {
+        id: iconThemesProcess
+
+        command: ["python3", root.scriptRoot + "/theme/icon_themes.py"]
+        onExited: root.loadIconThemes()
+
+        stdout: StdioCollector {
+            onStreamFinished: root.iconThemeOutput = this.text
         }
     }
 

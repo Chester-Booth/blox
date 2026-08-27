@@ -133,11 +133,13 @@ FocusScope {
                     id: modalCancelButton
 
                     visible: controller.modalKind !== "progress" || controller.applyProgressComplete
-                    iconName: controller.modalKind === "progress" || controller.modalKind === "guide" ? "x" : ""
-                    text: controller.modalKind === "guide" ? "Back" : controller.modalKind === "progress" ? "Close" : "Cancel"
+                    iconName: controller.modalKind === "guide" ? "x" : ""
+                    text: controller.modalKind === "guide" ? "Back" : controller.modalKind === "progress" ? controller.applyQuickshellReloadPending ? "Complete and reload" : "Complete" : "Cancel"
                     onClicked: {
                         if (controller.modalKind === "guide")
                             controller.modalKind = "progress";
+                        else if (controller.modalKind === "progress")
+                            controller.completeApply();
                         else
                             controller.dismissModal();
                     }

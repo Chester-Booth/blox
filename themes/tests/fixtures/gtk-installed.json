@@ -22,7 +22,8 @@
     "stylus": false,
     "powerlevel10k": false,
     "sddm": false,
-    "grub": false
+    "grub": false,
+    "helium": false
   },
   "fonts": {
     "ui": "Google Sans",

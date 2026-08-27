@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import shlex
@@ -54,6 +55,40 @@ def resolve_command(desktop_id: str) -> tuple[list[str], str | None]:
     return command, working_directory
 
 
+def active_cursor_environment() -> dict[str, str]:
+    """Pass the active cursor choice to applications launched from the menu."""
+    state_root = Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local/state")).expanduser()
+    metadata_path = state_root / "blox-theme/current/cursor/metadata.json"
+    try:
+        metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    theme = metadata.get("theme_name")
+    size = metadata.get("size")
+    if not isinstance(theme, str) or not theme or not isinstance(size, int):
+        return {}
+    data_home = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local/share")).expanduser()
+    cursor_path = [
+        data_home / "icons",
+        Path.home() / ".icons",
+        Path("/usr/local/share/icons"),
+        Path("/usr/share/icons"),
+        Path("/usr/share/pixmaps"),
+    ]
+    path_entries = [str(path) for path in cursor_path]
+    for entry in os.environ.get("XCURSOR_PATH", "").split(":"):
+        if entry and entry not in path_entries:
+            path_entries.append(entry)
+    environment = {
+        "XCURSOR_THEME": theme,
+        "XCURSOR_SIZE": str(size),
+        "XCURSOR_PATH": ":".join(path_entries),
+    }
+    if metadata.get("format") == "xcursor+hyprcursor-v1":
+        environment.update({"HYPRCURSOR_THEME": theme, "HYPRCURSOR_SIZE": str(size)})
+    return environment
+
+
 def main() -> int:
     if len(sys.argv) != 2:
         print("Usage: desktop_exec.py <desktop-id>", file=sys.stderr)
@@ -62,8 +97,9 @@ def main() -> int:
     try:
         command, working_directory = resolve_command(sys.argv[1])
         service_command = ["systemd-run", "--user", "--collect", "--quiet"]
-        for name in ("DISPLAY", "WAYLAND_DISPLAY", "XDG_CURRENT_DESKTOP", "XDG_SESSION_TYPE"):
-            value = os.environ.get(name)
+        inherited = {name: os.environ.get(name) for name in ("DISPLAY", "WAYLAND_DISPLAY", "XDG_CURRENT_DESKTOP", "XDG_SESSION_TYPE")}
+        inherited.update(active_cursor_environment())
+        for name, value in inherited.items():
             if value:
                 service_command.append(f"--setenv={name}={value}")
         if working_directory:

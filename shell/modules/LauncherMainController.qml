@@ -40,6 +40,7 @@ Scope {
     property string applyProgressMessage: "Preparing theme application"
     property bool applyProgressShowTargets: false
     property bool applyProgressComplete: false
+    property bool applyQuickshellReloadPending: false
     property string applyGuideTarget: ""
     property string retryingTarget: ""
     property bool applyWindowOpen: false
@@ -263,10 +264,11 @@ Scope {
         applyProgressMessage = "Checking theme and dependencies";
         applyProgressShowTargets = false;
         applyProgressComplete = false;
+        applyQuickshellReloadPending = false;
         applyGuideTarget = "";
         applyWindowOpen = true;
         themeApplyProcess.cancelling = false;
-        themeApplyProcess.command = [Quickshell.shellDir + "/scripts/theme/themectl.sh", "apply", entry.id, "--json", "--progress-ndjson"];
+        themeApplyProcess.command = [Quickshell.shellDir + "/scripts/theme/themectl.sh", "apply", entry.id, "--defer-quickshell-restart", "--json", "--progress-ndjson"];
         themeApplyProcess.running = true;
         themeApplyStarted();
     }
@@ -280,7 +282,22 @@ Scope {
         }
         applyingTheme = false;
         applyProgressComplete = false;
+        applyQuickshellReloadPending = false;
         retryingTarget = "";
+    }
+
+    function completeThemeApply() {
+        if (!applyProgressComplete)
+            return ;
+
+        const reloadQuickshell = applyQuickshellReloadPending;
+        applyQuickshellReloadPending = false;
+        applyWindowOpen = false;
+        applyGuideTarget = "";
+        applyProgressComplete = false;
+        retryingTarget = "";
+        if (reloadQuickshell)
+            Qt.callLater(() => Theme.reloadCursor());
     }
 
     function retryThemeTarget(target) {
@@ -299,7 +316,7 @@ Scope {
                 "message": "Retrying…"
             }) : row;
         });
-        themeApplyProcess.command = [Quickshell.shellDir + "/scripts/theme/themectl.sh", "apply", applyingThemeId, "--targets", target, "--json", "--progress-ndjson"];
+        themeApplyProcess.command = [Quickshell.shellDir + "/scripts/theme/themectl.sh", "apply", applyingThemeId, "--targets", target, "--defer-quickshell-restart", "--json", "--progress-ndjson"];
         themeApplyProcess.running = true;
     }
 
@@ -309,6 +326,8 @@ Scope {
 
         applyProgressValue = event.total > 0 ? Number(event.completed || 0) / Number(event.total) : applyProgressValue;
         applyProgressMessage = event.message || applyProgressMessage;
+        if (Array.isArray(event.pending_reloads) && event.pending_reloads.indexOf("quickshell") >= 0)
+            applyQuickshellReloadPending = true;
         if (event.targets && !retryingTarget.length)
             applyProgressRows = event.targets.map((target) => {
             return ({
@@ -786,6 +805,7 @@ Scope {
                 const response = JSON.parse(output);
                 if ((exitCode === 0 || exitCode === 10) && response.data && response.data.theme_id) {
                     Theme.reload();
+                    applyQuickshellReloadPending = Array.isArray(response.data.pending_reloads) && response.data.pending_reloads.indexOf("quickshell") >= 0;
                     root.applyProgressValue = 1;
                     root.applyProgressComplete = true;
                     root.applyProgressMessage = "Application finished · Review follow-up actions";

@@ -93,6 +93,21 @@ QtObject {
         }
         if (failed) {
             host.errorMessage = response && response.errors ? response.errors.join("\n") : "Theme action failed.";
+            if (completedAction === "list" || completedAction === "list-refresh") {
+                host.statusMessage = "Could not load themes.";
+                if (completedAction === "list")
+                    host.themes = [];
+            } else if (completedAction === "show") {
+                host.candidate = null;
+                host.sourceTheme = null;
+                host.touchedPaths = [];
+                host.selectedId = "";
+                host.sourceDigest = "";
+                host.baselineJson = "";
+                host.candidateValid = false;
+                host.validationErrors = [];
+                host.statusMessage = "Could not load the selected theme.";
+            }
             if (completedAction === "generate" || completedAction === "new-template")
                 host.creationBusy = false;
 
@@ -123,6 +138,8 @@ QtObject {
             }
         } else if (completedAction === "show") {
             host.candidate = JSON.parse(JSON.stringify(response.data));
+            host.sourceTheme = response.source && typeof response.source === "object" ? JSON.parse(JSON.stringify(response.source)) : null;
+            host.touchedPaths = [];
             host.selectedId = host.candidate.id;
             host.sourceDigest = host.themeDigest(host.candidate.id);
             host.baselineJson = JSON.stringify(host.candidate);
@@ -138,6 +155,8 @@ QtObject {
             host.generateTheme(response.data.wallpaper.path);
         } else if (completedAction === "generate") {
             host.candidate = JSON.parse(JSON.stringify(response.data.theme));
+            host.sourceTheme = null;
+            host.touchedPaths = [];
             host.selectedId = host.candidate.id;
             host.sourceDigest = "";
             host.baselineJson = "";
@@ -152,6 +171,8 @@ QtObject {
         } else if (completedAction === "new-template") {
             const blank = host.blankTheme(response.data, request.inputs);
             host.candidate = blank;
+            host.sourceTheme = null;
+            host.touchedPaths = [];
             host.selectedId = host.candidate.id;
             host.sourceDigest = "";
             host.baselineJson = "";
@@ -164,27 +185,47 @@ QtObject {
             host.validatePreview();
         } else if (completedAction === "save") {
             host.sourceDigest = response.data.source_sha256;
+            if (response.data.source && typeof response.data.source === "object")
+                host.sourceTheme = JSON.parse(JSON.stringify(response.data.source));
+            host.touchedPaths = [];
             host.selectedId = host.candidate.id;
             host.baselineJson = JSON.stringify(host.candidate);
             host.candidateRevision += 1;
             host.statusMessage = "Theme source saved.";
             if (host.pendingAfterSave === "apply") {
                 host.pendingAfterSave = "";
-                host.runApi("apply", ["apply", host.candidate.id]);
+                host.runApi("apply", ["apply", host.candidate.id, "--defer-quickshell-restart"]);
             } else {
                 host.refreshThemes(true);
             }
         } else if (completedAction === "apply" || completedAction === "apply-retry") {
             Theme.reload();
+            const pendingReloads = response.data && Array.isArray(response.data.pending_reloads) ? response.data.pending_reloads : [];
+            host.applyQuickshellReloadPending = host.applyQuickshellReloadPending || pendingReloads.indexOf("quickshell") >= 0;
+            const changedTargets = response.data && Array.isArray(response.data.changed_targets) ? response.data.changed_targets : null;
             host.baselineJson = JSON.stringify(host.candidate);
             host.candidateRevision += 1;
-            host.statusMessage = "Theme applied. Some applications may require restart.";
+            host.statusMessage = "Theme applied. Review any target notes below.";
             host.applyProgressComplete = true;
             host.applyProgressValue = 1;
             host.applyProgressMessage = "Application finished · Review follow-up actions";
             host.applyProgressRows = host.applyProgressRows.map((entry) => {
                 if (completedAction === "apply-retry" && entry.state !== "active")
                     return entry;
+
+                if (changedTargets && changedTargets.indexOf(entry.target) < 0)
+                    return {
+                    "target": entry.target,
+                    "state": "unchanged",
+                    "message": "Unchanged"
+                };
+
+                if (pendingReloads.indexOf("quickshell") >= 0 && entry.target === "cursor")
+                    return {
+                    "target": entry.target,
+                    "state": "restart",
+                    "message": "Complete to reload Blox surfaces"
+                };
 
                 const mode = host.targetApplyMode(entry.target);
                 const editorName = entry.target === "code" ? "Code" : entry.target === "cursor_editor" ? "Cursor" : "";
@@ -227,6 +268,8 @@ QtObject {
             if (response.data.id === host.selectedId) {
                 Theme.cancelPreview();
                 host.candidate = null;
+                host.sourceTheme = null;
+                host.touchedPaths = [];
                 host.selectedId = "";
                 host.sourceDigest = "";
                 host.baselineJson = "";

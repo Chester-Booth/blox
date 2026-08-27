@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any, Callable, Iterable
 
 from . import RENDERER_VERSION
+from .browser_targets import BROWSER_TARGET_BY_ID, browser_target, detect_browser_target
 from .core import DEFAULT_THEME_ID, canonical_json, load_theme, render_theme, repository_root, resolve_wallpaper_path, sha256_text, state_dir
 from .editor import EditorSettingsFailure, apply_fragment
 
@@ -23,7 +24,8 @@ TARGET_FILES = {
     "widgets": ("widgets/profile.json",),
     "kitty": ("kitty/theme.conf",),
     "wallpaper": ("hypr/wallpaper.json",),
-    "gtk": ("gtk/gtk-3.0/settings.ini", "gtk/gtk-3.0/gtk.css", "gtk/gtk-4.0/settings.ini", "gtk/gtk-4.0/gtk.css", "gtk/metadata.json", "gtk/helium/manifest.json"),
+    "gtk": ("gtk/gtk-3.0/settings.ini", "gtk/gtk-3.0/gtk.css", "gtk/gtk-4.0/settings.ini", "gtk/gtk-4.0/gtk.css", "gtk/metadata.json"),
+    "helium": ("helium/manifest.json",),
     "cursor": ("cursor/metadata.json",),
     "hyprland": ("hyprland/theme.lua", "hyprland/hyprtoolkit.conf"),
     "hyprlock": ("hyprlock/theme.conf",),
@@ -38,9 +40,13 @@ TARGET_FILES = {
 }
 TARGET_REQUIRED_FILES = {
     **{target: files for target, files in TARGET_FILES.items() if target != "gtk"},
-    "gtk": ("gtk/gtk-3.0/settings.ini", "gtk/gtk-4.0/settings.ini", "gtk/metadata.json", "gtk/helium/manifest.json"),
+    "gtk": ("gtk/gtk-3.0/settings.ini", "gtk/gtk-4.0/settings.ini", "gtk/metadata.json"),
 }
-LEGACY_TARGET_FILES = {"obsidian/blox-theme.css": "obsidian"}
+# The GTK-owned Helium path is accepted only while an old generation is being
+# carried forward. New generations never copy it.
+LEGACY_TARGET_FILES = {"obsidian/blox-theme.css": "obsidian", "gtk/helium/manifest.json": "gtk"}
+# Chromium writes this cache beside an unpacked theme extension at startup.
+RUNTIME_ARTIFACTS = {"helium/Cached Theme.pak"}
 TARGET_NAMES = tuple(TARGET_FILES)
 GENERATION_PATTERN = re.compile(r"^[0-9]{8}T[0-9]{6}Z-[0-9a-f]{8}$")
 HISTORY_LIMIT = 5
@@ -84,6 +90,25 @@ def _target_for_file(name: str) -> str | None:
         if name in names:
             return target
     return LEGACY_TARGET_FILES.get(name)
+
+
+def _target_file_names(target: str) -> tuple[str, ...]:
+    names = list(TARGET_FILES[target])
+    names.extend(name for name, owner in LEGACY_TARGET_FILES.items() if owner == target)
+    return tuple(dict.fromkeys(names))
+
+
+def _target_signature(path: Path, target: str) -> dict[str, str | None]:
+    return {
+        name: _file_sha256(path / name) if (path / name).is_file() else None
+        for name in _target_file_names(target)
+    }
+
+
+def _target_changed(previous_path: Path | None, previous_manifest: dict[str, Any] | None, candidate: Path, target: str) -> bool:
+    if previous_path is None or previous_manifest is None or target not in previous_manifest.get("enabled_targets", []):
+        return True
+    return _target_signature(previous_path, target) != _target_signature(candidate, target)
 
 
 def configured_targets(theme: dict[str, Any], requested: str | Iterable[str] | None = None) -> tuple[str, ...]:
@@ -176,7 +201,11 @@ def validate_generation(path: Path) -> dict[str, Any]:
     if len(set(manifest["enabled_targets"])) != len(manifest["enabled_targets"]) or not set(manifest["enabled_targets"]).issubset(TARGET_FILES):
         raise RuntimeFailure(f"generation targets are invalid: {manifest_path}")
     generation_manifest = path / "manifest.json"
-    actual_files = sorted(str(item.relative_to(path)) for item in path.rglob("*") if item.is_file() and item != generation_manifest)
+    actual_files = sorted(
+        str(item.relative_to(path))
+        for item in path.rglob("*")
+        if item.is_file() and item != generation_manifest and str(item.relative_to(path)) not in RUNTIME_ARTIFACTS
+    )
     if actual_files != sorted(manifest["files"]):
         raise RuntimeFailure(f"generation file list does not match its manifest: {path.name}")
     for name, expected in manifest["files"].items():
@@ -228,7 +257,9 @@ def _copy_previous(previous: Path | None, candidate: Path) -> None:
 
 
 def _remove_target(candidate: Path, target: str) -> None:
-    for name in TARGET_FILES[target]:
+    names = list(TARGET_FILES[target])
+    names.extend(name for name, owner in LEGACY_TARGET_FILES.items() if owner == target)
+    for name in names:
         path = candidate / name
         if path.exists():
             path.unlink()
@@ -1010,9 +1041,9 @@ def _reload_gtk(root: Path, mode: str, run_command: Callable[[list[str]], subpro
     return warnings
 
 
-def _reload_cursor(root: Path, mode: str, run_command: Callable[[list[str]], subprocess.CompletedProcess[str]]) -> list[str]:
+def _reload_cursor(root: Path, mode: str, run_command: Callable[[list[str]], subprocess.CompletedProcess[str]], defer_quickshell_restart: bool = False) -> list[str]:
+    integration = _load_cursor_integration(root)
     if mode == "reset":
-        integration = _load_cursor_integration(root)
         if integration is None:
             return ["Cursor reset fallback is unavailable; run: themectl setup cursor --yes"]
         metadata = integration["fallback"]
@@ -1023,19 +1054,42 @@ def _reload_cursor(root: Path, mode: str, run_command: Callable[[list[str]], sub
             return [str(error)]
     name = metadata["theme_name"]
     size = metadata["size"]
-    commands = (
+    commands = [
         ["gsettings", "set", "org.gnome.desktop.interface", "cursor-theme", name],
         ["gsettings", "set", "org.gnome.desktop.interface", "cursor-size", str(size)],
-        ["hyprctl", "setcursor", name, str(size)],
-    )
+    ]
+    if mode != "reset" and integration is not None:
+        fallback = integration["fallback"]
+        if (fallback["theme_name"], fallback["size"]) != (name, size):
+            # Hyprland caches a cursor by theme name and size. Generated
+            # variants keep the stable name `blox-generated`, so briefly
+            # selecting the captured fallback makes it load the new files.
+            commands.append(["hyprctl", "setcursor", fallback["theme_name"], str(fallback["size"])])
+    commands.append(["hyprctl", "setcursor", name, str(size)])
     warnings = []
     for command in commands:
         if run_command(command).returncode != 0:
             warnings.append(f"Cursor setting update failed; run: {_command_text(command)}")
+    if not defer_quickshell_restart or mode == "reset":
+        reload_command = _ipc_command("theme", "reloadCursor")
+        if run_command(reload_command).returncode != 0:
+            warnings.append(
+                "Blox shell cursor surfaces could not be reloaded; run: "
+                f"{_command_text(reload_command)}"
+            )
     return warnings
 
 
-def run_reload_actions(root: Path, targets: Iterable[str], mode: str = "reload", run_command: Callable[[list[str]], subprocess.CompletedProcess[str]] = _run, progress: Callable[[str, str, str], None] | None = None) -> list[str]:
+def _check_browser_targets(targets: Iterable[str]) -> None:
+    for target in targets:
+        if target not in BROWSER_TARGET_BY_ID:
+            continue
+        availability = detect_browser_target(target)
+        if not availability["available"]:
+            raise RuntimeFailure(f"{availability['label']} target is unavailable: {availability['reason']}")
+
+
+def run_reload_actions(root: Path, targets: Iterable[str], mode: str = "reload", run_command: Callable[[list[str]], subprocess.CompletedProcess[str]] = _run, progress: Callable[[str, str, str], None] | None = None, defer_quickshell_restart: bool = False) -> list[str]:
     warnings = []
     for target in targets:
         if progress is not None:
@@ -1055,10 +1109,13 @@ def run_reload_actions(root: Path, targets: Iterable[str], mode: str = "reload",
                 warnings.append(warning)
         elif target == "kitty":
             warnings.extend(_reload_kitty(run_command))
+        elif target in BROWSER_TARGET_BY_ID:
+            guidance = browser_target(target).restart_guidance
+            warnings.append(guidance if mode != "reset" else f"{browser_target(target).label} will use its browser default after restart")
         elif target == "gtk":
             warnings.extend(_reload_gtk(root, mode, run_command))
         elif target == "cursor":
-            warnings.extend(_reload_cursor(root, mode, run_command))
+            warnings.extend(_reload_cursor(root, mode, run_command, defer_quickshell_restart=defer_quickshell_restart))
         elif target == "hyprland":
             command = ["hyprctl", "reload"]
             if run_command(command).returncode != 0:
@@ -1108,27 +1165,32 @@ def run_reload_actions(root: Path, targets: Iterable[str], mode: str = "reload",
                 progress(target, "failed", failed)
             elif target in ("stylus", "obsidian"):
                 progress(target, "manual", "Apply manually")
-            elif target in ("gtk", "cursor", "hyprlock", "btop", "micro", "glow", "code", "cursor_editor", "powerlevel10k"):
+            elif target == "cursor" and defer_quickshell_restart and mode != "reset":
+                progress(target, "restart", "Complete to reload Blox surfaces")
+            elif target in ("gtk", "helium", "hyprlock", "btop", "micro", "glow", "code", "cursor_editor", "powerlevel10k"):
                 progress(target, "restart", "Restart needed" if target not in ("code", "cursor_editor") else "Reload Window")
             else:
                 progress(target, "applied", "Applied")
     return warnings
 
 
-def apply_theme(theme_path: Path, theme: dict[str, Any], targets: Iterable[str], run_command: Callable[[list[str]], subprocess.CompletedProcess[str]] = _run, renderer: Callable[[dict[str, Any]], tuple[dict[str, str], list[str]]] = render_theme, cursor_builder: Callable[[dict[str, Any], Path], tuple[Path, bool]] | None = None, progress: Callable[[dict[str, Any]], None] | None = None) -> tuple[dict[str, Any], list[str]]:
+def apply_theme(theme_path: Path, theme: dict[str, Any], targets: Iterable[str], run_command: Callable[[list[str]], subprocess.CompletedProcess[str]] = _run, renderer: Callable[[dict[str, Any]], tuple[dict[str, str], list[str]]] = render_theme, cursor_builder: Callable[[dict[str, Any], Path], tuple[Path, bool]] | None = None, progress: Callable[[dict[str, Any]], None] | None = None, defer_quickshell_restart: bool = False) -> tuple[dict[str, Any], list[str]]:
     root = state_dir()
     selected = tuple(targets)
     progress_total = 3 + len(selected)
 
-    def report(kind: str, stage: str, state: str, message: str, completed: int, target: str = "") -> None:
+    def report(kind: str, stage: str, state: str, message: str, completed: int, target: str = "", **extra: Any) -> None:
         if progress is not None:
-            progress({"kind": kind, "stage": stage, "target": target, "state": state, "message": message, "completed": completed, "total": progress_total})
+            event = {"kind": kind, "stage": stage, "target": target, "state": state, "message": message, "completed": completed, "total": progress_total}
+            event.update(extra)
+            progress(event)
 
     unknown = sorted(set(selected) - set(TARGET_NAMES))
     if unknown:
         raise RuntimeFailure(f"unsupported runtime target(s): {', '.join(unknown)}")
     if not selected:
         raise RuntimeFailure("at least one target is required")
+    _check_browser_targets(selected)
     verify_tracked_loaders(selected)
     with ApplicationLock(root):
         generations = root / "generations"
@@ -1191,6 +1253,9 @@ def apply_theme(theme_path: Path, theme: dict[str, Any], targets: Iterable[str],
                 for name in TARGET_FILES[target]:
                     if name in files:
                         _write_text(candidate / name, files[name])
+            changed_targets = tuple(target for target in selected if _target_changed(previous_path, previous_manifest, candidate, target))
+            unchanged_targets = tuple(target for target in selected if target not in changed_targets)
+            pending_reloads = ("quickshell",) if defer_quickshell_restart and "cursor" in changed_targets else ()
             sources = _target_sources(previous_manifest, selected, theme_path, theme)
             enabled = sorted(target for target, names in TARGET_FILES.items() if any((candidate / name).is_file() for name in names))
             sources = {target: sources[target] for target in enabled}
@@ -1232,7 +1297,16 @@ def apply_theme(theme_path: Path, theme: dict[str, Any], targets: Iterable[str],
                     shutil.rmtree(final, ignore_errors=True)
                 raise
             report("stage", "activation", "done", "Theme generation activated", 3)
-            report("stage", "applications", "active", f"Applying {len(selected)} enabled targets", 3)
+            report(
+                "stage",
+                "applications",
+                "active",
+                f"Applying {len(changed_targets)} changed targets · {len(unchanged_targets)} unchanged",
+                3,
+                changed_targets=list(changed_targets),
+                unchanged_targets=list(unchanged_targets),
+                pending_reloads=list(pending_reloads),
+            )
             application_started = True
             completed_targets = 0
 
@@ -1242,7 +1316,15 @@ def apply_theme(theme_path: Path, theme: dict[str, Any], targets: Iterable[str],
                     completed_targets += 1
                 report("target", "applications", state, message, 3 + completed_targets, target)
 
-            reload_warnings = run_reload_actions(root, selected, run_command=run_command, progress=report_target)
+            for target in unchanged_targets:
+                report_target(target, "unchanged", "Unchanged")
+            reload_warnings = run_reload_actions(
+                root,
+                changed_targets,
+                run_command=run_command,
+                progress=report_target,
+                defer_quickshell_restart=defer_quickshell_restart,
+            )
             report("stage", "applications", "done", "Application targets finished", progress_total)
             _prune_generations(root, final)
             return manifest, reload_warnings
@@ -1287,6 +1369,7 @@ def rollback(generation_id: str | None = None, run_command: Callable[[list[str]]
         if target == current_path:
             raise RuntimeFailure("requested generation is already active")
         manifest = validate_generation(target)
+        _check_browser_targets(manifest["enabled_targets"])
         _switch_generation(root, target)
         try:
             sync_dynamic_loaders(root, manifest["enabled_targets"])

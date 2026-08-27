@@ -11,7 +11,7 @@ import subprocess
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterable
 
 from . import RENDERER_VERSION
 
@@ -25,7 +25,12 @@ EXIT_APPLY = 6
 EXIT_RELOAD_WARNING = 7
 EXIT_LOCKED = 8
 
-IMPLEMENTED_TARGETS = ("quickshell", "widgets", "kitty", "wallpaper", "gtk", "cursor", "hyprland", "hyprlock", "btop", "micro", "glow", "code", "cursor_editor", "stylus", "obsidian", "powerlevel10k")
+THEME_TARGET_KEYS = (
+    "quickshell", "widgets", "gtk", "helium", "cursor", "wallpaper", "kitty",
+    "hyprland", "hyprlock", "btop", "micro", "glow", "code", "cursor_editor",
+    "stylus", "obsidian", "powerlevel10k", "sddm", "grub",
+)
+IMPLEMENTED_TARGETS = ("quickshell", "widgets", "kitty", "wallpaper", "gtk", "helium", "cursor", "hyprland", "hyprlock", "btop", "micro", "glow", "code", "cursor_editor", "stylus", "obsidian", "powerlevel10k")
 DEFERRED_TARGETS = {}
 TARGET_LIMITATIONS = {
     "hyprland": "Hyprtoolkit apps must be restarted after Apply",
@@ -37,6 +42,7 @@ TARGET_LIMITATIONS = {
     "stylus": "Stylus requires manual import or refresh of the generated UserCSS",
     "obsidian": "Obsidian requires Minimal, Style Settings, and manual import of the generated settings JSON",
     "powerlevel10k": "Powerlevel10k changes apply to new shells",
+    "helium": "Helium must be restarted after Apply",
 }
 
 HYPRLAND_RADIUS_BASE = 12
@@ -253,13 +259,18 @@ def load_theme(reference: str) -> tuple[Path, dict[str, Any]]:
 
 
 def apply_theme_defaults(theme: dict[str, Any]) -> dict[str, Any]:
-    """Fill omitted product-owned fields from the versioned package document."""
+    """Resolve a sparse source against the versioned product defaults.
+
+    The source stays sparse. This function only creates the complete view used
+    by validation, preview, and target generation.
+    """
     document = load_defaults_document()
     defaults = document["theme"]
     colours = defaults["colours"]
     fragment: dict[str, Any] = {
         "schema_version": 1,
         "id": defaults["id"],
+        "name": defaults.get("name", defaults["id"]),
         "variant": defaults["variant"],
         "colours": {
             "background": colours["background"],
@@ -284,7 +295,11 @@ def apply_theme_defaults(theme: dict[str, Any]) -> dict[str, Any]:
         "wallpaper": copy.deepcopy(defaults["wallpaper"]),
         "terminal": copy.deepcopy(defaults["terminal"]),
         "widgets": {"profile": document["widgets"]["profile"]},
+        "targets": copy.deepcopy(defaults.get("targets", {key: False for key in THEME_TARGET_KEYS})),
     }
+    for key in ("gtk", "icons", "cursor"):
+        if key in defaults:
+            fragment[key] = copy.deepcopy(defaults[key])
     fragment["shell"]["bar"].pop("reset_items", None)
 
     def merge(base: dict[str, Any], value: dict[str, Any]) -> dict[str, Any]:
@@ -299,6 +314,99 @@ def apply_theme_defaults(theme: dict[str, Any]) -> dict[str, Any]:
     return merge(fragment, theme)
 
 
+def theme_inherited_paths(source: dict[str, Any], resolved: dict[str, Any], prefix: str = "") -> list[str]:
+    """Return resolved paths that were absent from the source document."""
+    inherited: list[str] = []
+    for key, value in resolved.items():
+        path = f"{prefix}.{key}" if prefix else key
+        if not isinstance(source, dict) or key not in source:
+            inherited.append(path)
+        elif isinstance(value, dict) and isinstance(source[key], dict):
+            inherited.extend(theme_inherited_paths(source[key], value, path))
+    return inherited
+
+
+def sparsify_theme(
+    source: dict[str, Any],
+    baseline: dict[str, Any],
+    candidate: dict[str, Any],
+    touched_paths: Iterable[str] | None = None,
+) -> dict[str, Any]:
+    """Apply candidate edits to a sparse source without materialising defaults."""
+    def update(raw: Any, before: Any, after: Any) -> Any:
+        if not isinstance(before, dict) or not isinstance(after, dict):
+            return copy.deepcopy(after)
+
+        result = copy.deepcopy(raw) if isinstance(raw, dict) else {}
+        for key in set(before) | set(after):
+            before_present = key in before
+            after_present = key in after
+            raw_present = key in result
+            if not after_present:
+                if raw_present:
+                    del result[key]
+                continue
+            if not before_present:
+                result[key] = copy.deepcopy(after[key])
+                continue
+            if before[key] == after[key]:
+                continue
+            if isinstance(before[key], dict) and isinstance(after[key], dict):
+                child_raw = result.get(key) if isinstance(result.get(key), dict) else {}
+                child = update(child_raw, before[key], after[key])
+                if child or raw_present:
+                    result[key] = child
+                else:
+                    result.pop(key, None)
+            else:
+                result[key] = copy.deepcopy(after[key])
+        return result
+
+    result = update(source, baseline, candidate)
+
+    def read_path(document: Any, parts: list[str]) -> tuple[bool, Any]:
+        value = document
+        for part in parts:
+            if not isinstance(value, dict) or part not in value:
+                return False, None
+            value = value[part]
+        return True, value
+
+    def write_path(document: dict[str, Any], parts: list[str], value: Any) -> None:
+        current = document
+        for part in parts[:-1]:
+            child = current.get(part)
+            if not isinstance(child, dict):
+                child = {}
+                current[part] = child
+            current = child
+        current[parts[-1]] = copy.deepcopy(value)
+
+    def delete_path(document: dict[str, Any], parts: list[str]) -> None:
+        current = document
+        parents: list[tuple[dict[str, Any], str]] = []
+        for part in parts[:-1]:
+            if not isinstance(current.get(part), dict):
+                return
+            parents.append((current, part))
+            current = current[part]
+        current.pop(parts[-1], None)
+        for parent, part in reversed(parents):
+            if not parent[part]:
+                del parent[part]
+
+    for path in touched_paths or ():
+        parts = [part for part in str(path).split(".") if part]
+        if not parts:
+            continue
+        exists, value = read_path(candidate, parts)
+        if exists:
+            write_path(result, parts, value)
+        else:
+            delete_path(result, parts)
+    return result
+
+
 def list_themes() -> list[dict[str, Any]]:
     entries = []
     paths = [
@@ -309,39 +417,42 @@ def list_themes() -> list[dict[str, Any]]:
     for path in paths:
         try:
             data = load_json(path)
-            theme_id = data.get("id", path.stem)
+            if not isinstance(data, dict):
+                raise ValueError("theme root must be a JSON object")
+            resolved = apply_theme_defaults(data)
+            theme_id = resolved.get("id", path.stem)
             if theme_id in seen:
                 continue
             seen.add(theme_id)
-            wallpaper = data.get("wallpaper", {}).get("path", "")
+            wallpaper = resolved.get("wallpaper", {}).get("path", "")
             entries.append(
                 {
                     "id": theme_id,
-                    "name": data.get("name", path.stem),
-                    "variant": data.get("variant"),
+                    "name": resolved.get("name", path.stem),
+                    "variant": resolved.get("variant"),
                     "path": str(path),
                     "builtin": is_builtin_theme_path(path),
                     "source_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
                     "preview": {
-                        "colours": data.get("colours", {}),
+                        "colours": resolved.get("colours", {}),
                         "wallpaper": str(resolve_wallpaper_path(wallpaper, path)) if wallpaper else "",
                         "widget_count": sum(
                             1
-                            for item in data.get("widgets", {}).get("items", [])
+                            for item in resolved.get("widgets", {}).get("items", [])
                             if isinstance(item, dict) and item.get("enabled", True)
                         ),
                         "fonts": {
-                            role: data.get("fonts", {}).get(role, "")
+                            role: resolved.get("fonts", {}).get(role, "")
                             for role in ("ui", "mono", "panel")
                         },
                         "bar": {
-                            "position": data.get("shell", {}).get("bar", {}).get("position", "left"),
-                            "items": resolved_bar_items(data.get("shell", {}).get("bar")),
+                            "position": resolved.get("shell", {}).get("bar", {}).get("position", "left"),
+                            "items": resolved_bar_items(resolved.get("shell", {}).get("bar")),
                         },
                     },
                 }
             )
-        except (OSError, json.JSONDecodeError):
+        except (OSError, json.JSONDecodeError, ValueError, DefaultsFailure):
             entries.append({"id": path.stem, "name": path.stem, "variant": None, "path": str(path), "builtin": is_builtin_theme_path(path), "invalid": True})
     return entries
 
@@ -447,25 +558,6 @@ def contrast_ratio(first: str, second: str) -> float:
 
     high, low = sorted((luminance(first), luminance(second)), reverse=True)
     return (high + 0.05) / (low + 0.05)
-
-
-def _mix_colour(first: str, second: str, amount: float) -> str:
-    first_channels = [int(first[index:index + 2], 16) for index in (1, 3, 5)]
-    second_channels = [int(second[index:index + 2], 16) for index in (1, 3, 5)]
-    channels = [round(start + (end - start) * amount) for start, end in zip(first_channels, second_channels)]
-    return "#" + "".join(f"{channel:02x}" for channel in channels)
-
-
-def derive_helium_frame_colour(colours: dict[str, str]) -> str:
-    """Return an inactive-tab fill distinct from the active tab."""
-    if colours["background"] != colours["surface"]:
-        return colours["surface"]
-
-    for percentage in range(10, 0, -1):
-        candidate = _mix_colour(colours["background"], colours["surface_alt"], percentage / 100)
-        if candidate != colours["background"] and contrast_ratio(candidate, colours["foreground"]) >= 4.5:
-            return candidate
-    return colours["surface_alt"]
 
 
 def _named_asset_exists(name: str, roots: tuple[Path, ...]) -> bool:
@@ -884,55 +976,16 @@ def render_gtk(theme: dict[str, Any]) -> dict[str, str]:
         "generated_css": theme["gtk"]["mode"] == "generated",
         "restart_required": True,
         "libadwaita_support": "partial-user-css",
-        "helium_theme": "gtk/helium/manifest.json",
     }
     files = {
         "gtk/gtk-3.0/settings.ini": settings,
         "gtk/gtk-4.0/settings.ini": settings,
         "gtk/metadata.json": canonical_json(metadata),
-        "gtk/helium/manifest.json": render_helium_theme(theme),
     }
     if theme["gtk"]["mode"] == "generated":
         files["gtk/gtk-3.0/gtk.css"] = render_gtk3(theme)
         files["gtk/gtk-4.0/gtk.css"] = render_gtk4(theme)
     return files
-
-
-def render_helium_theme(theme: dict[str, Any]) -> str:
-    colours = target_colours(theme, "gtk")
-
-    def rgb(role: str) -> list[int]:
-        colour = colours[role]
-        return [int(colour[index:index + 2], 16) for index in (1, 3, 5)]
-
-    frame = derive_helium_frame_colour(colours)
-    frame_rgb = [int(frame[index:index + 2], 16) for index in (1, 3, 5)]
-    manifest = {
-        "manifest_version": 3,
-        "name": "Blox Helium theme",
-        "version": "1.0",
-        # A fixed public key keeps the extension ID stable across generations.
-        "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAoLDs7yzNkzRrnbnWZSys0JALYg6nvhlYNbRjqEdmte+RABd5QPN6zZMSTgE+BvkdCqXtdOHzq5iNwrWaAdFfsdAT9D2S7rcUzd8Fzl+3PyMJE4uslqkNzIYxHAnkNvmgJKoIrvFG/WUMUno04zUevKtO/+LTDGBocw8Mxgpq3UopSWtRcyGodRCoemor94ejCA7c9wxqko4duDidHZP8S2Ll2D1A/Fvqrp/JhCPNgu5pMMFiuUJAccxoMNY9CFax+HlAcWnsVPQxKkZ9/4JA63jb+oWyDG5rFRcUsppgxTCdu/g98XZD/8JO99Zu2LYNBwY3OH3CIUlfxlfzPrjtgQIDAQAB",
-        "theme": {
-            "colors": {
-                "frame": frame_rgb,
-                "frame_inactive": frame_rgb,
-                "toolbar": rgb("background"),
-                "tab_text": rgb("foreground"),
-                "tab_background_text": rgb("foreground"),
-                "bookmark_text": rgb("foreground"),
-                "toolbar_button_icon": rgb("foreground"),
-                "omnibox_background": rgb("surface_alt"),
-                "omnibox_text": rgb("foreground"),
-                "omnibox_results_bg": rgb("surface"),
-                "omnibox_results_text": rgb("foreground"),
-                "ntp_background": rgb("background"),
-                "ntp_text": rgb("foreground"),
-                "button_background": rgb("accent"),
-            }
-        },
-    }
-    return canonical_json(manifest)
 
 
 def _rgba(colour: str, alpha: str = "ff") -> str:
@@ -1199,6 +1252,10 @@ def render_theme(theme: dict[str, Any], source_path: Path | None = None) -> tupl
         files["hypr/wallpaper.json"] = render_wallpaper(theme, source_path)
     if targets["gtk"]:
         files.update(render_gtk(theme))
+    if targets.get("helium", False):
+        from .chromium import render_helium_theme
+
+        files["helium/manifest.json"] = render_helium_theme(theme)
     if targets["cursor"]:
         from .cursor import cursor_metadata
 

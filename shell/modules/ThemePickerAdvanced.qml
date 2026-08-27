@@ -40,7 +40,7 @@ ColumnLayout {
 
     BloxSlider {
         Layout.fillWidth: true
-        label: "Style"
+        label: "Roundness"
         from: 0
         to: 2
         value: controller.shapeValue("radius_scale", 1.25)
@@ -762,6 +762,64 @@ ColumnLayout {
                             controller.guideTarget = modelData;
                             controller.showModal("guide");
                         }
+                    }
+
+                }
+
+            }
+
+        }
+
+    }
+
+    Label {
+        visible: controller.browserTargetKeys.length > 0
+        text: "Browsers"
+        color: Theme.blue
+        font.bold: true
+    }
+
+    Flow {
+        visible: controller.browserTargetKeys.length > 0
+        Layout.fillWidth: true
+        spacing: Theme.scaledSpacing(8)
+
+        Repeater {
+            model: controller.browserTargetKeys
+
+            Rectangle {
+                required property string modelData
+
+                width: 250
+                height: 54
+                radius: Theme.scaledRadius(8)
+                color: Theme.background
+                border.color: Theme.border
+
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.margins: Theme.scaledSpacing(7)
+
+                    BloxCheckBox {
+                        Layout.fillWidth: true
+                        Layout.alignment: Qt.AlignVCenter
+                        text: controller.targetLabel(modelData)
+                        checked: {
+                            controller.candidateRevision;
+                            return controller.candidate && controller.candidate.targets ? controller.candidate.targets[modelData] === true : false;
+                        }
+                        onToggled: (value) => {
+                            if (controller.candidate && value !== controller.candidate.targets[modelData])
+                                controller.setTarget(modelData, value);
+
+                        }
+                    }
+
+                    Text {
+                        Layout.alignment: Qt.AlignVCenter
+                        text: controller.targetModeLabel(modelData)
+                        color: controller.targetApplyMode(modelData) === "restart" ? Theme.yellow : Theme.green
+                        font.pixelSize: 9
                     }
 
                 }

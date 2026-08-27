@@ -21,6 +21,7 @@ from .core import canonical_json, contrast_ratio, repository_root, state_dir
 
 
 CURSOR_THEME_NAME = "blox-generated"
+CURSOR_FORMAT_VERSION = "xcursor+hyprcursor-v1"
 DOWNLOAD_LIMIT = 25 * 1024 * 1024
 
 
@@ -92,6 +93,9 @@ def toolchain_check() -> dict[str, Any]:
         cbmp_lock = None
     if not isinstance(cbmp_lock, dict) or cbmp_lock.get("version") != manifest["cbmp"]["version"] or cbmp_lock.get("integrity") != manifest["cbmp"]["integrity"]:
         missing.append("cbmp_lock")
+    hyprcursor_util = shutil.which("hyprcursor-util")
+    if hyprcursor_util is None:
+        missing.append("hyprcursor-util")
     expected_record = {"schema_version": 1, "source": manifest["bibata"], "tools": {name: manifest[name] for name in ("clickgen", "cbmp")}}
     try:
         record = json.loads(paths["record"].read_text(encoding="utf-8"))
@@ -103,6 +107,7 @@ def toolchain_check() -> dict[str, Any]:
         "ok": not missing,
         "path": str(paths["root"]),
         "missing": missing,
+        "hyprcursor_util": hyprcursor_util,
         "recovery": "themes/bin/themectl setup cursor --yes",
     }
 
@@ -210,7 +215,7 @@ def setup_toolchain(download: Callable[[str, Path], None] = _download) -> dict[s
     paths = toolchain_paths()
     if toolchain_check()["ok"]:
         return {"path": str(paths["root"]), "cache_hit": True, "versions": {name: manifest[name]["version"] for name in ("bibata", "clickgen", "cbmp")}}
-    for executable in ("npm", "node"):
+    for executable in ("npm", "node", "hyprcursor-util"):
         if not shutil.which(executable):
             raise CursorFailure(f"cursor setup requires {executable}; install it and rerun: themectl setup cursor --yes")
     root = paths["root"]
@@ -302,6 +307,7 @@ def cursor_metadata(theme: dict[str, Any]) -> dict[str, Any]:
         "source_commit": manifest["bibata"]["commit"],
         "clickgen_version": manifest["clickgen"]["version"],
         "cbmp_version": manifest["cbmp"]["version"],
+        "format": CURSOR_FORMAT_VERSION,
         "style": cursor["base"],
         "handedness": cursor["handedness"],
         "sizes": cursor["sizes"],
@@ -351,7 +357,36 @@ def validate_cursor_cache(cache: Path, metadata: dict[str, Any]) -> bool:
         files = _cache_files(theme)
     except (OSError, json.JSONDecodeError, CursorFailure):
         return False
-    return record == {"schema_version": 1, "metadata": metadata, "files": files} and (theme / "index.theme").is_file() and (theme / "cursors/left_ptr").is_file()
+    return (
+        record == {"schema_version": 1, "metadata": metadata, "files": files}
+        and (theme / "index.theme").is_file()
+        and (theme / "cursors/left_ptr").is_file()
+        and (theme / "manifest.hl").is_file()
+        and (theme / "hyprcursors/left_ptr/meta.hl").is_file()
+    )
+
+
+def _add_hyprcursor_theme(theme: Path, output_root: Path, progress: Callable[[str], None] | None = None) -> None:
+    """Add a Hyprcursor copy beside the Xcursor theme in one cache."""
+    utility = shutil.which("hyprcursor-util")
+    if utility is None:
+        raise CursorFailure("cursor setup requires hyprcursor-util; install it and rerun setup")
+
+    output_root.mkdir(parents=True, exist_ok=True)
+    if progress is not None:
+        progress("Converting generated assets to Hyprcursor format")
+    _checked_run([utility, "-x", str(theme), "-o", str(output_root)], timeout=300)
+    extracted = output_root / "extracted_theme"
+    manifest = extracted / "manifest.hl"
+    shapes = extracted / "hyprcursors"
+    if not manifest.is_file() or not (shapes / "left_ptr/meta.hl").is_file():
+        raise CursorFailure("hyprcursor-util did not produce a complete Hyprcursor theme")
+    manifest_text = manifest.read_text(encoding="utf-8")
+    manifest_text = manifest_text.replace("name = Extracted Theme", f"name = {CURSOR_THEME_NAME}", 1)
+    manifest.write_text(manifest_text, encoding="utf-8")
+    os.replace(manifest, theme / "manifest.hl")
+    os.replace(shapes, theme / "hyprcursors")
+    shutil.rmtree(output_root, ignore_errors=True)
 
 
 def build_cursor_cache(metadata: dict[str, Any], root: Path | None = None, progress: Callable[[str], None] | None = None) -> tuple[Path, bool]:
@@ -359,6 +394,8 @@ def build_cursor_cache(metadata: dict[str, Any], root: Path | None = None, progr
         raise CursorFailure("installed cursor mode does not use the generated cache")
     check = toolchain_check()
     if not check["ok"]:
+        if "hyprcursor-util" in check.get("missing", []):
+            raise CursorFailure("cursor setup requires hyprcursor-util; install it and rerun setup")
         raise CursorFailure(f"cursor toolchain is not installed; run: {check['recovery']}")
     root = root or state_dir()
     caches = root / "cursors"
@@ -371,6 +408,7 @@ def build_cursor_cache(metadata: dict[str, Any], root: Path | None = None, progr
     candidate = caches / f".candidate-{metadata['cache_key']}-{uuid.uuid4().hex}"
     bitmaps = candidate / "bitmaps"
     output = candidate / "output"
+    hyprcursor_output = candidate / "hyprcursor-output"
     caches.mkdir(parents=True, exist_ok=True)
     candidate.mkdir(mode=0o700)
     source = paths["source"]
@@ -398,6 +436,7 @@ def build_cursor_cache(metadata: dict[str, Any], root: Path | None = None, progr
         if not (built / "index.theme").is_file() or not (built / "cursors/left_ptr").is_file():
             raise CursorFailure("cursor compiler did not produce a complete Xcursor theme")
         os.replace(built, candidate / "theme")
+        _add_hyprcursor_theme(candidate / "theme", hyprcursor_output, progress=progress)
         shutil.rmtree(bitmaps, ignore_errors=True)
         shutil.rmtree(output, ignore_errors=True)
         if progress is not None:

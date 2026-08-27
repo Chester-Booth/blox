@@ -198,7 +198,7 @@ ColumnLayout {
                         y: 0
                         width: parent.width * 0.49
                         height: parent.height
-                        source: "file://" + controller.newWallpaper.trim()
+                        source: Theme.wallpaperUrl(controller.newWallpaper.trim())
                         fillMode: Image.PreserveAspectCrop
                     }
 

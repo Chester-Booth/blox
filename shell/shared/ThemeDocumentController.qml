@@ -46,12 +46,17 @@ QtObject {
                 "selection_foreground": colours.selection_foreground,
                 "border": colours.border
             },
+            "name": defaultsDocument.name || defaultsDocument.id,
             "fonts": JSON.parse(JSON.stringify(defaultsDocument.fonts)),
             "shape": JSON.parse(JSON.stringify(defaultsDocument.shape)),
             "shell": shell,
             "wallpaper": JSON.parse(JSON.stringify(defaultsDocument.wallpaper)),
             "terminal": JSON.parse(JSON.stringify(defaultsDocument.terminal)),
-            "widgets": {"profile": root.defaults.document.widgets.profile}
+            "widgets": {"profile": root.defaults.document.widgets.profile},
+            "gtk": JSON.parse(JSON.stringify(defaultsDocument.gtk)),
+            "icons": JSON.parse(JSON.stringify(defaultsDocument.icons)),
+            "cursor": JSON.parse(JSON.stringify(defaultsDocument.cursor)),
+            "targets": JSON.parse(JSON.stringify(defaultsDocument.targets))
         };
     }
 

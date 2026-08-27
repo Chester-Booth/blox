@@ -139,6 +139,63 @@ class ThemeLibraryMutationTests(unittest.TestCase):
         self.assertEqual(3, code)
         self.assertIn("already exists", response["errors"][0])
 
+    def test_sparse_source_round_trip_keeps_inherited_fields_out_of_the_file(self) -> None:
+        raw = copy.deepcopy(self.source)
+        raw.update(id="legacy-theme", name="Legacy Theme")
+        raw["targets"].pop("helium")
+        raw.pop("overrides")
+        path = self.user_library / "themes/legacy-theme.json"
+        path.write_text(json.dumps(raw), encoding="utf-8")
+
+        with mock.patch("blox_theme.core.theme_path", return_value=path):
+            shown, code = self.invoke("show", "legacy-theme", "--json")
+        self.assertEqual(0, code, shown)
+        self.assertFalse(shown["data"]["targets"]["helium"])
+        self.assertNotIn("helium", shown["source"]["targets"])
+
+        untouched_candidate = copy.deepcopy(shown["data"])
+        digest = hashlib.sha256(path.read_bytes()).hexdigest()
+        saved, code = self.invoke(
+            "save",
+            json.dumps(untouched_candidate),
+            "--source",
+            json.dumps(shown["source"]),
+            "--touched",
+            json.dumps(["targets.helium"]),
+            "--replace",
+            "--expect-sha256",
+            digest,
+            "--json",
+        )
+        self.assertEqual(0, code, saved)
+        written = json.loads(path.read_text(encoding="utf-8"))
+        self.assertIn("helium", written["targets"])
+        self.assertFalse(written["targets"]["helium"])
+
+        with mock.patch("blox_theme.core.theme_path", return_value=path):
+            shown, code = self.invoke("show", "legacy-theme", "--json")
+        self.assertEqual(0, code, shown)
+
+        candidate = copy.deepcopy(shown["data"])
+        candidate["targets"]["helium"] = True
+        candidate["shape"]["density_scale"] = 1.1
+        digest = hashlib.sha256(path.read_bytes()).hexdigest()
+        saved, code = self.invoke(
+            "save",
+            json.dumps(candidate),
+            "--source",
+            json.dumps(shown["source"]),
+            "--replace",
+            "--expect-sha256",
+            digest,
+            "--json",
+        )
+        self.assertEqual(0, code, saved)
+        written = json.loads(path.read_text(encoding="utf-8"))
+        self.assertTrue(written["targets"]["helium"])
+        self.assertEqual(1.1, written["shape"]["density_scale"])
+        self.assertNotIn("overrides", written)
+
     def test_inline_preview_is_side_effect_free_and_inline_apply_is_rejected(self) -> None:
         candidate = copy.deepcopy(self.source)
         for target in candidate["targets"]:
@@ -252,6 +309,33 @@ class PickerIntegrationSourceTests(unittest.TestCase):
         available = {path.stem for path in modules.glob("*.qml")}
 
         self.assertEqual(available, registered)
+
+    def test_theme_cursor_reload_recreates_blox_windows(self) -> None:
+        theme = (REPOSITORY / "shell/shared/Theme.qml").read_text(encoding="utf-8")
+        self.assertIn("function reloadCursor() : string", theme)
+        self.assertIn("Quickshell.reload(true);", theme)
+        self.assertIn('function reloadCursor() : string {\n            return root.reloadCursor();', theme)
+
+    def test_apply_defers_quickshell_reload_until_completion(self) -> None:
+        controller = qml_source("Controller")
+        api = qml_source("ApiController")
+        modal = qml_source("Modal")
+        progress = (REPOSITORY / "shell/shared/ThemeApplyProgress.qml").read_text(encoding="utf-8")
+        launcher = (REPOSITORY / "shell/modules/LauncherMainController.qml").read_text(encoding="utf-8")
+        launcher_window = (REPOSITORY / "shell/modules/LauncherThemeApplyWindow.qml").read_text(encoding="utf-8")
+
+        for source in (controller, api, launcher):
+            self.assertIn("--defer-quickshell-restart", source)
+        self.assertIn("function completeApply()", controller)
+        self.assertIn("Theme.reloadCursor()", controller)
+        self.assertIn("pending_reloads", api)
+        self.assertIn('text: root.pendingQuickshellReload ? "Complete and reload" : "Complete"', progress)
+        self.assertIn("signal completeRequested()", progress)
+        self.assertIn("showCompleteButton: true", launcher_window)
+        self.assertIn("function completeThemeApply()", launcher)
+        self.assertIn('iconName: controller.modalKind === "guide" ? "x" : ""', modal)
+        self.assertNotIn('iconName: controller.modalKind === "progress" || controller.modalKind === "guide" ? "x" : ""', modal)
+        self.assertIn("controller.completeApply()", modal)
 
     def test_widget_style_selector_preserves_widget_items(self) -> None:
         controller = qml_source("Controller")
@@ -382,7 +466,11 @@ class PickerIntegrationSourceTests(unittest.TestCase):
     def test_unavailable_targets_are_visible_but_not_editable(self) -> None:
         controller = qml_source("Controller")
         advanced = qml_source("Advanced")
+        generation = qml_source("GenerationController")
         self.assertIn('readonly property var unavailableTargetKeys: ["sddm", "grub"]', controller)
+        self.assertIn('"helium"', controller)
+        self.assertIn('readonly property var browserTargetKeys:', controller)
+        self.assertIn('command: [root.apiPath, "targets", "--json"]', controller)
         self.assertIn("function targetAvailable(key)", controller)
         self.assertNotIn('text: "Widget profile"', advanced)
         self.assertIn('return key + " · unavailable"', controller)
@@ -392,6 +480,9 @@ class PickerIntegrationSourceTests(unittest.TestCase):
         self.assertIn('readonly property var applicationTargetKeys:', controller)
         self.assertIn('text: "Core"', advanced)
         self.assertIn('text: "Applications"', advanced)
+        self.assertIn('text: "Browsers"', advanced)
+        self.assertIn('model: controller.browserTargetKeys', advanced)
+        self.assertIn('"helium": ["helium/manifest.json"]', generation)
 
     def test_creation_and_application_flows_expose_progress_and_apply_modes(self) -> None:
         controller = qml_source("Controller")
@@ -412,7 +503,7 @@ class PickerIntegrationSourceTests(unittest.TestCase):
         self.assertIn('controller.newVariant = modelData.mode', creation)
         self.assertIn("columns: 2", creation)
         self.assertIn("Layout.preferredHeight: 132", creation)
-        self.assertIn('source: "file://" + controller.newWallpaper.trim()', creation)
+        self.assertIn("source: Theme.wallpaperUrl(controller.newWallpaper.trim())", creation)
         self.assertIn("activeFocusOnTab: modelData.available", creation)
         self.assertIn("Keys.onSpacePressed: choose()", creation)
         self.assertIn("palettePill.forceActiveFocus()", creation)
@@ -431,6 +522,8 @@ class PickerIntegrationSourceTests(unittest.TestCase):
         self.assertIn('text: "Guide"', qml)
         self.assertIn('if (key === "stylus" || key === "obsidian")', qml)
         self.assertIn('return "manual"', qml)
+        self.assertIn('if (["gtk", "helium", "hyprlock", "btop", "micro", "glow", "code", "cursor_editor", "powerlevel10k"]', qml)
+        self.assertNotIn('"helium", "cursor", "hyprlock"', qml)
         self.assertIn('key === "code" || key === "cursor_editor" ? "Reload Window"', qml)
         self.assertIn('source: "../assets/stylus-import.png"', qml)
         self.assertIn('text: "Generated Files"', qml)
@@ -611,7 +704,7 @@ class PickerIntegrationSourceTests(unittest.TestCase):
         for label in ("Round", "Slightly round", "Square", "Compact", "Comfortable", "Spacious"):
             self.assertIn(f'"label": "{label}"', overview)
         self.assertGreaterEqual(overview.count("ThemeShapePreview {"), 2)
-        self.assertIn('label: "Style"', advanced)
+        self.assertIn('label: "Roundness"', advanced)
         self.assertIn('label: "Density"', advanced)
         self.assertIn('text: "Automatic"', advanced)
         self.assertIn('label: "Window gap"', advanced)

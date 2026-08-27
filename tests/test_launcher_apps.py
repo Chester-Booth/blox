@@ -71,7 +71,7 @@ class AppControllerTests(unittest.TestCase):
         root = Path(tempfile.mkdtemp(prefix="blox-helium-launcher-"))
         self.addCleanup(shutil.rmtree, root, ignore_errors=True)
         state = root / "state"
-        theme = state / "blox-theme/current/gtk/helium"
+        theme = state / "blox-theme/current/helium"
         theme.mkdir(parents=True)
         (theme / "manifest.json").write_text("{}\n", encoding="utf-8")
         browser = root / "browser"
@@ -88,7 +88,7 @@ class AppControllerTests(unittest.TestCase):
 
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertEqual(
-            [f"--load-extension={theme}", "https://example.test"],
+            ["--ozone-platform=wayland", f"--load-extension={theme}", "https://example.test"],
             result.stdout.splitlines(),
         )
 
@@ -108,10 +108,72 @@ class AppControllerTests(unittest.TestCase):
         )
 
         self.assertEqual(0, result.returncode, result.stderr)
-        self.assertEqual(["--incognito"], result.stdout.splitlines())
+        self.assertEqual(["--ozone-platform=wayland", "--incognito"], result.stdout.splitlines())
+
+    def test_helium_launcher_passes_the_active_cursor_to_new_processes(self):
+        root = Path(tempfile.mkdtemp(prefix="blox-helium-cursor-"))
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        state = root / "state"
+        metadata = state / "blox-theme/current/cursor/metadata.json"
+        metadata.parent.mkdir(parents=True)
+        metadata.write_text(
+            json.dumps({"theme_name": "blox-generated", "size": 22, "format": "xcursor+hyprcursor-v1"}),
+            encoding="utf-8",
+        )
+        browser = root / "browser"
+        browser.write_text(
+            "#!/bin/sh\nprintf '%s\\n' \"$XCURSOR_THEME\" \"$XCURSOR_SIZE\" \"$XCURSOR_PATH\" \"$HYPRCURSOR_THEME\" \"$HYPRCURSOR_SIZE\"\n",
+            encoding="utf-8",
+        )
+        browser.chmod(0o755)
+
+        result = subprocess.run(
+            [str(REPOSITORY / "bin/blox-helium-browser"), "https://example.test"],
+            env={
+                **os.environ,
+                "XDG_STATE_HOME": str(state),
+                "BLOX_HELIUM_BINARY": str(browser),
+                "XCURSOR_THEME": "Bibata-Modern-Classic",
+                "XCURSOR_SIZE": "20",
+                "HYPRCURSOR_SIZE": "20",
+            },
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual(
+            [
+                "blox-generated",
+                "22",
+                f"{Path.home() / '.local/share' / 'icons'}:{Path.home() / '.icons'}:/usr/local/share/icons:/usr/share/icons:/usr/share/pixmaps",
+                "blox-generated",
+                "22",
+            ],
+            result.stdout.splitlines(),
+        )
+
+    def test_helium_launcher_preserves_an_explicit_ozone_platform(self):
+        root = Path(tempfile.mkdtemp(prefix="blox-helium-ozone-"))
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        browser = root / "browser"
+        browser.write_text("#!/bin/sh\nprintf '%s\\n' \"$@\"\n", encoding="utf-8")
+        browser.chmod(0o755)
+
+        result = subprocess.run(
+            [str(REPOSITORY / "bin/blox-helium-browser"), "--ozone-platform=x11", "--incognito"],
+            env={**os.environ, "XDG_STATE_HOME": str(root / "state"), "BLOX_HELIUM_BINARY": str(browser)},
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual(["--ozone-platform=x11", "--incognito"], result.stdout.splitlines())
 
     def test_helium_desktop_entry_uses_the_blox_launcher(self):
-        entry = (REPOSITORY / "applications/.local/share/applications/helium-browser.desktop").read_text(encoding="utf-8")
+        entry = (REPOSITORY / "applications/.local/share/applications/helium.desktop").read_text(encoding="utf-8")
         self.assertIn("Exec=blox-helium-browser %U", entry)
         self.assertIn("Exec=blox-helium-browser --incognito", entry)
 
@@ -154,6 +216,27 @@ class AppControllerTests(unittest.TestCase):
             check=False,
         )
         self.assertEqual(0, probe.returncode, (probe.stderr or "") + (probe.stdout or ""))
+
+    def test_active_cursor_environment_uses_the_current_generation(self):
+        state = Path(tempfile.mkdtemp(prefix="blox-desktop-cursor-"))
+        self.addCleanup(shutil.rmtree, state, ignore_errors=True)
+        metadata = state / "blox-theme/current/cursor/metadata.json"
+        metadata.parent.mkdir(parents=True)
+        metadata.write_text(
+            json.dumps({"theme_name": "blox-generated", "size": 22, "format": "xcursor+hyprcursor-v1"}),
+            encoding="utf-8",
+        )
+        with mock.patch.dict(os.environ, {"XDG_STATE_HOME": str(state)}, clear=False):
+            self.assertEqual(
+                {
+                    "XCURSOR_THEME": "blox-generated",
+                    "XCURSOR_SIZE": "22",
+                    "XCURSOR_PATH": f"{Path.home() / '.local/share' / 'icons'}:{Path.home() / '.icons'}:/usr/local/share/icons:/usr/share/icons:/usr/share/pixmaps",
+                    "HYPRCURSOR_THEME": "blox-generated",
+                    "HYPRCURSOR_SIZE": "22",
+                },
+                desktop_exec.active_cursor_environment(),
+            )
 
     def test_normalise_ignores_case_and_desktop_suffix(self):
         self.assertEqual("org.example.app", appctl.normalise("Org.Example.App.desktop"))

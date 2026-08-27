@@ -95,14 +95,15 @@ FloatingWindow {
             showTargets: controller.applyProgressShowTargets
             complete: controller.applyProgressComplete
             error: controller.applyError
-            showCloseButton: false
+            showCompleteButton: true
+            pendingQuickshellReload: controller.applyQuickshellReloadPending
             onRetryRequested: (target) => {
                 return controller.retryThemeTarget(target);
             }
             onGuideRequested: (target) => {
                 return controller.applyGuideTarget = target;
             }
-            onCloseRequested: controller.dismissThemeApply()
+            onCompleteRequested: controller.completeThemeApply()
         }
 
         Column {

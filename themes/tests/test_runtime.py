@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 import os
 import shutil
@@ -52,6 +53,11 @@ class RuntimeTests(unittest.TestCase):
             "VSCODE_EXTENSIONS": str(self.root / "vscode-extensions"),
         })
         self.environment.start()
+        self.browser_probe = mock.patch(
+            "blox_theme.runtime.detect_browser_target",
+            return_value={"available": True, "label": "Helium", "reason": ""},
+        )
+        self.browser_probe.start()
         quickshell_loader = self.root / "config/quickshell/blox/shared/Theme.qml"
         quickshell_loader.parent.mkdir(parents=True)
         quickshell_loader.write_text("watchChanges: true\nfunction loadJson() {}\n", encoding="utf-8")
@@ -65,6 +71,7 @@ class RuntimeTests(unittest.TestCase):
         self.alternate = json.loads(self.alternate_path.read_text(encoding="utf-8"))
 
     def tearDown(self) -> None:
+        self.browser_probe.stop()
         self.environment.stop()
         self.temporary.cleanup()
 
@@ -106,6 +113,14 @@ class RuntimeTests(unittest.TestCase):
         for executable in ("hyprctl", "kitty"):
             self.assertIn(executable, flattened)
         self.assertTrue(any("shell/scripts/ipc.sh" in part for part in flattened))
+
+    def test_helium_cache_does_not_break_generation_integrity(self) -> None:
+        self.apply_canonical()
+        cache = (self.state / "current/helium/Cached Theme.pak").resolve()
+        cache.write_bytes(b"browser cache")
+        generation, manifest = current_generation(self.state)
+        self.assertIsNotNone(generation)
+        self.assertIn("helium", manifest["enabled_targets"])
 
     def test_glow_style_uses_the_xdg_managed_loader(self) -> None:
         glow_link, _ = phase7_loader_specs(self.state)["glow"]
@@ -176,6 +191,90 @@ class RuntimeTests(unittest.TestCase):
         rollback(first["generation_id"], run_command=FakeCommands())
         self.assertEqual(first_target, os.readlink(cursor_icon_link()))
 
+    def test_cursor_apply_reports_live_switch_without_restart_warning(self) -> None:
+        runner = FakeCommands()
+        _, warnings = apply_theme(
+            self.canonical_path,
+            self.canonical,
+            ("cursor",),
+            run_command=runner,
+            cursor_builder=fake_cursor_builder,
+        )
+        self.assertEqual([], warnings)
+        self.assertIn(["gsettings", "set", "org.gnome.desktop.interface", "cursor-theme", "blox-generated"], runner.commands)
+        self.assertIn(["gsettings", "set", "org.gnome.desktop.interface", "cursor-size", "22"], runner.commands)
+        fallback_metadata = json.loads((self.state / "integration/cursor.json").read_text(encoding="utf-8"))["fallback"]
+        fallback = ["hyprctl", "setcursor", fallback_metadata["theme_name"], str(fallback_metadata["size"])]
+        generated = ["hyprctl", "setcursor", "blox-generated", "22"]
+        self.assertIn(generated, runner.commands)
+        if fallback != generated:
+            self.assertIn(fallback, runner.commands)
+            self.assertLess(runner.commands.index(fallback), runner.commands.index(generated))
+        self.assertIn(
+            ["bash", str(repository_root() / "shell/scripts/ipc.sh"), "theme", "reloadCursor"],
+            runner.commands,
+        )
+
+    def test_apply_skips_unchanged_targets(self) -> None:
+        self.apply_canonical()
+        runner = FakeCommands()
+        events: list[dict] = []
+        _, warnings = apply_theme(
+            self.canonical_path,
+            self.canonical,
+            TARGET_NAMES,
+            run_command=runner,
+            cursor_builder=fake_cursor_builder,
+            progress=events.append,
+        )
+        self.assertEqual([], warnings)
+        target_events = [event for event in events if event["kind"] == "target"]
+        self.assertEqual(list(TARGET_NAMES), [event["target"] for event in target_events])
+        self.assertEqual(["unchanged"] * len(TARGET_NAMES), [event["state"] for event in target_events])
+        self.assertNotIn(["hyprctl", "reload"], runner.commands)
+        self.assertNotIn(
+            ["bash", str(repository_root() / "shell/scripts/ipc.sh"), "theme", "reloadCursor"],
+            runner.commands,
+        )
+
+    def test_cursor_apply_can_defer_the_quickshell_restart(self) -> None:
+        self.apply_canonical()
+        changed = copy.deepcopy(self.canonical)
+        changed["cursor"].update(base_colour="#a6e3a1", outline_colour="#1e1e1e")
+        runner = FakeCommands()
+        events: list[dict] = []
+        _, warnings = apply_theme(
+            self.canonical_path,
+            changed,
+            ("cursor",),
+            run_command=runner,
+            cursor_builder=fake_cursor_builder,
+            progress=events.append,
+            defer_quickshell_restart=True,
+        )
+        self.assertEqual([], warnings)
+        self.assertIn(["gsettings", "set", "org.gnome.desktop.interface", "cursor-theme", "blox-generated"], runner.commands)
+        self.assertIn(["hyprctl", "setcursor", "blox-generated", "22"], runner.commands)
+        self.assertNotIn(
+            ["bash", str(repository_root() / "shell/scripts/ipc.sh"), "theme", "reloadCursor"],
+            runner.commands,
+        )
+        cursor_events = [event for event in events if event["kind"] == "target" and event["target"] == "cursor"]
+        self.assertEqual(["active", "restart"], [event["state"] for event in cursor_events])
+        self.assertEqual("Complete to reload Blox surfaces", cursor_events[-1]["message"])
+
+    def test_cursor_apply_reports_when_blox_shell_cannot_reload(self) -> None:
+        runner = FakeCommands()
+        runner.returncode = 1
+        _, warnings = apply_theme(
+            self.canonical_path,
+            self.canonical,
+            ("cursor",),
+            run_command=runner,
+            cursor_builder=fake_cursor_builder,
+        )
+        self.assertTrue(any("Blox shell cursor surfaces could not be reloaded" in warning for warning in warnings))
+
     def test_partial_apply_carries_unselected_targets_byte_for_byte(self) -> None:
         self.apply_canonical()
         before_path, before_manifest = current_generation(self.state)
@@ -189,6 +288,21 @@ class RuntimeTests(unittest.TestCase):
             self.assertEqual(before[name], (after_path / name).read_bytes(), name)
         self.assertEqual("phase2-alternate", manifest["target_sources"]["quickshell"]["theme_id"])
         self.assertEqual("catppuccin-mocha", manifest["target_sources"]["kitty"]["theme_id"])
+
+    def test_legacy_gtk_owned_helium_file_is_not_carried_forward(self) -> None:
+        self.apply_canonical()
+        active = (self.state / "current").resolve()
+        legacy = active / "gtk/helium/manifest.json"
+        legacy.parent.mkdir(parents=True)
+        legacy.write_text("{}\n", encoding="utf-8")
+        manifest_path = active / "manifest.json"
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest["files"]["gtk/helium/manifest.json"] = hashlib.sha256(legacy.read_bytes()).hexdigest()
+        manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+        current_generation(self.state)
+        apply_theme(self.canonical_path, self.canonical, ("quickshell",), run_command=FakeCommands())
+        self.assertFalse(((self.state / "current").resolve() / "gtk/helium/manifest.json").exists())
 
     def test_alternate_theme_changes_all_phase_two_targets(self) -> None:
         self.apply_canonical()
@@ -267,6 +381,15 @@ class RuntimeTests(unittest.TestCase):
             apply_theme(self.alternate_path, self.alternate, TARGET_NAMES, run_command=FakeCommands(), renderer=fail_renderer)
         self.assertEqual(before, os.readlink(self.state / "current"))
         self.assertEqual([], list((self.state / "generations").glob(".candidate-*")))
+
+    def test_unavailable_helium_fails_before_state_mutation(self) -> None:
+        with mock.patch(
+            "blox_theme.runtime.detect_browser_target",
+            return_value={"available": False, "label": "Helium", "reason": "Helium is not installed"},
+        ):
+            with self.assertRaisesRegex(RuntimeFailure, "Helium target is unavailable"):
+                apply_theme(self.canonical_path, self.canonical, ("helium",), run_command=FakeCommands())
+        self.assertFalse(self.state.exists())
 
     def test_corrupt_active_generation_blocks_carry_forward(self) -> None:
         self.apply_canonical()
@@ -442,7 +565,7 @@ class RuntimeTests(unittest.TestCase):
                 self.apply_canonical()
                 runner = FakeCommands()
                 manifest, warnings = reset_target(target, run_command=runner)
-                manual = {"hyprland", "hyprlock", "btop", "micro", "glow", "code", "cursor_editor", "stylus", "obsidian", "powerlevel10k"}
+                manual = {"helium", "hyprland", "hyprlock", "btop", "micro", "glow", "code", "cursor_editor", "stylus", "obsidian", "powerlevel10k"}
                 if target != "kitty":
                     self.assertEqual(target in manual, bool(warnings))
                 active = (self.state / "current").resolve()
@@ -568,8 +691,10 @@ class RuntimeCliTests(unittest.TestCase):
             stage_ids = list(dict.fromkeys(event["stage"] for event in events if event["kind"] == "stage"))
             self.assertEqual(["prepare", "cursor", "activation", "applications"], stage_ids)
             target_events = [event for event in events if event["kind"] == "target"]
-            self.assertEqual(["quickshell", "quickshell", "wallpaper", "wallpaper"], [event["target"] for event in target_events])
-            self.assertEqual(["active", "applied", "active", "applied"], [event["state"] for event in target_events])
+            self.assertEqual(["quickshell", "wallpaper"], [event["target"] for event in target_events])
+            self.assertEqual(["unchanged", "unchanged"], [event["state"] for event in target_events])
+            self.assertEqual([], json.loads(streamed.stdout)["data"]["changed_targets"])
+            self.assertEqual(["quickshell", "wallpaper"], json.loads(streamed.stdout)["data"]["unchanged_targets"])
             self.assertEqual(events[-1]["total"], events[-1]["completed"])
             first = json.loads(streamed.stdout)["data"]["generation"]
             reconcile_code, reconciled = invoke("reconcile")

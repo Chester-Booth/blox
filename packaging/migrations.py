@@ -55,6 +55,33 @@ def migrate_shell_env(roots: Roots, backup_dir: Path) -> dict[str, Any]:
     return {"moved": bool(detail), "detail": detail}
 
 
+def migrate_legacy_helium_desktop_entry(roots: Roots, backup_dir: Path) -> dict[str, Any]:
+    """Remove the old Blox-owned Helium desktop ID after the rename.
+
+    A user-owned Helium entry must stay untouched. The old Blox entry is
+    identified by its wrapper command and receives a pre-image so rollback
+    and failed installs can restore it.
+    """
+    legacy = _data_home() / "applications" / "helium-browser.desktop"
+    if legacy.is_symlink() or not legacy.is_file():
+        return {"moved": False}
+    try:
+        text = legacy.read_text(encoding="utf-8")
+    except OSError:
+        return {"moved": False}
+    if "Name=Helium Browser" not in text or "Exec=blox-helium-browser %U" not in text:
+        return {"moved": False}
+
+    pre_image = backup_dir / legacy.name
+    shutil.copy2(legacy, pre_image)
+    legacy.unlink()
+    return {
+        "moved": True,
+        "pre_image_file": str(pre_image),
+        "detail": {"destination": str(legacy), "action": "removed"},
+    }
+
+
 def _data_home() -> Path:
     return Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local" / "share"))
 
@@ -170,6 +197,7 @@ def migrate_active_theme_paths(roots: Roots, backup_dir: Path) -> dict[str, Any]
 MIGRATIONS: list[Migration] = [
     Migration("calendar-config-xdg", "Move the calendar allow-list into $XDG_CONFIG_HOME/blox.", migrate_calendar_config),
     Migration("shell-env-config", "Move the personal shell environment file into $XDG_CONFIG_HOME/blox.", migrate_shell_env),
+    Migration("helium-desktop-id", "Remove the old Blox-owned Helium desktop entry after its ID rename.", migrate_legacy_helium_desktop_entry),
     Migration("legacy-user-themes", "Relocate imported themes from $XDG_DATA_HOME/blox/themes into the separated user-data root.", migrate_legacy_user_themes, keep_on_rollback=True),
     Migration("active-theme-paths", "Repoint the active theme manifest at the relocated user-data root.", migrate_active_theme_paths, keep_on_rollback=True),
 ]

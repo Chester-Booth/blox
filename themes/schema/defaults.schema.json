@@ -11,9 +11,10 @@
     "theme": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "variant", "colours", "fonts", "shape", "shell", "wallpaper", "terminal"],
+      "required": ["id", "name", "variant", "colours", "fonts", "shape", "shell", "wallpaper", "gtk", "icons", "cursor", "targets", "terminal"],
       "properties": {
         "id": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+        "name": {"type": "string", "minLength": 1},
         "variant": {"enum": ["dark", "light"]},
         "shape": {
           "type": "object",
@@ -60,6 +61,37 @@
             "gtk_size": {"type": "number", "minimum": 6, "maximum": 48}
           }
         },
+        "gtk": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "base_theme", "colour_source"],
+          "properties": {
+            "mode": {"enum": ["generated", "installed"]},
+            "base_theme": {"type": "string", "minLength": 1},
+            "colour_source": {"enum": ["theme", "override"]}
+          }
+        },
+        "icons": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["theme"],
+          "properties": {"theme": {"type": "string", "minLength": 1}}
+        },
+        "cursor": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "base", "handedness", "sizes", "colour_source"],
+          "properties": {
+            "mode": {"enum": ["generated", "installed"]},
+            "base": {"type": "string", "minLength": 1},
+            "handedness": {"enum": ["right", "left"]},
+            "sizes": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "integer", "minimum": 16, "maximum": 96}},
+            "colour_source": {"enum": ["theme", "override"]},
+            "base_colour": {"$ref": "#/$defs/colour"},
+            "outline_colour": {"$ref": "#/$defs/colour"},
+            "watch_background": {"$ref": "#/$defs/colour"}
+          }
+        },
         "shell": {
           "type": "object",
           "additionalProperties": false,
@@ -77,6 +109,32 @@
           "properties": {
             "path": {"type": "string", "minLength": 1},
             "fit": {"enum": ["cover", "contain", "tile"]}
+          }
+        },
+        "targets": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["quickshell", "widgets", "gtk", "helium", "cursor", "wallpaper", "kitty", "hyprland", "hyprlock", "btop", "micro", "glow", "code", "cursor_editor", "stylus", "powerlevel10k", "sddm", "grub"],
+          "properties": {
+            "quickshell": {"type": "boolean"},
+            "widgets": {"type": "boolean"},
+            "gtk": {"type": "boolean"},
+            "helium": {"type": "boolean"},
+            "cursor": {"type": "boolean"},
+            "wallpaper": {"type": "boolean"},
+            "kitty": {"type": "boolean"},
+            "hyprland": {"type": "boolean"},
+            "hyprlock": {"type": "boolean"},
+            "btop": {"type": "boolean"},
+            "micro": {"type": "boolean"},
+            "glow": {"type": "boolean"},
+            "code": {"type": "boolean"},
+            "cursor_editor": {"type": "boolean"},
+            "stylus": {"type": "boolean"},
+            "obsidian": {"type": "boolean"},
+            "powerlevel10k": {"type": "boolean"},
+            "sddm": {"type": "boolean"},
+            "grub": {"type": "boolean"}
           }
         },
         "terminal": {

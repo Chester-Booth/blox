@@ -147,6 +147,9 @@ Singleton {
 
     function wallpaperUrl(path) : string {
         const value = String(path || "");
+        if (value.length === 0)
+            return "";
+
         if (value.startsWith("file:"))
             return value;
 
@@ -242,6 +245,13 @@ Singleton {
         return themeId;
     }
 
+    // Cursor images belong to each Wayland client. Recreate Blox's windows so
+    // they request the cursor image from the newly selected theme.
+    function reloadCursor() : string {
+        Quickshell.reload(true);
+        return "reloading";
+    }
+
     function reloadWidgets() : string {
         widgetFile.reload();
         return widgetProfile;
@@ -333,6 +343,10 @@ Singleton {
     IpcHandler {
         function reload() : string {
             return root.reload();
+        }
+
+        function reloadCursor() : string {
+            return root.reloadCursor();
         }
 
         function reset() : string {

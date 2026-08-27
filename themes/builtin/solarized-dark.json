@@ -218,6 +218,7 @@
     "glow": true,
     "grub": false,
     "gtk": true,
+    "helium": false,
     "hyprland": true,
     "hyprlock": true,
     "kitty": true,

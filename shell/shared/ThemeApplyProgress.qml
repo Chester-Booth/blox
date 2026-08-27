@@ -14,7 +14,8 @@ Item {
     required property bool showTargets
     required property bool complete
     property string error: ""
-    property bool showCloseButton: false
+    property bool showCompleteButton: false
+    property bool pendingQuickshellReload: false
     readonly property int completedTargets: targets.filter((target) => {
         return target.state !== "queued" && target.state !== "active";
     }).length
@@ -26,6 +27,7 @@ Item {
     signal retryRequested(string target)
     signal guideRequested(string target)
     signal closeRequested()
+    signal completeRequested()
 
     function stateColour(state) {
         if (state === "done" || state === "applied")
@@ -40,6 +42,9 @@ Item {
         if (state === "active")
             return Theme.blue;
 
+        if (state === "unchanged")
+            return Theme.muted;
+
         return Theme.muted;
     }
 
@@ -52,6 +57,9 @@ Item {
 
         if (state === "active")
             return "spinner-gap";
+
+        if (state === "unchanged")
+            return "check-circle";
 
         if (state === "failed")
             return "warning-circle";
@@ -352,9 +360,9 @@ Item {
             }
 
             BloxButton {
-                visible: root.showCloseButton
-                text: "Close"
-                onClicked: root.closeRequested()
+                visible: root.showCompleteButton
+                text: root.pendingQuickshellReload ? "Complete and reload" : "Complete"
+                onClicked: root.completeRequested()
             }
 
         }

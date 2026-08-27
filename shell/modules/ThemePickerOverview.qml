@@ -191,15 +191,6 @@ ColumnLayout {
         }
 
         Label {
-            text: "Hyprland rounding " + Math.round(12 * controller.shapeValue("radius_scale", 1.25))
-                + " px · gaps " + controller.effectiveWindowGap() + " px · GTK radius "
-                + Math.round(12 * controller.shapeValue("radius_scale", 1.25)) + " px"
-            color: Theme.muted
-            font.family: Theme.bodyFontFamily
-            font.pixelSize: 11
-        }
-
-        Label {
             text: "Bar / OSD / Notifications"
             color: Theme.foreground
             font.family: Theme.bodyFontFamily
@@ -297,7 +288,7 @@ ColumnLayout {
                 onActivated: (index, selectedText) => {
                     const next = controller.cloneCandidate();
                     next.wallpaper.fit = selectedText;
-                    controller.markCandidate(next);
+                    controller.markCandidate(next, "wallpaper.fit");
                 }
             }
 

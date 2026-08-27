@@ -32,6 +32,7 @@ QtObject {
             "kitty": ["kitty/theme.conf"],
             "wallpaper": ["hypr/wallpaper.json"],
             "gtk": ["gtk/gtk-3.0/settings.ini", "gtk/gtk-3.0/gtk.css", "gtk/gtk-4.0/settings.ini", "gtk/gtk-4.0/gtk.css", "gtk/metadata.json"],
+            "helium": ["helium/manifest.json"],
             "cursor": ["cursor/metadata.json"],
             "hyprland": ["hyprland/theme.lua"],
             "hyprlock": ["hyprlock/theme.conf"],

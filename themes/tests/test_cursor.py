@@ -88,7 +88,12 @@ class CursorCacheTests(unittest.TestCase):
         self.temporary.cleanup()
 
     def fake_run(self, command: list[str], cwd: Path | None = None, timeout: int = 300):
-        if "ctgen" in Path(command[0]).name:
+        if "hyprcursor-util" in Path(command[0]).name:
+            output = Path(command[command.index("-o") + 1]) / "extracted_theme"
+            (output / "hyprcursors/left_ptr").mkdir(parents=True)
+            (output / "manifest.hl").write_text("name = Extracted Theme\ncursors_directory = hyprcursors\n", encoding="utf-8")
+            (output / "hyprcursors/left_ptr/meta.hl").write_text("define_size = 22, left_ptr_000.png, 40\n", encoding="utf-8")
+        elif "ctgen" in Path(command[0]).name:
             output = Path(command[command.index("-o") + 1]) / "blox-generated"
             (output / "cursors").mkdir(parents=True)
             (output / "index.theme").write_text("[Icon Theme]\nName=blox-generated\n", encoding="utf-8")
@@ -103,6 +108,8 @@ class CursorCacheTests(unittest.TestCase):
             theme_path, hit = build_cursor_cache(self.metadata)
             self.assertFalse(hit)
             self.assertTrue(validate_cursor_cache(theme_path.parent, self.metadata))
+            self.assertTrue((theme_path / "manifest.hl").is_file())
+            self.assertTrue((theme_path / "hyprcursors/left_ptr/meta.hl").is_file())
             self.assertEqual(900, runner.call_args_list[0].kwargs["timeout"])
             first_calls = runner.call_count
             again, hit = build_cursor_cache(self.metadata)
@@ -142,6 +149,11 @@ class CursorCacheTests(unittest.TestCase):
         commands = [call.args[0] for call in runner.call_args_list]
         self.assertTrue(any(command[command.index("-d") + 1].endswith("svg/modern") for command in commands if "-bc" in command))
         self.assertTrue(any(command[1].endswith("configs/normal/x.build.toml") for command in commands if "ctgen" in command[0]))
+
+    def test_generated_cache_requires_hyprcursor_utility(self) -> None:
+        with mock.patch.object(cursor.shutil, "which", side_effect=lambda name: None if name == "hyprcursor-util" else "/usr/bin/available"):
+            with self.assertRaisesRegex(CursorFailure, "hyprcursor-util"):
+                build_cursor_cache(self.metadata)
 
     def test_build_failure_removes_partial_candidate(self) -> None:
         with mock.patch("blox_theme.cursor._checked_run", side_effect=CursorFailure("injected compiler failure")):

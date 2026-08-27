@@ -470,6 +470,7 @@ class RendererTests(unittest.TestCase):
             "hyprlock": "hyprlock/theme.conf",
             "btop": "btop/theme.theme", "micro": "micro/blox-theme.micro",
             "glow": "glow/style.json", "code": ["code/package.json", "code/settings.json", "code/themes/blox-dark-2026.json"],
+            "helium": "helium/manifest.json",
             "cursor_editor": "cursor-editor/settings.json", "stylus": "stylus/blox-system.user.css",
             "powerlevel10k": "powerlevel10k/theme.zsh",
             "widgets": "widgets/profile.json",
@@ -507,16 +508,37 @@ class RendererTests(unittest.TestCase):
         for path in sorted((THEMES / "builtin").glob("*.json")):
             with self.subTest(theme=path.stem):
                 _, theme = load_theme(path.stem)
+                theme["targets"]["gtk"] = False
+                theme["targets"]["helium"] = True
                 files, _ = render_theme(theme)
-                manifest = json.loads(files["gtk/helium/manifest.json"])
+                manifest = json.loads(files["helium/manifest.json"])
                 colours = manifest["theme"]["colors"]
                 self.assertEqual(3, manifest["manifest_version"])
                 self.assertRegex(manifest["key"], r"^[A-Za-z0-9+/]+=*$")
                 self.assertNotEqual(colours["frame"], colours["toolbar"])
                 self.assertEqual(colours["frame"], colours["frame_inactive"])
                 self.assertEqual(colours["toolbar"], [int(theme["colours"]["background"][index:index + 2], 16) for index in (1, 3, 5)])
-                frame = "#" + "".join(f"{channel:02x}" for channel in colours["frame"])
-                self.assertGreaterEqual(contrast_ratio(frame, theme["colours"]["foreground"]), 4.5)
+                for frame in (colours["frame"], colours["toolbar"]):
+                    value = "#" + "".join(f"{channel:02x}" for channel in frame)
+                    self.assertGreaterEqual(contrast_ratio(value, theme["colours"]["foreground"]), 4.5)
+
+    def test_helium_inactive_tabs_use_surface_alt(self) -> None:
+        theme = copy.deepcopy(self.theme)
+        theme["targets"]["gtk"] = False
+        theme["targets"]["helium"] = True
+        manifest = json.loads(render_theme(theme)[0]["helium/manifest.json"])
+        inactive = manifest["theme"]["colors"]["frame"]
+        expected = [int(theme["colours"]["surface_alt"][index:index + 2], 16) for index in (1, 3, 5)]
+        self.assertEqual(expected, inactive)
+
+    def test_helium_does_not_consume_gtk_overrides(self) -> None:
+        theme = copy.deepcopy(self.theme)
+        theme["targets"]["gtk"] = False
+        theme["targets"]["helium"] = True
+        theme["overrides"] = {"gtk": {"background": "#010203", "accent": "#abcdef"}}
+        manifest = json.loads(render_theme(theme)[0]["helium/manifest.json"])
+        self.assertEqual([30, 30, 46], manifest["theme"]["colors"]["toolbar"])
+        self.assertEqual([137, 180, 250], manifest["theme"]["colors"]["button_background"])
 
     def test_installed_gtk_mode_emits_no_generated_css(self) -> None:
         theme = copy.deepcopy(self.theme)
@@ -524,7 +546,7 @@ class RendererTests(unittest.TestCase):
         files, _ = render_theme(theme)
         self.assertNotIn("gtk/gtk-3.0/gtk.css", files)
         self.assertNotIn("gtk/gtk-4.0/gtk.css", files)
-        self.assertIn("gtk/helium/manifest.json", files)
+        self.assertNotIn("helium/manifest.json", files)
         self.assertIn("gtk-theme-name=Adwaita", files["gtk/gtk-3.0/settings.ini"])
         self.assertFalse(json.loads(files["gtk/metadata.json"])["generated_css"])
 
@@ -1075,7 +1097,7 @@ class CliContractTests(unittest.TestCase):
         self.assertIn("iconRotation: active === opensForward ? 180 : 0", toggle)
 
     def test_all_commands_support_human_and_json_output(self) -> None:
-        commands = (("list",), ("show", "catppuccin-mocha"), ("validate", "catppuccin-mocha"), ("render", "catppuccin-mocha"), ("preview", "catppuccin-mocha"), ("diff", "catppuccin-mocha"), ("doctor",))
+        commands = (("list",), ("targets",), ("show", "catppuccin-mocha"), ("validate", "catppuccin-mocha"), ("render", "catppuccin-mocha"), ("preview", "catppuccin-mocha"), ("diff", "catppuccin-mocha"), ("doctor",))
         for arguments in commands:
             with self.subTest(command=arguments[0], output="human"):
                 completed = run_cli(*arguments)
@@ -1093,7 +1115,10 @@ class CliContractTests(unittest.TestCase):
                 else:
                     self.assertEqual(0, completed.returncode, completed.stderr)
                     response = json.loads(completed.stdout)
-                self.assertEqual({"api_version", "command", "ok", "status", "data", "warnings", "errors"}, set(response))
+                expected_keys = {"api_version", "command", "ok", "status", "data", "warnings", "errors"}
+                if arguments[0] == "show":
+                    expected_keys.update(("source", "inherited_paths"))
+                self.assertEqual(expected_keys, set(response))
                 self.assertEqual(arguments[0], response["command"])
 
     def test_osd_position_uses_window_edge_flags(self) -> None:
@@ -1131,7 +1156,9 @@ class CliContractTests(unittest.TestCase):
         self.assertTrue(any("Libadwaita" in warning for warning in response["warnings"]))
         self.assertEqual([22, 24], response["data"]["cursor"]["sizes"])
         self.assertIn("wait", response["data"]["cursor"]["states"])
-        self.assertTrue(response["data"]["cursor"]["restart_required_for_existing_processes"])
+        self.assertTrue(response["data"]["cursor"]["updates_live"])
+        self.assertNotIn("restart_required_for_existing_processes", response["data"]["cursor"])
+        self.assertFalse(any("existing applications may retain" in warning for warning in response["warnings"]))
 
     def test_repository_does_not_force_gtk_theme_environment(self) -> None:
         # Environment wiring is user policy. The product ships no GTK_THEME

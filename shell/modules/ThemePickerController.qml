@@ -26,7 +26,14 @@ Scope {
     property bool validationPending: false
     property string baselineJson: ""
     property string sourceDigest: ""
+    // Raw source for the selected theme. The candidate stays fully resolved
+    // for the editor, while Save sends this sparse document back to themectl.
+    property var sourceTheme: null
+    property var touchedPaths: []
     property string selectedId: ""
+    property var browserTargets: []
+    property bool browserTargetsLoaded: false
+    property string browserTargetOutput: ""
     property var previewData: ({
     })
     property var apiWarnings: []
@@ -64,6 +71,7 @@ Scope {
     property real applyProgressValue: 0
     property string applyProgressMessage: "Preparing theme application"
     property bool applyProgressShowTargets: false
+    property bool applyQuickshellReloadPending: false
     property string guideTarget: ""
     property alias widgetDraft: widgetController.draft
     property alias widgetEditIndex: widgetController.editIndex
@@ -93,16 +101,21 @@ Scope {
     property string barDropTarget: ""
     property real barDragOriginX: 0
     property real barDragOriginY: 0
-    readonly property bool dirty: candidate !== null && JSON.stringify(candidate) !== baselineJson
+    readonly property bool dirty: candidate !== null && (JSON.stringify(candidate) !== baselineJson || touchedPaths.length > 0)
     readonly property string apiPath: Quickshell.shellDir + "/scripts/theme/themectl.sh"
     readonly property string scriptRoot: Quickshell.shellDir + "/scripts"
     readonly property var semanticKeys: ["background", "surface", "surface_alt", "foreground", "muted", "accent", "danger", "success", "warning", "info", "mauve", "teal", "selection_background", "selection_foreground", "border"]
     readonly property var ansiKeys: ["color0", "color1", "color2", "color3", "color4", "color5", "color6", "color7", "color8", "color9", "color10", "color11", "color12", "color13", "color14", "color15"]
     readonly property var overrideKeys: ["background", "foreground", "accent", "border"]
-    readonly property var targetKeys: ["quickshell", "widgets", "gtk", "cursor", "wallpaper", "kitty", "hyprland", "hyprlock", "btop", "micro", "glow", "code", "cursor_editor", "stylus", "obsidian", "powerlevel10k", "sddm", "grub"]
+    readonly property var targetKeys: ["quickshell", "widgets", "gtk", "helium", "cursor", "wallpaper", "kitty", "hyprland", "hyprlock", "btop", "micro", "glow", "code", "cursor_editor", "stylus", "obsidian", "powerlevel10k", "sddm", "grub"]
     readonly property var unavailableTargetKeys: ["sddm", "grub"]
     readonly property var coreTargetKeys: ["quickshell", "widgets", "wallpaper", "hyprland", "hyprlock", "cursor"]
     readonly property var applicationTargetKeys: ["kitty", "gtk", "btop", "micro", "glow", "code", "cursor_editor", "stylus", "obsidian", "powerlevel10k"]
+    readonly property var browserTargetKeys: browserTargets.filter((entry) => {
+        return entry.supported && entry.installed && entry.available;
+    }).map((entry) => {
+        return entry.target;
+    })
     readonly property var barRegions: ["start", "centre", "end", "tray"]
 
     function beginBarDrag(row, itemId) {
@@ -207,12 +220,26 @@ Scope {
     }
 
     function targetAvailable(key) {
-        return unavailableTargetKeys.indexOf(key) < 0;
+        if (unavailableTargetKeys.indexOf(key) >= 0)
+            return false;
+
+        if (key === "helium") {
+            if (!browserTargetsLoaded)
+                return false;
+
+            const browser = browserTargetInfo(key);
+            return browser !== null && browser.available === true;
+        }
+        return true;
     }
 
     function targetLabel(key) {
         if (key === "sddm" || key === "grub")
             return key + " · unavailable";
+
+        const browser = browserTargetInfo(key);
+        if (browser !== null && browser.label)
+            return browser.label;
 
         return key;
     }
@@ -221,7 +248,7 @@ Scope {
         if (key === "stylus" || key === "obsidian")
             return "manual";
 
-        if (["gtk", "cursor", "hyprlock", "btop", "micro", "glow", "code", "cursor_editor", "powerlevel10k"].indexOf(key) >= 0)
+        if (["gtk", "helium", "hyprlock", "btop", "micro", "glow", "code", "cursor_editor", "powerlevel10k"].indexOf(key) >= 0)
             return "restart";
 
         return "automatic";
@@ -420,6 +447,34 @@ Scope {
         return apiController.run(nextAction, args);
     }
 
+    function browserTargetInfo(key) {
+        for (const entry of browserTargets) {
+            if (entry.target === key)
+                return entry;
+        }
+        return null;
+    }
+
+    function refreshBrowserTargets() {
+        if (browserTargetsProcess.running)
+            return ;
+
+        browserTargetsLoaded = false;
+        browserTargets = [];
+        browserTargetOutput = "";
+        browserTargetsProcess.running = true;
+    }
+
+    function loadBrowserTargets() {
+        let response = null;
+        try {
+            response = JSON.parse(browserTargetOutput.trim());
+        } catch (error) {
+        }
+        browserTargets = response && response.ok === true && Array.isArray(response.data) ? response.data : [];
+        browserTargetsLoaded = true;
+    }
+
     function refreshThemes(refreshOnly) {
         runApi(refreshOnly ? "list-refresh" : "list", ["list"]);
     }
@@ -445,6 +500,7 @@ Scope {
         recoverPickerWorkspace("");
         revealTimer.restart();
         statusMessage = "Loading themes…";
+        refreshBrowserTargets();
         refreshThemes(false);
         return "open";
     }
@@ -472,9 +528,12 @@ Scope {
         candidateRevision += 1;
         selectedId = "";
         sourceDigest = "";
+        sourceTheme = null;
+        touchedPaths = [];
         baselineJson = "";
         candidateValid = false;
         validationErrors = [];
+        applyQuickshellReloadPending = false;
         pendingAfterSave = "";
         pendingSelection = "";
         pendingModalConfirmation = "";
@@ -518,8 +577,10 @@ Scope {
         statusMessage = dirty ? "Temporary Quickshell preview — unsaved" : "Temporary Quickshell preview";
     }
 
-    function markCandidate(value) {
+    function markCandidate(value, touchedPath) {
         candidate = value;
+        if (touchedPath && touchedPath.length > 0 && touchedPaths.indexOf(touchedPath) < 0)
+            touchedPaths = touchedPaths.concat([touchedPath]);
         candidateRevision += 1;
         candidateValid = false;
         validationPending = true;
@@ -529,19 +590,19 @@ Scope {
     function setTopLevel(key, value) {
         const next = cloneCandidate();
         next[key] = value;
-        markCandidate(next);
+        markCandidate(next, key);
     }
 
     function setColour(key, value) {
         const next = cloneCandidate();
         next.colours[key] = value;
-        markCandidate(next);
+        markCandidate(next, "colours." + key);
     }
 
     function setFont(key, value) {
         const next = cloneCandidate();
         next.fonts[key] = value;
-        markCandidate(next);
+        markCandidate(next, "fonts." + key);
     }
 
     function shapeValue(key, fallback) {
@@ -564,7 +625,7 @@ Scope {
             delete next.shape[key];
         else
             next.shape[key] = value;
-        markCandidate(next);
+        markCandidate(next, "shape." + key);
     }
 
     function setAutomaticWindowGap(automatic) {
@@ -583,7 +644,7 @@ Scope {
         next.widgets = next.widgets || {
         };
         next.widgets.profile = value;
-        markCandidate(next);
+        markCandidate(next, "widgets.profile");
     }
 
     function setTarget(key, value) {
@@ -592,7 +653,7 @@ Scope {
 
         const next = cloneCandidate();
         next.targets[key] = value;
-        markCandidate(next);
+        markCandidate(next, "targets." + key);
     }
 
     function setOverride(target, key, value) {
@@ -618,7 +679,7 @@ Scope {
         if (target === "ansi")
             next.terminal.ansi_source = "override";
 
-        markCandidate(next);
+        markCandidate(next, "overrides." + target + "." + key);
     }
 
     function setWallpaperPath(path) {
@@ -627,7 +688,7 @@ Scope {
 
         const next = cloneCandidate();
         next.wallpaper.path = String(path || "").trim();
-        markCandidate(next);
+        markCandidate(next, "wallpaper.path");
     }
 
     function setWallpaperDisplayPath(path) {
@@ -674,7 +735,7 @@ Scope {
             const overrides = next.shell.bar.items || [];
             next.shell.bar.items = normaliseBarItemOrders(Theme.resolvedBarItems(overrides, value), value);
         }
-        markCandidate(next);
+        markCandidate(next, section === "bar" ? "shell.bar" : "shell." + section + "." + key);
         Theme.loadShell(next.shell);
         if (section === "osd")
             Theme.osdPositionPreviewRequested();
@@ -864,6 +925,10 @@ Scope {
 
         pendingAfterSave = after || "";
         const args = ["save", JSON.stringify(candidate)];
+        if (sourceTheme !== null)
+            args.push("--source", JSON.stringify(sourceTheme));
+        if (touchedPaths.length > 0)
+            args.push("--touched", JSON.stringify(touchedPaths));
         if (sourceDigest)
             args.push("--replace", "--expect-sha256", sourceDigest);
 
@@ -899,6 +964,7 @@ Scope {
         applyProgressValue = 0;
         applyProgressMessage = "Checking theme and dependencies";
         applyProgressShowTargets = false;
+        applyQuickshellReloadPending = false;
         applyProgressRows = targetKeys.filter((key) => {
             return candidate.targets[key] && targetAvailable(key);
         }).map((key) => {
@@ -913,7 +979,19 @@ Scope {
             saveCandidate("apply");
             return ;
         }
-        runApi("apply", ["apply", candidate.id]);
+        runApi("apply", ["apply", candidate.id, "--defer-quickshell-restart"]);
+    }
+
+    function completeApply() {
+        if (!applyProgressComplete)
+            return ;
+
+        const reloadQuickshell = applyQuickshellReloadPending;
+        applyQuickshellReloadPending = false;
+        modalKind = "";
+        Qt.callLater(restoreOverlayFocus);
+        if (reloadQuickshell)
+            Qt.callLater(() => Theme.reloadCursor());
     }
 
     function handleApplyProgress(event) {
@@ -959,7 +1037,7 @@ Scope {
                 "message": "Retrying…"
             }) : row;
         });
-        runApi("apply-retry", ["apply", candidate.id, "--targets", target]);
+        runApi("apply-retry", ["apply", candidate.id, "--targets", target, "--defer-quickshell-restart"]);
     }
 
     function revertCandidate() {
@@ -967,6 +1045,7 @@ Scope {
             return ;
 
         candidate = JSON.parse(baselineJson);
+        touchedPaths = [];
         candidateRevision += 1;
         candidateValid = true;
         validationErrors = [];
@@ -1195,6 +1274,17 @@ Scope {
         interval: 350
         repeat: false
         onTriggered: root.requestPalettes()
+    }
+
+    Process {
+        id: browserTargetsProcess
+
+        command: [root.apiPath, "targets", "--json"]
+        onExited: root.loadBrowserTargets()
+
+        stdout: StdioCollector {
+            onStreamFinished: root.browserTargetOutput = this.text
+        }
     }
 
     Process {

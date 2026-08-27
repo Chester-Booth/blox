@@ -47,10 +47,10 @@
     "targets": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["quickshell", "widgets", "gtk", "cursor", "wallpaper", "kitty", "hyprland", "hyprlock", "btop", "micro", "glow", "code", "cursor_editor", "stylus", "powerlevel10k", "sddm", "grub"],
+      "required": ["quickshell", "widgets", "gtk", "helium", "cursor", "wallpaper", "kitty", "hyprland", "hyprlock", "btop", "micro", "glow", "code", "cursor_editor", "stylus", "powerlevel10k", "sddm", "grub"],
       "properties": {
         "quickshell": {"type": "boolean"},
-        "widgets": {"type": "boolean"}, "gtk": {"type": "boolean"},
+        "widgets": {"type": "boolean"}, "gtk": {"type": "boolean"}, "helium": {"type": "boolean"},
         "cursor": {"type": "boolean"}, "wallpaper": {"type": "boolean"},
         "kitty": {"type": "boolean"}, "hyprland": {"type": "boolean"},
         "hyprlock": {"type": "boolean"}, "btop": {"type": "boolean"},

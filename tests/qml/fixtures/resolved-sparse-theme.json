@@ -16,6 +16,19 @@
     "teal": "#81c8be",
     "warning": "#e5c890"
   },
+  "cursor": {
+    "base": "Bibata-Modern-Classic",
+    "base_colour": "#8caaee",
+    "colour_source": "theme",
+    "handedness": "right",
+    "mode": "generated",
+    "outline_colour": "#232634",
+    "sizes": [
+      22,
+      24
+    ],
+    "watch_background": "#303446"
+  },
   "fonts": {
     "editor_size": 13,
     "gtk_size": 11,
@@ -24,7 +37,15 @@
     "terminal_size": 12,
     "ui": "Rubik"
   },
+  "gtk": {
+    "base_theme": "Graphite-Dark-compact",
+    "colour_source": "theme",
+    "mode": "generated"
+  },
   "id": "sparse",
+  "icons": {
+    "theme": "Adwaita"
+  },
   "name": "Sparse",
   "schema_version": 1,
   "shape": {
@@ -168,6 +189,27 @@
       "offset_y": 0,
       "position": "centre-bottom"
     }
+  },
+  "targets": {
+    "btop": false,
+    "code": false,
+    "cursor": false,
+    "cursor_editor": false,
+    "glow": false,
+    "grub": false,
+    "gtk": false,
+    "helium": false,
+    "hyprland": false,
+    "hyprlock": false,
+    "kitty": false,
+    "micro": false,
+    "obsidian": false,
+    "powerlevel10k": false,
+    "quickshell": false,
+    "sddm": false,
+    "stylus": false,
+    "wallpaper": false,
+    "widgets": false
   },
   "terminal": {
     "ansi_source": "override",

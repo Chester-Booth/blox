@@ -160,6 +160,46 @@ if __name__ == "__main__":
 
 
 class DesktopEntryTests(unittest.TestCase):
+    def test_helium_desktop_id_rename_removes_only_the_old_blox_entry(self):
+        with Fixture() as roots:
+            source = fake_source("0.1.0")
+            try:
+                source_entry = source / "applications/.local/share/applications/helium.desktop"
+                source_entry.parent.mkdir(parents=True, exist_ok=True)
+                source_entry.write_text(
+                    "[Desktop Entry]\nName=Helium Browser\nExec=blox-helium-browser %U\n",
+                    encoding="utf-8",
+                )
+                legacy = roots.data.parent / "applications/helium-browser.desktop"
+                legacy.parent.mkdir(parents=True, exist_ok=True)
+                legacy.write_text(source_entry.read_text(encoding="utf-8"), encoding="utf-8")
+
+                installer.install(roots, source_root=source)
+
+                self.assertFalse(legacy.exists())
+                self.assertTrue((roots.data.parent / "applications/helium.desktop").is_file())
+                ledger = migrations.read_ledger(roots)
+                self.assertTrue(any(entry["migration"] == "helium-desktop-id" and entry["result"] == "applied" for entry in ledger))
+            finally:
+                shutil.rmtree(source, ignore_errors=True)
+
+    def test_helium_desktop_id_rename_keeps_a_foreign_old_entry(self):
+        with Fixture() as roots:
+            source = fake_source("0.1.0")
+            try:
+                source_entry = source / "applications/.local/share/applications/helium.desktop"
+                source_entry.parent.mkdir(parents=True, exist_ok=True)
+                source_entry.write_text("[Desktop Entry]\nName=Helium Browser\nExec=blox-helium-browser %U\n", encoding="utf-8")
+                legacy = roots.data.parent / "applications/helium-browser.desktop"
+                legacy.parent.mkdir(parents=True, exist_ok=True)
+                legacy.write_text("[Desktop Entry]\nName=Helium Browser\nExec=helium-browser %U\n", encoding="utf-8")
+
+                installer.install(roots, source_root=source)
+
+                self.assertTrue(legacy.is_file())
+            finally:
+                shutil.rmtree(source, ignore_errors=True)
+
     def test_desktop_entries_install_update_and_uninstall(self):
         with Fixture() as roots:
             source = fake_source("0.1.0")

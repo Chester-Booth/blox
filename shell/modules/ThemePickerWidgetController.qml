@@ -67,7 +67,7 @@ QtObject {
         };
 
         next.widgets.items = items;
-        host.markCandidate(next);
+        host.markCandidate(next, "widgets.items");
     }
 
     function updateGeometry(index, anchor, offsetX, offsetY, width, height) {

@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from . import API_VERSION
+from .browser_targets import detect_browser_targets
 from .core import (
     EXIT_APPLY,
     EXIT_DEPENDENCY,
@@ -23,6 +24,8 @@ from .core import (
     EXIT_USAGE,
     EXIT_VALIDATION,
     DEFAULT_THEME_ID,
+    DefaultsFailure,
+    apply_theme_defaults,
     builtin_themes_dir,
     canonical_json,
     contrast_ratio,
@@ -30,6 +33,7 @@ from .core import (
     derive_ansi,
     derive_shape,
     list_themes,
+    load_json,
     load_theme,
     is_builtin_theme_path,
     render_manifest,
@@ -38,9 +42,11 @@ from .core import (
     repository_root,
     state_dir,
     theme_path,
+    theme_inherited_paths,
     themes_dir,
     user_theme_library,
     validate_theme,
+    sparsify_theme,
     write_render,
 )
 from .runtime import (
@@ -90,6 +96,8 @@ def parser() -> argparse.ArgumentParser:
 
     list_parser = subcommands.add_parser("list", help="list source themes")
     list_parser.add_argument("--json", action="store_true")
+    targets_parser = subcommands.add_parser("targets", help="list installed browser targets")
+    targets_parser.add_argument("--json", action="store_true")
     for name in ("show", "validate", "preview", "diff"):
         child = subcommands.add_parser(name)
         child.add_argument("theme")
@@ -105,6 +113,11 @@ def parser() -> argparse.ArgumentParser:
     apply_parser.add_argument("--targets", help="comma-separated runtime targets")
     apply_parser.add_argument("--json", action="store_true")
     apply_parser.add_argument("--progress-ndjson", action="store_true", help="write structured progress events to stderr")
+    apply_parser.add_argument(
+        "--defer-quickshell-restart",
+        action="store_true",
+        help="leave the Blox surface reload to the caller after Apply completes",
+    )
     reconcile_parser = subcommands.add_parser("reconcile")
     reconcile_parser.add_argument("--targets", help="comma-separated active targets")
     reconcile_parser.add_argument("--json", action="store_true")
@@ -137,6 +150,8 @@ def parser() -> argparse.ArgumentParser:
     save_parser.add_argument("theme_json", help="JSON file, inline JSON, or - for stdin")
     save_parser.add_argument("--replace", action="store_true", help="replace the same theme ID using optimistic concurrency")
     save_parser.add_argument("--expect-sha256", help="source digest returned by list")
+    save_parser.add_argument("--source", help="sparse source JSON used to preserve inherited fields")
+    save_parser.add_argument("--touched", help="JSON array of picker field paths changed by the user")
     save_parser.add_argument("--json", action="store_true")
     duplicate_parser = subcommands.add_parser("duplicate", help="duplicate a source theme under a new stable ID")
     duplicate_parser.add_argument("theme")
@@ -194,6 +209,7 @@ def checked_theme(command: str, reference: str, check_dependencies: bool = True,
             theme = json.loads(reference)
             if not isinstance(theme, dict):
                 raise ValueError("theme root must be a JSON object")
+            theme = apply_theme_defaults(theme)
             source = theme_path(str(theme.get("id", "")))
             path = source if source.is_file() else builtin_themes_dir() / ".inline-theme.json"
         else:
@@ -217,6 +233,16 @@ def run(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
         summary = "\n".join(f"{item['id']:<24} {item['variant'] or '-':<6} {item['name']}" for item in themes)
         return envelope(command, summary), EXIT_OK
 
+    if command == "targets":
+        targets = detect_browser_targets()
+        if args.json:
+            return envelope(command, targets), EXIT_OK
+        summary = "\n".join(
+            f"{entry['target']:<12} {'available' if entry['available'] else 'hidden':<9} {entry['reason']}".rstrip()
+            for entry in targets
+        )
+        return envelope(command, summary), EXIT_OK
+
     if command == "doctor":
         checks = {
             "repository": {"ok": repository_root().is_dir(), "path": str(repository_root())},
@@ -226,6 +252,7 @@ def run(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
             "fc_match": {"ok": shutil.which("fc-match") is not None},
             "state_directory": {"ok": state_dir().is_dir(), "path": str(state_dir()), "required": False},
             "active_generation": {"ok": (state_dir() / "current").exists(), "required": False},
+            "browser_targets": {"ok": True, "required": False, "targets": detect_browser_targets()},
         }
         try:
             import jsonschema  # noqa: F401
@@ -395,21 +422,39 @@ def run(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
                 raise ValueError("theme root must be a JSON object")
         except (OSError, json.JSONDecodeError, ValueError) as error:
             return envelope(command, errors=[f"could not read theme JSON: {error}"]), EXIT_VALIDATION
-        checked = validate_theme(theme, check_dependencies=False)
+        try:
+            resolved_candidate = apply_theme_defaults(theme)
+            source_theme = json.loads(args.source) if args.source else None
+            if source_theme is not None and not isinstance(source_theme, dict):
+                raise ValueError("--source must contain a JSON object")
+            touched_paths = json.loads(args.touched) if args.touched else []
+            if not isinstance(touched_paths, list) or not all(isinstance(path, str) for path in touched_paths):
+                raise ValueError("--touched must contain a JSON array of field paths")
+            theme_to_save = (
+                sparsify_theme(source_theme, apply_theme_defaults(source_theme), resolved_candidate, touched_paths)
+                if source_theme is not None
+                else theme
+            )
+            resolved_to_save = apply_theme_defaults(theme_to_save)
+        except (json.JSONDecodeError, ValueError, DefaultsFailure) as error:
+            return envelope(command, errors=[f"could not resolve theme JSON: {error}"]), EXIT_VALIDATION
+        if source_theme is not None and source_theme.get("id") != resolved_candidate.get("id"):
+            return envelope(command, errors=["--source must have the same theme ID as the candidate"]), EXIT_VALIDATION
+        checked = validate_theme(resolved_to_save, check_dependencies=False)
         if checked.errors:
             return envelope(command, {"theme": theme}, errors=checked.errors, warnings=checked.warnings), EXIT_VALIDATION
         try:
-            existing = theme_path(theme["id"])
+            existing = theme_path(resolved_to_save["id"])
             if existing.is_file() and not args.replace:
-                return envelope(command, errors=[f"theme source already exists: {theme['id']}"]), EXIT_VALIDATION
+                return envelope(command, errors=[f"theme source already exists: {resolved_to_save['id']}"]), EXIT_VALIDATION
             if args.replace and existing.is_file() and is_builtin_theme_path(existing):
                 return envelope(command, errors=["built-in themes are read-only; duplicate the theme first"]), EXIT_VALIDATION
             directory = existing.parent if args.replace and existing.is_file() else user_theme_library() / "themes"
-            destination = save_theme_source(theme, directory, replace=args.replace, expected_sha256=args.expect_sha256)
+            destination = save_theme_source(theme_to_save, directory, replace=args.replace, expected_sha256=args.expect_sha256)
         except (GeneratorFailure, OSError) as error:
             return envelope(command, errors=[str(error)]), EXIT_APPLY
         digest = hashlib.sha256(destination.read_bytes()).hexdigest()
-        return envelope(command, {"id": theme["id"], "path": str(destination), "source_sha256": digest}, warnings=checked.warnings), EXIT_OK
+        return envelope(command, {"id": resolved_to_save["id"], "path": str(destination), "source_sha256": digest, "source": theme_to_save}, warnings=checked.warnings), EXIT_OK
 
     if command == "import":
         try:
@@ -518,7 +563,14 @@ def run(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
 
     checked = validate_theme(theme, check_dependencies=command != "show", source_path=path, dependency_gate=command == "apply")
     if command == "show":
-        return envelope(command, theme), EXIT_OK
+        try:
+            source = load_json(path)
+        except (OSError, json.JSONDecodeError):
+            source = theme
+        result = envelope(command, theme)
+        result["source"] = source if isinstance(source, dict) else theme
+        result["inherited_paths"] = theme_inherited_paths(result["source"], theme)
+        return result, EXIT_OK
     if command == "validate":
         data = {"id": theme["id"], "path": str(path), "valid": True}
         return envelope(command, data, warnings=checked.warnings), EXIT_OK
@@ -533,10 +585,18 @@ def run(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
             return envelope(command, errors=checked.errors, warnings=checked.warnings), EXIT_VALIDATION
         progress_total = 3 + len(selected)
         last_progress: dict[str, Any] = {}
+        apply_details: dict[str, Any] = {
+            "changed_targets": list(selected),
+            "unchanged_targets": [],
+            "pending_reloads": [],
+        }
 
         def emit_progress(event: dict[str, Any]) -> None:
             nonlocal last_progress
             last_progress = event
+            for key in apply_details:
+                if key in event:
+                    apply_details[key] = event[key]
             if not args.progress_ndjson:
                 return
             print(json.dumps({"type": "theme-progress", **event}, sort_keys=True, separators=(",", ":")), file=sys.stderr, flush=True)
@@ -563,21 +623,37 @@ def run(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
             "targets": list(selected),
         })
         try:
-            manifest, warnings = apply_theme(path, theme, selected, progress=emit_progress)
+            manifest, warnings = apply_theme(
+                path,
+                theme,
+                selected,
+                progress=emit_progress,
+                defer_quickshell_restart=args.defer_quickshell_restart,
+            )
         except LockContended as error:
             emit_failure(error)
             return envelope(command, errors=[str(error)]), EXIT_LOCKED
         except (OSError, RuntimeFailure, TypeError, ValueError) as error:
             emit_failure(error)
             return envelope(command, errors=[str(error)]), EXIT_APPLY
-        data = {"generation": manifest["generation_id"], "theme_id": manifest["theme_id"], "changed_targets": list(selected), "active_targets": manifest["enabled_targets"]}
+        data = {
+            "generation": manifest["generation_id"],
+            "theme_id": manifest["theme_id"],
+            "changed_targets": apply_details["changed_targets"],
+            "unchanged_targets": apply_details["unchanged_targets"],
+            "pending_reloads": apply_details["pending_reloads"],
+            "active_targets": manifest["enabled_targets"],
+        }
         operation_warnings = []
         if "gtk" in selected:
             operation_warnings.append("GTK changes apply to newly started applications; Libadwaita support is limited to best-effort user CSS")
             if os.environ.get("GTK_THEME"):
                 operation_warnings.append("the current session still exports GTK_THEME; log out and back in to remove the legacy forced base theme")
-        if "cursor" in selected:
-            operation_warnings.append("cursor changes apply to new surfaces immediately; existing applications may require a restart")
+        if "cursor" in apply_details["changed_targets"]:
+            if args.defer_quickshell_restart:
+                operation_warnings.append("Cursor changes reach the compositor immediately; click Complete to recreate Blox Quickshell surfaces. Existing application-owned surfaces such as Helium and Steam may need their app to recreate the cursor. New Blox-launched applications receive the active cursor environment")
+            else:
+                operation_warnings.append("Cursor changes reach the compositor immediately and Blox Quickshell surfaces are recreated automatically; existing application-owned surfaces such as Helium and Steam may need their app to recreate the cursor. New Blox-launched applications receive the active cursor environment")
         all_warnings = checked.warnings + operation_warnings + warnings
         return envelope(command, data, warnings=all_warnings), EXIT_RELOAD_WARNING if warnings else EXIT_OK
 
@@ -617,8 +693,9 @@ def run(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
             "mode": cursor["mode"],
             "theme_name": cursor["theme_name"],
             "size": cursor["size"],
+            "format": cursor.get("format", "installed"),
             "states": ["left_ptr", "hand2", "text", "wait", "not-allowed", "move", "resize"],
-            "restart_required_for_existing_processes": True,
+            "updates_live": True,
         }
         if cursor["mode"] == "generated":
             cache = state_dir() / f"cursors/{cursor['cache_key']}"
@@ -631,7 +708,6 @@ def run(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
                 "toolchain": toolchain_check(),
             })
         data["cursor"] = cursor_preview
-        warnings.append("existing applications may retain the previous cursor until they restart or create new surfaces")
     if theme["targets"]["gtk"]:
         data["gtk"] = {
             "mode": theme["gtk"]["mode"],

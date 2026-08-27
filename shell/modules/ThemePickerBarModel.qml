@@ -131,7 +131,7 @@ QtObject {
             next.shell.bar = host.shellDefaults().bar;
 
         next.shell.bar.items = normaliseOrders(items);
-        host.markCandidate(next);
+        host.markCandidate(next, "shell.bar");
         Theme.loadShell(next.shell);
     }
 

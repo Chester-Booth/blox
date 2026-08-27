@@ -149,6 +149,7 @@
     "grub": false,
     "gtk": true,
     "helium": false,
+    "chromium": false,
     "hyprland": true,
     "hyprlock": true,
     "kitty": true,

@@ -1,0 +1,22 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Chromium Browser
+GenericName=Web Browser
+Comment=Access the Internet with the active Blox theme
+TryExec=chromium
+Exec=blox-chromium-browser %U
+StartupNotify=true
+Terminal=false
+Icon=chromium
+Categories=Network;WebBrowser;
+MimeType=application/pdf;application/rdf+xml;application/rss+xml;application/xhtml+xml;application/xml;image/gif;image/jpeg;image/png;image/webp;text/html;text/xml;x-scheme-handler/http;x-scheme-handler/https;
+Actions=new-window;new-private-window;
+
+[Desktop Action new-window]
+Name=New Window
+Exec=blox-chromium-browser --new-window
+
+[Desktop Action new-private-window]
+Name=New Private Window
+Exec=blox-chromium-browser --incognito

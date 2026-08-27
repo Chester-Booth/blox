@@ -172,10 +172,58 @@ class AppControllerTests(unittest.TestCase):
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertEqual(["--ozone-platform=x11", "--incognito"], result.stdout.splitlines())
 
+    def test_chromium_launcher_loads_the_active_blox_theme(self):
+        root = Path(tempfile.mkdtemp(prefix="blox-chromium-launcher-"))
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        state = root / "state"
+        theme = state / "blox-theme/current/chromium"
+        theme.mkdir(parents=True)
+        (theme / "manifest.json").write_text("{}\n", encoding="utf-8")
+        browser = root / "browser"
+        browser.write_text("#!/bin/sh\nprintf '%s\\n' \"$@\"\n", encoding="utf-8")
+        browser.chmod(0o755)
+
+        result = subprocess.run(
+            [str(REPOSITORY / "bin/blox-chromium-browser"), "https://example.test"],
+            env={**os.environ, "XDG_STATE_HOME": str(state), "BLOX_CHROMIUM_BINARY": str(browser)},
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual(
+            ["--ozone-platform=wayland", f"--load-extension={theme}", "https://example.test"],
+            result.stdout.splitlines(),
+        )
+
+    def test_chromium_launcher_fails_clearly_without_a_browser(self):
+        root = Path(tempfile.mkdtemp(prefix="blox-chromium-missing-"))
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        path = root / "bin"
+        path.mkdir()
+
+        result = subprocess.run(
+            [str(REPOSITORY / "bin/blox-chromium-browser")],
+            env={**os.environ, "PATH": f"{path}:/usr/bin:/bin", "XDG_STATE_HOME": str(root / "state")},
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        self.assertEqual(127, result.returncode)
+        self.assertIn("Chromium is not installed", result.stderr)
+
     def test_helium_desktop_entry_uses_the_blox_launcher(self):
         entry = (REPOSITORY / "applications/.local/share/applications/helium.desktop").read_text(encoding="utf-8")
         self.assertIn("Exec=blox-helium-browser %U", entry)
         self.assertIn("Exec=blox-helium-browser --incognito", entry)
+
+    def test_chromium_desktop_entry_uses_the_blox_launcher(self):
+        entry = (REPOSITORY / "applications/.local/share/applications/chromium.desktop").read_text(encoding="utf-8")
+        self.assertIn("TryExec=chromium", entry)
+        self.assertIn("Exec=blox-chromium-browser %U", entry)
+        self.assertIn("Exec=blox-chromium-browser --incognito", entry)
 
     def test_icon_lookup_returns_fresh_theme_paths(self):
         self.assertEqual(

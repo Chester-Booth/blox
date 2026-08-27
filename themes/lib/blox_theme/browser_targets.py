@@ -29,6 +29,14 @@ BROWSER_TARGETS = (
         generated_files=("helium/manifest.json",),
         restart_guidance="Helium must be restarted to read the generated theme",
     ),
+    BrowserTarget(
+        id="chromium",
+        label="Chromium",
+        executable_names=("chromium", "chromium-browser"),
+        desktop_entry_names=("chromium.desktop", "chromium-browser.desktop"),
+        generated_files=("chromium/manifest.json",),
+        restart_guidance="Chromium must be restarted to read the generated theme",
+    ),
 )
 BROWSER_TARGET_BY_ID = {target.id: target for target in BROWSER_TARGETS}
 
@@ -120,7 +128,7 @@ def detect_browser_target(
 
     A desktop entry only counts when its Exec field resolves to a known,
     executable browser binary. Blox's own launcher therefore cannot make a
-    missing Helium install look available.
+    missing browser install look available.
     """
     target = browser_target(target_id)
     which = which or shutil.which
@@ -147,9 +155,15 @@ def detect_browser_target(
             path = directory / entry_name
             if not path.is_file():
                 continue
-            desktop_paths.append(path)
             token = _desktop_exec(path)
-            if token is None or Path(token).name not in target.executable_names:
+            if token is None:
+                continue
+            # The managed desktop entry points at Blox's wrapper. It must not
+            # make an absent system browser look installed.
+            if Path(token).name == f"blox-{target.id}-browser":
+                continue
+            desktop_paths.append(path)
+            if Path(token).name not in target.executable_names:
                 continue
             executable = _resolve_executable(token, which, is_executable)
             if executable is None:
@@ -161,16 +175,16 @@ def detect_browser_target(
 
     if len(candidates) > 1:
         result["matches"] = list(candidates.values())
-        result["reason"] = "ambiguous browser installation: more than one Helium executable matched"
+        result["reason"] = f"ambiguous browser installation: more than one {target.label} executable matched"
         return result
 
     if not candidates:
         if desktop_paths:
-            result["reason"] = "stale or unsupported Helium desktop entry; no executable browser matched"
+            result["reason"] = f"stale or unsupported {target.label} desktop entry; no executable browser matched"
         elif rejected_executables:
-            result["reason"] = "Helium executable is not executable"
+            result["reason"] = f"{target.label} executable is not executable"
         else:
-            result["reason"] = "Helium is not installed"
+            result["reason"] = f"{target.label} is not installed"
         return result
 
     matches = list(candidates.values())

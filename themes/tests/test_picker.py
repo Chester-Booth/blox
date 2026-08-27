@@ -483,6 +483,8 @@ class PickerIntegrationSourceTests(unittest.TestCase):
         self.assertIn('text: "Browsers"', advanced)
         self.assertIn('model: controller.browserTargetKeys', advanced)
         self.assertIn('"helium": ["helium/manifest.json"]', generation)
+        self.assertIn('"chromium": ["chromium/manifest.json"]', generation)
+        self.assertIn('["helium", "chromium"].indexOf(key) >= 0', controller)
 
     def test_creation_and_application_flows_expose_progress_and_apply_modes(self) -> None:
         controller = qml_source("Controller")
@@ -522,7 +524,7 @@ class PickerIntegrationSourceTests(unittest.TestCase):
         self.assertIn('text: "Guide"', qml)
         self.assertIn('if (key === "stylus" || key === "obsidian")', qml)
         self.assertIn('return "manual"', qml)
-        self.assertIn('if (["gtk", "helium", "hyprlock", "btop", "micro", "glow", "code", "cursor_editor", "powerlevel10k"]', qml)
+        self.assertIn('if (["gtk", "helium", "chromium", "hyprlock", "btop", "micro", "glow", "code", "cursor_editor", "powerlevel10k"]', qml)
         self.assertNotIn('"helium", "cursor", "hyprlock"', qml)
         self.assertIn('key === "code" || key === "cursor_editor" ? "Reload Window"', qml)
         self.assertIn('source: "../assets/stylus-import.png"', qml)

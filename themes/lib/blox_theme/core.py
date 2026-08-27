@@ -26,11 +26,11 @@ EXIT_RELOAD_WARNING = 7
 EXIT_LOCKED = 8
 
 THEME_TARGET_KEYS = (
-    "quickshell", "widgets", "gtk", "helium", "cursor", "wallpaper", "kitty",
+    "quickshell", "widgets", "gtk", "helium", "chromium", "cursor", "wallpaper", "kitty",
     "hyprland", "hyprlock", "btop", "micro", "glow", "code", "cursor_editor",
     "stylus", "obsidian", "powerlevel10k", "sddm", "grub",
 )
-IMPLEMENTED_TARGETS = ("quickshell", "widgets", "kitty", "wallpaper", "gtk", "helium", "cursor", "hyprland", "hyprlock", "btop", "micro", "glow", "code", "cursor_editor", "stylus", "obsidian", "powerlevel10k")
+IMPLEMENTED_TARGETS = ("quickshell", "widgets", "kitty", "wallpaper", "gtk", "helium", "chromium", "cursor", "hyprland", "hyprlock", "btop", "micro", "glow", "code", "cursor_editor", "stylus", "obsidian", "powerlevel10k")
 DEFERRED_TARGETS = {}
 TARGET_LIMITATIONS = {
     "hyprland": "Hyprtoolkit apps must be restarted after Apply",
@@ -43,6 +43,7 @@ TARGET_LIMITATIONS = {
     "obsidian": "Obsidian requires Minimal, Style Settings, and manual import of the generated settings JSON",
     "powerlevel10k": "Powerlevel10k changes apply to new shells",
     "helium": "Helium must be restarted after Apply",
+    "chromium": "Chromium must be restarted after Apply",
 }
 
 HYPRLAND_RADIUS_BASE = 12
@@ -1256,6 +1257,10 @@ def render_theme(theme: dict[str, Any], source_path: Path | None = None) -> tupl
         from .chromium import render_helium_theme
 
         files["helium/manifest.json"] = render_helium_theme(theme)
+    if targets.get("chromium", False):
+        from .chromium import render_chromium_theme
+
+        files["chromium/manifest.json"] = render_chromium_theme(theme)
     if targets["cursor"]:
         from .cursor import cursor_metadata
 

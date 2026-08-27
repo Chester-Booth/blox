@@ -107,7 +107,7 @@ Scope {
     readonly property var semanticKeys: ["background", "surface", "surface_alt", "foreground", "muted", "accent", "danger", "success", "warning", "info", "mauve", "teal", "selection_background", "selection_foreground", "border"]
     readonly property var ansiKeys: ["color0", "color1", "color2", "color3", "color4", "color5", "color6", "color7", "color8", "color9", "color10", "color11", "color12", "color13", "color14", "color15"]
     readonly property var overrideKeys: ["background", "foreground", "accent", "border"]
-    readonly property var targetKeys: ["quickshell", "widgets", "gtk", "helium", "cursor", "wallpaper", "kitty", "hyprland", "hyprlock", "btop", "micro", "glow", "code", "cursor_editor", "stylus", "obsidian", "powerlevel10k", "sddm", "grub"]
+    readonly property var targetKeys: ["quickshell", "widgets", "gtk", "helium", "chromium", "cursor", "wallpaper", "kitty", "hyprland", "hyprlock", "btop", "micro", "glow", "code", "cursor_editor", "stylus", "obsidian", "powerlevel10k", "sddm", "grub"]
     readonly property var unavailableTargetKeys: ["sddm", "grub"]
     readonly property var coreTargetKeys: ["quickshell", "widgets", "wallpaper", "hyprland", "hyprlock", "cursor"]
     readonly property var applicationTargetKeys: ["kitty", "gtk", "btop", "micro", "glow", "code", "cursor_editor", "stylus", "obsidian", "powerlevel10k"]
@@ -223,7 +223,7 @@ Scope {
         if (unavailableTargetKeys.indexOf(key) >= 0)
             return false;
 
-        if (key === "helium") {
+        if (["helium", "chromium"].indexOf(key) >= 0) {
             if (!browserTargetsLoaded)
                 return false;
 
@@ -248,7 +248,7 @@ Scope {
         if (key === "stylus" || key === "obsidian")
             return "manual";
 
-        if (["gtk", "helium", "hyprlock", "btop", "micro", "glow", "code", "cursor_editor", "powerlevel10k"].indexOf(key) >= 0)
+        if (["gtk", "helium", "chromium", "hyprlock", "btop", "micro", "glow", "code", "cursor_editor", "powerlevel10k"].indexOf(key) >= 0)
             return "restart";
 
         return "automatic";

@@ -29,7 +29,7 @@ SOURCE_AREAS = ("shell", "themes", "bin", "packaging", "gtk")
 DATA_AREAS = ("applications",)  # desktop entries and icons, installed into $XDG_DATA_HOME
 COPY_EXCLUDE = {"__pycache__", ".git"}
 UNIT_TEMPLATES = ("quickshell.service.in", "gcal-update.service.in")
-INSTALLED_BINS = ("bloxctl", "blox-helium-browser", "blox-theme-ipc", "themectl", "dmenu")
+INSTALLED_BINS = ("bloxctl", "blox-helium-browser", "blox-chromium-browser", "blox-theme-ipc", "themectl", "dmenu")
 
 EXIT_OK = 0
 EXIT_INTERNAL = 1

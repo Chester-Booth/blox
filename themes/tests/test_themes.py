@@ -474,6 +474,7 @@ class RendererTests(unittest.TestCase):
             "cursor_editor": "cursor-editor/settings.json", "stylus": "stylus/blox-system.user.css",
             "powerlevel10k": "powerlevel10k/theme.zsh",
             "widgets": "widgets/profile.json",
+            "chromium": "chromium/manifest.json",
         }
         for target, expected in target_files.items():
             with self.subTest(target=target):
@@ -539,6 +540,17 @@ class RendererTests(unittest.TestCase):
         manifest = json.loads(render_theme(theme)[0]["helium/manifest.json"])
         self.assertEqual([30, 30, 46], manifest["theme"]["colors"]["toolbar"])
         self.assertEqual([137, 180, 250], manifest["theme"]["colors"]["button_background"])
+
+    def test_chromium_uses_a_separate_manifest_with_the_shared_mapping(self) -> None:
+        theme = copy.deepcopy(self.theme)
+        theme["targets"]["helium"] = False
+        theme["targets"]["chromium"] = True
+        files, _ = render_theme(theme)
+        self.assertNotIn("helium/manifest.json", files)
+        manifest = json.loads(files["chromium/manifest.json"])
+        self.assertEqual("Blox Chromium theme", manifest["name"])
+        self.assertEqual(3, manifest["manifest_version"])
+        self.assertNotEqual(manifest["theme"]["colors"]["frame"], manifest["theme"]["colors"]["toolbar"])
 
     def test_installed_gtk_mode_emits_no_generated_css(self) -> None:
         theme = copy.deepcopy(self.theme)

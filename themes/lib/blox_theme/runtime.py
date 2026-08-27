@@ -26,6 +26,7 @@ TARGET_FILES = {
     "wallpaper": ("hypr/wallpaper.json",),
     "gtk": ("gtk/gtk-3.0/settings.ini", "gtk/gtk-3.0/gtk.css", "gtk/gtk-4.0/settings.ini", "gtk/gtk-4.0/gtk.css", "gtk/metadata.json"),
     "helium": ("helium/manifest.json",),
+    "chromium": ("chromium/manifest.json",),
     "cursor": ("cursor/metadata.json",),
     "hyprland": ("hyprland/theme.lua", "hyprland/hyprtoolkit.conf"),
     "hyprlock": ("hyprlock/theme.conf",),
@@ -46,7 +47,7 @@ TARGET_REQUIRED_FILES = {
 # carried forward. New generations never copy it.
 LEGACY_TARGET_FILES = {"obsidian/blox-theme.css": "obsidian", "gtk/helium/manifest.json": "gtk"}
 # Chromium writes this cache beside an unpacked theme extension at startup.
-RUNTIME_ARTIFACTS = {"helium/Cached Theme.pak"}
+RUNTIME_ARTIFACTS = {"helium/Cached Theme.pak", "chromium/Cached Theme.pak"}
 TARGET_NAMES = tuple(TARGET_FILES)
 GENERATION_PATTERN = re.compile(r"^[0-9]{8}T[0-9]{6}Z-[0-9a-f]{8}$")
 HISTORY_LIMIT = 5
@@ -1167,7 +1168,7 @@ def run_reload_actions(root: Path, targets: Iterable[str], mode: str = "reload",
                 progress(target, "manual", "Apply manually")
             elif target == "cursor" and defer_quickshell_restart and mode != "reset":
                 progress(target, "restart", "Complete to reload Blox surfaces")
-            elif target in ("gtk", "helium", "hyprlock", "btop", "micro", "glow", "code", "cursor_editor", "powerlevel10k"):
+            elif target in ("gtk", "helium", "chromium", "hyprlock", "btop", "micro", "glow", "code", "cursor_editor", "powerlevel10k"):
                 progress(target, "restart", "Restart needed" if target not in ("code", "cursor_editor") else "Reload Window")
             else:
                 progress(target, "applied", "Applied")

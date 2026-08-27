@@ -23,7 +23,8 @@
     "powerlevel10k": false,
     "sddm": false,
     "grub": false,
-    "helium": false
+    "helium": false,
+    "chromium": false
   },
   "fonts": {
     "ui": "Google Sans",

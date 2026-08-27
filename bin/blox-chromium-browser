@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [ -n "${BLOX_CHROMIUM_BINARY:-}" ]; then
+	browser="${BLOX_CHROMIUM_BINARY}"
+elif command -v chromium >/dev/null 2>&1; then
+	browser=$(command -v chromium)
+elif command -v chromium-browser >/dev/null 2>&1; then
+	browser=$(command -v chromium-browser)
+else
+	echo "Chromium is not installed" >&2
+	exit 127
+fi
+
+state_root="${XDG_STATE_HOME:-${HOME}/.local/state}/blox-theme"
+theme_dir="${state_root}/current/chromium"
+cursor_metadata="${state_root}/current/cursor/metadata.json"
+ozone_args=()
+has_ozone_platform=false
+
+if [ -f "${cursor_metadata}" ] && command -v jq >/dev/null 2>&1; then
+	cursor_theme=$(jq -r '.theme_name // empty' "${cursor_metadata}")
+	cursor_size=$(jq -r '.size // empty' "${cursor_metadata}")
+	cursor_format=$(jq -r '.format // empty' "${cursor_metadata}")
+	if [ -n "${cursor_theme}" ] && [ -n "${cursor_size}" ]; then
+		cursor_data_home="${XDG_DATA_HOME:-${HOME}/.local/share}"
+		cursor_search_path="${cursor_data_home}/icons:${HOME}/.icons:/usr/local/share/icons:/usr/share/icons:/usr/share/pixmaps"
+		if [ -n "${XCURSOR_PATH:-}" ]; then
+			IFS=: read -r -a inherited_cursor_paths <<< "${XCURSOR_PATH}"
+			for cursor_path_entry in "${inherited_cursor_paths[@]}"; do
+				[ -n "${cursor_path_entry}" ] || continue
+				case ":${cursor_search_path}:" in
+					*":${cursor_path_entry}:"*) ;;
+					*) cursor_search_path="${cursor_search_path}:${cursor_path_entry}" ;;
+				esac
+			done
+		fi
+		export XCURSOR_THEME="${cursor_theme}"
+		export XCURSOR_SIZE="${cursor_size}"
+		export XCURSOR_PATH="${cursor_search_path}"
+		if [ "${cursor_format}" = "xcursor+hyprcursor-v1" ]; then
+			export HYPRCURSOR_THEME="${cursor_theme}"
+			export HYPRCURSOR_SIZE="${cursor_size}"
+		fi
+	fi
+fi
+
+for argument in "$@"; do
+	case "${argument}" in
+		--ozone-platform=*)
+			has_ozone_platform=true
+			break
+			;;
+	esac
+done
+
+if [ "${has_ozone_platform}" = false ]; then
+	ozone_args+=(--ozone-platform=wayland)
+fi
+
+if [ -f "${theme_dir}/manifest.json" ]; then
+	exec "${browser}" "${ozone_args[@]}" --load-extension="${theme_dir}" "$@"
+fi
+exec "${browser}" "${ozone_args[@]}" "$@"

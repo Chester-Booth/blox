@@ -3,7 +3,7 @@
   "id": "invalid-colour",
   "name": "Invalid colour",
   "variant": "dark",
-  "targets": {"quickshell": true, "widgets": false, "gtk": false, "helium": false, "cursor": false, "wallpaper": false, "kitty": false, "hyprland": false, "hyprlock": false, "btop": false, "micro": false, "glow": false, "code": false, "cursor_editor": false, "stylus": false, "powerlevel10k": false, "sddm": false, "grub": false},
+  "targets": {"quickshell": true, "widgets": false, "gtk": false, "helium": false, "chromium": false, "cursor": false, "wallpaper": false, "kitty": false, "hyprland": false, "hyprlock": false, "btop": false, "micro": false, "glow": false, "code": false, "cursor_editor": false, "stylus": false, "powerlevel10k": false, "sddm": false, "grub": false},
   "fonts": {"ui": "sans-serif", "mono": "monospace", "panel": "monospace", "terminal_size": 12, "editor_size": 13, "gtk_size": 11},
   "colours": {"background": "black", "surface": "#111111", "surface_alt": "#333333", "foreground": "#ffffff", "muted": "#cccccc", "accent": "#66aaff", "danger": "#ff6666", "success": "#66ff66", "warning": "#ffff66", "info": "#66aaff", "mauve": "#ff66ff", "teal": "#66ffff", "selection_background": "#66aaff", "selection_foreground": "#111111", "border": "#555555"},
   "wallpaper": {"path": "/missing", "fit": "cover"},

@@ -14,7 +14,7 @@ ColumnLayout {
     ThemeApplyProgress {
         visible: controller.modalKind === "progress"
         Layout.fillWidth: true
-        Layout.preferredHeight: controller.applyProgressShowTargets ? 570 : 280
+        Layout.preferredHeight: controller.applyProgressShowTargets ? 570 : 300
         themeName: controller.candidate ? controller.candidate.name : "Theme"
         stages: controller.applyProgressStages
         targets: controller.applyProgressRows
@@ -39,7 +39,7 @@ ColumnLayout {
         Text {
             visible: controller.guideTarget === "stylus"
             Layout.fillWidth: true
-            text: "In your browser, press Ctrl+O and open the Stylus file at:"
+            text: "In your browser, press Ctrl+O and open the generated Stylus file at:"
             color: Theme.foreground
             wrapMode: Text.Wrap
         }
@@ -67,19 +67,65 @@ ColumnLayout {
         Text {
             visible: controller.guideTarget === "stylus"
             Layout.fillWidth: true
-            text: "Then click Install style."
+            text: "After changing theme, open or reload this file, then click Install style the first time, or Reinstall style if the style is already installed."
             color: Theme.foreground
             wrapMode: Text.Wrap
         }
 
-        Image {
+        Text {
             visible: controller.guideTarget === "stylus"
             Layout.fillWidth: true
-            Layout.preferredHeight: 45
-            Layout.maximumHeight: 45
-            height: 45
-            source: "../assets/stylus-install-style.png"
-            fillMode: Image.PreserveAspectFit
+            text: "If Stylus lists more than one Blox Web Theme, disable or remove the older copy first."
+            color: Theme.muted
+            wrapMode: Text.Wrap
+        }
+
+        RowLayout {
+            visible: controller.guideTarget === "stylus"
+            Layout.fillWidth: true
+            spacing: Theme.scaledSpacing(8)
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                spacing: Theme.scaledSpacing(2)
+
+                Text {
+                    Layout.fillWidth: true
+                    text: "First install"
+                    color: Theme.muted
+                    wrapMode: Text.Wrap
+                }
+
+                Image {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 45
+                    Layout.maximumHeight: 45
+                    fillMode: Image.PreserveAspectFit
+                    source: "../assets/stylus-install-style.png"
+                }
+            }
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                spacing: Theme.scaledSpacing(2)
+
+                Text {
+                    Layout.fillWidth: true
+                    text: "Already installed"
+                    color: Theme.muted
+                    wrapMode: Text.Wrap
+                }
+
+                Image {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 45
+                    Layout.maximumHeight: 45
+                    fillMode: Image.PreserveAspectFit
+                    source: "../assets/stylus-reinstall-style.png"
+                }
+            }
         }
 
         Text {

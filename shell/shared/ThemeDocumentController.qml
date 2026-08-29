@@ -56,6 +56,9 @@ QtObject {
             "gtk": JSON.parse(JSON.stringify(defaultsDocument.gtk)),
             "icons": JSON.parse(JSON.stringify(defaultsDocument.icons)),
             "cursor": JSON.parse(JSON.stringify(defaultsDocument.cursor)),
+            "stylus": JSON.parse(JSON.stringify(defaultsDocument.stylus || {
+                "style_set": "recommended"
+            })),
             "targets": JSON.parse(JSON.stringify(defaultsDocument.targets))
         };
     }

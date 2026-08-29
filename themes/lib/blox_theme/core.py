@@ -39,7 +39,7 @@ TARGET_LIMITATIONS = {
     "micro": "Micro must be restarted after Apply",
     "code": "Code theme installs and applies automatically; use Reload Window for existing windows",
     "cursor_editor": "Cursor settings apply automatically; use Reload Window for existing windows",
-    "stylus": "Open the generated .user.css in a browser with Stylus and choose Install style; manifest.json lists included and excluded sites",
+    "stylus": "Open or reload the generated .user.css in a browser with Stylus, then choose Install style the first time or Reinstall style after an earlier import; remove older duplicate Blox Web Theme entries first; manifest.json lists included and excluded sites",
     "obsidian": "Obsidian requires Minimal, Style Settings, and manual import of the generated settings JSON",
     "powerlevel10k": "Powerlevel10k changes apply to new shells",
     "helium": "Helium must be restarted after Apply",

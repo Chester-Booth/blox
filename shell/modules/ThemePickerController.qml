@@ -112,6 +112,9 @@ Scope {
     readonly property var semanticKeys: ["background", "surface", "surface_alt", "foreground", "muted", "accent", "danger", "success", "warning", "info", "mauve", "teal", "selection_background", "selection_foreground", "border"]
     readonly property var ansiKeys: ["color0", "color1", "color2", "color3", "color4", "color5", "color6", "color7", "color8", "color9", "color10", "color11", "color12", "color13", "color14", "color15"]
     readonly property var overrideKeys: ["background", "foreground", "accent", "border"]
+    readonly property bool selectedThemeBuiltin: themes.some((entry) => {
+        return entry && entry.id === selectedId && entry.builtin === true;
+    })
     readonly property var targetKeys: ["quickshell", "widgets", "gtk", "helium", "chromium", "cursor", "wallpaper", "kitty", "hyprland", "hyprlock", "btop", "micro", "glow", "code", "cursor_editor", "stylus", "obsidian", "powerlevel10k", "sddm", "grub"]
     readonly property var unavailableTargetKeys: ["sddm", "grub"]
     readonly property var coreTargetKeys: ["quickshell", "widgets", "wallpaper", "hyprland", "hyprlock", "cursor"]
@@ -1253,6 +1256,7 @@ Scope {
         if (candidate === null || !candidateValid || busy)
             return ;
 
+        errorMessage = "";
         applyProgressComplete = false;
         applyProgressStages = [{
             "id": "prepare",
@@ -1290,6 +1294,18 @@ Scope {
         });
         showModal("progress");
         if (dirty || !sourceDigest) {
+            if (selectedThemeBuiltin) {
+                applyProgressStages = applyProgressStages.map((stage) => {
+                    return stage.id === "prepare" ? Object.assign({}, stage, {
+                        "state": "failed",
+                        "message": "Duplicate this built-in theme before saving changes"
+                    }) : stage;
+                });
+                applyProgressMessage = "Duplicate this built-in theme before saving changes";
+                errorMessage = "Built-in themes are read-only; duplicate the theme first.";
+                applyProgressComplete = true;
+                return ;
+            }
             saveCandidate("apply");
             return ;
         }

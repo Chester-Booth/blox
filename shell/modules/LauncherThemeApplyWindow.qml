@@ -125,7 +125,7 @@ FloatingWindow {
             Text {
                 visible: controller.applyGuideTarget === "stylus"
                 width: parent.width
-                text: "In your browser, press Ctrl+O and open the Stylus file at:"
+                text: "In your browser, press Ctrl+O and open the generated Stylus file at:"
                 color: Theme.foreground
                 font.family: Theme.bodyFontFamily
                 font.pixelSize: 13
@@ -158,19 +158,69 @@ FloatingWindow {
             Text {
                 visible: controller.applyGuideTarget === "stylus"
                 width: parent.width
-                text: "Then click Install style."
+                text: "After changing theme, open or reload this file, then click Install style the first time, or Reinstall style if the style is already installed."
                 color: Theme.foreground
                 font.family: Theme.bodyFontFamily
                 font.pixelSize: 13
                 wrapMode: Text.Wrap
             }
 
-            Image {
+            Text {
                 visible: controller.applyGuideTarget === "stylus"
                 width: parent.width
-                height: 45
-                source: "../assets/stylus-install-style.png"
-                fillMode: Image.PreserveAspectFit
+                text: "If Stylus lists more than one Blox Web Theme, disable or remove the older copy first."
+                color: Theme.muted
+                font.family: Theme.bodyFontFamily
+                font.pixelSize: 12
+                wrapMode: Text.Wrap
+            }
+
+            Row {
+                visible: controller.applyGuideTarget === "stylus"
+                width: parent.width
+                spacing: Theme.scaledSpacing(8)
+
+                Column {
+                    width: (parent.width - parent.spacing) / 2
+                    spacing: Theme.scaledSpacing(2)
+
+                    Text {
+                        width: parent.width
+                        text: "First install"
+                        color: Theme.muted
+                        font.family: Theme.bodyFontFamily
+                        font.pixelSize: 12
+                        wrapMode: Text.Wrap
+                    }
+
+                    Image {
+                        width: parent.width
+                        height: 45
+                        source: "../assets/stylus-install-style.png"
+                        fillMode: Image.PreserveAspectFit
+                    }
+                }
+
+                Column {
+                    width: (parent.width - parent.spacing) / 2
+                    spacing: Theme.scaledSpacing(2)
+
+                    Text {
+                        width: parent.width
+                        text: "Already installed"
+                        color: Theme.muted
+                        font.family: Theme.bodyFontFamily
+                        font.pixelSize: 12
+                        wrapMode: Text.Wrap
+                    }
+
+                    Image {
+                        width: parent.width
+                        height: 45
+                        source: "../assets/stylus-reinstall-style.png"
+                        fillMode: Image.PreserveAspectFit
+                    }
+                }
             }
 
             Text {

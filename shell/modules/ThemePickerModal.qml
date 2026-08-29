@@ -103,7 +103,7 @@ FocusScope {
                 visible: controller.modalKind === "progress" || controller.modalKind === "guide"
                 Layout.fillWidth: true
                 Layout.fillHeight: controller.modalKind === "guide"
-                Layout.preferredHeight: controller.modalKind === "progress" ? controller.applyProgressShowTargets ? 570 : 280 : 0
+                Layout.preferredHeight: controller.modalKind === "progress" ? controller.applyProgressShowTargets ? 570 : 300 : 0
                 clip: true
                 contentWidth: availableWidth
 

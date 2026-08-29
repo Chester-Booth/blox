@@ -1184,7 +1184,7 @@ def run_reload_actions(root: Path, targets: Iterable[str], mode: str = "reload",
                 except (OSError, json.JSONDecodeError, EditorSettingsFailure) as error:
                     warnings.append(f"{editor} settings were not changed: {error}")
         elif target == "stylus":
-            warnings.append("Stylus's generated UserCSS was removed; manually remove any previously imported copy" if mode == "reset" else f"Open {root / 'current/stylus/blox-system.user.css'} in a browser with Stylus and choose Install style or Reinstall; manifest.json lists included and excluded sites")
+            warnings.append("Stylus's generated UserCSS was removed; manually remove any previously imported copy" if mode == "reset" else f"Open or reload {root / 'current/stylus/blox-system.user.css'} in a browser with Stylus, then choose Install style the first time or Reinstall style after an earlier import; remove older duplicate Blox Web Theme entries first; manifest.json lists included and excluded sites")
         elif target == "obsidian":
             warnings.append("Obsidian's generated Style Settings import was removed; existing vault settings were not changed" if mode == "reset" else f"Obsidian requires Minimal and Style Settings; manually import {root / 'current/obsidian/style-settings.json'}")
         elif target == "powerlevel10k":

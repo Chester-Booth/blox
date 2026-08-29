@@ -11,6 +11,7 @@ THEMES = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(THEMES / "lib"))
 
 from blox_theme.core import load_theme, render_theme
+from blox_theme.stylus import CATPPUCCIN_PALETTES
 
 
 class StylusTargetTests(unittest.TestCase):
@@ -54,18 +55,39 @@ class StylusTargetTests(unittest.TestCase):
 
     def test_generated_usercss_uses_the_active_blox_palette(self) -> None:
         theme = copy.deepcopy(self.theme)
-        theme["colours"]["background"] = "#010203"
-        theme["colours"]["accent"] = "#070809"
-        theme["colours"]["mauve"] = "#040506"
+        for index, role in enumerate(theme["colours"], start=1):
+            theme["colours"][role] = f"#{index:06x}"
         files, _ = render_theme(theme)
         css = files["stylus/blox-system.user.css"].lower()
-        self.assertIn("#010203", css)
-        self.assertNotIn("#1e1e2e", css)
-        self.assertNotIn("%231e1e2e", css)
-        self.assertNotIn("%23cba6f7", css)
+        self.assertIn("#000001", css)
+        for palette in CATPPUCCIN_PALETTES.values():
+            for source in palette.values():
+                self.assertNotIn(source, css)
+                self.assertNotIn(f"%23{source[1:]}", css)
         manifest = json.loads(files["stylus/manifest.json"])
         self.assertEqual("background", manifest["palette_mapping"]["base"])
         self.assertEqual(theme["id"], manifest["theme_id"])
+
+    def test_every_builtin_emits_its_active_palette(self) -> None:
+        checked_roles = ("background", "surface", "surface_alt", "foreground", "muted", "accent", "mauve", "danger", "success", "warning", "info", "teal")
+        previous_blox_values = {"#242424", "#1e1e1e", "#89b4fa", "#cdd6f4"}
+        for path in sorted((THEMES / "builtin").glob("*.json")):
+            with self.subTest(theme=path.stem):
+                _, theme = load_theme(path.stem)
+                files, _ = render_theme(theme)
+                css = files["stylus/blox-system.user.css"].lower()
+                missing = {
+                    role: theme["colours"][role]
+                    for role in checked_roles
+                    if theme["colours"][role].lower() not in css
+                }
+                stale = {
+                    value
+                    for value in previous_blox_values
+                    if value in css and value not in {colour.lower() for colour in theme["colours"].values()}
+                }
+                self.assertEqual({}, missing)
+                self.assertEqual(set(), stale)
 
     def test_stylus_target_only_writes_its_package(self) -> None:
         theme = copy.deepcopy(self.theme)

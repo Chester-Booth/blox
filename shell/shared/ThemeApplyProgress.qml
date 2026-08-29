@@ -104,7 +104,7 @@ Item {
                 spacing: Theme.scaledSpacing(2)
 
                 Text {
-                    text: root.complete ? root.themeName + " applied" : "Applying " + root.themeName
+                    text: root.error.length ? "Could not apply " + root.themeName : root.complete ? root.themeName + " applied" : "Applying " + root.themeName
                     color: Theme.foreground
                     font.family: Theme.bodyFontFamily
                     font.pixelSize: 22

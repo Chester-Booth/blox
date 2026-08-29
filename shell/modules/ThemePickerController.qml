@@ -658,14 +658,22 @@ Scope {
         statusMessage = dirty ? "Temporary Quickshell preview — unsaved" : "Temporary Quickshell preview";
     }
 
-    function markCandidate(value, touchedPath) {
+    function markCandidatePaths(value, paths) {
         candidate = value;
-        if (touchedPath && touchedPath.length > 0 && touchedPaths.indexOf(touchedPath) < 0)
-            touchedPaths = touchedPaths.concat([touchedPath]);
+        const nextTouchedPaths = touchedPaths.slice();
+        for (const path of paths || []) {
+            if (path && path.length > 0 && nextTouchedPaths.indexOf(path) < 0)
+                nextTouchedPaths.push(path);
+        }
+        touchedPaths = nextTouchedPaths;
         candidateRevision += 1;
         candidateValid = false;
         validationPending = true;
         validationDelay.restart();
+    }
+
+    function markCandidate(value, touchedPath) {
+        markCandidatePaths(value, touchedPath ? [touchedPath] : []);
     }
 
     function setTopLevel(key, value) {
@@ -718,6 +726,74 @@ Scope {
             return;
         }
         setShapeValue("window_gap", effectiveWindowGap());
+    }
+
+    function barOverrideSpec(axis) {
+        return axis === "radius" ? {
+            "automatic": "radius_automatic",
+            "value": "radius_scale",
+            "shape": "radius_scale",
+            "fallback": 1.25
+        } : {
+            "automatic": "density_automatic",
+            "value": "density_scale",
+            "shape": "density_scale",
+            "fallback": 1.0
+        };
+    }
+
+    function barOverrideAutomatic(axis) {
+        const spec = barOverrideSpec(axis);
+        const value = shellValue("bar", spec.automatic);
+        return value === undefined ? true : value;
+    }
+
+    function barOverrideValue(axis) {
+        const spec = barOverrideSpec(axis);
+        const inherited = shapeValue(spec.shape, spec.fallback);
+        if (barOverrideAutomatic(axis))
+            return inherited;
+
+        const value = shellValue("bar", spec.value);
+        return value === undefined ? inherited : value;
+    }
+
+    function setBarOverrideAutomatic(axis, automatic) {
+        if (!candidate)
+            return ;
+
+        const spec = barOverrideSpec(axis);
+        const next = cloneCandidate();
+        if (!next.shell)
+            next.shell = shellDefaults();
+        if (!next.shell.bar)
+            next.shell.bar = { };
+
+        next.shell.bar[spec.automatic] = !!automatic;
+        const paths = ["shell.bar." + spec.automatic];
+        if (!automatic && next.shell.bar[spec.value] === undefined) {
+            next.shell.bar[spec.value] = shapeValue(spec.shape, spec.fallback);
+            paths.push("shell.bar." + spec.value);
+        }
+        markCandidatePaths(next, paths);
+        Theme.loadShell(next.shell);
+    }
+
+    function setBarOverrideValue(axis, value) {
+        if (!candidate)
+            return ;
+
+        const spec = barOverrideSpec(axis);
+        const next = cloneCandidate();
+        if (!next.shell)
+            next.shell = shellDefaults();
+        if (!next.shell.bar)
+            next.shell.bar = { };
+
+        next.shell.bar[spec.value] = value;
+        next.shell.bar[spec.automatic] = false;
+        markCandidatePaths(next, ["shell.bar." + spec.value, "shell.bar." + spec.automatic]);
+        Theme.loadShell(next.shell);
     }
 
     function setWidgetProfile(value) {
@@ -783,7 +859,10 @@ Scope {
     function shellDefaults() {
         return {
             "bar": {
-                "position": "left"
+                "position": "left",
+                "separate_groups": false,
+                "border": false,
+                "edge_inset": 0
             },
             "osd": {
                 "position": "top-left",
@@ -799,8 +878,11 @@ Scope {
     }
 
     function shellValue(section, key) {
-        const shell = candidate && candidate.shell ? candidate.shell : shellDefaults();
-        return shell[section][key];
+        const defaults = shellDefaults();
+        const shell = candidate && candidate.shell ? candidate.shell : defaults;
+        const sectionDefaults = defaults[section] || ({ });
+        const values = shell[section] || sectionDefaults;
+        return values[key] === undefined ? sectionDefaults[key] : values[key];
     }
 
     function setShellValue(section, key, value) {
@@ -816,7 +898,8 @@ Scope {
             const overrides = next.shell.bar.items || [];
             next.shell.bar.items = normaliseBarItemOrders(Theme.resolvedBarItems(overrides, value), value);
         }
-        markCandidate(next, section === "bar" ? "shell.bar" : "shell." + section + "." + key);
+        const touchedPath = section === "bar" && key === "position" ? "shell.bar" : "shell." + section + "." + key;
+        markCandidate(next, touchedPath);
         Theme.loadShell(next.shell);
         if (section === "osd")
             Theme.osdPositionPreviewRequested();

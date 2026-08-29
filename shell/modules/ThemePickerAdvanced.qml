@@ -14,6 +14,143 @@ ColumnLayout {
     spacing: Theme.scaledSpacing(12)
 
     Label {
+        text: "Bar settings"
+        color: Theme.foreground
+        font.family: Theme.bodyFontFamily
+        font.pixelSize: 17
+        font.bold: true
+    }
+
+    ColumnLayout {
+        Layout.fillWidth: true
+        spacing: Theme.scaledSpacing(8)
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: Theme.scaledSpacing(12)
+
+            Label {
+                text: "Bar position"
+                color: Theme.muted
+            }
+
+            BloxComboBox {
+                Layout.fillWidth: true
+                model: ["left", "right", "top", "bottom"]
+                currentIndex: model.indexOf(controller.shellValue("bar", "position"))
+                onActivated: (index, value) => controller.setShellValue("bar", "position", value)
+            }
+        }
+
+        BloxCheckBox {
+            Layout.fillWidth: true
+            text: "Separate bar groups"
+            checked: controller.shellValue("bar", "separate_groups")
+            onToggled: value => controller.setShellValue("bar", "separate_groups", value)
+        }
+
+        BloxCheckBox {
+            Layout.fillWidth: true
+            text: "Bar border"
+            checked: controller.shellValue("bar", "border")
+            onToggled: value => controller.setShellValue("bar", "border", value)
+        }
+
+        BloxSlider {
+            Layout.fillWidth: true
+            label: "Edge inset"
+            from: 0
+            to: 24
+            decimals: 0
+            value: controller.shellValue("bar", "edge_inset")
+            onMoved: value => controller.setShellValue("bar", "edge_inset", Math.round(value))
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: Theme.scaledSpacing(12)
+
+            BloxCheckBox {
+                Layout.alignment: Qt.AlignBottom
+                text: "Automatic"
+                checked: controller.barOverrideAutomatic("radius")
+                onToggled: value => controller.setBarOverrideAutomatic("radius", value)
+            }
+
+            BloxSlider {
+                Layout.fillWidth: true
+                label: "Bar roundness"
+                from: 0
+                to: 2
+                value: controller.barOverrideValue("radius")
+                enabled: !controller.barOverrideAutomatic("radius")
+                onMoved: value => controller.setBarOverrideValue("radius", value)
+            }
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: Theme.scaledSpacing(12)
+
+            BloxCheckBox {
+                Layout.alignment: Qt.AlignBottom
+                text: "Automatic"
+                checked: controller.barOverrideAutomatic("density")
+                onToggled: value => controller.setBarOverrideAutomatic("density", value)
+            }
+
+            BloxSlider {
+                Layout.fillWidth: true
+                label: "Bar density"
+                from: 0.75
+                to: 1.5
+                value: controller.barOverrideValue("density")
+                enabled: !controller.barOverrideAutomatic("density")
+                onMoved: value => controller.setBarOverrideValue("density", value)
+            }
+        }
+    }
+
+    Label {
+        text: "OSD / Notifications"
+        color: Theme.foreground
+        font.family: Theme.bodyFontFamily
+        font.pixelSize: 17
+        font.bold: true
+    }
+
+    GridLayout {
+        Layout.fillWidth: true
+        columns: 2
+        columnSpacing: 12
+        rowSpacing: 8
+
+        Label {
+            text: "OSD position"
+            color: Theme.muted
+        }
+
+        BloxComboBox {
+            Layout.fillWidth: true
+            model: ["top-left", "top-right", "bottom-left", "bottom-right", "centre-top", "centre-bottom"]
+            currentIndex: model.indexOf(controller.shellValue("osd", "position"))
+            onActivated: (index, value) => controller.setShellValue("osd", "position", value)
+        }
+
+        Label {
+            text: "Notification position"
+            color: Theme.muted
+        }
+
+        BloxComboBox {
+            Layout.fillWidth: true
+            model: ["top-left", "top-right", "bottom-left", "bottom-right", "centre-top", "centre-bottom"]
+            currentIndex: model.indexOf(controller.shellValue("notifications", "position"))
+            onActivated: (index, value) => controller.setShellValue("notifications", "position", value)
+        }
+    }
+
+    Label {
         text: "Shape & density"
         color: Theme.foreground
         font.family: Theme.bodyFontFamily
@@ -214,7 +351,7 @@ ColumnLayout {
     }
 
     Label {
-        text: "Bar / OSD / Notifications"
+        text: "Bar items"
         color: Theme.foreground
         font.family: Theme.bodyFontFamily
         font.pixelSize: 17

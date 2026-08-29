@@ -569,7 +569,8 @@ class PickerIntegrationSourceTests(unittest.TestCase):
         self.assertNotIn('text: "Target impact"', overview)
         self.assertNotIn('text: "Dependency and compatibility notes"', overview)
         self.assertIn("editorScroll.contentY - delta * 4", qml)
-        self.assertIn('text: "Bar / OSD / Notifications"', qml)
+        self.assertIn('text: "Bar settings"', qml)
+        self.assertIn('text: "Bar items"', qml)
         self.assertIn('visible: controller.editorMode === "overview"', overview)
         self.assertIn('Theme.osdPositionPreviewRequested()', qml)
         self.assertIn('Theme.notificationPositionPreviewRequested()', qml)
@@ -711,7 +712,7 @@ class PickerIntegrationSourceTests(unittest.TestCase):
     def test_advanced_mode_can_edit_terminal_colours(self) -> None:
         controller = qml_source("Controller")
         advanced = qml_source("Advanced")
-        terminal = advanced.split('text: "Terminal colours"', 1)[1].split('text: "Bar / OSD / Notifications"', 1)[0]
+        terminal = advanced.split('text: "Terminal colours"', 1)[1].split('text: "Bar items"', 1)[0]
         self.assertIn("model: controller.ansiKeys", terminal)
         self.assertIn('controller.openColourPicker(modelData, "ansi")', terminal)
         self.assertIn("previewData.ansi[modelData]", terminal)
@@ -736,11 +737,26 @@ class PickerIntegrationSourceTests(unittest.TestCase):
         self.assertGreaterEqual(overview.count("ThemeShapePreview {"), 2)
         self.assertIn('label: "Roundness"', advanced)
         self.assertIn('label: "Density"', advanced)
+        for label in ("Bar roundness", "Bar density"):
+            self.assertIn(f'"{label}"', advanced)
+            label_position = advanced.index(f'label: "{label}"')
+            row_start = advanced.rfind("RowLayout {", 0, label_position)
+            row_end = advanced.find("RowLayout {", label_position)
+            row = advanced[row_start:] if row_end < 0 else advanced[row_start:row_end]
+            self.assertLess(row.index("BloxCheckBox"), row.index("BloxSlider"))
         self.assertIn('text: "Automatic"', advanced)
         self.assertIn('label: "Window gap"', advanced)
+        for view in (overview, advanced):
+            for label in ("Bar settings", "Bar position", "Separate bar groups", "Bar border", "Edge inset", "OSD / Notifications"):
+                self.assertIn(f'"{label}"', view)
+            self.assertIn('controller.shellValue("bar", "separate_groups")', view)
+            self.assertIn('controller.shellValue("bar", "border")', view)
+            self.assertIn('controller.shellValue("bar", "edge_inset")', view)
         self.assertNotIn("SpinBox", advanced)
         self.assertIn('delete next.shape[key]', controller)
         self.assertIn('setShapeValue("window_gap", effectiveWindowGap())', controller)
+        for function in ("barOverrideAutomatic", "barOverrideValue", "setBarOverrideAutomatic", "setBarOverrideValue"):
+            self.assertIn(f"function {function}", controller)
         self.assertIn("preventStealing: true", slider)
         self.assertIn("event.accepted = true", slider)
         self.assertIn("readonly property real mainWidth", preview)

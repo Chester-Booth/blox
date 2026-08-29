@@ -177,7 +177,10 @@
           "visibility": "normal"
         }
       ],
-      "position": "top"
+      "position": "top",
+      "separate_groups": false,
+      "border": false,
+      "edge_inset": 0
     },
     "notifications": {
       "offset_x": 0,

@@ -76,10 +76,18 @@ Scope {
                 barSurfaceController.activeScreen = modelData;
             }
 
+            readonly property int barInset: Math.max(0, Theme.barEdgeInset)
+            // Reserve the bar and one equal inset on each side of the bar.
+            // This keeps the gap from the screen edge to the bar equal to the
+            // gap from the bar to the window area.
+            readonly property int barDepth: Theme.railWidth + barInset * 2
+            // Keep a smaller inset at the two open ends of the bar.
+            readonly property int barEndInset: Math.round(barInset / 2)
+
             screen: modelData
-            implicitWidth: barSurfaceController.horizontalBar ? modelData.width : (barSurfaceController.barVisible || barSurfaceController.barSlide > 0.01 ? Theme.railWidth : 1)
-            implicitHeight: barSurfaceController.horizontalBar ? (barSurfaceController.barVisible || barSurfaceController.barSlide > 0.01 ? Theme.railWidth : 1) : modelData.height
-            exclusiveZone: barSurfaceController.barPinnedOpen ? Math.round(Theme.railWidth * barSurfaceController.barSlide) : 0
+            implicitWidth: barSurfaceController.horizontalBar ? modelData.width : (barSurfaceController.barVisible || barSurfaceController.barSlide > 0.01 ? barDepth : 1)
+            implicitHeight: barSurfaceController.horizontalBar ? (barSurfaceController.barVisible || barSurfaceController.barSlide > 0.01 ? barDepth : 1) : modelData.height
+            exclusiveZone: barSurfaceController.barPinnedOpen ? Math.round(barDepth * barSurfaceController.barSlide) : 0
             focusable: false
             visible: Theme.ready
             color: "transparent"
@@ -111,11 +119,14 @@ Scope {
             }
 
             Rectangle {
-                x: Theme.barPosition === "left" ? Math.round(-Theme.railWidth * (1 - barSurfaceController.barSlide)) : Theme.barPosition === "right" ? Math.round(Theme.railWidth * (1 - barSurfaceController.barSlide)) : 0
-                y: Theme.barPosition === "top" ? Math.round(-Theme.railWidth * (1 - barSurfaceController.barSlide)) : Theme.barPosition === "bottom" ? Math.round(Theme.railWidth * (1 - barSurfaceController.barSlide)) : 0
-                width: barSurfaceController.horizontalBar ? parent.width : Theme.railWidth
-                height: barSurfaceController.horizontalBar ? Theme.railWidth : parent.height
-                color: Theme.background
+                x: barSurfaceController.horizontalBar ? panel.barEndInset : Theme.barPosition === "left" ? panel.barInset + Math.round(-panel.barDepth * (1 - barSurfaceController.barSlide)) : Theme.barPosition === "right" ? panel.barInset + Math.round(panel.barDepth * (1 - barSurfaceController.barSlide)) : 0
+                y: barSurfaceController.horizontalBar ? (Theme.barPosition === "top" ? panel.barInset + Math.round(-panel.barDepth * (1 - barSurfaceController.barSlide)) : Theme.barPosition === "bottom" ? panel.barInset + Math.round(panel.barDepth * (1 - barSurfaceController.barSlide)) : 0) : panel.barEndInset
+                width: barSurfaceController.horizontalBar ? Math.max(0, parent.width - panel.barEndInset * 2) : Theme.railWidth
+                height: barSurfaceController.horizontalBar ? Theme.railWidth : Math.max(0, parent.height - panel.barEndInset * 2)
+                radius: Theme.barScaledRadius(12)
+                color: Theme.barSeparateGroups ? "transparent" : Theme.background
+                border.color: Theme.border
+                border.width: !Theme.barSeparateGroups && Theme.barBorder ? 1 : 0
 
                 HoverHandler {
                     onHoveredChanged: {
@@ -210,7 +221,45 @@ Scope {
                     }
 
                     anchors.fill: parent
-                    anchors.margins: Theme.scaledSpacing(4)
+                    anchors.margins: Theme.barScaledSpacing(4)
+
+                    component GroupSurface: Rectangle {
+                        required property Item regionItem
+
+                        visible: Theme.barSeparateGroups && regionItem.visible && regionItem.width > 0 && regionItem.height > 0
+                        x: regionItem.x - Theme.barScaledSpacing(4)
+                        y: regionItem.y - Theme.barScaledSpacing(4)
+                        width: regionItem.width + Theme.barScaledSpacing(8)
+                        height: regionItem.height + Theme.barScaledSpacing(8)
+                        radius: Theme.barScaledRadius(12)
+                        color: Theme.background
+                        border.color: Theme.border
+                        border.width: Theme.barBorder ? 1 : 0
+                    }
+
+                    GroupSurface {
+                        regionItem: verticalStartRegion
+                    }
+
+                    GroupSurface {
+                        regionItem: verticalCentreRegion
+                    }
+
+                    GroupSurface {
+                        regionItem: verticalEndRegion
+                    }
+
+                    GroupSurface {
+                        regionItem: horizontalStartRegion
+                    }
+
+                    GroupSurface {
+                        regionItem: horizontalCentreRegion
+                    }
+
+                    GroupSurface {
+                        regionItem: horizontalEndRegion
+                    }
 
                     BarRegion {
                         id: verticalStartRegion
@@ -327,7 +376,7 @@ Scope {
                         z: 100
                         x: configuredRail.verticalTrayPoint.x
                         y: configuredRail.verticalTrayToggleItem && configuredRail.verticalTrayToggleItem.trayOpensForward ? configuredRail.verticalTrayPoint.y + configuredRail.verticalTrayToggleItem.height + spacing : configuredRail.verticalTrayPoint.y - height - spacing
-                        spacing: Theme.scaledSpacing(2)
+                        spacing: Theme.barScaledSpacing(2)
 
                         HoverHandler {
                             margin: configuredRail.anchors.margins
@@ -362,7 +411,7 @@ Scope {
                         z: 100
                         x: configuredRail.horizontalTrayToggleItem && configuredRail.horizontalTrayToggleItem.trayOpensForward ? configuredRail.horizontalTrayPoint.x + configuredRail.horizontalTrayToggleItem.width + spacing : configuredRail.horizontalTrayPoint.x - width - spacing
                         y: configuredRail.horizontalTrayPoint.y
-                        spacing: Theme.scaledSpacing(2)
+                        spacing: Theme.barScaledSpacing(2)
 
                         HoverHandler {
                             margin: configuredRail.anchors.margins

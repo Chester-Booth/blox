@@ -36,7 +36,10 @@ QtObject {
             if (!data.theme.colours || !data.theme.fonts || !data.theme.shape || !data.theme.shell || !data.theme.wallpaper || !data.theme.terminal)
                 throw new Error("defaults document has incomplete theme values");
 
-            if (!data.theme.shell.bar || !Array.isArray(data.theme.shell.bar.items) || !Array.isArray(data.theme.shell.bar.reset_items))
+            const bar = data.theme.shell.bar;
+            if (!bar || typeof bar.separate_groups !== "boolean" || typeof bar.border !== "boolean"
+                    || !Number.isInteger(bar.edge_inset) || bar.edge_inset < 0 || bar.edge_inset > 24
+                    || !Array.isArray(bar.items) || !Array.isArray(bar.reset_items))
                 throw new Error("defaults document has incomplete bar values");
 
             if (!data.widgets.profile || !data.widgets.profiles)

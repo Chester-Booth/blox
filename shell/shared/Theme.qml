@@ -56,6 +56,14 @@ Singleton {
     property int widgetFontSize: defaults.ready && defaults.widgetProfile(widgetProfile) ? defaults.widgetProfile(widgetProfile).font_size : 0
     property var widgetItems: []
     property string barPosition: defaults.ready ? defaults.themeDocument().shell.bar.position : ""
+    property bool barSeparateGroups: defaults.ready ? defaults.themeDocument().shell.bar.separate_groups : false
+    property bool barBorder: defaults.ready ? defaults.themeDocument().shell.bar.border : false
+    property int barEdgeInset: defaults.ready ? defaults.themeDocument().shell.bar.edge_inset : 0
+    property bool barRadiusAutomatic: true
+    property bool barDensityAutomatic: true
+    property real barRadiusScale: radiusScale
+    property real barDensityScale: densityScale
+    readonly property int barRadius: Shape.roundScaled(4, barRadiusScale)
     property var barItems: []
     readonly property var barStartItems: barItemsForRegion("start")
     readonly property var barCentreItems: barItemsForRegion("centre")
@@ -78,6 +86,14 @@ Singleton {
 
     function scaledSpacing(base) {
         return Shape.roundScaled(base, densityScale);
+    }
+
+    function barScaledRadius(base) {
+        return Shape.roundScaled(base, barRadiusScale);
+    }
+
+    function barScaledSpacing(base) {
+        return Shape.roundScaled(base, barDensityScale);
     }
     readonly property string themePath: stateRoot + "/blox-theme/current/quickshell/theme.json"
     readonly property string widgetPath: stateRoot + "/blox-theme/current/widgets/profile.json"

@@ -17,7 +17,7 @@ THEMES = Path(__file__).resolve().parents[1]
 REPOSITORY = THEMES.parent
 sys.path.insert(0, str(THEMES / "lib"))
 
-from blox_theme.core import DEFAULT_BAR_ITEMS, contrast_ratio, dependency_checks, derive_ansi, derive_shape, list_themes, load_theme, render_manifest, render_theme, resolve_wallpaper_path, resolved_bar_items, schema_errors, themes_dir, validate_theme
+from blox_theme.core import DEFAULT_BAR_ITEMS, apply_theme_defaults, contrast_ratio, dependency_checks, derive_ansi, derive_shape, list_themes, load_theme, render_manifest, render_theme, resolve_wallpaper_path, resolved_bar_items, schema_errors, sparsify_theme, themes_dir, validate_theme
 
 
 def run_cli(*arguments: str, environment: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
@@ -132,6 +132,41 @@ class ThemeSchemaTests(unittest.TestCase):
                 theme = copy.deepcopy(source)
                 mutate(theme["shape"])
                 self.assertTrue(schema_errors(theme))
+
+    def test_sparse_save_keeps_explicit_bar_overrides(self) -> None:
+        source = json.loads((THEMES / "builtin/catppuccin-mocha.json").read_text(encoding="utf-8"))
+        baseline = apply_theme_defaults(source)
+        candidate = copy.deepcopy(baseline)
+        candidate["shell"]["bar"].update({
+            "radius_automatic": False,
+            "radius_scale": 1.37,
+            "density_automatic": False,
+            "density_scale": 1.18,
+        })
+
+        saved = sparsify_theme(
+            source,
+            baseline,
+            candidate,
+            [
+                "shell.bar.radius_automatic",
+                "shell.bar.radius_scale",
+                "shell.bar.density_automatic",
+                "shell.bar.density_scale",
+            ],
+        )
+
+        self.assertEqual({
+            "radius_automatic": False,
+            "radius_scale": 1.37,
+            "density_automatic": False,
+            "density_scale": 1.18,
+        }, {
+            key: saved["shell"]["bar"][key]
+            for key in ("radius_automatic", "radius_scale", "density_automatic", "density_scale")
+        })
+        self.assertNotIn("radius_automatic", source["shell"]["bar"])
+        self.assertNotIn("density_automatic", source["shell"]["bar"])
 
     def test_widget_schema_rejects_invalid_identifiers_and_unknown_fields(self) -> None:
         _, source = load_theme("catppuccin-mocha")
@@ -311,6 +346,10 @@ class RendererTests(unittest.TestCase):
         shell = json.loads(files["quickshell/theme.json"])["shell"]
         expected_shell = self.theme.get("shell", {})
         self.assertEqual(expected_shell.get("bar", {}).get("position", "left"), shell["bar"]["position"])
+        expected_bar = expected_shell.get("bar", {})
+        self.assertEqual(expected_bar.get("separate_groups", False), shell["bar"]["separate_groups"])
+        self.assertEqual(expected_bar.get("border", False), shell["bar"]["border"])
+        self.assertEqual(expected_bar.get("edge_inset", 0), shell["bar"]["edge_inset"])
         expected_bar_items = resolved_bar_items(expected_shell.get("bar"))
         self.assertEqual(
             {item["id"]: item for item in expected_bar_items},
@@ -704,6 +743,10 @@ class CliContractTests(unittest.TestCase):
             'regionItems: Theme.barStartItems',
             'regionItems: Theme.barCentreItems',
             'regionItems: Theme.barEndItems',
+            'Theme.barSeparateGroups',
+            'Theme.barBorder',
+            'Theme.barEdgeInset',
+            'component GroupSurface',
             'Theme.barPosition === "left"',
             'Theme.barPosition === "right"',
             'Theme.barPosition === "top"',
@@ -711,6 +754,13 @@ class CliContractTests(unittest.TestCase):
         ):
             with self.subTest(expected=expected):
                 self.assertIn(expected, source)
+        self.assertIn("readonly property int barDepth: Theme.railWidth + barInset * 2", source)
+        self.assertIn("readonly property int barEndInset: Math.round(barInset / 2)", source)
+        self.assertIn("panel.barInset + Math.round(-panel.barDepth", source)
+        self.assertIn("panel.barInset + Math.round(panel.barDepth", source)
+        self.assertIn("Math.round(barDepth * barSurfaceController.barSlide)", source)
+        self.assertIn("Math.max(0, parent.width - panel.barEndInset * 2)", source)
+        self.assertIn("Math.max(0, parent.height - panel.barEndInset * 2)", source)
         self.assertIn('model: Theme.barHiddenItems.filter', source)
         for item_id in ("power", "notes", "workspaces", "clock", "battery", "notifications", "wifi", "sound", "privacy", "awake", "display", "bt", "updates", "fan", "gpu", "touchpad", "tray", "application-tray"):
             with self.subTest(item_id=item_id):

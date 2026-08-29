@@ -55,6 +55,9 @@
     "shell": {
       "bar": {
         "position": "left",
+        "separate_groups": false,
+        "border": false,
+        "edge_inset": 0,
         "items": [
           {"id": "power", "enabled": true, "region": "start", "order": 0},
           {"id": "notes", "enabled": true, "region": "start", "order": 1},

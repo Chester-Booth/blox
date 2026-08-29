@@ -25,7 +25,16 @@ CANONICAL_THEME = json.loads((THEMES / "builtin" / "catppuccin-frappe.json").rea
 # Provenance stamped by generators.py onto generated themes only; hand
 # written built-ins must not fake it.
 DERIVED_PREFIXES = ("generator.",)
-OPTIONAL_STATE_LEAVES = {"shape.window_gap"}
+OPTIONAL_STATE_LEAVES = {
+    "shape.window_gap",
+    "shell.bar.separate_groups",
+    "shell.bar.border",
+    "shell.bar.edge_inset",
+    "shell.bar.radius_automatic",
+    "shell.bar.radius_scale",
+    "shell.bar.density_automatic",
+    "shell.bar.density_scale",
+}
 
 
 def _resolve(node: dict) -> dict:
@@ -92,7 +101,19 @@ class BuiltinTruthTests(unittest.TestCase):
         )
 
     def test_optional_absence_has_one_named_meaning(self) -> None:
-        self.assertEqual(OPTIONAL_STATE_LEAVES, {"shape.window_gap"})
+        self.assertEqual(
+            OPTIONAL_STATE_LEAVES,
+            {
+                "shape.window_gap",
+                "shell.bar.separate_groups",
+                "shell.bar.border",
+                "shell.bar.edge_inset",
+                "shell.bar.radius_automatic",
+                "shell.bar.radius_scale",
+                "shell.bar.density_automatic",
+                "shell.bar.density_scale",
+            },
+        )
         for name, document in self.documents():
             with self.subTest(theme=name):
                 self.assertNotIn("window_gap", document["shape"])
@@ -130,6 +151,9 @@ class BuiltinTruthTests(unittest.TestCase):
         self.assertEqual(defaults["fonts"], canonical["fonts"])
         self.assertEqual(defaults["shape"], canonical["shape"])
         self.assertEqual(defaults["shell"]["bar"]["position"], canonical["shell"]["bar"]["position"])
+        self.assertFalse(defaults["shell"]["bar"]["separate_groups"])
+        self.assertFalse(defaults["shell"]["bar"]["border"])
+        self.assertEqual(0, defaults["shell"]["bar"]["edge_inset"])
         self.assertEqual(defaults["shell"]["bar"]["reset_items"], canonical["shell"]["bar"]["items"])
         self.assertEqual(defaults["shell"]["osd"], canonical["shell"]["osd"])
         self.assertEqual(defaults["shell"]["notifications"], canonical["shell"]["notifications"])

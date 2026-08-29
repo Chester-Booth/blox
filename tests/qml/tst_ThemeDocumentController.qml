@@ -84,6 +84,38 @@ TestCase {
         compare(target.terminalCanvas, "#654321");
     }
 
+    function test_bar_shape_inherits_or_uses_bar_overrides() {
+        verify(controller.loadJson(generatedTheme("bar-default", "#123456")));
+        compare(target.barRadiusAutomatic, true);
+        compare(target.barDensityAutomatic, true);
+        compare(target.barRadiusScale, 1.25);
+        compare(target.barDensityScale, 1.0);
+
+        const source = sourceTheme("bar-custom", "#654321");
+        source.shell = {
+            "bar": {
+                "position": "top",
+                "radius_automatic": false,
+                "radius_scale": 0.4,
+                "density_automatic": false,
+                "density_scale": 1.4
+            }
+        };
+        verify(controller.previewSource(source));
+        compare(target.barRadiusAutomatic, false);
+        compare(target.barDensityAutomatic, false);
+        compare(target.barRadiusScale, 0.4);
+        compare(target.barDensityScale, 1.4);
+
+        source.shell.bar.radius_automatic = true;
+        source.shell.bar.density_automatic = true;
+        verify(controller.previewSource(source));
+        compare(target.barRadiusAutomatic, true);
+        compare(target.barDensityAutomatic, true);
+        compare(target.barRadiusScale, 1.25);
+        compare(target.barDensityScale, 1.0);
+    }
+
     function test_shape_derivation_matches_python_cases() {
         const cases = [
             {"radius": 0, "density": 0.75, "gap": undefined, "derivedRadius": 0, "derivedGap": 0},
@@ -136,6 +168,13 @@ TestCase {
         property var monoFontFamily
         property var bodyFontFamily
         property var barPosition
+        property var barSeparateGroups
+        property var barBorder
+        property var barEdgeInset
+        property var barRadiusAutomatic
+        property var barDensityAutomatic
+        property var barRadiusScale
+        property var barDensityScale
         property var barItems: []
         property var osdPosition
         property var osdOffsetX

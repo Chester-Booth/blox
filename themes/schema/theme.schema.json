@@ -27,6 +27,13 @@
           "type": "object", "additionalProperties": false, "required": ["position"],
           "properties": {
             "position": {"enum": ["left", "right", "top", "bottom"]},
+            "separate_groups": {"type": "boolean"},
+            "border": {"type": "boolean"},
+            "edge_inset": {"type": "integer", "minimum": 0, "maximum": 24},
+            "radius_automatic": {"type": "boolean"},
+            "radius_scale": {"type": "number", "minimum": 0, "maximum": 2},
+            "density_automatic": {"type": "boolean"},
+            "density_scale": {"type": "number", "minimum": 0.75, "maximum": 1.5},
             "items": {
               "type": "array", "uniqueItems": true,
               "items": {"$ref": "#/$defs/barItem"}

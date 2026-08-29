@@ -14,7 +14,7 @@ Rectangle {
     implicitHeight: Theme.buttonSize
     width: implicitWidth
     height: implicitHeight
-    radius: Theme.radius
+    radius: Theme.barRadius
     color: trayMouse.containsMouse ? Theme.surfaceAlt : "transparent"
     clip: true
 

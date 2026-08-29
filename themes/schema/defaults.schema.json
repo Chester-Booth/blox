@@ -184,9 +184,16 @@
     "bar": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["position", "items", "reset_items"],
+      "required": ["position", "separate_groups", "border", "edge_inset", "items", "reset_items"],
       "properties": {
         "position": {"enum": ["left", "right", "top", "bottom"]},
+        "separate_groups": {"type": "boolean"},
+        "border": {"type": "boolean"},
+        "edge_inset": {"type": "integer", "minimum": 0, "maximum": 24},
+        "radius_automatic": {"type": "boolean"},
+        "radius_scale": {"type": "number", "minimum": 0, "maximum": 2},
+        "density_automatic": {"type": "boolean"},
+        "density_scale": {"type": "number", "minimum": 0.75, "maximum": 1.5},
         "items": {"type": "array", "minItems": 19, "items": {"$ref": "#/$defs/barItem"}},
         "reset_items": {"type": "array", "items": {"$ref": "#/$defs/barItem"}}
       }

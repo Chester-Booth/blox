@@ -97,6 +97,10 @@ QtObject {
         theme.monoFontFamily = fonts.mono;
         theme.bodyFontFamily = fonts.ui;
         theme.barPosition = shell.bar.position;
+        theme.barSeparateGroups = shell.bar.separate_groups === undefined ? false : shell.bar.separate_groups;
+        theme.barBorder = shell.bar.border === undefined ? false : shell.bar.border;
+        theme.barEdgeInset = shell.bar.edge_inset === undefined ? 0 : shell.bar.edge_inset;
+        loadBarShape(shell.bar);
         theme.barItems = theme.builtinBarItems();
         theme.osdPosition = shell.osd.position;
         theme.osdOffsetX = shell.osd.offset_x;
@@ -203,6 +207,10 @@ QtObject {
         const osd = data.osd || fallback.osd;
         const notifications = data.notifications || fallback.notifications;
         theme.barPosition = bar.position;
+        theme.barSeparateGroups = bar.separate_groups === undefined ? fallback.bar.separate_groups : bar.separate_groups;
+        theme.barBorder = bar.border === undefined ? fallback.bar.border : bar.border;
+        theme.barEdgeInset = bar.edge_inset === undefined ? fallback.bar.edge_inset : bar.edge_inset;
+        loadBarShape(bar);
         theme.barItems = defaults.resolvedBarItems(data.bar && data.bar.items ? data.bar.items : []);
         theme.osdPosition = osd.position;
         theme.osdOffsetX = osd.offset_x;
@@ -211,6 +219,17 @@ QtObject {
         theme.notificationOffsetX = notifications.offset_x;
         theme.notificationOffsetY = notifications.offset_y;
         return true;
+    }
+
+    function loadBarShape(bar) {
+        const radiusAutomatic = bar.radius_automatic === undefined ? true : bar.radius_automatic;
+        const densityAutomatic = bar.density_automatic === undefined ? true : bar.density_automatic;
+        const radiusValue = bar.radius_scale === undefined ? theme.radiusScale : bar.radius_scale;
+        const densityValue = bar.density_scale === undefined ? theme.densityScale : bar.density_scale;
+        theme.barRadiusAutomatic = radiusAutomatic;
+        theme.barDensityAutomatic = densityAutomatic;
+        theme.barRadiusScale = radiusAutomatic ? theme.radiusScale : radiusValue;
+        theme.barDensityScale = densityAutomatic ? theme.densityScale : densityValue;
     }
 
     function loadActiveIdentity(raw) {

@@ -23,7 +23,7 @@ Rectangle {
     implicitHeight: visible ? Theme.buttonSize : 0
     width: implicitWidth
     height: implicitHeight
-    radius: Theme.radius
+    radius: Theme.barRadius
     color: alert ? Theme.red : active || mouse.containsMouse ? Theme.surfaceAlt : "transparent"
     opacity: mouse.containsMouse ? 0.68 : 1
 
@@ -51,7 +51,7 @@ Rectangle {
 
     Text {
         anchors.top: iconText.bottom
-        anchors.topMargin: Theme.scaledSpacing(-2)
+        anchors.topMargin: Theme.barScaledSpacing(-2)
         anchors.horizontalCenter: parent.horizontalCenter
         text: root.label
         color: root.accent

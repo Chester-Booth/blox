@@ -125,6 +125,9 @@ def shape_offenders(files: Iterable[tuple[str, str]]) -> list[str]:
                 and NUMBER_LITERAL.search(assignment.group("value")) is not None
                 and "Theme.scaledRadius(" not in line
                 and "Theme.scaledSpacing(" not in line
+                and "Theme.barScaledRadius(" not in line
+                and "Theme.barScaledSpacing(" not in line
+                and "Theme.barRadius" not in line
                 and "root.scaledPadding" not in line
                 and not pill_radius
                 and not geometry_radius

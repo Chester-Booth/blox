@@ -55,6 +55,99 @@ ColumnLayout {
         }
 
         Label {
+            text: "Bar settings"
+            color: Theme.foreground
+            font.family: Theme.bodyFontFamily
+            font.pixelSize: 17
+            font.bold: true
+        }
+
+        ColumnLayout {
+            Layout.fillWidth: true
+            spacing: Theme.scaledSpacing(8)
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: Theme.scaledSpacing(12)
+
+                Label {
+                    text: "Bar position"
+                    color: Theme.muted
+                }
+
+                BloxComboBox {
+                    Layout.fillWidth: true
+                    model: ["left", "right", "top", "bottom"]
+                    currentIndex: model.indexOf(controller.shellValue("bar", "position"))
+                    onActivated: (index, value) => controller.setShellValue("bar", "position", value)
+                }
+            }
+
+            BloxCheckBox {
+                Layout.fillWidth: true
+                text: "Separate bar groups"
+                checked: controller.shellValue("bar", "separate_groups")
+                onToggled: value => controller.setShellValue("bar", "separate_groups", value)
+            }
+
+            BloxCheckBox {
+                Layout.fillWidth: true
+                text: "Bar border"
+                checked: controller.shellValue("bar", "border")
+                onToggled: value => controller.setShellValue("bar", "border", value)
+            }
+
+            BloxSlider {
+                Layout.fillWidth: true
+                label: "Edge inset"
+                from: 0
+                to: 24
+                decimals: 0
+                value: controller.shellValue("bar", "edge_inset")
+                onMoved: value => controller.setShellValue("bar", "edge_inset", Math.round(value))
+            }
+        }
+
+        Label {
+            text: "OSD / Notifications"
+            color: Theme.foreground
+            font.family: Theme.bodyFontFamily
+            font.pixelSize: 17
+            font.bold: true
+        }
+
+        GridLayout {
+            Layout.fillWidth: true
+            columns: 2
+            columnSpacing: 12
+            rowSpacing: 8
+
+            Label {
+                text: "OSD position"
+                color: Theme.muted
+            }
+
+            BloxComboBox {
+                Layout.fillWidth: true
+                model: ["top-left", "top-right", "bottom-left", "bottom-right", "centre-top", "centre-bottom"]
+                currentIndex: model.indexOf(controller.shellValue("osd", "position"))
+                onActivated: (index, value) => controller.setShellValue("osd", "position", value)
+            }
+
+            Label {
+                text: "Notification position"
+                color: Theme.muted
+            }
+
+            BloxComboBox {
+                Layout.fillWidth: true
+                model: ["top-left", "top-right", "bottom-left", "bottom-right", "centre-top", "centre-bottom"]
+                currentIndex: model.indexOf(controller.shellValue("notifications", "position"))
+                onActivated: (index, value) => controller.setShellValue("notifications", "position", value)
+            }
+        }
+
+        Label {
             text: "Style"
             color: Theme.foreground
             font.family: Theme.bodyFontFamily
@@ -188,64 +281,6 @@ ColumnLayout {
                     }
                 }
             }
-        }
-
-        Label {
-            text: "Bar / OSD / Notifications"
-            color: Theme.foreground
-            font.family: Theme.bodyFontFamily
-            font.pixelSize: 17
-            font.bold: true
-        }
-
-        GridLayout {
-            Layout.fillWidth: true
-            columns: 2
-            columnSpacing: 12
-            rowSpacing: 8
-
-            Label {
-                text: "Bar position"
-                color: Theme.muted
-            }
-
-            BloxComboBox {
-                Layout.fillWidth: true
-                model: ["left", "right", "top", "bottom"]
-                currentIndex: model.indexOf(controller.shellValue("bar", "position"))
-                onActivated: (index, value) => {
-                    return controller.setShellValue("bar", "position", value);
-                }
-            }
-
-            Label {
-                text: "OSD position"
-                color: Theme.muted
-            }
-
-            BloxComboBox {
-                Layout.fillWidth: true
-                model: ["top-left", "top-right", "bottom-left", "bottom-right", "centre-top", "centre-bottom"]
-                currentIndex: model.indexOf(controller.shellValue("osd", "position"))
-                onActivated: (index, value) => {
-                    return controller.setShellValue("osd", "position", value);
-                }
-            }
-
-            Label {
-                text: "Notification position"
-                color: Theme.muted
-            }
-
-            BloxComboBox {
-                Layout.fillWidth: true
-                model: ["top-left", "top-right", "bottom-left", "bottom-right", "centre-top", "centre-bottom"]
-                currentIndex: model.indexOf(controller.shellValue("notifications", "position"))
-                onActivated: (index, value) => {
-                    return controller.setShellValue("notifications", "position", value);
-                }
-            }
-
         }
 
     }

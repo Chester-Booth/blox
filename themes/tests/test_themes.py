@@ -747,6 +747,19 @@ class CliContractTests(unittest.TestCase):
             'Theme.barBorder',
             'Theme.barEdgeInset',
             'component GroupSurface',
+            'component TraySurface',
+            'trayJoin',
+            'trayJoinExtent',
+            'trayItem: verticalExpandedTrayContent',
+            'trayItem: horizontalExpandedTrayContent',
+            'verticalExpandedTrayContent',
+            'horizontalExpandedTrayContent',
+            'clip: true',
+            'property real slideProgress',
+            'Behavior on slideProgress',
+            'slideProgress > 0.001',
+            'z: 110',
+            'z: 120',
             'Theme.barPosition === "left"',
             'Theme.barPosition === "right"',
             'Theme.barPosition === "top"',
@@ -968,7 +981,7 @@ class CliContractTests(unittest.TestCase):
         self.assertIn('maximumExtent: root.maximumExtent', (shared / "BarItemDelegate.qml").read_text(encoding="utf-8"))
         bar = (REPOSITORY / "shell/modules/Bar.qml").read_text(encoding="utf-8")
         self.assertIn('configuredRail.horizontalContentEnd - configuredRail.horizontalContentStart', bar)
-        self.assertIn('horizontalExpandedTray.x', bar)
+        self.assertIn('horizontalExpandedTray.settledX', bar)
         self.assertIn('barSurfaceController.trayOpen && horizontalTrayRegion === "end"', bar)
         self.assertIn('"active-window-title": "Active window title"', picker_model)
         self.assertIn('["inward", "outward", "horizontal"]', picker)
@@ -1135,8 +1148,10 @@ class CliContractTests(unittest.TestCase):
         self.assertIn("height: implicitHeight", application_tray)
         self.assertNotIn("SystemTray.items.length", application_tray)
         bar = (REPOSITORY / "shell/modules/Bar.qml").read_text(encoding="utf-8")
-        hidden_drawers = bar.split("model: Theme.barHiddenItems", 1)[0].rsplit("Column {", 1)[1]
-        self.assertIn("z: 100", hidden_drawers)
+        hidden_drawers = bar.split("model: Theme.barHiddenItems", 1)[0]
+        self.assertIn("id: verticalExpandedTray", hidden_drawers)
+        self.assertIn("id: verticalExpandedTrayContent", hidden_drawers)
+        self.assertIn("z: 115", hidden_drawers)
 
     def test_theme_list_exposes_visual_preview_data(self) -> None:
         entries = list_themes()

@@ -123,7 +123,7 @@ Scope {
                 y: barSurfaceController.horizontalBar ? (Theme.barPosition === "top" ? panel.barInset + Math.round(-panel.barDepth * (1 - barSurfaceController.barSlide)) : Theme.barPosition === "bottom" ? panel.barInset + Math.round(panel.barDepth * (1 - barSurfaceController.barSlide)) : 0) : panel.barEndInset
                 width: barSurfaceController.horizontalBar ? Math.max(0, parent.width - panel.barEndInset * 2) : Theme.railWidth
                 height: barSurfaceController.horizontalBar ? Theme.railWidth : Math.max(0, parent.height - panel.barEndInset * 2)
-                radius: Theme.barScaledRadius(12)
+                radius: Math.min(Theme.barScaledRadius(12), Math.min(width, height) / 2)
                 color: Theme.barSeparateGroups ? "transparent" : Theme.background
                 border.color: Theme.border
                 border.width: !Theme.barSeparateGroups && Theme.barBorder ? 1 : 0
@@ -149,33 +149,40 @@ Scope {
                     property var horizontalTrayToggleItem: null
                     property string verticalTrayRegion: ""
                     property string horizontalTrayRegion: ""
+                    readonly property real alongSurfacePadding: Theme.barScaledSpacing(4)
+                    // Keep the surface inside the fixed 34 px bar when a
+                    // button plus the normal padding would be too tall.
+                    readonly property real crossSurfacePadding: Math.min(alongSurfacePadding, Math.max(0, (Theme.railWidth - Theme.buttonSize) / 2))
+                    readonly property real trayJoinExtent: Math.min(Theme.barScaledRadius(12), Theme.railWidth / 2)
+                    readonly property real horizontalSurfacePadding: barSurfaceController.horizontalBar ? alongSurfacePadding : crossSurfacePadding
+                    readonly property real verticalSurfacePadding: barSurfaceController.horizontalBar ? crossSurfacePadding : alongSurfacePadding
                     readonly property point verticalTrayPoint: mappedTrayPoint(verticalTrayToggleItem)
                     readonly property point horizontalTrayPoint: mappedTrayPoint(horizontalTrayToggleItem)
                     readonly property real verticalContentStart: {
                         let edge = verticalStartRegion.minimumExtent;
                         if (barSurfaceController.trayOpen && verticalTrayRegion === "start" && verticalTrayToggleItem && verticalTrayToggleItem.trayOpensForward)
-                            edge = Math.max(edge, verticalExpandedTray.y + verticalExpandedTray.height);
+                            edge = Math.max(edge, verticalExpandedTray.settledY + verticalExpandedTrayContent.height + verticalExpandedTray.alongPadding);
 
                         return edge;
                     }
                     readonly property real verticalContentEnd: {
                         let edge = height - verticalEndRegion.minimumExtent;
                         if (barSurfaceController.trayOpen && verticalTrayRegion === "end" && verticalTrayToggleItem && !verticalTrayToggleItem.trayOpensForward)
-                            edge = Math.min(edge, verticalExpandedTray.y);
+                            edge = Math.min(edge, verticalExpandedTray.settledY - verticalExpandedTray.alongPadding);
 
                         return edge;
                     }
                     readonly property real horizontalContentStart: {
                         let edge = horizontalStartRegion.minimumExtent;
                         if (barSurfaceController.trayOpen && horizontalTrayRegion === "start" && horizontalTrayToggleItem && horizontalTrayToggleItem.trayOpensForward)
-                            edge = Math.max(edge, horizontalExpandedTray.x + horizontalExpandedTray.width);
+                            edge = Math.max(edge, horizontalExpandedTray.settledX + horizontalExpandedTrayContent.width + horizontalExpandedTray.alongPadding);
 
                         return edge;
                     }
                     readonly property real horizontalContentEnd: {
                         let edge = width - horizontalEndRegion.minimumExtent;
                         if (barSurfaceController.trayOpen && horizontalTrayRegion === "end" && horizontalTrayToggleItem && !horizontalTrayToggleItem.trayOpensForward)
-                            edge = Math.min(edge, horizontalExpandedTray.x);
+                            edge = Math.min(edge, horizontalExpandedTray.settledX - horizontalExpandedTray.alongPadding);
 
                         return edge;
                     }
@@ -221,20 +228,79 @@ Scope {
                     }
 
                     anchors.fill: parent
-                    anchors.margins: Theme.barScaledSpacing(4)
+                    anchors.leftMargin: barSurfaceController.horizontalBar ? alongSurfacePadding : crossSurfacePadding
+                    anchors.rightMargin: barSurfaceController.horizontalBar ? alongSurfacePadding : crossSurfacePadding
+                    anchors.topMargin: barSurfaceController.horizontalBar ? crossSurfacePadding : alongSurfacePadding
+                    anchors.bottomMargin: barSurfaceController.horizontalBar ? crossSurfacePadding : alongSurfacePadding
 
                     component GroupSurface: Rectangle {
                         required property Item regionItem
 
                         visible: Theme.barSeparateGroups && regionItem.visible && regionItem.width > 0 && regionItem.height > 0
-                        x: regionItem.x - Theme.barScaledSpacing(4)
-                        y: regionItem.y - Theme.barScaledSpacing(4)
-                        width: regionItem.width + Theme.barScaledSpacing(8)
-                        height: regionItem.height + Theme.barScaledSpacing(8)
-                        radius: Theme.barScaledRadius(12)
+                        x: regionItem.x - configuredRail.horizontalSurfacePadding
+                        y: regionItem.y - configuredRail.verticalSurfacePadding
+                        width: regionItem.width + configuredRail.horizontalSurfacePadding * 2
+                        height: regionItem.height + configuredRail.verticalSurfacePadding * 2
+                        z: 110
+                        radius: Math.max(0, Math.min(Theme.barScaledRadius(12), Math.min(width, height) / 2))
                         color: Theme.background
                         border.color: Theme.border
                         border.width: Theme.barBorder ? 1 : 0
+                    }
+
+                    component TraySurface: Rectangle {
+                        id: traySurface
+
+                        required property var trayItem
+                        required property bool horizontal
+                        required property bool arrowAtStart
+                        required property real joinExtent
+
+                        visible: Theme.barSeparateGroups && trayItem.visible && trayItem.width > 0 && trayItem.height > 0
+                        enabled: false
+                        anchors.fill: parent
+                        z: -1
+                        transform: Translate {
+                            x: trayItem.slideOffsetX
+                            y: trayItem.slideOffsetY
+                        }
+                        radius: Math.max(0, Math.min(Theme.barScaledRadius(12), Math.min(width, height) / 2))
+                        color: Theme.background
+                        border.color: Theme.border
+                        border.width: Theme.barBorder ? 1 : 0
+
+                        // The arrow-side corner belongs to the stable toggle,
+                        // so the tray surface must continue behind it instead
+                        // of ending in a second rounded corner.
+                        Rectangle {
+                            id: trayJoin
+
+                            x: traySurface.horizontal && !traySurface.arrowAtStart ? parent.width - traySurface.joinExtent : 0
+                            y: !traySurface.horizontal && !traySurface.arrowAtStart ? parent.height - traySurface.joinExtent : 0
+                            width: traySurface.horizontal ? traySurface.joinExtent : parent.width
+                            height: traySurface.horizontal ? parent.height : traySurface.joinExtent
+                            color: Theme.background
+                            border.width: 0
+                            z: 1
+
+                            Rectangle {
+                                visible: Theme.barBorder
+                                color: Theme.border
+                                x: 0
+                                y: 0
+                                width: traySurface.horizontal ? parent.width : 1
+                                height: traySurface.horizontal ? 1 : parent.height
+                            }
+
+                            Rectangle {
+                                visible: Theme.barBorder
+                                color: Theme.border
+                                x: traySurface.horizontal ? 0 : parent.width - 1
+                                y: traySurface.horizontal ? parent.height - 1 : 0
+                                width: traySurface.horizontal ? parent.width : 1
+                                height: traySurface.horizontal ? 1 : parent.height
+                            }
+                        }
                     }
 
                     GroupSurface {
@@ -265,6 +331,7 @@ Scope {
                         id: verticalStartRegion
 
                         visible: !barSurfaceController.horizontalBar
+                        z: 120
                         anchors.top: parent.top
                         anchors.horizontalCenter: parent.horizontalCenter
                         regionItems: Theme.barStartItems
@@ -283,6 +350,7 @@ Scope {
                         id: verticalCentreRegion
 
                         visible: !barSurfaceController.horizontalBar
+                        z: 120
                         anchors.horizontalCenter: parent.horizontalCenter
                         y: Math.max(configuredRail.verticalContentStart, Math.min((parent.height - height) / 2, configuredRail.verticalContentEnd - height))
                         regionItems: Theme.barCentreItems
@@ -301,6 +369,7 @@ Scope {
                         id: verticalEndRegion
 
                         visible: !barSurfaceController.horizontalBar
+                        z: 120
                         anchors.bottom: parent.bottom
                         anchors.horizontalCenter: parent.horizontalCenter
                         regionItems: Theme.barEndItems
@@ -319,6 +388,7 @@ Scope {
                         id: horizontalStartRegion
 
                         visible: barSurfaceController.horizontalBar
+                        z: 120
                         anchors.left: parent.left
                         anchors.verticalCenter: parent.verticalCenter
                         regionItems: Theme.barStartItems
@@ -337,6 +407,7 @@ Scope {
                         id: horizontalCentreRegion
 
                         visible: barSurfaceController.horizontalBar
+                        z: 120
                         anchors.verticalCenter: parent.verticalCenter
                         x: Math.max(configuredRail.horizontalContentStart, Math.min((parent.width - width) / 2, configuredRail.horizontalContentEnd - width))
                         regionItems: Theme.barCentreItems
@@ -355,6 +426,7 @@ Scope {
                         id: horizontalEndRegion
 
                         visible: barSurfaceController.horizontalBar
+                        z: 120
                         anchors.right: parent.right
                         anchors.verticalCenter: parent.verticalCenter
                         regionItems: Theme.barEndItems
@@ -369,72 +441,168 @@ Scope {
                         maximumExtent: Math.max(0, parent.width - Math.max(horizontalStartRegion.minimumExtent, parent.width / 2 + horizontalCentreRegion.minimumExtent / 2))
                     }
 
-                    Column {
+                    Item {
                         id: verticalExpandedTray
 
-                        visible: !barSurfaceController.horizontalBar && barSurfaceController.trayOpen && configuredRail.verticalTrayToggleItem
-                        z: 100
-                        x: configuredRail.verticalTrayPoint.x
-                        y: configuredRail.verticalTrayToggleItem && configuredRail.verticalTrayToggleItem.trayOpensForward ? configuredRail.verticalTrayPoint.y + configuredRail.verticalTrayToggleItem.height + spacing : configuredRail.verticalTrayPoint.y - height - spacing
-                        spacing: Theme.barScaledSpacing(2)
+                        readonly property real alongPadding: configuredRail.alongSurfacePadding
+                        readonly property real crossPadding: configuredRail.crossSurfacePadding
+                        readonly property real openingDirection: configuredRail.verticalTrayToggleItem && configuredRail.verticalTrayToggleItem.trayOpensForward ? 1 : -1
+                        readonly property real joinExtent: configuredRail.trayJoinExtent
+                        // The surface padding extends under the arrow-side
+                        // rounding; the stable arrow then covers the join.
+                        readonly property real settledY: configuredRail.verticalTrayToggleItem && configuredRail.verticalTrayToggleItem.trayOpensForward ? configuredRail.verticalTrayPoint.y + configuredRail.verticalTrayToggleItem.height : configuredRail.verticalTrayPoint.y - verticalExpandedTrayContent.height
+                        readonly property real slideOffsetX: 0
+                        readonly property real slideOffsetY: -openingDirection * (height + verticalExpandedTrayContent.spacing) * (1 - slideProgress)
+                        property real slideProgress: barSurfaceController.trayOpen ? 1 : 0
 
-                        HoverHandler {
-                            margin: configuredRail.anchors.margins
-                            onHoveredChanged: hovered ? barSurfaceController.trayBoundsEntered() : barSurfaceController.trayBoundsExited()
-                        }
+                        visible: !barSurfaceController.horizontalBar && configuredRail.verticalTrayToggleItem && (barSurfaceController.trayOpen || slideProgress > 0.001)
+                        // Sit above the group surface so the tray background
+                        // can cover the arrow-side join, but below the stable
+                        // bar regions that contain the arrow and its items.
+                        z: 115
+                        x: configuredRail.verticalTrayPoint.x - crossPadding
+                        y: settledY - alongPadding - (openingDirection > 0 ? joinExtent : 0)
+                        width: verticalExpandedTrayContent.width + crossPadding * 2
+                        height: verticalExpandedTrayContent.height + alongPadding * 2 + joinExtent
+                        clip: true
 
-                        Repeater {
-                            model: Theme.barHiddenItems.filter((item) => {
-                                return item.id !== "tray";
-                            })
-
-                            BarItemDelegate {
-                                required property var modelData
-
-                                itemId: modelData.id
-                                surfaceController: barSurfaceController
-                                contentController: barContentController
-                                workspaceController: barWorkspaceController
-                                notificationController: barNotificationController
-                                horizontal: false
-                                panelExtent: panel.height
+                        Behavior on slideProgress {
+                            NumberAnimation {
+                                duration: 160
+                                easing.type: Easing.OutCubic
                             }
 
+                        }
+
+                        Column {
+                            id: verticalExpandedTrayContent
+
+                            readonly property real slideOffsetX: 0
+                            readonly property real slideOffsetY: verticalExpandedTray.slideOffsetY
+                            x: verticalExpandedTray.crossPadding
+                            y: verticalExpandedTray.alongPadding + (verticalExpandedTray.openingDirection > 0 ? verticalExpandedTray.joinExtent : 0)
+                            width: implicitWidth
+                            height: implicitHeight
+                            spacing: Theme.barScaledSpacing(2)
+
+                            transform: Translate {
+                                y: verticalExpandedTray.slideOffsetY
+                            }
+
+                            HoverHandler {
+                                margin: Math.max(configuredRail.alongSurfacePadding, configuredRail.crossSurfacePadding)
+                                onHoveredChanged: hovered ? barSurfaceController.trayBoundsEntered() : barSurfaceController.trayBoundsExited()
+                            }
+
+                            Repeater {
+                                model: Theme.barHiddenItems.filter((item) => {
+                                    return item.id !== "tray";
+                                })
+
+                                BarItemDelegate {
+                                    required property var modelData
+
+                                    itemId: modelData.id
+                                    surfaceController: barSurfaceController
+                                    contentController: barContentController
+                                    workspaceController: barWorkspaceController
+                                    notificationController: barNotificationController
+                                    horizontal: false
+                                    panelExtent: panel.height
+                                }
+
+                            }
+
+                        }
+
+                        TraySurface {
+                            trayItem: verticalExpandedTrayContent
+                            horizontal: false
+                            arrowAtStart: verticalExpandedTray.openingDirection > 0
+                            joinExtent: verticalExpandedTray.joinExtent
                         }
 
                     }
 
-                    Row {
+                    Item {
                         id: horizontalExpandedTray
 
-                        visible: barSurfaceController.horizontalBar && barSurfaceController.trayOpen && configuredRail.horizontalTrayToggleItem
-                        z: 100
-                        x: configuredRail.horizontalTrayToggleItem && configuredRail.horizontalTrayToggleItem.trayOpensForward ? configuredRail.horizontalTrayPoint.x + configuredRail.horizontalTrayToggleItem.width + spacing : configuredRail.horizontalTrayPoint.x - width - spacing
-                        y: configuredRail.horizontalTrayPoint.y
-                        spacing: Theme.barScaledSpacing(2)
+                        readonly property real alongPadding: configuredRail.alongSurfacePadding
+                        readonly property real crossPadding: configuredRail.crossSurfacePadding
+                        readonly property real openingDirection: configuredRail.horizontalTrayToggleItem && configuredRail.horizontalTrayToggleItem.trayOpensForward ? 1 : -1
+                        readonly property real joinExtent: configuredRail.trayJoinExtent
+                        // The surface padding extends under the arrow-side
+                        // rounding; the stable arrow then covers the join.
+                        readonly property real settledX: configuredRail.horizontalTrayToggleItem && configuredRail.horizontalTrayToggleItem.trayOpensForward ? configuredRail.horizontalTrayPoint.x + configuredRail.horizontalTrayToggleItem.width : configuredRail.horizontalTrayPoint.x - horizontalExpandedTrayContent.width
+                        readonly property real slideOffsetX: -openingDirection * (width + horizontalExpandedTrayContent.spacing) * (1 - slideProgress)
+                        readonly property real slideOffsetY: 0
+                        property real slideProgress: barSurfaceController.trayOpen ? 1 : 0
 
-                        HoverHandler {
-                            margin: configuredRail.anchors.margins
-                            onHoveredChanged: hovered ? barSurfaceController.trayBoundsEntered() : barSurfaceController.trayBoundsExited()
-                        }
+                        visible: barSurfaceController.horizontalBar && configuredRail.horizontalTrayToggleItem && (barSurfaceController.trayOpen || slideProgress > 0.001)
+                        // Sit above the group surface so the tray background
+                        // can cover the arrow-side join, but below the stable
+                        // bar regions that contain the arrow and its items.
+                        z: 115
+                        x: settledX - alongPadding - (openingDirection > 0 ? joinExtent : 0)
+                        y: configuredRail.horizontalTrayPoint.y - crossPadding
+                        width: horizontalExpandedTrayContent.width + alongPadding * 2 + joinExtent
+                        height: horizontalExpandedTrayContent.height + crossPadding * 2
+                        clip: true
 
-                        Repeater {
-                            model: Theme.barHiddenItems.filter((item) => {
-                                return item.id !== "tray";
-                            })
-
-                            BarItemDelegate {
-                                required property var modelData
-
-                                itemId: modelData.id
-                                surfaceController: barSurfaceController
-                                contentController: barContentController
-                                workspaceController: barWorkspaceController
-                                notificationController: barNotificationController
-                                horizontal: true
-                                panelExtent: panel.height
+                        Behavior on slideProgress {
+                            NumberAnimation {
+                                duration: 160
+                                easing.type: Easing.OutCubic
                             }
 
+                        }
+
+                        Row {
+                            id: horizontalExpandedTrayContent
+
+                            readonly property real slideOffsetX: horizontalExpandedTray.slideOffsetX
+                            readonly property real slideOffsetY: 0
+                            x: horizontalExpandedTray.alongPadding + (horizontalExpandedTray.openingDirection > 0 ? horizontalExpandedTray.joinExtent : 0)
+                            y: horizontalExpandedTray.crossPadding
+                            width: implicitWidth
+                            height: implicitHeight
+                            spacing: Theme.barScaledSpacing(2)
+
+                            transform: Translate {
+                                x: horizontalExpandedTray.slideOffsetX
+                            }
+
+                            HoverHandler {
+                                margin: Math.max(configuredRail.alongSurfacePadding, configuredRail.crossSurfacePadding)
+                                onHoveredChanged: hovered ? barSurfaceController.trayBoundsEntered() : barSurfaceController.trayBoundsExited()
+                            }
+
+                            Repeater {
+                                model: Theme.barHiddenItems.filter((item) => {
+                                    return item.id !== "tray";
+                                })
+
+                                BarItemDelegate {
+                                    required property var modelData
+
+                                    itemId: modelData.id
+                                    surfaceController: barSurfaceController
+                                    contentController: barContentController
+                                    workspaceController: barWorkspaceController
+                                    notificationController: barNotificationController
+                                    horizontal: true
+                                    panelExtent: panel.height
+                                }
+
+                            }
+
+                        }
+
+                        TraySurface {
+                            trayItem: horizontalExpandedTrayContent
+                            horizontal: true
+                            arrowAtStart: horizontalExpandedTray.openingDirection > 0
+                            joinExtent: horizontalExpandedTray.joinExtent
                         }
 
                     }

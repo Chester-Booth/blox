@@ -22,6 +22,7 @@ from .core import canonical_json, contrast_ratio, repository_root, state_dir
 
 CURSOR_THEME_NAME = "blox-generated"
 CURSOR_FORMAT_VERSION = "xcursor+hyprcursor-v1"
+GENERATED_CURSOR_BASES = ("Bibata-Modern-Classic", "Bibata-Original-Classic")
 DOWNLOAD_LIMIT = 25 * 1024 * 1024
 
 
@@ -79,7 +80,15 @@ def toolchain_paths() -> dict[str, Path]:
 def toolchain_check() -> dict[str, Any]:
     paths = toolchain_paths()
     missing = []
-    required_source = ("LICENSE", "configs/right/x.build.toml", "configs/normal/x.build.toml", "svg/modern-right", "svg/modern")
+    required_source = (
+        "LICENSE",
+        "configs/right/x.build.toml",
+        "configs/normal/x.build.toml",
+        "svg/modern-right",
+        "svg/modern",
+        "svg/original-right",
+        "svg/original",
+    )
     if not paths["source"].is_dir() or any(not (paths["source"] / name).exists() for name in required_source):
         missing.append("source")
     for name in ("ctgen", "cbmp"):
@@ -297,6 +306,15 @@ def cursor_colours(theme: dict[str, Any]) -> dict[str, str]:
     }
 
 
+def generated_cursor_base(theme: dict[str, Any]) -> str:
+    """Return the generated Bibata variant selected by the theme shape."""
+    cursor = theme["cursor"]
+    if cursor.get("shape_source", "theme") == "theme":
+        radius_scale = theme.get("shape", {}).get("radius_scale", 1.25)
+        return "Bibata-Original-Classic" if radius_scale == 0 else "Bibata-Modern-Classic"
+    return cursor["base"]
+
+
 def cursor_metadata(theme: dict[str, Any]) -> dict[str, Any]:
     cursor = theme["cursor"]
     if cursor["mode"] == "installed":
@@ -308,7 +326,7 @@ def cursor_metadata(theme: dict[str, Any]) -> dict[str, Any]:
         "clickgen_version": manifest["clickgen"]["version"],
         "cbmp_version": manifest["cbmp"]["version"],
         "format": CURSOR_FORMAT_VERSION,
-        "style": cursor["base"],
+        "style": generated_cursor_base(theme),
         "handedness": cursor["handedness"],
         "sizes": cursor["sizes"],
         "colours": cursor_colours(theme),
@@ -323,8 +341,8 @@ def validate_cursor_theme(theme: dict[str, Any]) -> tuple[list[str], list[str]]:
         return [], []
     errors = []
     warnings = []
-    if cursor["base"] != "Bibata-Modern-Classic":
-        errors.append("generated cursor base must be Bibata-Modern-Classic")
+    if cursor["base"] not in GENERATED_CURSOR_BASES:
+        errors.append("generated cursor base must be Bibata-Modern-Classic or Bibata-Original-Classic")
     colours = cursor_colours(theme)
     if contrast_ratio(colours["base"], colours["outline"]) < 3:
         warnings.append("generated cursor base/outline contrast recommends 3.0:1")
@@ -414,7 +432,9 @@ def build_cursor_cache(metadata: dict[str, Any], root: Path | None = None, progr
     source = paths["source"]
     suffix = "-right" if metadata["handedness"] == "right" else ""
     config_variant = "right" if metadata["handedness"] == "right" else "normal"
-    svg = source / f"svg/modern{suffix}"
+    style = metadata["style"]
+    svg_variant = "original" if style == "Bibata-Original-Classic" else "modern"
+    svg = source / f"svg/{svg_variant}{suffix}"
     config = source / f"configs/{config_variant}/x.build.toml"
     colours = metadata["colours"]
     try:

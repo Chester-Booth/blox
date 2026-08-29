@@ -104,6 +104,7 @@ Scope {
     property string barDropTarget: ""
     property real barDragOriginX: 0
     property real barDragOriginY: 0
+    property var editorWheelOwner: null
     readonly property bool dirty: candidate !== null && (JSON.stringify(candidate) !== baselineJson || touchedPaths.length > 0)
     readonly property string apiPath: Quickshell.shellDir + "/scripts/theme/themectl.sh"
     readonly property string scriptRoot: Quickshell.shellDir + "/scripts"
@@ -174,6 +175,16 @@ Scope {
             editorScrollItem.contentY = Math.min(maximum, editorScrollItem.contentY + 14);
         else if (pointerY < viewport.y + edge)
             editorScrollItem.contentY = Math.max(editorScrollItem.originY, editorScrollItem.contentY - 14);
+    }
+
+    function claimEditorWheel(owner) {
+        if (!owner)
+            return false;
+
+        if (editorWheelOwner === null)
+            editorWheelOwner = owner;
+        editorWheelSessionTimer.restart();
+        return editorWheelOwner === owner;
     }
 
     function setBarDropTarget(region, index, target) {
@@ -569,6 +580,8 @@ Scope {
 
     function openPicker() {
         hideTimer.stop();
+        editorWheelOwner = null;
+        editorWheelSessionTimer.stop();
         // An interrupted widget-edit transition used to leave the picker open
         // internally but permanently hidden.  Opening the picker is an
         // explicit request to return to it, so always cancel that transient
@@ -600,6 +613,8 @@ Scope {
 
     function closePicker() {
         sessionRevision += 1;
+        editorWheelOwner = null;
+        editorWheelSessionTimer.stop();
         validationPending = false;
         validationDelay.stop();
         Theme.cancelPreview();
@@ -702,6 +717,95 @@ Scope {
 
     function effectiveWindowGap() {
         return candidate && candidate.shape ? Shape.effectiveWindowGap(candidate.shape) : 5;
+    }
+
+    function cursorValue(key, fallback) {
+        return candidate && candidate.cursor && candidate.cursor[key] !== undefined
+            ? candidate.cursor[key]
+            : fallback;
+    }
+
+    function cursorGenerated() {
+        return cursorValue("mode", "generated") === "generated";
+    }
+
+    function cursorFollowsThemeRoundness() {
+        return cursorValue("shape_source", "theme") === "theme";
+    }
+
+    function cursorEffectiveBase() {
+        return shapeValue("radius_scale", 1.25) === 0
+            ? "Bibata-Original-Classic"
+            : "Bibata-Modern-Classic";
+    }
+
+    function cursorShapeIndex() {
+        const base = cursorFollowsThemeRoundness()
+            ? cursorEffectiveBase()
+            : cursorValue("base", "Bibata-Modern-Classic");
+        return ["Bibata-Original-Classic", "Bibata-Modern-Classic"].indexOf(base);
+    }
+
+    function cursorDirectionIndex() {
+        return ["right", "left"].indexOf(cursorValue("handedness", "right"));
+    }
+
+    function cursorSize() {
+        const sizes = cursorValue("sizes", [26]);
+        if (!Array.isArray(sizes) || sizes.length === 0 || !Number.isInteger(sizes[0]))
+            return 26;
+        return sizes[0];
+    }
+
+    function setCursorFollowsThemeRoundness(follows) {
+        if (!candidate || !cursorGenerated() || cursorFollowsThemeRoundness() === !!follows)
+            return ;
+
+        const next = cloneCandidate();
+        next.cursor = next.cursor || {};
+        const paths = ["cursor.shape_source"];
+        if (follows) {
+            next.cursor.shape_source = "theme";
+        } else {
+            next.cursor.shape_source = "override";
+            next.cursor.base = cursorEffectiveBase();
+            paths.push("cursor.base");
+        }
+        markCandidatePaths(next, paths);
+    }
+
+    function setCursorShape(index) {
+        if (!candidate || !cursorGenerated() || index < 0 || index > 1)
+            return ;
+
+        const next = cloneCandidate();
+        next.cursor = next.cursor || {};
+        next.cursor.base = index === 0 ? "Bibata-Original-Classic" : "Bibata-Modern-Classic";
+        next.cursor.shape_source = "override";
+        markCandidatePaths(next, ["cursor.base", "cursor.shape_source"]);
+    }
+
+    function setCursorDirection(index) {
+        if (!candidate || !cursorGenerated() || index < 0 || index > 1)
+            return ;
+
+        const next = cloneCandidate();
+        next.cursor = next.cursor || {};
+        next.cursor.handedness = index === 0 ? "right" : "left";
+        markCandidate(next, "cursor.handedness");
+    }
+
+    function setCursorSize(value) {
+        if (!candidate || !candidate.cursor || !Number.isFinite(value))
+            return ;
+
+        const size = Math.max(16, Math.min(96, Math.round(value)));
+        const next = cloneCandidate();
+        next.cursor = next.cursor || {};
+        const existing = Array.isArray(next.cursor.sizes) ? next.cursor.sizes : [];
+        const remaining = existing.slice(1).filter(entry => entry !== size);
+        next.cursor.sizes = [size].concat(remaining);
+        markCandidate(next, "cursor.sizes");
     }
 
     function setShapeValue(key, value) {
@@ -1430,6 +1534,14 @@ Scope {
         interval: 300
         repeat: false
         onTriggered: root.validatePreview()
+    }
+
+    Timer {
+        id: editorWheelSessionTimer
+
+        interval: 450
+        repeat: false
+        onTriggered: root.editorWheelOwner = null
     }
 
     Timer {

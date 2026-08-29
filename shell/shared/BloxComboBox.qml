@@ -38,6 +38,7 @@ Rectangle {
 
     implicitHeight: 38
     implicitWidth: 132
+    opacity: root.enabled ? 1 : 0.48
     radius: Theme.scaledRadius(9)
     color: pointer.pressed || popup.visible ? Theme.surfaceAlt : hovered ? Theme.withAlpha(Theme.surfaceAlt, 0.72) : Theme.background
     border.color: activeFocus || popup.visible ? Theme.blue : Theme.border
@@ -104,6 +105,7 @@ Rectangle {
     HoverHandler {
         id: hover
 
+        enabled: root.enabled
         cursorShape: Qt.PointingHandCursor
     }
 
@@ -114,7 +116,7 @@ Rectangle {
         enabled: root.enabled
         acceptedButtons: Qt.LeftButton
         preventStealing: true
-        cursorShape: Qt.PointingHandCursor
+        cursorShape: root.enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
         onClicked: root.openPopup()
     }
 

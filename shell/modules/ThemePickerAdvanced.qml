@@ -57,6 +57,7 @@ ColumnLayout {
         }
 
         BloxSlider {
+            wheelSession: controller
             Layout.fillWidth: true
             label: "Edge inset"
             from: 0
@@ -78,6 +79,7 @@ ColumnLayout {
             }
 
             BloxSlider {
+                wheelSession: controller
                 Layout.fillWidth: true
                 label: "Bar roundness"
                 from: 0
@@ -100,6 +102,7 @@ ColumnLayout {
             }
 
             BloxSlider {
+                wheelSession: controller
                 Layout.fillWidth: true
                 label: "Bar density"
                 from: 0.75
@@ -176,6 +179,7 @@ ColumnLayout {
     }
 
     BloxSlider {
+        wheelSession: controller
         Layout.fillWidth: true
         label: "Roundness"
         from: 0
@@ -185,6 +189,7 @@ ColumnLayout {
     }
 
     BloxSlider {
+        wheelSession: controller
         Layout.fillWidth: true
         label: "Density"
         from: 0.75
@@ -205,6 +210,7 @@ ColumnLayout {
         }
 
         BloxSlider {
+            wheelSession: controller
             Layout.fillWidth: true
             enabled: controller.candidate && controller.candidate.shape && controller.candidate.shape.window_gap !== undefined
             label: "Window gap"
@@ -213,6 +219,72 @@ ColumnLayout {
             decimals: 0
             value: controller.effectiveWindowGap()
             onMoved: value => controller.setShapeValue("window_gap", Math.round(value))
+        }
+    }
+
+    Label {
+        text: "Cursor"
+        color: Theme.foreground
+        font.family: Theme.bodyFontFamily
+        font.pixelSize: 17
+        font.bold: true
+    }
+
+    RowLayout {
+        Layout.fillWidth: true
+        spacing: Theme.scaledSpacing(12)
+
+        BloxCheckBox {
+            Layout.fillWidth: true
+            text: "Follow theme roundness"
+            enabled: controller.cursorGenerated()
+            checked: controller.cursorFollowsThemeRoundness()
+            onToggled: value => controller.setCursorFollowsThemeRoundness(value)
+        }
+
+        BloxComboBox {
+            Layout.preferredWidth: 320
+            Layout.fillWidth: true
+            enabled: controller.cursorGenerated() && !controller.cursorFollowsThemeRoundness()
+            model: ["Classic (square)", "Modern (rounded)"]
+            currentIndex: {
+                controller.candidateRevision;
+                return controller.cursorShapeIndex();
+            }
+            onActivated: (index, value) => controller.setCursorShape(index)
+        }
+    }
+
+    BloxSlider {
+        wheelSession: controller
+        Layout.fillWidth: true
+        label: "Cursor size"
+        from: 16
+        to: 48
+        decimals: 0
+        value: controller.cursorSize()
+        enabled: controller.candidate !== null
+        onMoved: value => controller.setCursorSize(Math.round(value))
+    }
+
+    RowLayout {
+        Layout.fillWidth: true
+        spacing: Theme.scaledSpacing(12)
+
+        Label {
+            text: "Pointer direction"
+            color: Theme.muted
+        }
+
+        BloxComboBox {
+            Layout.fillWidth: true
+            enabled: controller.cursorGenerated()
+            model: ["Points right", "Points left"]
+            currentIndex: {
+                controller.candidateRevision;
+                return controller.cursorDirectionIndex();
+            }
+            onActivated: (index, value) => controller.setCursorDirection(index)
         }
     }
 

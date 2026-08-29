@@ -1237,6 +1237,7 @@ class CliContractTests(unittest.TestCase):
         self.assertEqual("partial-user-css", response["data"]["gtk"]["libadwaita_support"])
         self.assertTrue(any("Libadwaita" in warning for warning in response["warnings"]))
         self.assertEqual([22, 24], response["data"]["cursor"]["sizes"])
+        self.assertEqual("Bibata-Modern-Classic", response["data"]["cursor"]["style"])
         self.assertIn("wait", response["data"]["cursor"]["states"])
         self.assertTrue(response["data"]["cursor"]["updates_live"])
         self.assertNotIn("restart_required_for_existing_processes", response["data"]["cursor"])

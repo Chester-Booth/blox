@@ -23,6 +23,7 @@
     "handedness": "right",
     "mode": "generated",
     "outline_colour": "#fdf6e3",
+    "shape_source": "theme",
     "sizes": [
       22,
       24

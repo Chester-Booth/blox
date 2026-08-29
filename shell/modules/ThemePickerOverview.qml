@@ -98,6 +98,7 @@ ColumnLayout {
             }
 
             BloxSlider {
+                wheelSession: controller
                 Layout.fillWidth: true
                 label: "Edge inset"
                 from: 0

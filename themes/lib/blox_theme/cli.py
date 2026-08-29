@@ -694,6 +694,7 @@ def run(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
             "theme_name": cursor["theme_name"],
             "size": cursor["size"],
             "format": cursor.get("format", "installed"),
+            "style": cursor.get("style", ""),
             "states": ["left_ptr", "hand2", "text", "wait", "not-allowed", "move", "resize"],
             "updates_live": True,
         }

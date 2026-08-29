@@ -212,6 +212,10 @@ FloatingWindow {
                             WheelHandler {
                                 acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
                                 onWheel: (event) => {
+                                    if (!pickerController.claimEditorWheel(editorScroll)) {
+                                        event.accepted = false;
+                                        return;
+                                    }
                                     const pixelDelta = event.pixelDelta.y || 0;
                                     const angleDelta = event.angleDelta.y || 0;
                                     const delta = pixelDelta !== 0 ? pixelDelta : angleDelta / 2;

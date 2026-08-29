@@ -106,6 +106,7 @@
       "properties": {
         "mode": {"enum": ["generated", "installed"]}, "base": {"type": "string", "minLength": 1},
         "handedness": {"enum": ["right", "left"]},
+        "shape_source": {"enum": ["theme", "override"]},
         "sizes": {"type": "array", "items": {"type": "integer", "minimum": 16, "maximum": 96}, "minItems": 1, "uniqueItems": true},
         "colour_source": {"enum": ["theme", "override"]},
         "base_colour": {"$ref": "#/$defs/colour"}, "outline_colour": {"$ref": "#/$defs/colour"},

@@ -31,10 +31,27 @@ class CursorMetadataTests(unittest.TestCase):
         self.assertEqual(first, second)
         self.assertEqual([22, 24], first["sizes"])
         self.assertEqual("right", first["handedness"])
+        self.assertEqual("Bibata-Modern-Classic", first["style"])
         self.assertEqual("blox-generated", first["theme_name"])
+        sized = copy.deepcopy(self.theme)
+        sized["cursor"]["sizes"] = [26, 24]
+        self.assertEqual(26, cursor_metadata(sized)["size"])
         changed = copy.deepcopy(self.theme)
         changed["cursor"]["base_colour"] = "#ffffff"
         self.assertNotEqual(first["cache_key"], cursor_metadata(changed)["cache_key"])
+
+    def test_theme_roundness_selects_the_generated_cursor_shape(self) -> None:
+        square = copy.deepcopy(self.theme)
+        square["shape"]["radius_scale"] = 0
+        self.assertEqual("Bibata-Original-Classic", cursor_metadata(square)["style"])
+
+        rounded = copy.deepcopy(square)
+        rounded["shape"]["radius_scale"] = 0.01
+        self.assertEqual("Bibata-Modern-Classic", cursor_metadata(rounded)["style"])
+
+        override = copy.deepcopy(square)
+        override["cursor"].update(shape_source="override", base="Bibata-Modern-Classic")
+        self.assertEqual("Bibata-Modern-Classic", cursor_metadata(override)["style"])
 
     def test_installed_mode_has_no_build_inputs(self) -> None:
         self.theme["cursor"].update(mode="installed", base="Bibata-Modern-Ice")
@@ -69,6 +86,8 @@ class CursorCacheTests(unittest.TestCase):
         paths = toolchain_paths()
         (paths["source"] / "svg/modern-right").mkdir(parents=True)
         (paths["source"] / "svg/modern").mkdir(parents=True)
+        (paths["source"] / "svg/original-right").mkdir(parents=True)
+        (paths["source"] / "svg/original").mkdir(parents=True)
         (paths["source"] / "configs/right").mkdir(parents=True)
         (paths["source"] / "configs/normal").mkdir(parents=True)
         (paths["source"] / "configs/right/x.build.toml").write_text("[theme]\n", encoding="utf-8")
@@ -149,6 +168,15 @@ class CursorCacheTests(unittest.TestCase):
         commands = [call.args[0] for call in runner.call_args_list]
         self.assertTrue(any(command[command.index("-d") + 1].endswith("svg/modern") for command in commands if "-bc" in command))
         self.assertTrue(any(command[1].endswith("configs/normal/x.build.toml") for command in commands if "ctgen" in command[0]))
+
+    def test_square_build_uses_original_upstream_source(self) -> None:
+        _, theme = load_theme("catppuccin-mocha")
+        theme["shape"]["radius_scale"] = 0
+        metadata = cursor_metadata(theme)
+        with mock.patch("blox_theme.cursor._checked_run", side_effect=self.fake_run) as runner:
+            build_cursor_cache(metadata)
+        commands = [call.args[0] for call in runner.call_args_list]
+        self.assertTrue(any(command[command.index("-d") + 1].endswith("svg/original-right") for command in commands if "-bc" in command))
 
     def test_generated_cache_requires_hyprcursor_utility(self) -> None:
         with mock.patch.object(cursor.shutil, "which", side_effect=lambda name: None if name == "hyprcursor-util" else "/usr/bin/available"):

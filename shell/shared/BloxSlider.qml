@@ -10,6 +10,7 @@ ColumnLayout {
     property real from: 0
     property real to: 1
     property int decimals: 2
+    property var wheelSession: null
 
     signal moved(real value)
 
@@ -81,8 +82,21 @@ ColumnLayout {
                     root.moved(root.valueAt(mouse.x));
             }
             onWheel: event => {
-                const increment = (root.to - root.from) / 100;
-                root.moved(Math.max(root.from, Math.min(root.to, root.value + (event.angleDelta.y >= 0 ? increment : -increment))));
+                if (root.wheelSession && !root.wheelSession.claimEditorWheel(root)) {
+                    event.accepted = false;
+                    return;
+                }
+                const pixelDelta = event.pixelDelta.y || 0;
+                const angleDelta = event.angleDelta.y || 0;
+                const delta = pixelDelta !== 0 ? pixelDelta : angleDelta;
+                if (delta === 0) {
+                    event.accepted = false;
+                    return;
+                }
+                const increment = Math.pow(10, -root.decimals);
+                const nextValue = Math.max(root.from, Math.min(root.to, root.value + (delta > 0 ? increment : -increment)));
+                if (nextValue !== root.value)
+                    root.moved(nextValue);
                 event.accepted = true;
             }
         }

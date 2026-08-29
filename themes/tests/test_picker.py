@@ -729,6 +729,7 @@ class PickerIntegrationSourceTests(unittest.TestCase):
         controller = qml_source("Controller")
         overview = qml_source("Overview")
         advanced = qml_source("Advanced")
+        main = qml_source("")
         preview = (PICKER_MODULES / "ThemeShapePreview.qml").read_text(encoding="utf-8")
         slider = (REPOSITORY / "shell/shared/BloxSlider.qml").read_text(encoding="utf-8")
 
@@ -758,9 +759,48 @@ class PickerIntegrationSourceTests(unittest.TestCase):
         for function in ("barOverrideAutomatic", "barOverrideValue", "setBarOverrideAutomatic", "setBarOverrideValue"):
             self.assertIn(f"function {function}", controller)
         self.assertIn("preventStealing: true", slider)
+        self.assertIn("property var wheelSession: null", slider)
+        self.assertIn("claimEditorWheel(root)", slider)
+        self.assertIn("event.pixelDelta.y", slider)
+        self.assertIn("Math.pow(10, -root.decimals)", slider)
+        self.assertIn("if (nextValue !== root.value)", slider)
+        self.assertIn("event.accepted = false", slider)
         self.assertIn("event.accepted = true", slider)
+        self.assertIn("claimEditorWheel(editorScroll)", main)
+        self.assertIn("editorWheelSessionTimer", controller)
         self.assertIn("readonly property real mainWidth", preview)
         self.assertEqual(3, preview.count("AppWindow {"))
+
+    def test_cursor_shape_controls_use_the_compact_advanced_contract(self) -> None:
+        controller = qml_source("Controller")
+        overview = qml_source("Overview")
+        advanced = qml_source("Advanced")
+
+        self.assertIn('text: "Follow theme roundness"', advanced)
+        self.assertIn('model: ["Classic (square)", "Modern (rounded)"]', advanced)
+        self.assertIn('model: ["Points right", "Points left"]', advanced)
+        self.assertIn('label: "Cursor size"', advanced)
+        self.assertIn('value: controller.cursorSize()', advanced)
+        self.assertIn('controller.setCursorSize(Math.round(value))', advanced)
+        self.assertIn("controller.cursorFollowsThemeRoundness()", advanced)
+        self.assertIn("controller.setCursorFollowsThemeRoundness(value)", advanced)
+        self.assertIn("controller.setCursorShape(index)", advanced)
+        self.assertIn("controller.setCursorDirection(index)", advanced)
+        for function in (
+            "cursorGenerated",
+            "cursorFollowsThemeRoundness",
+            "cursorEffectiveBase",
+            "cursorShapeIndex",
+            "cursorDirectionIndex",
+            "cursorSize",
+            "setCursorFollowsThemeRoundness",
+            "setCursorShape",
+            "setCursorDirection",
+            "setCursorSize",
+        ):
+            self.assertIn(f"function {function}", controller)
+        self.assertNotIn('text: "Follows theme roundness"', overview)
+        self.assertLess(advanced.index('text: "Cursor"'), advanced.index('text: "Semantic colours"'))
 
     def test_theme_list_uses_source_colours_wallpaper_and_fonts(self) -> None:
         theme_list = qml_source("Library")

@@ -117,6 +117,9 @@
       "wallpaper": false,
       "widgets": false
     },
+    "stylus": {
+      "style_set": "recommended"
+    },
     "terminal": {
       "canvas": "#303446",
       "chrome_background": "#292c3c",

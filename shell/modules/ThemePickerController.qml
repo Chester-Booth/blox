@@ -76,6 +76,7 @@ Scope {
     property bool applyProgressShowTargets: false
     property bool applyQuickshellReloadPending: false
     property string guideTarget: ""
+    property string guideReturnModalKind: ""
     property alias widgetDraft: widgetController.draft
     property alias widgetEditIndex: widgetController.editIndex
     property alias selectedWidgetIndex: widgetController.selectedIndex
@@ -115,6 +116,8 @@ Scope {
     readonly property var unavailableTargetKeys: ["sddm", "grub"]
     readonly property var coreTargetKeys: ["quickshell", "widgets", "wallpaper", "hyprland", "hyprlock", "cursor"]
     readonly property var applicationTargetKeys: ["kitty", "gtk", "btop", "micro", "glow", "code", "cursor_editor", "stylus", "obsidian", "powerlevel10k"]
+    readonly property var stylusStyleSetValues: ["recommended", "unmaintained", "all"]
+    readonly property var stylusStyleSetNames: ["Recommended", "Include unmaintained", "All eligible"]
     readonly property var browserTargetKeys: browserTargets.filter((entry) => {
         return entry.supported && entry.installed && entry.available;
     }).map((entry) => {
@@ -456,6 +459,30 @@ Scope {
         Qt.callLater(focusModal);
     }
 
+    function openGuide(target, returnModalKind) {
+        guideTarget = target;
+        guideReturnModalKind = returnModalKind || "";
+        if (guideReturnModalKind === "progress") {
+            modalKind = "guide";
+            Qt.callLater(focusModal);
+        } else {
+            showModal("guide");
+        }
+    }
+
+    function closeGuide() {
+        const returnModalKind = guideReturnModalKind;
+        guideTarget = "";
+        guideReturnModalKind = "";
+        if (returnModalKind.length > 0) {
+            modalKind = returnModalKind;
+            Qt.callLater(focusModal);
+        } else {
+            modalKind = "";
+            Qt.callLater(restoreOverlayFocus);
+        }
+    }
+
     function modalConfirmationEnabled() {
         if (modalKind === "duplicate")
             return duplicateId.trim().length > 0 && duplicateName.trim().length > 0;
@@ -630,6 +657,8 @@ Scope {
         candidateValid = false;
         validationErrors = [];
         applyQuickshellReloadPending = false;
+        guideTarget = "";
+        guideReturnModalKind = "";
         pendingAfterSave = "";
         pendingSelection = "";
         pendingModalConfirmation = "";
@@ -695,6 +724,23 @@ Scope {
         const next = cloneCandidate();
         next[key] = value;
         markCandidate(next, key);
+    }
+
+    function stylusStyleSetIndex() {
+        const value = candidate && candidate.stylus ? candidate.stylus.style_set : "recommended";
+        const index = stylusStyleSetValues.indexOf(value);
+        return index >= 0 ? index : 0;
+    }
+
+    function setStylusStyleSet(index) {
+        if (!candidate || index < 0 || index >= stylusStyleSetValues.length)
+            return ;
+
+        const next = cloneCandidate();
+        next.stylus = next.stylus || {
+        };
+        next.stylus.style_set = stylusStyleSetValues[index];
+        markCandidate(next, "stylus.style_set");
     }
 
     function setColour(key, value) {
@@ -1369,6 +1415,10 @@ Scope {
     }
 
     function dismissModal() {
+        if (modalKind === "guide") {
+            closeGuide();
+            return ;
+        }
         pendingModalConfirmation = "";
         modalDismissTimer.restart();
     }

@@ -1,0 +1,527 @@
+/* Compiled from Catppuccin Userstyles 5ef4cc64231826f46d12a2721fa72571f5aa8a27; do not edit. */
+/* deno-fmt-ignore */
+/* deno-fmt-ignore */
+@-moz-document domain("porkbun.com") {
+  @media (prefers-color-scheme: light) {
+    :root {
+      color-scheme: dark;
+      --cloudflare_on: #fab387;
+      --porkbun_danger: #f38ba8;
+      --porkbun_warning: #f9e2af;
+      --porkbun_success: #a6e3a1;
+      --porkbun_pink_hover: #bd8ff5;
+      --porkbun_pink: #cba6f7;
+      --porkbun_gold: #f9e2af;
+      --porkbun_pink_light: #d9bdf9;
+      --porkbun_pink_medium: #cba6f7;
+      --porkbun_dark_gray: #cdd6f4;
+      --porkbun_light_gray: #313244;
+      --porkbun_medium_gray: #7f849c;
+      --porkbun_white: #181825;
+      --blue_link: #89b4fa;
+      --blue_link_hover: #74c7ec;
+      --headerMenuLink_color: #cdd6f4;
+      --headerMenuLink-hover_color: #cdd6f4;
+      --homepageBlurb_color: #cdd6f4;
+      /* Misc */
+      /* Inline overrides */
+      /* Buttons */
+      /* Inputs */
+      /* Table dividers */
+      /* Main */
+    }
+    :root ::selection {
+      background-color: rgba(203, 166, 247, 0.3);
+    }
+    :root input::placeholder,
+    :root textarea::placeholder {
+      color: #a6adc8 !important;
+    }
+    :root,
+    :root body {
+      background-color: #1e1e2e;
+      color: #cdd6f4;
+    }
+    :root .text-muted {
+      color: #a6adc8;
+    }
+    :root .text-danger {
+      color: #f38ba8;
+    }
+    :root .text-success {
+      color: #a6e3a1;
+    }
+    :root .badge-porkbun {
+      background-color: #313244;
+      color: #cdd6f4;
+    }
+    :root .alert-info {
+      background-color: rgba(137, 180, 250, 0.3);
+      color: #89b4fa;
+      border-color: #89b4fa;
+    }
+    :root .alert-warning {
+      background-color: rgba(249, 226, 175, 0.3);
+      color: #f9e2af;
+      border-color: #f9e2af;
+    }
+    :root .alert-danger {
+      background-color: rgba(243, 139, 168, 0.3);
+      color: #f38ba8;
+      border-color: #f38ba8;
+    }
+    :root hr {
+      border-top-color: #45475a;
+    }
+    :root [style*="background-color:white;"],
+    :root [style*="background-color: rgb(248, 248, 248);"] {
+      background-color: #313244 !important;
+    }
+    :root [style*="color:black;"],
+    :root [style*="color: white;"] {
+      color: #cdd6f4 !important;
+    }
+    :root[stylus-iframe="https://porkbun.com"],
+    :root #beacon-container-body {
+      background-color: transparent;
+    }
+    :root[stylus-iframe="https://porkbun.com"] .hsds-beacon button,
+    :root #beacon-container-body .hsds-beacon button {
+      background-color: #cba6f7;
+    }
+    :root[stylus-iframe="https://porkbun.com"] .hsds-beacon button [class*="FabButtoncss__FabBackgroundUI"] > svg,
+    :root #beacon-container-body .hsds-beacon button [class*="FabButtoncss__FabBackgroundUI"] > svg {
+      fill: #cba6f7;
+    }
+    :root[stylus-iframe="https://porkbun.com"] .hsds-beacon button > span,
+    :root #beacon-container-body .hsds-beacon button > span {
+      color: #11111b;
+    }
+    :root .btn-default:not(.searchAddRemoveIcon, .searchAddRemoveIconSideBar),
+    :root .sortByPriceButton:not(.searchAddRemoveIcon, .searchAddRemoveIconSideBar) {
+      background-color: #313244;
+      color: #cdd6f4;
+      border-color: #45475a;
+    }
+    :root .btn-default:hover,
+    :root .sortByPriceButton:hover {
+      background-color: #45475a;
+      color: #cdd6f4;
+    }
+    :root .btn-primary {
+      background-color: #cba6f7;
+      border-color: #cba6f7;
+      color: #11111b;
+    }
+    :root .btn-primary:hover {
+      background-color: #bd8ff5;
+    }
+    :root .btn-danger {
+      background-color: #f38ba8;
+      border-color: #f38ba8;
+      color: #11111b;
+    }
+    :root .btn-success {
+      background-color: #a6e3a1;
+      border-color: #a6e3a1;
+      color: #11111b;
+    }
+    :root .btn-success-light {
+      background-color: #a6e3a1;
+      color: #11111b;
+    }
+    :root .btn-porkbun-white-borderless,
+    :root .btn-porkbun-white:hover,
+    :root .btn-porkbun-white:focus {
+      color: #cdd6f4;
+    }
+    :root .btn-porkbun-white.active {
+      color: #11111b;
+    }
+    :root .btn-porkbun-white.active .text-muted {
+      color: #313244;
+    }
+    :root .slider {
+      background-color: #f38ba8;
+    }
+    :root .slider::before {
+      background-color: #11111b;
+    }
+    :root .dropdown-menu {
+      background-color: #313244;
+    }
+    :root .dropdown-menu > li > a {
+      color: #cdd6f4;
+    }
+    :root .dropdown-menu > li > a:hover {
+      background-color: #45475a;
+    }
+    :root .dropdown-menu .divider {
+      background-color: #45475a;
+    }
+    :root .form-control {
+      background-color: #181825;
+      color: #cdd6f4;
+      border-color: #313244;
+    }
+    :root .form-control:focus {
+      box-shadow: 0 0 8px rgba(203, 166, 247, 0.5);
+    }
+    :root select:not([multiple]) {
+      -webkit-appearance: auto;
+    }
+    :root .table > tbody > tr > th,
+    :root .table > tfoot > tr > th,
+    :root .table > thead > tr > th,
+    :root .table > tbody > tr > td,
+    :root .table > tfoot > tr > td,
+    :root .table > thead > tr > td {
+      border-top-color: #45475a;
+    }
+    :root .table > thead > tr > th {
+      border-bottom-color: #585b70;
+    }
+    :root .table [style*="border-top:2px solid gray;"] {
+      border-top-color: #585b70 !important;
+    }
+    :root .table-bordered {
+      border-color: #45475a;
+    }
+    :root .table-bordered > tbody > tr > th,
+    :root .table-bordered > tfoot > tr > th,
+    :root .table-bordered > thead > tr > th,
+    :root .table-bordered > tbody > tr > td,
+    :root .table-bordered > tfoot > tr > td,
+    :root .table-bordered > thead > tr > td {
+      border-color: #45475a;
+    }
+    :root .headerContainer,
+    :root footer > div {
+      background-color: #11111b !important;
+    }
+    :root #headerBrandLogo,
+    :root #footerLogo {
+      content: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20144%20144%22%20fill%3D%22%2311111b%22%3E%3Ccircle%20fill%3D%22%23cba6f7%22%20cx%3D%2272%22%20cy%3D%2272%22%20r%3D%2256.3%22/%3E%3Cpath%20d%3D%22M43.1%2043.2c5%201.1%209.8%202.9%2014.1%205.3-5.1%202.6-9.4%206.5-12.5%2011.3-2-2.7-3.1-6.1-3.1-9.7q0-3.75%201.5-6.9%22/%3E%3Cpath%20d%3D%22M102.4%2095.2c0%203.1-2.5%205.6-5.6%205.6s-5.6-2.5-5.6-5.6v-4.5H52.7v4.5c0%203.1-2.5%205.6-5.6%205.6s-5.6-2.5-5.6-5.6V78.1c0-16.5%2012.8-30.5%2029.3-31.1%2017.3-.6%2031.5%2013.2%2031.5%2030.4z%22/%3E%3Cpath%20d%3D%22M99.3%2059.8c-3.1-4.8-7.4-8.7-12.5-11.3%204.4-2.4%209.1-4.2%2014.1-5.3q1.5%203.15%201.5%206.9c0%203.6-1.2%206.9-3.1%209.7%22/%3E%3Cpath%20fill%3D%22%23cba6f7%22%20d%3D%22M85.3%2071.4c-.4-.2-.8-.1-1%20.2-.4.6-.9%201-1.6%201.4v-.5c0-1.4-.5-2.7-1.3-3.7-.6-.9-1.6-1.4-2.8-1.4-1.9%200-3.5%201.6-3.5%203.5%200%20.8.3%201.6.8%202.2.6.7%201.3%201.3%202.2%201.7-.6.3-1.2.5-1.9.5-.8%200-1.4.7-1.4%201.4%200%20.8.6%201.4%201.4%201.4h.7c2.2%200%204.2-1.3%205.1-3.1%201.5-.4%202.7-1.4%203.5-2.7.3-.2.2-.7-.2-.9m-5.7%201.9c-.9-.3-1.7-.8-2.2-1.6-.2-.2-.3-.5-.3-.8%200-.8.6-1.4%201.4-1.4.7%200%201.4.6%201.4%201.3%200%20.2.1.4.1.7.1.6-.1%201.3-.4%201.8%22/%3E%3C/svg%3E");
+    }
+    :root .reviewWidget .googleReviewCount {
+      color: #bac2de;
+    }
+    :root .reviewWidget .fas[class*="fa-star"] {
+      color: #f9e2af;
+    }
+    :root .homepageBulletIconFontAwesome {
+      color: #a6adc8;
+    }
+    :root .homePageSupportOptionCenterRight {
+      border-color: #313244;
+    }
+    :root #domainSearchBulkDropButton:hover,
+    :root #domainSearchBulkDropButton:active,
+    :root #domainSearchBulkDropButton:target,
+    :root #domainSearchBulkDropButton:focus {
+      background-color: #313244;
+    }
+    :root #searchResultsContainer {
+      background-color: transparent;
+    }
+    :root #searchResultsContainer .sideBarSearchResults {
+      border-color: #313244;
+    }
+    :root .searchResultsTldLetterBox {
+      border-color: #45475a;
+    }
+    :root .cartBox {
+      border-color: #45475a;
+    }
+    :root .cartSummaryBoxFreeList > li::before {
+      color: #a6adc8;
+    }
+    :root .marketplaceRow {
+      border-top-color: #313244;
+    }
+    :root .domainsPricingAllExtensionsHeader {
+      background-color: transparent;
+    }
+    :root #homePagePricingContainer {
+      background-color: transparent;
+    }
+    :root .hostingBox {
+      border-color: #313244;
+    }
+    :root .well {
+      background-color: #1e1e2e;
+      border-color: #313244;
+    }
+    :root .modal-content {
+      background-color: #1e1e2e;
+    }
+    :root .modal-content .close {
+      color: #cdd6f4;
+      opacity: 1;
+    }
+    :root .nav-tabs {
+      border-bottom-color: #313244;
+    }
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --cloudflare_on: #fab387;
+      --porkbun_danger: #f38ba8;
+      --porkbun_warning: #f9e2af;
+      --porkbun_success: #a6e3a1;
+      --porkbun_pink_hover: #bd8ff5;
+      --porkbun_pink: #cba6f7;
+      --porkbun_gold: #f9e2af;
+      --porkbun_pink_light: #d9bdf9;
+      --porkbun_pink_medium: #cba6f7;
+      --porkbun_dark_gray: #cdd6f4;
+      --porkbun_light_gray: #313244;
+      --porkbun_medium_gray: #7f849c;
+      --porkbun_white: #181825;
+      --blue_link: #89b4fa;
+      --blue_link_hover: #74c7ec;
+      --headerMenuLink_color: #cdd6f4;
+      --headerMenuLink-hover_color: #cdd6f4;
+      --homepageBlurb_color: #cdd6f4;
+      /* Misc */
+      /* Inline overrides */
+      /* Buttons */
+      /* Inputs */
+      /* Table dividers */
+      /* Main */
+    }
+    :root ::selection {
+      background-color: rgba(203, 166, 247, 0.3);
+    }
+    :root input::placeholder,
+    :root textarea::placeholder {
+      color: #a6adc8 !important;
+    }
+    :root,
+    :root body {
+      background-color: #1e1e2e;
+      color: #cdd6f4;
+    }
+    :root .text-muted {
+      color: #a6adc8;
+    }
+    :root .text-danger {
+      color: #f38ba8;
+    }
+    :root .text-success {
+      color: #a6e3a1;
+    }
+    :root .badge-porkbun {
+      background-color: #313244;
+      color: #cdd6f4;
+    }
+    :root .alert-info {
+      background-color: rgba(137, 180, 250, 0.3);
+      color: #89b4fa;
+      border-color: #89b4fa;
+    }
+    :root .alert-warning {
+      background-color: rgba(249, 226, 175, 0.3);
+      color: #f9e2af;
+      border-color: #f9e2af;
+    }
+    :root .alert-danger {
+      background-color: rgba(243, 139, 168, 0.3);
+      color: #f38ba8;
+      border-color: #f38ba8;
+    }
+    :root hr {
+      border-top-color: #45475a;
+    }
+    :root [style*="background-color:white;"],
+    :root [style*="background-color: rgb(248, 248, 248);"] {
+      background-color: #313244 !important;
+    }
+    :root [style*="color:black;"],
+    :root [style*="color: white;"] {
+      color: #cdd6f4 !important;
+    }
+    :root[stylus-iframe="https://porkbun.com"],
+    :root #beacon-container-body {
+      background-color: transparent;
+    }
+    :root[stylus-iframe="https://porkbun.com"] .hsds-beacon button,
+    :root #beacon-container-body .hsds-beacon button {
+      background-color: #cba6f7;
+    }
+    :root[stylus-iframe="https://porkbun.com"] .hsds-beacon button [class*="FabButtoncss__FabBackgroundUI"] > svg,
+    :root #beacon-container-body .hsds-beacon button [class*="FabButtoncss__FabBackgroundUI"] > svg {
+      fill: #cba6f7;
+    }
+    :root[stylus-iframe="https://porkbun.com"] .hsds-beacon button > span,
+    :root #beacon-container-body .hsds-beacon button > span {
+      color: #11111b;
+    }
+    :root .btn-default:not(.searchAddRemoveIcon, .searchAddRemoveIconSideBar),
+    :root .sortByPriceButton:not(.searchAddRemoveIcon, .searchAddRemoveIconSideBar) {
+      background-color: #313244;
+      color: #cdd6f4;
+      border-color: #45475a;
+    }
+    :root .btn-default:hover,
+    :root .sortByPriceButton:hover {
+      background-color: #45475a;
+      color: #cdd6f4;
+    }
+    :root .btn-primary {
+      background-color: #cba6f7;
+      border-color: #cba6f7;
+      color: #11111b;
+    }
+    :root .btn-primary:hover {
+      background-color: #bd8ff5;
+    }
+    :root .btn-danger {
+      background-color: #f38ba8;
+      border-color: #f38ba8;
+      color: #11111b;
+    }
+    :root .btn-success {
+      background-color: #a6e3a1;
+      border-color: #a6e3a1;
+      color: #11111b;
+    }
+    :root .btn-success-light {
+      background-color: #a6e3a1;
+      color: #11111b;
+    }
+    :root .btn-porkbun-white-borderless,
+    :root .btn-porkbun-white:hover,
+    :root .btn-porkbun-white:focus {
+      color: #cdd6f4;
+    }
+    :root .btn-porkbun-white.active {
+      color: #11111b;
+    }
+    :root .btn-porkbun-white.active .text-muted {
+      color: #313244;
+    }
+    :root .slider {
+      background-color: #f38ba8;
+    }
+    :root .slider::before {
+      background-color: #11111b;
+    }
+    :root .dropdown-menu {
+      background-color: #313244;
+    }
+    :root .dropdown-menu > li > a {
+      color: #cdd6f4;
+    }
+    :root .dropdown-menu > li > a:hover {
+      background-color: #45475a;
+    }
+    :root .dropdown-menu .divider {
+      background-color: #45475a;
+    }
+    :root .form-control {
+      background-color: #181825;
+      color: #cdd6f4;
+      border-color: #313244;
+    }
+    :root .form-control:focus {
+      box-shadow: 0 0 8px rgba(203, 166, 247, 0.5);
+    }
+    :root select:not([multiple]) {
+      -webkit-appearance: auto;
+    }
+    :root .table > tbody > tr > th,
+    :root .table > tfoot > tr > th,
+    :root .table > thead > tr > th,
+    :root .table > tbody > tr > td,
+    :root .table > tfoot > tr > td,
+    :root .table > thead > tr > td {
+      border-top-color: #45475a;
+    }
+    :root .table > thead > tr > th {
+      border-bottom-color: #585b70;
+    }
+    :root .table [style*="border-top:2px solid gray;"] {
+      border-top-color: #585b70 !important;
+    }
+    :root .table-bordered {
+      border-color: #45475a;
+    }
+    :root .table-bordered > tbody > tr > th,
+    :root .table-bordered > tfoot > tr > th,
+    :root .table-bordered > thead > tr > th,
+    :root .table-bordered > tbody > tr > td,
+    :root .table-bordered > tfoot > tr > td,
+    :root .table-bordered > thead > tr > td {
+      border-color: #45475a;
+    }
+    :root .headerContainer,
+    :root footer > div {
+      background-color: #11111b !important;
+    }
+    :root #headerBrandLogo,
+    :root #footerLogo {
+      content: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20144%20144%22%20fill%3D%22%2311111b%22%3E%3Ccircle%20fill%3D%22%23cba6f7%22%20cx%3D%2272%22%20cy%3D%2272%22%20r%3D%2256.3%22/%3E%3Cpath%20d%3D%22M43.1%2043.2c5%201.1%209.8%202.9%2014.1%205.3-5.1%202.6-9.4%206.5-12.5%2011.3-2-2.7-3.1-6.1-3.1-9.7q0-3.75%201.5-6.9%22/%3E%3Cpath%20d%3D%22M102.4%2095.2c0%203.1-2.5%205.6-5.6%205.6s-5.6-2.5-5.6-5.6v-4.5H52.7v4.5c0%203.1-2.5%205.6-5.6%205.6s-5.6-2.5-5.6-5.6V78.1c0-16.5%2012.8-30.5%2029.3-31.1%2017.3-.6%2031.5%2013.2%2031.5%2030.4z%22/%3E%3Cpath%20d%3D%22M99.3%2059.8c-3.1-4.8-7.4-8.7-12.5-11.3%204.4-2.4%209.1-4.2%2014.1-5.3q1.5%203.15%201.5%206.9c0%203.6-1.2%206.9-3.1%209.7%22/%3E%3Cpath%20fill%3D%22%23cba6f7%22%20d%3D%22M85.3%2071.4c-.4-.2-.8-.1-1%20.2-.4.6-.9%201-1.6%201.4v-.5c0-1.4-.5-2.7-1.3-3.7-.6-.9-1.6-1.4-2.8-1.4-1.9%200-3.5%201.6-3.5%203.5%200%20.8.3%201.6.8%202.2.6.7%201.3%201.3%202.2%201.7-.6.3-1.2.5-1.9.5-.8%200-1.4.7-1.4%201.4%200%20.8.6%201.4%201.4%201.4h.7c2.2%200%204.2-1.3%205.1-3.1%201.5-.4%202.7-1.4%203.5-2.7.3-.2.2-.7-.2-.9m-5.7%201.9c-.9-.3-1.7-.8-2.2-1.6-.2-.2-.3-.5-.3-.8%200-.8.6-1.4%201.4-1.4.7%200%201.4.6%201.4%201.3%200%20.2.1.4.1.7.1.6-.1%201.3-.4%201.8%22/%3E%3C/svg%3E");
+    }
+    :root .reviewWidget .googleReviewCount {
+      color: #bac2de;
+    }
+    :root .reviewWidget .fas[class*="fa-star"] {
+      color: #f9e2af;
+    }
+    :root .homepageBulletIconFontAwesome {
+      color: #a6adc8;
+    }
+    :root .homePageSupportOptionCenterRight {
+      border-color: #313244;
+    }
+    :root #domainSearchBulkDropButton:hover,
+    :root #domainSearchBulkDropButton:active,
+    :root #domainSearchBulkDropButton:target,
+    :root #domainSearchBulkDropButton:focus {
+      background-color: #313244;
+    }
+    :root #searchResultsContainer {
+      background-color: transparent;
+    }
+    :root #searchResultsContainer .sideBarSearchResults {
+      border-color: #313244;
+    }
+    :root .searchResultsTldLetterBox {
+      border-color: #45475a;
+    }
+    :root .cartBox {
+      border-color: #45475a;
+    }
+    :root .cartSummaryBoxFreeList > li::before {
+      color: #a6adc8;
+    }
+    :root .marketplaceRow {
+      border-top-color: #313244;
+    }
+    :root .domainsPricingAllExtensionsHeader {
+      background-color: transparent;
+    }
+    :root #homePagePricingContainer {
+      background-color: transparent;
+    }
+    :root .hostingBox {
+      border-color: #313244;
+    }
+    :root .well {
+      background-color: #1e1e2e;
+      border-color: #313244;
+    }
+    :root .modal-content {
+      background-color: #1e1e2e;
+    }
+    :root .modal-content .close {
+      color: #cdd6f4;
+      opacity: 1;
+    }
+    :root .nav-tabs {
+      border-bottom-color: #313244;
+    }
+  }
+}

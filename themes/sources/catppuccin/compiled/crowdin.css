@@ -1,0 +1,177 @@
+/* Compiled from Catppuccin Userstyles 5ef4cc64231826f46d12a2721fa72571f5aa8a27; do not edit. */
+/* deno-fmt-ignore */
+/* deno-fmt-ignore */
+@-moz-document regexp("https://crowdin.com(?!/translate).*") {
+  @media (prefers-color-scheme: light) {
+    :root {
+      color-scheme: dark;
+    }
+    :root ::selection {
+      background-color: rgba(203, 166, 247, 0.3);
+    }
+    :root input::placeholder,
+    :root textarea::placeholder {
+      color: #a6adc8 !important;
+    }
+    :root :root:root:root:root:root {
+      --app-bg: #181825;
+      --body-bg: #1e1e2e;
+      --light-bg: #313244;
+      --search-bg: #313244;
+      --super-light-bg: #45475a;
+      --body-color: #cdd6f4;
+      --link-hover: #a6e3a1;
+      --primary: #a6e3a1;
+      --secondary: #f5e0dc;
+      --tertiary: #f5c2e7;
+      --primary-btn: #a6e3a1;
+      --primary-btn-hover: #94e2d5;
+      --warning-content: #f9e2af;
+      --info: #89b4fa;
+      --crowdin-primary-blue-gray-05: #45475a;
+      --crowdin-primary-blue-gray: #6c7086;
+    }
+    :root .btn-primary,
+    :root .btn-primary:hover {
+      color: #1e1e2e;
+    }
+    :root .btn-outline-primary,
+    :root .btn-outline-primary:hover {
+      color: #a6e3a1;
+      border-color: #a6e3a1;
+    }
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+    }
+    :root ::selection {
+      background-color: rgba(203, 166, 247, 0.3);
+    }
+    :root input::placeholder,
+    :root textarea::placeholder {
+      color: #a6adc8 !important;
+    }
+    :root :root:root:root:root:root {
+      --app-bg: #181825;
+      --body-bg: #1e1e2e;
+      --light-bg: #313244;
+      --search-bg: #313244;
+      --super-light-bg: #45475a;
+      --body-color: #cdd6f4;
+      --link-hover: #a6e3a1;
+      --primary: #a6e3a1;
+      --secondary: #f5e0dc;
+      --tertiary: #f5c2e7;
+      --primary-btn: #a6e3a1;
+      --primary-btn-hover: #94e2d5;
+      --warning-content: #f9e2af;
+      --info: #89b4fa;
+      --crowdin-primary-blue-gray-05: #45475a;
+      --crowdin-primary-blue-gray: #6c7086;
+    }
+    :root .btn-primary,
+    :root .btn-primary:hover {
+      color: #1e1e2e;
+    }
+    :root .btn-outline-primary,
+    :root .btn-outline-primary:hover {
+      color: #a6e3a1;
+      border-color: #a6e3a1;
+    }
+  }
+}
+@-moz-document regexp("https://crowdin.com/translate/.*") {
+  @media (prefers-color-scheme: light) {
+    color-scheme: dark;
+    ::selection {
+      background-color: rgba(203, 166, 247, 0.3);
+    }
+    input::placeholder,
+    textarea::placeholder {
+      color: #a6adc8 !important;
+    }
+    body {
+      background-color: #181825 !important;
+      color: #cdd6f4 !important;
+    }
+    #left_panel,
+    .nav-tabs,
+    .navbar-inner.editor-navbar,
+    #discussions_control,
+    #main_menu {
+      background-color: #313244 !important;
+    }
+    #editor-center-layout,
+    .editor-pane-inner,
+    #translation_wrapper,
+    #translation_text_container,
+    .texts-to-translate-header,
+    #right_panel,
+    .texts-to-translate-paging,
+    #asset_preview_wrapper.no-preview,
+    .editor-pane-title-and-buttons-helper {
+      background-color: #1e1e2e !important;
+      color: #cdd6f4 !important;
+    }
+    .body.dark-theme #main_menu .nav-pills > li.active > a {
+      background-color: #89b4fa;
+    }
+    .progress .bar-validate {
+      background-color: #b4befe;
+    }
+    .progress .bar-translate {
+      background-color: #74c7ec;
+    }
+    a,
+    .btn-link {
+      color: #f5e0dc !important;
+    }
+  }
+  @media (prefers-color-scheme: dark) {
+    color-scheme: dark;
+    ::selection {
+      background-color: rgba(203, 166, 247, 0.3);
+    }
+    input::placeholder,
+    textarea::placeholder {
+      color: #a6adc8 !important;
+    }
+    body {
+      background-color: #181825 !important;
+      color: #cdd6f4 !important;
+    }
+    #left_panel,
+    .nav-tabs,
+    .navbar-inner.editor-navbar,
+    #discussions_control,
+    #main_menu {
+      background-color: #313244 !important;
+    }
+    #editor-center-layout,
+    .editor-pane-inner,
+    #translation_wrapper,
+    #translation_text_container,
+    .texts-to-translate-header,
+    #right_panel,
+    .texts-to-translate-paging,
+    #asset_preview_wrapper.no-preview,
+    .editor-pane-title-and-buttons-helper {
+      background-color: #1e1e2e !important;
+      color: #cdd6f4 !important;
+    }
+    .body.dark-theme #main_menu .nav-pills > li.active > a {
+      background-color: #89b4fa;
+    }
+    .progress .bar-validate {
+      background-color: #b4befe;
+    }
+    .progress .bar-translate {
+      background-color: #74c7ec;
+    }
+    a,
+    .btn-link {
+      color: #f5e0dc !important;
+    }
+  }
+}

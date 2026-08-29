@@ -1,0 +1,165 @@
+/* Compiled from Catppuccin Userstyles 5ef4cc64231826f46d12a2721fa72571f5aa8a27; do not edit. */
+/* deno-fmt-ignore */
+/* deno-fmt-ignore */
+@-moz-document regexp("https://status\\.cafe/(?!users).*"), domain("forum.status.cafe") {
+  @media (prefers-color-scheme: light) {
+    :root {
+      color-scheme: dark;
+      background-color: #1e1e2e;
+    }
+    :root ::selection {
+      background-color: rgba(203, 166, 247, 0.3);
+    }
+    :root input::placeholder,
+    :root textarea::placeholder {
+      color: #a6adc8 !important;
+    }
+    :root body {
+      background-color: #1e1e2e;
+      color: #cdd6f4;
+    }
+    :root textarea {
+      background-color: #181825;
+      color: #cdd6f4;
+      border-color: #45475a;
+      border-style: solid;
+      border-width: 1px;
+      border-radius: 2px;
+      padding: 3px;
+    }
+    :root input {
+      background-color: #181825;
+      color: #cdd6f4;
+      border-color: #45475a;
+      border-style: solid;
+      border-width: 1px;
+      border-radius: 4px;
+      padding: 2px 5px;
+    }
+    :root input :hover {
+      background-color: #14141f;
+    }
+    :root input :active {
+      background-color: #11111b;
+      border-color: #313244;
+    }
+    :root textarea:hover,
+    :root input:hover {
+      border-color: #3a3c4c;
+    }
+    :root .flash {
+      background-color: #a6e3a1;
+    }
+    :root a:not(.flash a) {
+      color: #cba6f7;
+    }
+    :root a:visited:not(.flash a) {
+      color: #bd8ff5;
+    }
+    :root table,
+    :root th,
+    :root td {
+      border-color: #45475a !important;
+    }
+    :root thead {
+      background-color: #45475a;
+      color: #cdd6f4;
+    }
+    :root .forum {
+      background-color: #f9e2af;
+    }
+    :root .forum a {
+      color: #5895f8 !important;
+    }
+    :root tbody,
+    :root .topic > tbody > tr:nth-child(2n) {
+      background-color: #181825;
+    }
+    :root hr {
+      background-color: #45475a;
+    }
+    :root .signature {
+      border-top-color: #313244;
+    }
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      background-color: #1e1e2e;
+    }
+    :root ::selection {
+      background-color: rgba(203, 166, 247, 0.3);
+    }
+    :root input::placeholder,
+    :root textarea::placeholder {
+      color: #a6adc8 !important;
+    }
+    :root body {
+      background-color: #1e1e2e;
+      color: #cdd6f4;
+    }
+    :root textarea {
+      background-color: #181825;
+      color: #cdd6f4;
+      border-color: #45475a;
+      border-style: solid;
+      border-width: 1px;
+      border-radius: 2px;
+      padding: 3px;
+    }
+    :root input {
+      background-color: #181825;
+      color: #cdd6f4;
+      border-color: #45475a;
+      border-style: solid;
+      border-width: 1px;
+      border-radius: 4px;
+      padding: 2px 5px;
+    }
+    :root input :hover {
+      background-color: #14141f;
+    }
+    :root input :active {
+      background-color: #11111b;
+      border-color: #313244;
+    }
+    :root textarea:hover,
+    :root input:hover {
+      border-color: #3a3c4c;
+    }
+    :root .flash {
+      background-color: #a6e3a1;
+    }
+    :root a:not(.flash a) {
+      color: #cba6f7;
+    }
+    :root a:visited:not(.flash a) {
+      color: #bd8ff5;
+    }
+    :root table,
+    :root th,
+    :root td {
+      border-color: #45475a !important;
+    }
+    :root thead {
+      background-color: #45475a;
+      color: #cdd6f4;
+    }
+    :root .forum {
+      background-color: #f9e2af;
+    }
+    :root .forum a {
+      color: #5895f8 !important;
+    }
+    :root tbody,
+    :root .topic > tbody > tr:nth-child(2n) {
+      background-color: #181825;
+    }
+    :root hr {
+      background-color: #45475a;
+    }
+    :root .signature {
+      border-top-color: #313244;
+    }
+  }
+}

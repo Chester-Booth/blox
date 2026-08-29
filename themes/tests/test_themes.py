@@ -294,7 +294,7 @@ class RendererTests(unittest.TestCase):
         phase7 = {
             "hyprland/theme.lua", "hyprland/hyprtoolkit.conf", "hyprlock/theme.conf", "btop/theme.theme",
             "micro/blox-theme.micro", "glow/style.json",
-            "cursor-editor/settings.json", "stylus/blox-system.user.css",
+            "cursor-editor/settings.json", "stylus/blox-system.user.css", "stylus/manifest.json",
             "powerlevel10k/theme.zsh",
             "widgets/profile.json",
         }
@@ -359,6 +359,11 @@ class RendererTests(unittest.TestCase):
         self.assertEqual(expected_shell.get("notifications", {}).get("position", "bottom-right"), shell["notifications"]["position"])
         self.assertIn("workbench.colorCustomizations", json.loads(files["cursor-editor/settings.json"]))
         self.assertIn("@-moz-document", files["stylus/blox-system.user.css"])
+        stylus_manifest = json.loads(files["stylus/manifest.json"])
+        self.assertEqual("catppuccin-mocha", stylus_manifest["theme_id"])
+        self.assertEqual(92, len(stylus_manifest["styles"]))
+        self.assertEqual(0, len(stylus_manifest["excluded"]))
+        self.assertNotIn('regexp("https?://.*")', files["stylus/blox-system.user.css"])
         self.assertIn('color-link default "#cdd6f4"', files["micro/blox-theme.micro"])
         self.assertNotIn('color-link default "#cdd6f4,#242424"', files["micro/blox-theme.micro"])
         hyprtoolkit = files["hyprland/hyprtoolkit.conf"]
@@ -515,7 +520,7 @@ class RendererTests(unittest.TestCase):
             "btop": "btop/theme.theme", "micro": "micro/blox-theme.micro",
             "glow": "glow/style.json", "code": ["code/package.json", "code/settings.json", "code/themes/blox-dark-2026.json"],
             "helium": "helium/manifest.json",
-            "cursor_editor": "cursor-editor/settings.json", "stylus": "stylus/blox-system.user.css",
+            "cursor_editor": "cursor-editor/settings.json", "stylus": ["stylus/blox-system.user.css", "stylus/manifest.json"],
             "powerlevel10k": "powerlevel10k/theme.zsh",
             "widgets": "widgets/profile.json",
             "chromium": "chromium/manifest.json",

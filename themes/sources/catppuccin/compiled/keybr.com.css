@@ -1,0 +1,317 @@
+/* Compiled from Catppuccin Userstyles 5ef4cc64231826f46d12a2721fa72571f5aa8a27; do not edit. */
+/* deno-fmt-ignore */
+/* deno-fmt-ignore */
+@-moz-document domain("keybr.com") {
+  html[data-color="dark"] {
+    color-scheme: dark;
+    --primary-d2: #6c7086;
+    --primary-d1: #6c7086;
+    --primary: #1e1e2e;
+    --primary-l1: #11111b;
+    --primary-l2: #181825;
+    --secondary-d1: #a6adc8;
+    --secondary: #cdd6f4;
+    --secondary-l1: #a6adc8;
+    --secondary-l2: #cba6f7;
+    --secondary-f1: #a6adc8;
+    --secondary-f2: #a6adc8;
+    --accent-d2: #cba6f7;
+    --accent-d1: #cba6f7;
+    --accent: #cba6f7;
+    --accent-l1: #cba6f7;
+    --accent-l2: #cba6f7;
+    --error-d1: #f38ba8;
+    --error: #f38ba8;
+    --error-l1: #f38ba8;
+    --shadow-color: rgba(17, 17, 27, 0.88);
+    --slow-key-color: #f38ba8;
+    --fast-key-color: #a6e3a1;
+    --Chart-speed__color: #a6e3a1;
+    --Chart-accuracy__color: #fab387;
+    --Chart-complexity__color: #f5c2e7;
+    --Chart-threshold__color: #eba0ac;
+    --Chart-hist-h__color: #b4befe;
+    --Chart-hist-m__color: #eba0ac;
+    --Chart-hist-r__color: #cba6f7;
+    --KeyboardKey-pointer__color: #cba6f7;
+    --KeyboardKey-symbol__color: #11111b;
+    --pinky-zone-color: #a6e3a1;
+    --ring-zone-color: #94e2d5;
+    --middle-zone-color: #f9e2af;
+    --left-index-zone-color: #89b4fa;
+    --right-index-zone-color: #eba0ac;
+    --thumb-zone-color: #cba6f7;
+    --effort-0-color: #11111b;
+    --effort-1-color: #11111b;
+    --effort-2-color: #cba6f7;
+    --effort-3-color: #cba6f7;
+    --Value--more__color: #a6e3a1;
+    --Value--less__color: #f38ba8;
+    --KeyboardKey-button--depressed__color: #cba6f7;
+    --LessonKey--included__color: #11111b;
+    --LessonKey--uncalibrated__background-color: #313244;
+    --LessonKey--excluded__background-color: #313244;
+    --LessonKey--excluded__color: #6c7086;
+    --DailyGoal-bar__color: #cba6f7;
+    --KeyboardKey-button__color: #cba6f7;
+    --textinput__color: #cdd6f4;
+    --textinput--special__color: #bac2de;
+    --textinput--hit__color: #a6adc8;
+    --textinput--miss__color: #f38ba8;
+    --syntax-keyword: #cba6f7;
+    --syntax-string: #a6e3a1;
+    --syntax-number: #fab387;
+    --syntax-comment: #9399b2;
+    --MenuItem__background-color: #181825;
+    --MenuItem__color: #cdd6f4;
+    --MenuItem--hover__background-color: #313244;
+    --MenuItem--hover__color: #cdd6f4;
+    --KeyboardKey-symbol--dead__color: #f38ba8;
+    --KeyboardKey-symbol--ligature__color: #89b4fa;
+    --Name-color: #a6adc8;
+    --Value-color: #cba6f7;
+    --effort-color: #cba6f7;
+  }
+  html[data-color="dark"] ::selection {
+    background-color: rgba(203, 166, 247, 0.3);
+  }
+  html[data-color="dark"] input::placeholder,
+  html[data-color="dark"] textarea::placeholder {
+    color: #a6adc8 !important;
+  }
+  html[data-color="light"] {
+    color-scheme: dark;
+    --primary-d2: #6c7086;
+    --primary-d1: #6c7086;
+    --primary: #1e1e2e;
+    --primary-l1: #11111b;
+    --primary-l2: #181825;
+    --secondary-d1: #a6adc8;
+    --secondary: #cdd6f4;
+    --secondary-l1: #a6adc8;
+    --secondary-l2: #cba6f7;
+    --secondary-f1: #a6adc8;
+    --secondary-f2: #a6adc8;
+    --accent-d2: #cba6f7;
+    --accent-d1: #cba6f7;
+    --accent: #cba6f7;
+    --accent-l1: #cba6f7;
+    --accent-l2: #cba6f7;
+    --error-d1: #f38ba8;
+    --error: #f38ba8;
+    --error-l1: #f38ba8;
+    --shadow-color: rgba(17, 17, 27, 0.88);
+    --slow-key-color: #f38ba8;
+    --fast-key-color: #a6e3a1;
+    --Chart-speed__color: #a6e3a1;
+    --Chart-accuracy__color: #fab387;
+    --Chart-complexity__color: #f5c2e7;
+    --Chart-threshold__color: #eba0ac;
+    --Chart-hist-h__color: #b4befe;
+    --Chart-hist-m__color: #eba0ac;
+    --Chart-hist-r__color: #cba6f7;
+    --KeyboardKey-pointer__color: #cba6f7;
+    --KeyboardKey-symbol__color: #11111b;
+    --pinky-zone-color: #a6e3a1;
+    --ring-zone-color: #94e2d5;
+    --middle-zone-color: #f9e2af;
+    --left-index-zone-color: #89b4fa;
+    --right-index-zone-color: #eba0ac;
+    --thumb-zone-color: #cba6f7;
+    --effort-0-color: #11111b;
+    --effort-1-color: #11111b;
+    --effort-2-color: #cba6f7;
+    --effort-3-color: #cba6f7;
+    --Value--more__color: #a6e3a1;
+    --Value--less__color: #f38ba8;
+    --KeyboardKey-button--depressed__color: #cba6f7;
+    --LessonKey--included__color: #11111b;
+    --LessonKey--uncalibrated__background-color: #313244;
+    --LessonKey--excluded__background-color: #313244;
+    --LessonKey--excluded__color: #6c7086;
+    --DailyGoal-bar__color: #cba6f7;
+    --KeyboardKey-button__color: #cba6f7;
+    --textinput__color: #cdd6f4;
+    --textinput--special__color: #bac2de;
+    --textinput--hit__color: #a6adc8;
+    --textinput--miss__color: #f38ba8;
+    --syntax-keyword: #cba6f7;
+    --syntax-string: #a6e3a1;
+    --syntax-number: #fab387;
+    --syntax-comment: #9399b2;
+    --MenuItem__background-color: #181825;
+    --MenuItem__color: #cdd6f4;
+    --MenuItem--hover__background-color: #313244;
+    --MenuItem--hover__color: #cdd6f4;
+    --KeyboardKey-symbol--dead__color: #f38ba8;
+    --KeyboardKey-symbol--ligature__color: #89b4fa;
+    --Name-color: #a6adc8;
+    --Value-color: #cba6f7;
+    --effort-color: #cba6f7;
+  }
+  html[data-color="light"] ::selection {
+    background-color: rgba(203, 166, 247, 0.3);
+  }
+  html[data-color="light"] input::placeholder,
+  html[data-color="light"] textarea::placeholder {
+    color: #a6adc8 !important;
+  }
+  @media (prefers-color-scheme: light) {
+    html[data-color="system"] {
+      color-scheme: dark;
+      --primary-d2: #6c7086;
+      --primary-d1: #6c7086;
+      --primary: #1e1e2e;
+      --primary-l1: #11111b;
+      --primary-l2: #181825;
+      --secondary-d1: #a6adc8;
+      --secondary: #cdd6f4;
+      --secondary-l1: #a6adc8;
+      --secondary-l2: #cba6f7;
+      --secondary-f1: #a6adc8;
+      --secondary-f2: #a6adc8;
+      --accent-d2: #cba6f7;
+      --accent-d1: #cba6f7;
+      --accent: #cba6f7;
+      --accent-l1: #cba6f7;
+      --accent-l2: #cba6f7;
+      --error-d1: #f38ba8;
+      --error: #f38ba8;
+      --error-l1: #f38ba8;
+      --shadow-color: rgba(17, 17, 27, 0.88);
+      --slow-key-color: #f38ba8;
+      --fast-key-color: #a6e3a1;
+      --Chart-speed__color: #a6e3a1;
+      --Chart-accuracy__color: #fab387;
+      --Chart-complexity__color: #f5c2e7;
+      --Chart-threshold__color: #eba0ac;
+      --Chart-hist-h__color: #b4befe;
+      --Chart-hist-m__color: #eba0ac;
+      --Chart-hist-r__color: #cba6f7;
+      --KeyboardKey-pointer__color: #cba6f7;
+      --KeyboardKey-symbol__color: #11111b;
+      --pinky-zone-color: #a6e3a1;
+      --ring-zone-color: #94e2d5;
+      --middle-zone-color: #f9e2af;
+      --left-index-zone-color: #89b4fa;
+      --right-index-zone-color: #eba0ac;
+      --thumb-zone-color: #cba6f7;
+      --effort-0-color: #11111b;
+      --effort-1-color: #11111b;
+      --effort-2-color: #cba6f7;
+      --effort-3-color: #cba6f7;
+      --Value--more__color: #a6e3a1;
+      --Value--less__color: #f38ba8;
+      --KeyboardKey-button--depressed__color: #cba6f7;
+      --LessonKey--included__color: #11111b;
+      --LessonKey--uncalibrated__background-color: #313244;
+      --LessonKey--excluded__background-color: #313244;
+      --LessonKey--excluded__color: #6c7086;
+      --DailyGoal-bar__color: #cba6f7;
+      --KeyboardKey-button__color: #cba6f7;
+      --textinput__color: #cdd6f4;
+      --textinput--special__color: #bac2de;
+      --textinput--hit__color: #a6adc8;
+      --textinput--miss__color: #f38ba8;
+      --syntax-keyword: #cba6f7;
+      --syntax-string: #a6e3a1;
+      --syntax-number: #fab387;
+      --syntax-comment: #9399b2;
+      --MenuItem__background-color: #181825;
+      --MenuItem__color: #cdd6f4;
+      --MenuItem--hover__background-color: #313244;
+      --MenuItem--hover__color: #cdd6f4;
+      --KeyboardKey-symbol--dead__color: #f38ba8;
+      --KeyboardKey-symbol--ligature__color: #89b4fa;
+      --Name-color: #a6adc8;
+      --Value-color: #cba6f7;
+      --effort-color: #cba6f7;
+    }
+    html[data-color="system"] ::selection {
+      background-color: rgba(203, 166, 247, 0.3);
+    }
+    html[data-color="system"] input::placeholder,
+    html[data-color="system"] textarea::placeholder {
+      color: #a6adc8 !important;
+    }
+  }
+  @media (prefers-color-scheme: dark) {
+    html[data-color="system"] {
+      color-scheme: dark;
+      --primary-d2: #6c7086;
+      --primary-d1: #6c7086;
+      --primary: #1e1e2e;
+      --primary-l1: #11111b;
+      --primary-l2: #181825;
+      --secondary-d1: #a6adc8;
+      --secondary: #cdd6f4;
+      --secondary-l1: #a6adc8;
+      --secondary-l2: #cba6f7;
+      --secondary-f1: #a6adc8;
+      --secondary-f2: #a6adc8;
+      --accent-d2: #cba6f7;
+      --accent-d1: #cba6f7;
+      --accent: #cba6f7;
+      --accent-l1: #cba6f7;
+      --accent-l2: #cba6f7;
+      --error-d1: #f38ba8;
+      --error: #f38ba8;
+      --error-l1: #f38ba8;
+      --shadow-color: rgba(17, 17, 27, 0.88);
+      --slow-key-color: #f38ba8;
+      --fast-key-color: #a6e3a1;
+      --Chart-speed__color: #a6e3a1;
+      --Chart-accuracy__color: #fab387;
+      --Chart-complexity__color: #f5c2e7;
+      --Chart-threshold__color: #eba0ac;
+      --Chart-hist-h__color: #b4befe;
+      --Chart-hist-m__color: #eba0ac;
+      --Chart-hist-r__color: #cba6f7;
+      --KeyboardKey-pointer__color: #cba6f7;
+      --KeyboardKey-symbol__color: #11111b;
+      --pinky-zone-color: #a6e3a1;
+      --ring-zone-color: #94e2d5;
+      --middle-zone-color: #f9e2af;
+      --left-index-zone-color: #89b4fa;
+      --right-index-zone-color: #eba0ac;
+      --thumb-zone-color: #cba6f7;
+      --effort-0-color: #11111b;
+      --effort-1-color: #11111b;
+      --effort-2-color: #cba6f7;
+      --effort-3-color: #cba6f7;
+      --Value--more__color: #a6e3a1;
+      --Value--less__color: #f38ba8;
+      --KeyboardKey-button--depressed__color: #cba6f7;
+      --LessonKey--included__color: #11111b;
+      --LessonKey--uncalibrated__background-color: #313244;
+      --LessonKey--excluded__background-color: #313244;
+      --LessonKey--excluded__color: #6c7086;
+      --DailyGoal-bar__color: #cba6f7;
+      --KeyboardKey-button__color: #cba6f7;
+      --textinput__color: #cdd6f4;
+      --textinput--special__color: #bac2de;
+      --textinput--hit__color: #a6adc8;
+      --textinput--miss__color: #f38ba8;
+      --syntax-keyword: #cba6f7;
+      --syntax-string: #a6e3a1;
+      --syntax-number: #fab387;
+      --syntax-comment: #9399b2;
+      --MenuItem__background-color: #181825;
+      --MenuItem__color: #cdd6f4;
+      --MenuItem--hover__background-color: #313244;
+      --MenuItem--hover__color: #cdd6f4;
+      --KeyboardKey-symbol--dead__color: #f38ba8;
+      --KeyboardKey-symbol--ligature__color: #89b4fa;
+      --Name-color: #a6adc8;
+      --Value-color: #cba6f7;
+      --effort-color: #cba6f7;
+    }
+    html[data-color="system"] ::selection {
+      background-color: rgba(203, 166, 247, 0.3);
+    }
+    html[data-color="system"] input::placeholder,
+    html[data-color="system"] textarea::placeholder {
+      color: #a6adc8 !important;
+    }
+  }
+}

@@ -1,0 +1,1561 @@
+{
+  "build": {
+    "command": "deno run -A themes/tools/build_catppuccin.ts",
+    "compiler": "less",
+    "compiler_version": "4.2.2",
+    "palette_baseline": "mocha / mocha / mauve",
+    "vendor_manifest": "vendor/manifest.json"
+  },
+  "excluded": [],
+  "package": "blox-catppuccin-userstyles",
+  "schema_version": 1,
+  "style_sets": {
+    "all": 134,
+    "recommended": 92,
+    "unmaintained": 104
+  },
+  "styles": [
+    {
+      "document_blocks": 1,
+      "id": "advent-of-code",
+      "name": "Advent Of Code Catppuccin",
+      "remote_imports": [],
+      "source": "styles/advent-of-code/catppuccin.user.less",
+      "source_sha256": "9d264b00744c25af318809fac3e08597b442d4e6414a87261ff5b2ac9c1c1036",
+      "template": "compiled/advent-of-code.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "alacritty.org",
+      "name": "alacritty.org Catppuccin",
+      "remote_imports": [],
+      "source": "styles/alacritty.org/catppuccin.user.less",
+      "source_sha256": "fcf333f8cebc6939f855c4f589518194c971142a9701c9d4b763f431cbb93265",
+      "template": "compiled/alacritty.org.css",
+      "unmaintained": false,
+      "version": "2025.11.07"
+    },
+    {
+      "document_blocks": 2,
+      "id": "alternativeto",
+      "name": "AlternativeTo Catppuccin",
+      "remote_imports": [],
+      "source": "styles/alternativeto/catppuccin.user.less",
+      "source_sha256": "1ef0b71d821b9f653ed467f5455dec5c89a4d50bcab86a09637d6e964543d2d8",
+      "template": "compiled/alternativeto.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "amplenote",
+      "name": "Amplenote Catppuccin",
+      "remote_imports": [],
+      "source": "styles/amplenote/catppuccin.user.less",
+      "source_sha256": "bec44464bf0106ec9b17ee0ba8ceefe10bb4bc38d50480ba795d3f19e0693892",
+      "template": "compiled/amplenote.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 2,
+      "id": "anilist",
+      "name": "AniList/AniChart Catppuccin",
+      "remote_imports": [],
+      "source": "styles/anilist/catppuccin.user.less",
+      "source_sha256": "59f609b7b6cefde9f3bca2ebe4fc08cf0e2c8d11baa688dba9dd5d2ac04cc635",
+      "template": "compiled/anilist.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "anonymous-overflow",
+      "name": "Anonymous Overflow Catppuccin",
+      "remote_imports": [
+        "https://python.catppuccin.com/pygments/catppuccin-variables.important.css"
+      ],
+      "source": "styles/anonymous-overflow/catppuccin.user.less",
+      "source_sha256": "dcc0102c4e92d7e1fe91811e5541a9f9ee33517d80320eba8db63fa468aabcfd",
+      "template": "compiled/anonymous-overflow.css",
+      "unmaintained": false,
+      "version": "2026.01.10"
+    },
+    {
+      "document_blocks": 1,
+      "id": "arch-wiki",
+      "name": "Arch Wiki Catppuccin",
+      "remote_imports": [],
+      "source": "styles/arch-wiki/catppuccin.user.less",
+      "source_sha256": "64a1fc9adc6e5afd2711d43b115c843233e4972d11380c14de4324a53d63c40a",
+      "template": "compiled/arch-wiki.css",
+      "unmaintained": true,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "boringproxy",
+      "name": "boringproxy Catppuccin",
+      "remote_imports": [],
+      "source": "styles/boringproxy/catppuccin.user.less",
+      "source_sha256": "880b789ad07b1e1e6c124ca070003caa0eb674eefc635e82aa9d160b62437190",
+      "template": "compiled/boringproxy.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "brave-search",
+      "name": "Brave Search Catppuccin",
+      "remote_imports": [],
+      "source": "styles/brave-search/catppuccin.user.less",
+      "source_sha256": "0a1123ab6b09dae68babf7acc31798e16d3b7aa7a38be66830a0e9ac95b44e2a",
+      "template": "compiled/brave-search.css",
+      "unmaintained": false,
+      "version": "2026.01.15"
+    },
+    {
+      "document_blocks": 1,
+      "id": "bsky",
+      "name": "Bluesky Social Catppuccin",
+      "remote_imports": [],
+      "source": "styles/bsky/catppuccin.user.less",
+      "source_sha256": "dff6da56483b8098c230b6998124ce04fa980a1e5d3894f14495653be71012aa",
+      "template": "compiled/bsky.css",
+      "unmaintained": false,
+      "version": "2025.10.29"
+    },
+    {
+      "document_blocks": 1,
+      "id": "bstats",
+      "name": "bStats Catppuccin",
+      "remote_imports": [],
+      "source": "styles/bstats/catppuccin.user.less",
+      "source_sha256": "3f7ff5fd09ebd8c7fa399207e71959dddb4d1eddbf345166b2c94f8a2af6ddde",
+      "template": "compiled/bstats.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "canvas-lms",
+      "name": "Canvas LMS Catppuccin",
+      "remote_imports": [],
+      "source": "styles/canvas-lms/catppuccin.user.less",
+      "source_sha256": "deec2b7872606ca80d5ae0e32c384ec16a4c8c70a7d04ff940e5720f7691dc57",
+      "template": "compiled/canvas-lms.css",
+      "unmaintained": false,
+      "version": "2026.04.09"
+    },
+    {
+      "document_blocks": 2,
+      "id": "chatgpt",
+      "name": "ChatGPT Catppuccin",
+      "remote_imports": [],
+      "source": "styles/chatgpt/catppuccin.user.less",
+      "source_sha256": "f1e88fe3552da004658aa673e170978f2a2db62c745c21c6ef4f935bfb5f6d2f",
+      "template": "compiled/chatgpt.css",
+      "unmaintained": false,
+      "version": "2026.07.26"
+    },
+    {
+      "document_blocks": 1,
+      "id": "chatreplay",
+      "name": "ChatReplay Catppuccin",
+      "remote_imports": [],
+      "source": "styles/chatreplay/catppuccin.user.less",
+      "source_sha256": "afa2b6aac34ae615678288922011396d8eb3e2f7e73a7d72bf58a9f149104d9f",
+      "template": "compiled/chatreplay.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "chess.com",
+      "name": "Chess.com Catppuccin",
+      "remote_imports": [],
+      "source": "styles/chess.com/catppuccin.user.less",
+      "source_sha256": "8e2648f7a742598e5b57a265c59089cc6aac155cd43794970080c33242876a30",
+      "template": "compiled/chess.com.css",
+      "unmaintained": false,
+      "version": "2026.04.13"
+    },
+    {
+      "document_blocks": 1,
+      "id": "cinny",
+      "name": "Cinny Catppuccin",
+      "remote_imports": [
+        "https://prismjs.catppuccin.com/variables.important.css"
+      ],
+      "source": "styles/cinny/catppuccin.user.less",
+      "source_sha256": "c8e5d19e4a8dd40a67a4ec9f3515dc25d63d98a7f456b00571930068789795af",
+      "template": "compiled/cinny.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "claude",
+      "name": "Claude Catppuccin",
+      "remote_imports": [],
+      "source": "styles/claude/catppuccin.user.less",
+      "source_sha256": "f11dca3d508c3954818012fd5e8df740b81873fc2972c13339072b3bdc41fb37",
+      "template": "compiled/claude.css",
+      "unmaintained": false,
+      "version": "2026.04.11.1"
+    },
+    {
+      "document_blocks": 1,
+      "id": "cobalt",
+      "name": "cobalt Catppuccin",
+      "remote_imports": [],
+      "source": "styles/cobalt/catppuccin.user.less",
+      "source_sha256": "e3083af77a3ae3f9240e4cbf7580d720a7f252d7be5a7016740de68e0b1b3bab",
+      "template": "compiled/cobalt.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 2,
+      "id": "codeberg",
+      "name": "Codeberg Catppuccin",
+      "remote_imports": [
+        "https://catppuccin.github.io/gitea/theme-catppuccin-mocha-mauve.css"
+      ],
+      "source": "styles/codeberg/catppuccin.user.less",
+      "source_sha256": "f8eb25aa849d2d77451d6ce23ae9833c2d1a552ec44c18b5cff380ca924bb1d8",
+      "template": "compiled/codeberg.css",
+      "unmaintained": false,
+      "version": "2026.04.16"
+    },
+    {
+      "document_blocks": 1,
+      "id": "crates.io",
+      "name": "crates.io Catppuccin",
+      "remote_imports": [
+        "https://unpkg.com/@catppuccin/highlightjs@1.0.0/css/catppuccin-variables.important.css"
+      ],
+      "source": "styles/crates.io/catppuccin.user.less",
+      "source_sha256": "255c6ba50659ac5e2afe9df304be40cb24b28da959271c78a9907f49d59a19e6",
+      "template": "compiled/crates.io.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 2,
+      "id": "crowdin",
+      "name": "Crowdin Catppuccin",
+      "remote_imports": [],
+      "source": "styles/crowdin/catppuccin.user.less",
+      "source_sha256": "b1da7b75084e2a2e006972b2c223e82e8ca1efcaef8ae70834a95db3c059aa44",
+      "template": "compiled/crowdin.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "deepl",
+      "name": "DeepL Catppuccin",
+      "remote_imports": [],
+      "source": "styles/deepl/catppuccin.user.less",
+      "source_sha256": "a39276772dddc472fc186ebd77870f18b8de634a538e279c0a7d42707fc5ae5b",
+      "template": "compiled/deepl.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "deepseek",
+      "name": "DeepSeek Catppuccin",
+      "remote_imports": [
+        "https://prismjs.catppuccin.com/variables.important.css"
+      ],
+      "source": "styles/deepseek/catppuccin.user.less",
+      "source_sha256": "03dc65de8dfd2791200cc0f2d7b045beb5491df20f2f94689f5db9364dcb52b0",
+      "template": "compiled/deepseek.css",
+      "unmaintained": false,
+      "version": "2025.12.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "desmos",
+      "name": "Desmos Catppuccin",
+      "remote_imports": [
+        "https://unpkg.com/@catppuccin/highlightjs@1.0.0/css/catppuccin-variables.important.css"
+      ],
+      "source": "styles/desmos/catppuccin.user.less",
+      "source_sha256": "5b82b76cc87da5a938c6d52086892d59c5bc96d68471a252240aa56ffd8f8716",
+      "template": "compiled/desmos.css",
+      "unmaintained": false,
+      "version": "2026.07.16"
+    },
+    {
+      "document_blocks": 1,
+      "id": "dev.to",
+      "name": "DEV Community Catppuccin",
+      "remote_imports": [
+        "https://python.catppuccin.com/pygments/catppuccin-variables.important.css"
+      ],
+      "source": "styles/dev.to/catppuccin.user.less",
+      "source_sha256": "93b5bb87f25ff46eb19f8e836ed9bf75c3def2c5c33f7bf93757ba676e66cf5c",
+      "template": "compiled/dev.to.css",
+      "unmaintained": false,
+      "version": "2025.12.29"
+    },
+    {
+      "document_blocks": 1,
+      "id": "devdocs",
+      "name": "DevDocs Catppuccin",
+      "remote_imports": [
+        "https://prismjs.catppuccin.com/variables.important.css"
+      ],
+      "source": "styles/devdocs/catppuccin.user.less",
+      "source_sha256": "c20514b1a9f460e2061d0ec97066b968fbb341ee9f80c7b68109d2a09c73ebd9",
+      "template": "compiled/devdocs.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "docs.deno.com",
+      "name": "docs.deno.com Catppuccin",
+      "remote_imports": [
+        "https://prismjs.catppuccin.com/variables.important.css"
+      ],
+      "source": "styles/docs.deno.com/catppuccin.user.less",
+      "source_sha256": "038972fc26098386a35996a9edc507739685049232c2544d1be4f5cd6d55a69a",
+      "template": "compiled/docs.deno.com.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "docs.rs",
+      "name": "docs.rs Catppuccin",
+      "remote_imports": [],
+      "source": "styles/docs.rs/catppuccin.user.less",
+      "source_sha256": "01cadf2d79c17e833c344355902dc38d3e2cfde69879f700f23acf552bf0b323",
+      "template": "compiled/docs.rs.css",
+      "unmaintained": false,
+      "version": "2026.01.16"
+    },
+    {
+      "document_blocks": 2,
+      "id": "duckduckgo",
+      "name": "DuckDuckGo Catppuccin",
+      "remote_imports": [],
+      "source": "styles/duckduckgo/catppuccin.user.less",
+      "source_sha256": "cda87da02bd81a9c329fa13f7a4d342ec33d167aeca878d52b2065b20a344980",
+      "template": "compiled/duckduckgo.css",
+      "unmaintained": false,
+      "version": "2026.03.18"
+    },
+    {
+      "document_blocks": 1,
+      "id": "ecosia",
+      "name": "Ecosia Catppuccin",
+      "remote_imports": [],
+      "source": "styles/ecosia/catppuccin.user.less",
+      "source_sha256": "d1e2f4052a7a74df6cb2a3370c00018c747931fe56543933f0b5f518dbab7f37",
+      "template": "compiled/ecosia.css",
+      "unmaintained": true,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "elk",
+      "name": "Elk Catppuccin",
+      "remote_imports": [],
+      "source": "styles/elk/catppuccin.user.less",
+      "source_sha256": "b10513a42b10b6256ebdf8dd5bfa28b6b2244d6d81553a20bbfd8f53869181c1",
+      "template": "compiled/elk.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "formative",
+      "name": "Formative Catppuccin",
+      "remote_imports": [],
+      "source": "styles/formative/catppuccin.user.less",
+      "source_sha256": "3b67bfa3bc67b5a911028200f8dfff2f00e390918916a7228e24239007ecbcd5",
+      "template": "compiled/formative.css",
+      "unmaintained": true,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "freedesktop",
+      "name": "freedesktop.org Catppuccin",
+      "remote_imports": [],
+      "source": "styles/freedesktop/catppuccin.user.less",
+      "source_sha256": "ab5c5251ec04789ef867648d3fb5a001a5c56f7d6a472419add7550a41a421b7",
+      "template": "compiled/freedesktop.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "ghostty.org",
+      "name": "Ghostty.org Catppuccin",
+      "remote_imports": [
+        "https://unpkg.com/@catppuccin/highlightjs@1.0.0/css/catppuccin-variables.important.css"
+      ],
+      "source": "styles/ghostty.org/catppuccin.user.less",
+      "source_sha256": "a74b335867298e209fdf26ce06742e74b1a284ce8060ecf0b5e1ba7a2306af20",
+      "template": "compiled/ghostty.org.css",
+      "unmaintained": false,
+      "version": "2026.03.10"
+    },
+    {
+      "document_blocks": 3,
+      "id": "github",
+      "name": "GitHub Catppuccin",
+      "remote_imports": [],
+      "source": "styles/github/catppuccin.user.less",
+      "source_sha256": "9f09b6261b298acf923c7562bed8171f04376f3857b7106cc724b36442e18a27",
+      "template": "compiled/github.css",
+      "unmaintained": false,
+      "version": "2026.02.17"
+    },
+    {
+      "document_blocks": 1,
+      "id": "gleam.run",
+      "name": "gleam.run Catppuccin",
+      "remote_imports": [
+        "https://prismjs.catppuccin.com/variables.important.css",
+        "https://unpkg.com/@catppuccin/highlightjs@1.0.0/css/catppuccin-variables.important.css"
+      ],
+      "source": "styles/gleam.run/catppuccin.user.less",
+      "source_sha256": "ff445eef4a16d21e71c7a6689de6a36619169252f61fef0947a4aa40e2e3bfb2",
+      "template": "compiled/gleam.run.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "gmail",
+      "name": "Gmail Catppuccin",
+      "remote_imports": [],
+      "source": "styles/gmail/catppuccin.user.less",
+      "source_sha256": "81e67092195d77940cb68f1ee6ba9680046e67c543ac9056ca6574b4c5c92d79",
+      "template": "compiled/gmail.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 3,
+      "id": "go.dev",
+      "name": "go.dev Catppuccin",
+      "remote_imports": [],
+      "source": "styles/go.dev/catppuccin.user.less",
+      "source_sha256": "993a411944150a84f06cdc3384e17fbf0e60d9d7a922b27eace6bec0473cf9a6",
+      "template": "compiled/go.dev.css",
+      "unmaintained": false,
+      "version": "2026.01.06"
+    },
+    {
+      "document_blocks": 2,
+      "id": "google",
+      "name": "Google Catppuccin",
+      "remote_imports": [],
+      "source": "styles/google/catppuccin.user.less",
+      "source_sha256": "3b5a9b791ddb33fed0a560020665bf3a6152c615ec35a64e11660333c16fcf16",
+      "template": "compiled/google.css",
+      "unmaintained": true,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "google-drive",
+      "name": "Google Drive Catppuccin",
+      "remote_imports": [],
+      "source": "styles/google-drive/catppuccin.user.less",
+      "source_sha256": "bba63c87bb4ec63973aa279f4bdd69a3c37a699839d53007117a6225ebe3e3d4",
+      "template": "compiled/google-drive.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "google-gemini",
+      "name": "Google Gemini Catppuccin",
+      "remote_imports": [
+        "https://unpkg.com/@catppuccin/highlightjs@1.0.0/css/catppuccin-variables.important.css"
+      ],
+      "source": "styles/google-gemini/catppuccin.user.less",
+      "source_sha256": "73b7345f7733b2580f1ff03e199d81aca9f508037d0de1a367feeb487b67a936",
+      "template": "compiled/google-gemini.css",
+      "unmaintained": false,
+      "version": "2026.01.04"
+    },
+    {
+      "document_blocks": 1,
+      "id": "google-photos",
+      "name": "Google Photos Catppuccin",
+      "remote_imports": [],
+      "source": "styles/google-photos/catppuccin.user.less",
+      "source_sha256": "0cce47027ac34575125115b48566515b7a2bf2c205077c8228e55bdb9061ec88",
+      "template": "compiled/google-photos.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "grabify",
+      "name": "Grabify Catppuccin",
+      "remote_imports": [],
+      "source": "styles/grabify/catppuccin.user.less",
+      "source_sha256": "a9e6510d6465d0905a2117dfde333f2b570da8078c4ebc6e0945c6f2f9533247",
+      "template": "compiled/grabify.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "graphite",
+      "name": "Graphite Catppuccin",
+      "remote_imports": [],
+      "source": "styles/graphite/catppuccin.user.less",
+      "source_sha256": "6a2d4620afab7ae025a38f98683149800771b55edd1504a2bf8a05cfc6664a62",
+      "template": "compiled/graphite.css",
+      "unmaintained": true,
+      "version": "2025.11.07"
+    },
+    {
+      "document_blocks": 1,
+      "id": "hackage",
+      "name": "Hackage Catppuccin",
+      "remote_imports": [],
+      "source": "styles/hackage/catppuccin.user.less",
+      "source_sha256": "ed23976e42f7dde5d938fba96acee72d9c6925849db96bd1ba3595806b580409",
+      "template": "compiled/hackage.css",
+      "unmaintained": false,
+      "version": "2026.03.14"
+    },
+    {
+      "document_blocks": 1,
+      "id": "hacker-news",
+      "name": "Hacker News Catppuccin",
+      "remote_imports": [],
+      "source": "styles/hacker-news/catppuccin.user.less",
+      "source_sha256": "ee5a32a2c0101b6584cbf57a9f45211387dbe46744feb2b29c216fbb70a3f9ad",
+      "template": "compiled/hacker-news.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "have-i-been-pwned",
+      "name": "Have I Been Pwned Catppuccin",
+      "remote_imports": [],
+      "source": "styles/have-i-been-pwned/catppuccin.user.less",
+      "source_sha256": "e8fc1a84f06f7b50ddef9bbe3810d255139500a98c4033192c4bfe0c29d3e8f6",
+      "template": "compiled/have-i-been-pwned.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "holodex",
+      "name": "Holodex Catppuccin",
+      "remote_imports": [],
+      "source": "styles/holodex/catppuccin.user.less",
+      "source_sha256": "f5d05d1e350636a85769baa391038fade7ad0a329062faecafb18cd084d93554",
+      "template": "compiled/holodex.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "home-manager-options-search",
+      "name": "Home Manager Options Search Catppuccin",
+      "remote_imports": [],
+      "source": "styles/home-manager-options-search/catppuccin.user.less",
+      "source_sha256": "4a37d95fdc0a2d499f69ef81218bc46065721c19f797f58eb0de350181fbb046",
+      "template": "compiled/home-manager-options-search.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "homepage",
+      "name": "homepage Catppuccin",
+      "remote_imports": [],
+      "source": "styles/homepage/catppuccin.user.less",
+      "source_sha256": "0ae01855c9c14a8d77a7e99b7226e5db1a322ac695e9b118d4a75fd651968218",
+      "template": "compiled/homepage.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "hoogle",
+      "name": "Hoogle Catppuccin",
+      "remote_imports": [],
+      "source": "styles/hoogle/catppuccin.user.less",
+      "source_sha256": "6184d4e6ccb34f3a127ae02460d3d808ced75c41105687f653b98d687379c466",
+      "template": "compiled/hoogle.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "hoppscotch",
+      "name": "Hoppscotch Catppuccin",
+      "remote_imports": [],
+      "source": "styles/hoppscotch/catppuccin.user.less",
+      "source_sha256": "d92788d91b7f15b1cc1873a0160c5dd64d9623b6d297d9c370e04ec1d049e1dc",
+      "template": "compiled/hoppscotch.css",
+      "unmaintained": false,
+      "version": "2025.12.27"
+    },
+    {
+      "document_blocks": 1,
+      "id": "hyperpipe",
+      "name": "Hyperpipe Catppuccin",
+      "remote_imports": [],
+      "source": "styles/hyperpipe/catppuccin.user.less",
+      "source_sha256": "2ee1f0dd7f210c4b10ffddfa0a9ff1e5ef458530f75f47e6662d14228369e959",
+      "template": "compiled/hyperpipe.css",
+      "unmaintained": true,
+      "version": "2026.03.21"
+    },
+    {
+      "document_blocks": 1,
+      "id": "ichi.moe",
+      "name": "ichi.moe Catppuccin",
+      "remote_imports": [],
+      "source": "styles/ichi.moe/catppuccin.user.less",
+      "source_sha256": "da2143b7548e2d451a89a35c4c09427b9d8dbac2b54d9f668a631b2b4d94200e",
+      "template": "compiled/ichi.moe.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 2,
+      "id": "indie-wiki-buddy",
+      "name": "Indie Wiki Buddy Catppuccin",
+      "remote_imports": [],
+      "source": "styles/indie-wiki-buddy/catppuccin.user.less",
+      "source_sha256": "e4f7f36a2a7fff2d1a54bca7856d5474e5012ad404f0cd0c83fc4079e29cba32",
+      "template": "compiled/indie-wiki-buddy.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "inoreader",
+      "name": "inoreader Catppuccin",
+      "remote_imports": [],
+      "source": "styles/inoreader/catppuccin.user.less",
+      "source_sha256": "f728e630c324ea744e70e602c9a307693467597d843ec893544cdf910aebbd88",
+      "template": "compiled/inoreader.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 2,
+      "id": "instagram",
+      "name": "Instagram Catppuccin",
+      "remote_imports": [],
+      "source": "styles/instagram/catppuccin.user.less",
+      "source_sha256": "501b6d16b011c18057561580c2afcd04349540a49a81bfa757d80eecb9a07b3b",
+      "template": "compiled/instagram.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "invidious",
+      "name": "Invidious Catppuccin",
+      "remote_imports": [],
+      "source": "styles/invidious/catppuccin.user.less",
+      "source_sha256": "566f8d24ece653c945e5cb2f9db5742183854f31b19a97ea71347063ce4b415b",
+      "template": "compiled/invidious.css",
+      "unmaintained": true,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "invokeai",
+      "name": "InvokeAI Catppuccin",
+      "remote_imports": [],
+      "source": "styles/invokeai/catppuccin.user.less",
+      "source_sha256": "2c199c947f312b789f8b91d86c0407f673716c910d91738baaf22ef335ea7a56",
+      "template": "compiled/invokeai.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "jisho",
+      "name": "Jisho Catppuccin",
+      "remote_imports": [],
+      "source": "styles/jisho/catppuccin.user.less",
+      "source_sha256": "fcc1c04bb10c8ef0d38def1fe8b889b0805f3ec8856fe1b4b6393bce0c5428bb",
+      "template": "compiled/jisho.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "keybr.com",
+      "name": "keybr.com Catppuccin",
+      "remote_imports": [],
+      "source": "styles/keybr.com/catppuccin.user.less",
+      "source_sha256": "86b1226a92f4b3f9b766dd70e8298f453144f30417c97475d2caa90a5195f9ed",
+      "template": "compiled/keybr.com.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 2,
+      "id": "keyoxide",
+      "name": "Keyoxide Catppuccin",
+      "remote_imports": [],
+      "source": "styles/keyoxide/catppuccin.user.less",
+      "source_sha256": "937a5971a3728fb363bd3bc5478948eab1a348af87ee6a3f14b0523ec782c6c6",
+      "template": "compiled/keyoxide.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "lastfm",
+      "name": "Last.fm Catppuccin",
+      "remote_imports": [],
+      "source": "styles/lastfm/catppuccin.user.less",
+      "source_sha256": "254093935ea802ee04201567d048e81d1f629f3854ecfadf261974d7c935adf6",
+      "template": "compiled/lastfm.css",
+      "unmaintained": false,
+      "version": "2026.01.03"
+    },
+    {
+      "document_blocks": 1,
+      "id": "learn-x-in-y-minutes",
+      "name": "Learn X in Y Minutes Catppuccin",
+      "remote_imports": [
+        "https://python.catppuccin.com/pygments/catppuccin-variables.important.css"
+      ],
+      "source": "styles/learn-x-in-y-minutes/catppuccin.user.less",
+      "source_sha256": "7a0bfe0abf076cd2a5751fc135334db5c8c55aa67a5112c1b9542516b273562e",
+      "template": "compiled/learn-x-in-y-minutes.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "lemmy",
+      "name": "Lemmy Catppuccin",
+      "remote_imports": [],
+      "source": "styles/lemmy/catppuccin.user.less",
+      "source_sha256": "001dbcbe5014eeea99636c7faae844592d9a8e6750699262d6ec370522ffd77a",
+      "template": "compiled/lemmy.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "libreddit",
+      "name": "Libreddit/Redlib Catppuccin",
+      "remote_imports": [],
+      "source": "styles/libreddit/catppuccin.user.less",
+      "source_sha256": "c7b931ad9266e0f69d89516778f3634101b4548fcf682996bad975c7eeab18a0",
+      "template": "compiled/libreddit.css",
+      "unmaintained": true,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "lichess",
+      "name": "Lichess Catppuccin",
+      "remote_imports": [],
+      "source": "styles/lichess/catppuccin.user.less",
+      "source_sha256": "3f8f9685c3364d646ed96c7cbf31d3001e57a4e44a2ab6db48c6e6fb00e627ea",
+      "template": "compiled/lichess.css",
+      "unmaintained": false,
+      "version": "2025.09.19"
+    },
+    {
+      "document_blocks": 1,
+      "id": "lingva",
+      "name": "Lingva Catppuccin",
+      "remote_imports": [],
+      "source": "styles/lingva/catppuccin.user.less",
+      "source_sha256": "71af3f31ac85053c6a7adb21deae8322ed0cbc867934bf8dee92fdd8ba8291ce",
+      "template": "compiled/lingva.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "linkedin",
+      "name": "LinkedIn Catppuccin",
+      "remote_imports": [],
+      "source": "styles/linkedin/catppuccin.user.less",
+      "source_sha256": "e6b1fad3792521bb3168f33fc3dd24cfce8af97e9779ce79b49dcd8ab98a4229",
+      "template": "compiled/linkedin.css",
+      "unmaintained": true,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "listenbrainz",
+      "name": "ListenBrainz Catppuccin",
+      "remote_imports": [],
+      "source": "styles/listenbrainz/catppuccin.user.less",
+      "source_sha256": "563c4edbfefd09de0d8e4e4108a00a4763116a64023e9d12b197d83a9e4495b8",
+      "template": "compiled/listenbrainz.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "lobste.rs",
+      "name": "Lobsters Catppuccin",
+      "remote_imports": [],
+      "source": "styles/lobste.rs/catppuccin.user.less",
+      "source_sha256": "984545c50966926638bc8dc3f6934688cc37161793786e4abcf0da35263e0263",
+      "template": "compiled/lobste.rs.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "mastodon",
+      "name": "Mastodon Catppuccin",
+      "remote_imports": [],
+      "source": "styles/mastodon/catppuccin.user.less",
+      "source_sha256": "00dc20a95c1af06aad046bd9e306b6322e2cfb77b7fa401abbd6b51c79133112",
+      "template": "compiled/mastodon.css",
+      "unmaintained": false,
+      "version": "2026.07.08"
+    },
+    {
+      "document_blocks": 1,
+      "id": "mdbook",
+      "name": "mdBook Catppuccin",
+      "remote_imports": [
+        "https://unpkg.com/@catppuccin/highlightjs@1.0.0/css/catppuccin-variables.css"
+      ],
+      "source": "styles/mdbook/catppuccin.user.less",
+      "source_sha256": "a37c13393071076d673fe56900f1e79298ad9f10f7ae4ed03c83ac00a1908c41",
+      "template": "compiled/mdbook.css",
+      "unmaintained": false,
+      "version": "2026.04.09"
+    },
+    {
+      "document_blocks": 2,
+      "id": "mdn",
+      "name": "MDN Catppuccin",
+      "remote_imports": [
+        "https://prismjs.catppuccin.com/variables.important.css"
+      ],
+      "source": "styles/mdn/catppuccin.user.less",
+      "source_sha256": "d056be43e00d3c7112b9fefad116c0cabf8966ef788c8ba0873edaa2a2898621",
+      "template": "compiled/mdn.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "microsoft-word",
+      "name": "Microsoft Word Catppuccin",
+      "remote_imports": [],
+      "source": "styles/microsoft-word/catppuccin.user.less",
+      "source_sha256": "82174a3aeeabcac5adae752afcf4192db5349c9b621be816efd7e436cf13e6a6",
+      "template": "compiled/microsoft-word.css",
+      "unmaintained": true,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "migadu-webmail",
+      "name": "Migadu Webmail Catppuccin",
+      "remote_imports": [],
+      "source": "styles/migadu-webmail/catppuccin.user.less",
+      "source_sha256": "0e27a7d411be620195018eb8e23e9761b593bcb8595ea1bf0198819e0ab2843a",
+      "template": "compiled/migadu-webmail.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "minesweeper",
+      "name": "Minesweeper Online Catppuccin",
+      "remote_imports": [],
+      "source": "styles/minesweeper/catppuccin.user.less",
+      "source_sha256": "687de8edfde42a1e8db16d335f453a8d301f32ef9a4d9ef7e7d19f3dce198c7f",
+      "template": "compiled/minesweeper.css",
+      "unmaintained": true,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "modrinth",
+      "name": "Modrinth Catppuccin",
+      "remote_imports": [],
+      "source": "styles/modrinth/catppuccin.user.less",
+      "source_sha256": "31f66b9e90bc4ff3c01550d794a2aba6b75a2e89606d07561b1bc295d96c9670",
+      "template": "compiled/modrinth.css",
+      "unmaintained": false,
+      "version": "2026.04.13"
+    },
+    {
+      "document_blocks": 1,
+      "id": "namemc",
+      "name": "NameMC Catppuccin",
+      "remote_imports": [],
+      "source": "styles/namemc/catppuccin.user.less",
+      "source_sha256": "9822f220fc7c148d539d43b0a621818d8764f44693199cf28392def759713336",
+      "template": "compiled/namemc.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "neovim.io",
+      "name": "neovim.io Catppuccin",
+      "remote_imports": [
+        "https://unpkg.com/@catppuccin/highlightjs@1.0.0/css/catppuccin-variables.important.css"
+      ],
+      "source": "styles/neovim.io/catppuccin.user.less",
+      "source_sha256": "8dc58b3583c41e156d01a861a17f07d8442d586bc5d9dd5f299102a259f7bf67",
+      "template": "compiled/neovim.io.css",
+      "unmaintained": false,
+      "version": "2025.09.19"
+    },
+    {
+      "document_blocks": 1,
+      "id": "nitter",
+      "name": "Nitter Catppuccin",
+      "remote_imports": [],
+      "source": "styles/nitter/catppuccin.user.less",
+      "source_sha256": "49772bcc9d343e6065550e0761495cd9dc15f83a3c27b41198986b535b102baa",
+      "template": "compiled/nitter.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "nixos-manual",
+      "name": "NixOS Manual/Nixpkgs Manual Catppuccin",
+      "remote_imports": [
+        "https://unpkg.com/@catppuccin/highlightjs@1.0.0/css/catppuccin-variables.important.css"
+      ],
+      "source": "styles/nixos-manual/catppuccin.user.less",
+      "source_sha256": "892c075bffec7f5ba932cb662281752c2bc1e3f508c3c1ac4b91c05a5a6dd42d",
+      "template": "compiled/nixos-manual.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "nixos-search",
+      "name": "NixOS Search Catppuccin",
+      "remote_imports": [],
+      "source": "styles/nixos-search/catppuccin.user.less",
+      "source_sha256": "cd3e3ca9fe58e81fec19bf5684013045d08eb545fdb70e613cc21009ee3cc8f5",
+      "template": "compiled/nixos-search.css",
+      "unmaintained": false,
+      "version": "2026.05.14"
+    },
+    {
+      "document_blocks": 1,
+      "id": "npm",
+      "name": "npm Catppuccin",
+      "remote_imports": [],
+      "source": "styles/npm/catppuccin.user.less",
+      "source_sha256": "3aaa41f489429ddbbd4bbb19ee8a526a1b10c745e67d456a25b1309e1fcf9932",
+      "template": "compiled/npm.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "npmx",
+      "name": "npmx Catppuccin",
+      "remote_imports": [],
+      "source": "styles/npmx/catppuccin.user.less",
+      "source_sha256": "a177418f43ab817d191f79bd5c7adbf4182bb6e0f4d046713d7e437a0d2958fd",
+      "template": "compiled/npmx.css",
+      "unmaintained": false,
+      "version": "2026.04.13"
+    },
+    {
+      "document_blocks": 1,
+      "id": "ollama",
+      "name": "Ollama Catppuccin",
+      "remote_imports": [
+        "https://unpkg.com/@catppuccin/highlightjs@1.0.0/css/catppuccin-variables.css"
+      ],
+      "source": "styles/ollama/catppuccin.user.less",
+      "source_sha256": "0897e91184c50cf9342097f8b6447d019f5b4cea41329d7219e55590c0d5da57",
+      "template": "compiled/ollama.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "openmediavault",
+      "name": "openmediavault Catppuccin",
+      "remote_imports": [],
+      "source": "styles/openmediavault/catppuccin.user.less",
+      "source_sha256": "880fb9b15cd3f32f1abe636795fbb211ba3615e15966bfccd8bdda5cd780fa6a",
+      "template": "compiled/openmediavault.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "paste.rs",
+      "name": "paste.rs Catppuccin",
+      "remote_imports": [],
+      "source": "styles/paste.rs/catppuccin.user.less",
+      "source_sha256": "7594c3951d6418141fc1c8a5d6b4398dc634753b2a05b38581aa418914b36732",
+      "template": "compiled/paste.rs.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "perplexity",
+      "name": "Perplexity Catppuccin",
+      "remote_imports": [],
+      "source": "styles/perplexity/catppuccin.user.less",
+      "source_sha256": "73d9aaecb6ebb605007a3f342b0aa6c75a0eda6ec5599dd6e6301d4efeef8288",
+      "template": "compiled/perplexity.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "phanpy",
+      "name": "Phanpy Catppuccin",
+      "remote_imports": [],
+      "source": "styles/phanpy/catppuccin.user.less",
+      "source_sha256": "680cec49b439eb3f2a73dcd57c2a5dbbdda03fd569007396ce3f8d2cd52b2750",
+      "template": "compiled/phanpy.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "picrew",
+      "name": "Picrew Catppuccin",
+      "remote_imports": [],
+      "source": "styles/picrew/catppuccin.user.less",
+      "source_sha256": "41f44e96f6274952c6f6c883f15a74ecc1b3ff381bc9680e0dfb8cde34486110",
+      "template": "compiled/picrew.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "pinterest",
+      "name": "Pinterest Catppuccin",
+      "remote_imports": [],
+      "source": "styles/pinterest/catppuccin.user.less",
+      "source_sha256": "8262e1a39e198e433f206b72b47ad68d23f532637394e4a636893ac23d84e508",
+      "template": "compiled/pinterest.css",
+      "unmaintained": false,
+      "version": "2025.10.09"
+    },
+    {
+      "document_blocks": 1,
+      "id": "planet-minecraft",
+      "name": "Planet Minecraft Catppuccin",
+      "remote_imports": [],
+      "source": "styles/planet-minecraft/catppuccin.user.less",
+      "source_sha256": "11462927c3f4f1997987328eaaea25e49a0357461b615b77c0d9a0f6c22b4db9",
+      "template": "compiled/planet-minecraft.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "poe",
+      "name": "Poe Catppuccin",
+      "remote_imports": [],
+      "source": "styles/poe/catppuccin.user.less",
+      "source_sha256": "8a7f6245d72941a7eaa56c14a8a9501e3640a1aa42cde83eb872563481d1e56e",
+      "template": "compiled/poe.css",
+      "unmaintained": false,
+      "version": "2026.01.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "porkbun",
+      "name": "Porkbun Catppuccin",
+      "remote_imports": [],
+      "source": "styles/porkbun/catppuccin.user.less",
+      "source_sha256": "b56f380ab8bb2c7e36c502ec32fa6864dcb75ac707da49415fa964b42c7674a1",
+      "template": "compiled/porkbun.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "pronouns.cc",
+      "name": "pronouns.cc Catppuccin",
+      "remote_imports": [],
+      "source": "styles/pronouns.cc/catppuccin.user.less",
+      "source_sha256": "201a930111fc5465de4c07be4b5b8697f8020a48c61ee8699974c12afb3a181a",
+      "template": "compiled/pronouns.cc.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "pronouns.page",
+      "name": "Pronouns.page Catppuccin",
+      "remote_imports": [],
+      "source": "styles/pronouns.page/catppuccin.user.less",
+      "source_sha256": "0367af98c23c4dfc221bc6a1ecbd90c767264fdf81f1403e8ff9a938c56455d5",
+      "template": "compiled/pronouns.page.css",
+      "unmaintained": false,
+      "version": "2026.01.09"
+    },
+    {
+      "document_blocks": 1,
+      "id": "proton",
+      "name": "Proton Catppuccin",
+      "remote_imports": [],
+      "source": "styles/proton/catppuccin.user.less",
+      "source_sha256": "75f832b65e8da5cddeccfccabe66ece8ae6326b97cb9f0d51cd5559eb0c55c21",
+      "template": "compiled/proton.css",
+      "unmaintained": false,
+      "version": "2025.12.05"
+    },
+    {
+      "document_blocks": 1,
+      "id": "pypi",
+      "name": "PyPI Catppuccin",
+      "remote_imports": [
+        "https://python.catppuccin.com/pygments/catppuccin-variables.important.css"
+      ],
+      "source": "styles/pypi/catppuccin.user.less",
+      "source_sha256": "55de51133005b1ec1a5237f85fbc88597c4b59f0fe717058de7dbec5a8aae957",
+      "template": "compiled/pypi.css",
+      "unmaintained": false,
+      "version": "2026.03.14"
+    },
+    {
+      "document_blocks": 1,
+      "id": "pythonanywhere",
+      "name": "PythonAnywhere Catppuccin",
+      "remote_imports": [
+        "https://chroma.catppuccin.com/mocha-chroma-style.css",
+        "https://python.catppuccin.com/pygments/catppuccin-variables.important.css"
+      ],
+      "source": "styles/pythonanywhere/catppuccin.user.less",
+      "source_sha256": "f996a10a7774e75d9b3b5c90cf92b19f49ae96febbb56b37512fbc6f6a57d9b5",
+      "template": "compiled/pythonanywhere.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "quizlet",
+      "name": "Quizlet Catppuccin",
+      "remote_imports": [],
+      "source": "styles/quizlet/catppuccin.user.less",
+      "source_sha256": "e1d48abeb4f2d32d56856f1ebb8431e7f60d68b7e52ce01f065b664aaae2fdc5",
+      "template": "compiled/quizlet.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "raindrop",
+      "name": "Raindrop Catppuccin",
+      "remote_imports": [],
+      "source": "styles/raindrop/catppuccin.user.less",
+      "source_sha256": "d9a7d2af4211e3c4035ae94807cc0118dfaca31ff1f91cc82298ff85e2d3757e",
+      "template": "compiled/raindrop.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "react.dev",
+      "name": "React.dev Catppuccin",
+      "remote_imports": [],
+      "source": "styles/react.dev/catppuccin.user.less",
+      "source_sha256": "97c6b8285194e7be3c1482bb97dd6b7b4ed032c9ed1dd1746f86aa9e707a57c1",
+      "template": "compiled/react.dev.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "reddit",
+      "name": "Reddit Catppuccin",
+      "remote_imports": [],
+      "source": "styles/reddit/catppuccin.user.less",
+      "source_sha256": "9df9b9aff1c62feb31b0aaad58f6c08643cd44a54b7e9818cefd79dd5159b2ee",
+      "template": "compiled/reddit.css",
+      "unmaintained": true,
+      "version": "2026.03.09.1"
+    },
+    {
+      "document_blocks": 1,
+      "id": "regex101",
+      "name": "regex101 Catppuccin",
+      "remote_imports": [
+        "https://unpkg.com/@catppuccin/highlightjs@1.0.0/css/catppuccin-variables.important.css"
+      ],
+      "source": "styles/regex101/catppuccin.user.less",
+      "source_sha256": "ba9b8d722fcaf55194fa8ab19ca1971994be1cf9130e1b92d66b86c1f3417f6e",
+      "template": "compiled/regex101.css",
+      "unmaintained": false,
+      "version": "2026.01.10"
+    },
+    {
+      "document_blocks": 2,
+      "id": "rentry.co",
+      "name": "Rentry.co Catppuccin",
+      "remote_imports": [
+        "https://python.catppuccin.com/pygments/catppuccin-variables.important.css"
+      ],
+      "source": "styles/rentry.co/catppuccin.user.less",
+      "source_sha256": "91fef9788d06b95b38d4a9faedb550fb69f6898af294d1c1c35367f7bd7c7e11",
+      "template": "compiled/rentry.co.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "scalar",
+      "name": "Scalar Catppuccin",
+      "remote_imports": [
+        "https://unpkg.com/@catppuccin/highlightjs@1.0.0/css/catppuccin-variables.important.css"
+      ],
+      "source": "styles/scalar/catppuccin.user.less",
+      "source_sha256": "2d046d6482048b7a8c201605bee8374d17b98f39ab3d111a52de49cb3b83671e",
+      "template": "compiled/scalar.css",
+      "unmaintained": false,
+      "version": "2026.01.20"
+    },
+    {
+      "document_blocks": 1,
+      "id": "searchix",
+      "name": "Searchix Catppuccin",
+      "remote_imports": [],
+      "source": "styles/searchix/catppuccin.user.less",
+      "source_sha256": "3d08c97beda1afde3f3268c93c486b251e4a23045df4a20daca1db783f2f3fbf",
+      "template": "compiled/searchix.css",
+      "unmaintained": false,
+      "version": "2025.12.05"
+    },
+    {
+      "document_blocks": 1,
+      "id": "searxng",
+      "name": "SearXNG Catppuccin",
+      "remote_imports": [],
+      "source": "styles/searxng/catppuccin.user.less",
+      "source_sha256": "d06620cecffd6767069978be4b2da4e0378a8e7fc7d8d1a07dcbfb1deef21cb1",
+      "template": "compiled/searxng.css",
+      "unmaintained": false,
+      "version": "2026.07.12"
+    },
+    {
+      "document_blocks": 2,
+      "id": "seventv",
+      "name": "7TV Catppuccin",
+      "remote_imports": [],
+      "source": "styles/seventv/catppuccin.user.less",
+      "source_sha256": "80e38269fa5813b0a9217950736ce075b1383442e8c15fddd8a2e3b5c1e18e2b",
+      "template": "compiled/seventv.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "shinigami-eyes",
+      "name": "Shinigami Eyes Catppuccin",
+      "remote_imports": [],
+      "source": "styles/shinigami-eyes/catppuccin.user.less",
+      "source_sha256": "887abb0e3eae045d3cf6dffa92d4ed110659a5c8844c3ece02366d3d110e5f28",
+      "template": "compiled/shinigami-eyes.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "snapchat-web",
+      "name": "Snapchat Web Catppuccin",
+      "remote_imports": [],
+      "source": "styles/snapchat-web/catppuccin.user.less",
+      "source_sha256": "bc0f2d33b4288a8f185b5752db841478b5530792b9669a288c8fb8b08f5f6953",
+      "template": "compiled/snapchat-web.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "spotify-web",
+      "name": "Spotify Web Catppuccin",
+      "remote_imports": [],
+      "source": "styles/spotify-web/catppuccin.user.less",
+      "source_sha256": "0b4257228e126a41fd1a8279ee46980309353988359f8dfbe2b2ee839fe31e65",
+      "template": "compiled/spotify-web.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "stack-overflow",
+      "name": "Stack Overflow Catppuccin",
+      "remote_imports": [
+        "https://unpkg.com/@catppuccin/highlightjs@1.0.0/css/catppuccin-variables.important.css"
+      ],
+      "source": "styles/stack-overflow/catppuccin.user.less",
+      "source_sha256": "510080634e15cb58bceaa6371cb78b51a1abe6fc95dfd1a5363469ab55d623e9",
+      "template": "compiled/stack-overflow.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "startpage",
+      "name": "Startpage Catppuccin",
+      "remote_imports": [],
+      "source": "styles/startpage/catppuccin.user.less",
+      "source_sha256": "fd5e6cbce5d78fed4a2fb2e16ef7deb8393d91bd6ed57e4cc665221960be039f",
+      "template": "compiled/startpage.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "status.cafe",
+      "name": "status.cafe Catppuccin",
+      "remote_imports": [],
+      "source": "styles/status.cafe/catppuccin.user.less",
+      "source_sha256": "19e2de03846792c945493ea4f179d6dbc2be950b9a1318d7fcf95bd92bd58bc2",
+      "template": "compiled/status.cafe.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "stylus",
+      "name": "Stylus Catppuccin",
+      "remote_imports": [],
+      "source": "styles/stylus/catppuccin.user.less",
+      "source_sha256": "90a9bae5fb4c78dd9f95fea1ba10386522b987c1a4f46f1a77a989117e597a31",
+      "template": "compiled/stylus.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "substack",
+      "name": "Substack Catppuccin",
+      "remote_imports": [],
+      "source": "styles/substack/catppuccin.user.less",
+      "source_sha256": "ae72d5e5b9270ddd413c0dd08415f1cf5de62701dd7c8e2660e055e181681d31",
+      "template": "compiled/substack.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "syncthing",
+      "name": "Syncthing Catppuccin",
+      "remote_imports": [],
+      "source": "styles/syncthing/catppuccin.user.less",
+      "source_sha256": "df493f0275edc5094bfd0350c3ca532c7fbdb7aa70769131e3a0aeaa163dfefb",
+      "template": "compiled/syncthing.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "tabnews",
+      "name": "TabNews Catppuccin",
+      "remote_imports": [],
+      "source": "styles/tabnews/catppuccin.user.less",
+      "source_sha256": "25ed46c40bd785576cd706dfe3764d4b01caa079dfbfdb65bcd84cd03fd50dec",
+      "template": "compiled/tabnews.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "tldraw",
+      "name": "tldraw Catppuccin",
+      "remote_imports": [],
+      "source": "styles/tldraw/catppuccin.user.less",
+      "source_sha256": "94707eb87550d33e5c1131788413c6308188a0e6eaafcd1e21a339dcfd9dfb99",
+      "template": "compiled/tldraw.css",
+      "unmaintained": false,
+      "version": "2025.09.10"
+    },
+    {
+      "document_blocks": 1,
+      "id": "trinket",
+      "name": "Trinket Catppuccin",
+      "remote_imports": [
+        "https://unpkg.com/@catppuccin/highlightjs@1.0.0/css/catppuccin-variables.important.css"
+      ],
+      "source": "styles/trinket/catppuccin.user.less",
+      "source_sha256": "879bab4c2bafdc75127c08b6dd2197872cbf8d071d1b1d24d0876a9c50924a94",
+      "template": "compiled/trinket.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "tuta",
+      "name": "Tuta Catppuccin",
+      "remote_imports": [],
+      "source": "styles/tuta/catppuccin.user.less",
+      "source_sha256": "840579b29939df6c6f0bbd0ea63ca2c0a83a87ff3a883deb036a025f77490e3b",
+      "template": "compiled/tuta.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 3,
+      "id": "twitch",
+      "name": "Twitch Catppuccin",
+      "remote_imports": [
+        "https://python.catppuccin.com/pygments/catppuccin-variables.important.css"
+      ],
+      "source": "styles/twitch/catppuccin.user.less",
+      "source_sha256": "f7aee68ee5a5b1fe3f95837325047e8809738d6889a13c3ffee3e7da48294093",
+      "template": "compiled/twitch.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 3,
+      "id": "twitter",
+      "name": "Twitter Catppuccin",
+      "remote_imports": [],
+      "source": "styles/twitter/catppuccin.user.less",
+      "source_sha256": "d06b31331a1426ccade384df420697ab49f98389df8df352657a9654b8ec956b",
+      "template": "compiled/twitter.css",
+      "unmaintained": false,
+      "version": "2026.04.19"
+    },
+    {
+      "document_blocks": 2,
+      "id": "vercel",
+      "name": "Vercel/Next.js Catppuccin",
+      "remote_imports": [
+        "https://prismjs.catppuccin.com/variables.important.css"
+      ],
+      "source": "styles/vercel/catppuccin.user.less",
+      "source_sha256": "399381012f554d6a86f4c8f55091851ce934804aba17cfa9551cab16968cdd1b",
+      "template": "compiled/vercel.css",
+      "unmaintained": false,
+      "version": "2026.02.25"
+    },
+    {
+      "document_blocks": 1,
+      "id": "vikunja",
+      "name": "Vikunja Catppuccin",
+      "remote_imports": [],
+      "source": "styles/vikunja/catppuccin.user.less",
+      "source_sha256": "857e18dd7943475303fcde0ccbac9b1e118138511e71f75aa81a31915cfb49ce",
+      "template": "compiled/vikunja.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "web.dev",
+      "name": "web.dev Catppuccin",
+      "remote_imports": [],
+      "source": "styles/web.dev/catppuccin.user.less",
+      "source_sha256": "d9bcd03ec8cf1c280311ba8117ddb3c13baf2cffdcc76eae2a2e48898f9d5408",
+      "template": "compiled/web.dev.css",
+      "unmaintained": false,
+      "version": "2026.03.04"
+    },
+    {
+      "document_blocks": 1,
+      "id": "whatsapp-web",
+      "name": "WhatsApp Web Catppuccin",
+      "remote_imports": [],
+      "source": "styles/whatsapp-web/catppuccin.user.less",
+      "source_sha256": "5ddf88728fc03ad076601e8d6577815d1b6d72d55a54a31ab7e679f65f01a066",
+      "template": "compiled/whatsapp-web.css",
+      "unmaintained": false,
+      "version": "2026.07.03"
+    },
+    {
+      "document_blocks": 1,
+      "id": "wiki.nixos.org",
+      "name": "NixOS Wiki Catppuccin",
+      "remote_imports": [
+        "https://python.catppuccin.com/pygments/catppuccin-variables.important.css"
+      ],
+      "source": "styles/wiki.nixos.org/catppuccin.user.less",
+      "source_sha256": "a42d688cda2fbf9d6a694b5d593f4c2cbf2a726922fef411ae73c0c12e179ef1",
+      "template": "compiled/wiki.nixos.org.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "wikipedia",
+      "name": "Wikipedia Catppuccin",
+      "remote_imports": [
+        "https://python.catppuccin.com/pygments/catppuccin-variables.important.css"
+      ],
+      "source": "styles/wikipedia/catppuccin.user.less",
+      "source_sha256": "cbe2e0158a3dde9e10248627610f6e85da60b89c31ec8088e2427f8c8ed96af4",
+      "template": "compiled/wikipedia.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 1,
+      "id": "wikiwand",
+      "name": "Wikiwand Catppuccin",
+      "remote_imports": [
+        "https://python.catppuccin.com/pygments/catppuccin-variables.important.css"
+      ],
+      "source": "styles/wikiwand/catppuccin.user.less",
+      "source_sha256": "215cba4b648549509e812ee725fcf257c3a18d03c7089c18834301f7f01983db",
+      "template": "compiled/wikiwand.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    },
+    {
+      "document_blocks": 3,
+      "id": "youtube",
+      "name": "YouTube Catppuccin",
+      "remote_imports": [],
+      "source": "styles/youtube/catppuccin.user.less",
+      "source_sha256": "ac9f8d832bd1ff06b8fba95e99cbed9ae6aafd5b4f8b892efd5935d82cafa7af",
+      "template": "compiled/youtube.css",
+      "unmaintained": false,
+      "version": "2026.04.14"
+    },
+    {
+      "document_blocks": 1,
+      "id": "zen-browser-docs",
+      "name": "Zen Browser Docs Catppuccin",
+      "remote_imports": [],
+      "source": "styles/zen-browser-docs/catppuccin.user.less",
+      "source_sha256": "3b3ee6bc082968ae83cf2a378311556c696bb13ab6c3f24510fdce021bf9874f",
+      "template": "compiled/zen-browser-docs.css",
+      "unmaintained": false,
+      "version": "2025.09.06"
+    }
+  ],
+  "upstream": {
+    "license": "MIT",
+    "name": "Catppuccin Userstyles",
+    "revision": "5ef4cc64231826f46d12a2721fa72571f5aa8a27",
+    "url": "https://github.com/catppuccin/userstyles"
+  }
+}

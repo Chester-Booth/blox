@@ -1,0 +1,143 @@
+/* Compiled from Catppuccin Userstyles 5ef4cc64231826f46d12a2721fa72571f5aa8a27; do not edit. */
+/* deno-fmt-ignore */
+/* deno-fmt-ignore */
+@-moz-document url-prefix("https://nixos.org/manual/"), url-prefix("https://nix-darwin.github.io/nix-darwin/manual/") {
+  code.hljs{color:var(--ctp-text) !important;background:var(--ctp-base) !important}code .hljs-keyword{color:var(--ctp-mauve) !important}code .hljs-built_in{color:var(--ctp-red) !important}code .hljs-type{color:var(--ctp-yellow) !important}code .hljs-literal{color:var(--ctp-peach) !important}code .hljs-number{color:var(--ctp-peach) !important}code .hljs-operator{color:var(--ctp-sky) !important}code .hljs-punctuation{color:var(--ctp-subtext1) !important}code .hljs-property{color:var(--ctp-teal) !important}code .hljs-regexp{color:var(--ctp-pink) !important}code .hljs-string{color:var(--ctp-green) !important}code .hljs-char.escape_{color:var(--ctp-green) !important}code .hljs-subst{color:var(--ctp-subtext0) !important}code .hljs-symbol{color:var(--ctp-flamingo) !important}code .hljs-variable{color:var(--ctp-mauve) !important}code .hljs-variable.language_{color:var(--ctp-mauve) !important}code .hljs-variable.constant_{color:var(--ctp-peach) !important}code .hljs-title{color:var(--ctp-blue) !important}code .hljs-title.class_{color:var(--ctp-yellow) !important}code .hljs-title.function_{color:var(--ctp-blue) !important}code .hljs-params{color:var(--ctp-text) !important}code .hljs-comment{color:var(--ctp-overlay2) !important}code .hljs-doctag{color:var(--ctp-red) !important}code .hljs-meta{color:var(--ctp-peach) !important}code .hljs-section{color:var(--ctp-blue) !important}code .hljs-tag{color:var(--ctp-teal) !important}code .hljs-name{color:var(--ctp-mauve) !important}code .hljs-attr{color:var(--ctp-blue) !important}code .hljs-attribute{color:var(--ctp-green) !important}code .hljs-bullet{color:var(--ctp-teal) !important}code .hljs-code{color:var(--ctp-green) !important}code .hljs-emphasis{color:var(--ctp-red) !important;font-style:italic !important}code .hljs-strong{color:var(--ctp-red) !important;font-weight:bold !important}code .hljs-formula{color:var(--ctp-teal) !important}code .hljs-link{color:var(--ctp-sapphire) !important;font-style:italic !important}code .hljs-quote{color:var(--ctp-green) !important;font-style:italic !important}code .hljs-selector-tag{color:var(--ctp-yellow) !important}code .hljs-selector-id{color:var(--ctp-blue) !important}code .hljs-selector-class{color:var(--ctp-teal) !important}code .hljs-selector-attr{color:var(--ctp-mauve) !important}code .hljs-selector-pseudo{color:var(--ctp-teal) !important}code .hljs-template-tag{color:var(--ctp-flamingo) !important}code .hljs-template-variable{color:var(--ctp-flamingo) !important}code .hljs-addition{color:var(--ctp-green) !important;background:rgb(from var(--ctp-green) r g b/15%) !important}code .hljs-deletion{color:var(--ctp-red) !important;background:rgb(from var(--ctp-red) r g b/15%) !important}
+
+  @media (prefers-color-scheme: light) {
+    :root {
+      color-scheme: dark;
+      --ctp-rosewater: #f5e0dc;
+      --ctp-flamingo: #f2cdcd;
+      --ctp-pink: #f5c2e7;
+      --ctp-mauve: #cba6f7;
+      --ctp-red: #f38ba8;
+      --ctp-maroon: #eba0ac;
+      --ctp-peach: #fab387;
+      --ctp-yellow: #f9e2af;
+      --ctp-green: #a6e3a1;
+      --ctp-teal: #94e2d5;
+      --ctp-sky: #89dceb;
+      --ctp-sapphire: #74c7ec;
+      --ctp-blue: #89b4fa;
+      --ctp-lavender: #b4befe;
+      --ctp-text: #cdd6f4;
+      --ctp-subtext1: #bac2de;
+      --ctp-subtext0: #a6adc8;
+      --ctp-overlay2: #9399b2;
+      --ctp-overlay1: #7f849c;
+      --ctp-overlay0: #6c7086;
+      --ctp-surface2: #585b70;
+      --ctp-surface1: #45475a;
+      --ctp-surface0: #313244;
+      --ctp-base: #1e1e2e;
+      --ctp-mantle: #181825;
+      --ctp-crust: #11111b;
+      --background: #1e1e2e;
+      --main-text-color: #cdd6f4;
+      --link-color: #cba6f7;
+      --heading-color: #cba6f7;
+      --small-heading-color: rgba(203, 166, 247, 0.85);
+      --note-text-color: #89b4fa;
+      --note-background: #1e1e2e;
+      --warning-text-color: #f38ba8;
+      --warning-background: #1e1e2e;
+      --codeblock-background: #313244;
+      --codeblock-text-color: #cdd6f4;
+    }
+    :root ::selection {
+      background-color: rgba(203, 166, 247, 0.3);
+    }
+    :root input::placeholder,
+    :root textarea::placeholder {
+      color: #a6adc8 !important;
+    }
+    :root div.book .programlisting,
+    :root div.appendix .programlisting {
+      background-color: #313244 !important;
+    }
+    :root hr,
+    :root div.toc {
+      border-top-color: transparent;
+      border-bottom-color: #7f849c !important;
+    }
+    :root div[style^="background: #333333;color: #FFFFFF;"] {
+      background-color: #11111b !important;
+    }
+    :root div[style^="background: #333333;color: #FFFFFF;"],
+    :root div[style^="background: #333333;color: #FFFFFF;"] dt {
+      color: #cdd6f4 !important;
+    }
+    :root div[style^="background: #333333;color: #FFFFFF;"] a {
+      color: #cba6f7 !important;
+    }
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --ctp-rosewater: #f5e0dc;
+      --ctp-flamingo: #f2cdcd;
+      --ctp-pink: #f5c2e7;
+      --ctp-mauve: #cba6f7;
+      --ctp-red: #f38ba8;
+      --ctp-maroon: #eba0ac;
+      --ctp-peach: #fab387;
+      --ctp-yellow: #f9e2af;
+      --ctp-green: #a6e3a1;
+      --ctp-teal: #94e2d5;
+      --ctp-sky: #89dceb;
+      --ctp-sapphire: #74c7ec;
+      --ctp-blue: #89b4fa;
+      --ctp-lavender: #b4befe;
+      --ctp-text: #cdd6f4;
+      --ctp-subtext1: #bac2de;
+      --ctp-subtext0: #a6adc8;
+      --ctp-overlay2: #9399b2;
+      --ctp-overlay1: #7f849c;
+      --ctp-overlay0: #6c7086;
+      --ctp-surface2: #585b70;
+      --ctp-surface1: #45475a;
+      --ctp-surface0: #313244;
+      --ctp-base: #1e1e2e;
+      --ctp-mantle: #181825;
+      --ctp-crust: #11111b;
+      --background: #1e1e2e;
+      --main-text-color: #cdd6f4;
+      --link-color: #cba6f7;
+      --heading-color: #cba6f7;
+      --small-heading-color: rgba(203, 166, 247, 0.85);
+      --note-text-color: #89b4fa;
+      --note-background: #1e1e2e;
+      --warning-text-color: #f38ba8;
+      --warning-background: #1e1e2e;
+      --codeblock-background: #313244;
+      --codeblock-text-color: #cdd6f4;
+    }
+    :root ::selection {
+      background-color: rgba(203, 166, 247, 0.3);
+    }
+    :root input::placeholder,
+    :root textarea::placeholder {
+      color: #a6adc8 !important;
+    }
+    :root div.book .programlisting,
+    :root div.appendix .programlisting {
+      background-color: #313244 !important;
+    }
+    :root hr,
+    :root div.toc {
+      border-top-color: transparent;
+      border-bottom-color: #7f849c !important;
+    }
+    :root div[style^="background: #333333;color: #FFFFFF;"] {
+      background-color: #11111b !important;
+    }
+    :root div[style^="background: #333333;color: #FFFFFF;"],
+    :root div[style^="background: #333333;color: #FFFFFF;"] dt {
+      color: #cdd6f4 !important;
+    }
+    :root div[style^="background: #333333;color: #FFFFFF;"] a {
+      color: #cba6f7 !important;
+    }
+  }
+}

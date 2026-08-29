@@ -42,13 +42,16 @@ FocusScope {
     }
 
     Rectangle {
+        id: modalCard
+
         anchors.centerIn: parent
         width: controller.modalKind === "progress" ? Math.min(770, modalFocusScope.width - 80) : 500
-        height: Math.min(modalFocusScope.height - 80, implicitHeight)
+        height: controller.modalKind === "guide" ? Math.min(modalFocusScope.height - 80, 620) : Math.min(modalFocusScope.height - 80, implicitHeight)
         implicitHeight: modalColumn.implicitHeight + 40
         radius: Theme.scaledRadius(10)
         color: Theme.surface
         border.color: Theme.border
+        clip: true
 
         MouseArea {
             id: modalCardInputBlocker
@@ -65,6 +68,7 @@ FocusScope {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
+            anchors.bottom: parent.bottom
             anchors.margins: Theme.scaledSpacing(20)
             spacing: Theme.scaledSpacing(12)
 
@@ -79,7 +83,7 @@ FocusScope {
             }
 
             Text {
-                visible: controller.modalKind === "new" || controller.modalKind === "guide" || controller.modalKind === "navigate" || controller.modalKind === "generate-current" || controller.modalKind === "close" || controller.modalKind === "delete" || controller.modalKind === "export"
+                visible: controller.modalKind === "new" || controller.modalKind === "navigate" || controller.modalKind === "generate-current" || controller.modalKind === "close" || controller.modalKind === "delete" || controller.modalKind === "export"
                 Layout.fillWidth: true
                 text: controller.modalKind === "new" ? controller.creationBusy ? "Creating the theme from the selected inputs…" : controller.newFlowPage === "blank" ? "Create a blank editable theme." : "Choose a wallpaper and the palette generator to use." : controller.modalKind === "progress" ? controller.applyProgressComplete ? "Application finished. Review any follow-up actions below." : "Generating and applying each enabled target…" : controller.modalKind === "delete" ? "This removes the editable source. The action cannot be undone." : controller.modalKind === "export" ? "Create a portable bundle. Fonts, GTK, icon and cursor themes remain dependency notes." : "The temporary Quickshell preview will be restored to the active theme."
                 color: Theme.muted
@@ -93,8 +97,24 @@ FocusScope {
                 controller: modalFocusScope.controller
             }
 
-            ThemePickerProgressFlow {
-                controller: modalFocusScope.controller
+            ScrollView {
+                id: progressScroll
+
+                visible: controller.modalKind === "progress" || controller.modalKind === "guide"
+                Layout.fillWidth: true
+                Layout.fillHeight: controller.modalKind === "guide"
+                Layout.preferredHeight: controller.modalKind === "progress" ? controller.applyProgressShowTargets ? 570 : 280 : 0
+                clip: true
+                contentWidth: availableWidth
+
+                ThemePickerProgressFlow {
+                    id: progressFlow
+
+                    width: progressScroll.availableWidth
+                    height: implicitHeight
+                    controller: modalFocusScope.controller
+                }
+
             }
 
             ThemePickerWidgetDialog {
@@ -130,6 +150,13 @@ FocusScope {
                 }
 
                 BloxButton {
+                    visible: controller.modalKind === "guide" && controller.guideTarget === "stylus"
+                    iconName: "download-simple"
+                    text: "Download file"
+                    onClicked: controller.downloadGeneratedFile("stylus", "stylus/blox-system.user.css")
+                }
+
+                BloxButton {
                     id: modalCancelButton
 
                     visible: controller.modalKind !== "progress" || controller.applyProgressComplete
@@ -137,7 +164,7 @@ FocusScope {
                     text: controller.modalKind === "guide" ? "Back" : controller.modalKind === "progress" ? controller.applyQuickshellReloadPending ? "Complete and reload" : "Complete" : "Cancel"
                     onClicked: {
                         if (controller.modalKind === "guide")
-                            controller.modalKind = "progress";
+                            controller.closeGuide();
                         else if (controller.modalKind === "progress")
                             controller.completeApply();
                         else

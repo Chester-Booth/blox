@@ -1,0 +1,189 @@
+/* Compiled from Catppuccin Userstyles 5ef4cc64231826f46d12a2721fa72571f5aa8a27; do not edit. */
+/* deno-fmt-ignore */
+/* deno-fmt-ignore */
+@-moz-document domain("search.nixos.org") {
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme]) {
+      color-scheme: dark;
+      --background-color: #1e1e2e;
+      --badge-background: #585b70;
+      --button-active-background: #45475a;
+      --button-active-hover-background: #585b70;
+      --button-background: #313244;
+      --button-hover-background: #585b70;
+      --color-active-hover-tab: #45475a;
+      --color-active-tab: #313244;
+      --color-hover-tab: #45475a;
+      --headerbar-background-color: #181825;
+      --hover-background: #313244;
+      --link-color: #cba6f7;
+      --info-label-background: #cba6f7;
+      --dark-blue: #cba6f7;
+      --light-blue: #cba6f7;
+      --line-color: #313244;
+      --search-result-short-details-color: #bac2de;
+      --search-result-divider-line-color: #313244;
+      --search-result-title-color: #cba6f7;
+      --search-sidebar-link-color: #cdd6f4;
+      --search-sidebar-selected-link-background: #cba6f7;
+      --search-sidebar-selected-link-color: #11111b;
+      --terminal-background: #313244;
+      --terminal-color: #cdd6f4;
+      --text-color: #cdd6f4;
+      --text-color-light: #cdd6f4;
+      --text-color-warning: #f9e2af;
+      /* Experimental Flakes label */
+    }
+    :root:not([data-theme]) ::selection {
+      background-color: rgba(203, 166, 247, 0.3);
+    }
+    :root:not([data-theme]) input::placeholder,
+    :root:not([data-theme]) textarea::placeholder {
+      color: #a6adc8 !important;
+    }
+    :root:not([data-theme]) .badge {
+      color: #cdd6f4;
+    }
+    :root:not([data-theme]) .label {
+      color: #1e1e2e;
+      text-shadow: none;
+    }
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme]) {
+      color-scheme: dark;
+      --background-color: #1e1e2e;
+      --badge-background: #585b70;
+      --button-active-background: #45475a;
+      --button-active-hover-background: #585b70;
+      --button-background: #313244;
+      --button-hover-background: #585b70;
+      --color-active-hover-tab: #45475a;
+      --color-active-tab: #313244;
+      --color-hover-tab: #45475a;
+      --headerbar-background-color: #181825;
+      --hover-background: #313244;
+      --link-color: #cba6f7;
+      --info-label-background: #cba6f7;
+      --dark-blue: #cba6f7;
+      --light-blue: #cba6f7;
+      --line-color: #313244;
+      --search-result-short-details-color: #bac2de;
+      --search-result-divider-line-color: #313244;
+      --search-result-title-color: #cba6f7;
+      --search-sidebar-link-color: #cdd6f4;
+      --search-sidebar-selected-link-background: #cba6f7;
+      --search-sidebar-selected-link-color: #11111b;
+      --terminal-background: #313244;
+      --terminal-color: #cdd6f4;
+      --text-color: #cdd6f4;
+      --text-color-light: #cdd6f4;
+      --text-color-warning: #f9e2af;
+      /* Experimental Flakes label */
+    }
+    :root:not([data-theme]) ::selection {
+      background-color: rgba(203, 166, 247, 0.3);
+    }
+    :root:not([data-theme]) input::placeholder,
+    :root:not([data-theme]) textarea::placeholder {
+      color: #a6adc8 !important;
+    }
+    :root:not([data-theme]) .badge {
+      color: #cdd6f4;
+    }
+    :root:not([data-theme]) .label {
+      color: #1e1e2e;
+      text-shadow: none;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --background-color: #1e1e2e;
+    --badge-background: #585b70;
+    --button-active-background: #45475a;
+    --button-active-hover-background: #585b70;
+    --button-background: #313244;
+    --button-hover-background: #585b70;
+    --color-active-hover-tab: #45475a;
+    --color-active-tab: #313244;
+    --color-hover-tab: #45475a;
+    --headerbar-background-color: #181825;
+    --hover-background: #313244;
+    --link-color: #cba6f7;
+    --info-label-background: #cba6f7;
+    --dark-blue: #cba6f7;
+    --light-blue: #cba6f7;
+    --line-color: #313244;
+    --search-result-short-details-color: #bac2de;
+    --search-result-divider-line-color: #313244;
+    --search-result-title-color: #cba6f7;
+    --search-sidebar-link-color: #cdd6f4;
+    --search-sidebar-selected-link-background: #cba6f7;
+    --search-sidebar-selected-link-color: #11111b;
+    --terminal-background: #313244;
+    --terminal-color: #cdd6f4;
+    --text-color: #cdd6f4;
+    --text-color-light: #cdd6f4;
+    --text-color-warning: #f9e2af;
+    /* Experimental Flakes label */
+  }
+  :root[data-theme="dark"] ::selection {
+    background-color: rgba(203, 166, 247, 0.3);
+  }
+  :root[data-theme="dark"] input::placeholder,
+  :root[data-theme="dark"] textarea::placeholder {
+    color: #a6adc8 !important;
+  }
+  :root[data-theme="dark"] .badge {
+    color: #cdd6f4;
+  }
+  :root[data-theme="dark"] .label {
+    color: #1e1e2e;
+    text-shadow: none;
+  }
+  :root[data-theme="light"] {
+    color-scheme: dark;
+    --background-color: #1e1e2e;
+    --badge-background: #585b70;
+    --button-active-background: #45475a;
+    --button-active-hover-background: #585b70;
+    --button-background: #313244;
+    --button-hover-background: #585b70;
+    --color-active-hover-tab: #45475a;
+    --color-active-tab: #313244;
+    --color-hover-tab: #45475a;
+    --headerbar-background-color: #181825;
+    --hover-background: #313244;
+    --link-color: #cba6f7;
+    --info-label-background: #cba6f7;
+    --dark-blue: #cba6f7;
+    --light-blue: #cba6f7;
+    --line-color: #313244;
+    --search-result-short-details-color: #bac2de;
+    --search-result-divider-line-color: #313244;
+    --search-result-title-color: #cba6f7;
+    --search-sidebar-link-color: #cdd6f4;
+    --search-sidebar-selected-link-background: #cba6f7;
+    --search-sidebar-selected-link-color: #11111b;
+    --terminal-background: #313244;
+    --terminal-color: #cdd6f4;
+    --text-color: #cdd6f4;
+    --text-color-light: #cdd6f4;
+    --text-color-warning: #f9e2af;
+    /* Experimental Flakes label */
+  }
+  :root[data-theme="light"] ::selection {
+    background-color: rgba(203, 166, 247, 0.3);
+  }
+  :root[data-theme="light"] input::placeholder,
+  :root[data-theme="light"] textarea::placeholder {
+    color: #a6adc8 !important;
+  }
+  :root[data-theme="light"] .badge {
+    color: #cdd6f4;
+  }
+  :root[data-theme="light"] .label {
+    color: #1e1e2e;
+    text-shadow: none;
+  }
+}

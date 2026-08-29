@@ -1,0 +1,125 @@
+/* Compiled from Catppuccin Userstyles 5ef4cc64231826f46d12a2721fa72571f5aa8a27; do not edit. */
+/* deno-fmt-ignore */
+/* deno-fmt-ignore */
+@-moz-document domain("alacritty.org") {
+  @media (prefers-color-scheme: light) {
+    :root {
+      color-scheme: dark;
+    }
+    :root ::selection {
+      background-color: rgba(203, 166, 247, 0.3);
+    }
+    :root input::placeholder,
+    :root textarea::placeholder {
+      color: #a6adc8 !important;
+    }
+    :root body {
+      color: #cdd6f4 !important;
+      background-color: #1e1e2e !important;
+    }
+    :root a {
+      color: #cba6f7 !important;
+    }
+    :root header {
+      background-color: #181825 !important;
+      border-bottom-color: #313244 !important;
+    }
+    :root header nav > a {
+      color: #cdd6f4 !important;
+    }
+    :root em {
+      color: #a6e3a1 !important;
+    }
+    :root strong,
+    :root strong > a {
+      color: #89b4fa !important;
+    }
+    :root #pick-version select {
+      color: #cdd6f4 !important;
+      background-color: #313244;
+      border-color: #6c7086;
+    }
+    :root h1 {
+      color: #cba6f7 !important;
+    }
+    :root a:not([name]) {
+      text-shadow: none !important;
+    }
+    :root code {
+      background-color: #313244;
+    }
+    :root video {
+      background-color: #6c7086 !important;
+    }
+    :root img:not(img#logo-img) {
+      border-color: #6c7086 !important;
+    }
+    :root img#logo-img {
+      border-color: #181825 !important;
+    }
+    :root kbd {
+      background-color: #45475a !important;
+      border-color: #6c7086 !important;
+    }
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+    }
+    :root ::selection {
+      background-color: rgba(203, 166, 247, 0.3);
+    }
+    :root input::placeholder,
+    :root textarea::placeholder {
+      color: #a6adc8 !important;
+    }
+    :root body {
+      color: #cdd6f4 !important;
+      background-color: #1e1e2e !important;
+    }
+    :root a {
+      color: #cba6f7 !important;
+    }
+    :root header {
+      background-color: #181825 !important;
+      border-bottom-color: #313244 !important;
+    }
+    :root header nav > a {
+      color: #cdd6f4 !important;
+    }
+    :root em {
+      color: #a6e3a1 !important;
+    }
+    :root strong,
+    :root strong > a {
+      color: #89b4fa !important;
+    }
+    :root #pick-version select {
+      color: #cdd6f4 !important;
+      background-color: #313244;
+      border-color: #6c7086;
+    }
+    :root h1 {
+      color: #cba6f7 !important;
+    }
+    :root a:not([name]) {
+      text-shadow: none !important;
+    }
+    :root code {
+      background-color: #313244;
+    }
+    :root video {
+      background-color: #6c7086 !important;
+    }
+    :root img:not(img#logo-img) {
+      border-color: #6c7086 !important;
+    }
+    :root img#logo-img {
+      border-color: #181825 !important;
+    }
+    :root kbd {
+      background-color: #45475a !important;
+      border-color: #6c7086 !important;
+    }
+  }
+}

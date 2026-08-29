@@ -1,0 +1,435 @@
+/* Compiled from Catppuccin Userstyles 5ef4cc64231826f46d12a2721fa72571f5aa8a27; do not edit. */
+/* deno-fmt-ignore */
+/* deno-fmt-ignore */
+@-moz-document domain("chatgpt.com") {
+  .light {
+    color-scheme: dark;
+  }
+  .light ::selection {
+    background-color: rgba(203, 166, 247, 0.3);
+  }
+  .light input::placeholder,
+  .light textarea::placeholder {
+    color: #a6adc8 !important;
+  }
+  .light * {
+    --text-primary: #cdd6f4;
+    --text-secondary: #bac2de;
+    --text-tertiary: #a6adc8;
+    --text-quaternary: #9399b2;
+    --bg-primary: #1e1e2e;
+    --bg-secondary: #313244;
+    --bg-tertiary: #45475a;
+    --bg-secondary-surface: #181825;
+    --bg-elevated-primary: #1e1e2e;
+    --bg-elevated-secondary: #181825;
+    --bg-tooltip: #11111b;
+    --main-surface-primary: #1e1e2e;
+    --main-surface-secondary: #313244;
+    --main-surface-tertiary: #45475a;
+    --interactive-bg-secondary-hover: #45475a;
+    --interactive-bg-secondary-press: #313244;
+    --interactive-label-accent-default: #cba6f7;
+    --border-light: #313244;
+    --border-default: #45475a;
+    --border-medium: #585b70;
+    --interactive-border-focus: #6c7086;
+    --theme-user-msg-bg: #313244;
+    --theme-user-msg-text: #cdd6f4;
+    --theme-submit-btn-bg: #cba6f7;
+    --theme-submit-btn-text: #1e1e2e;
+    --theme-secondary-btn-bg: #45475a;
+    --theme-secondary-btn-text: #cdd6f4;
+    --sidebar-surface: #181825;
+    --sidebar-surface-primary: #181825;
+    --surface-hover: #313244;
+    --icon-tertiary: #9399b2;
+    --text-status-error: #f38ba8;
+    --shadow-color-1: rgba(24, 24, 37, 0.5);
+    --shadow-color-2: rgba(205, 214, 244, 0.8);
+    /* Markdown */
+    /* Inline code */
+    /* Components */
+    /* Dark Overrides */
+    /* Tailwind Utilities */
+  }
+  .light * .__menu-item[data-sidebar-item] {
+    --menu-item-highlighted: #313244;
+  }
+  .light * .__menu-item[data-color="danger"] {
+    --menu-item-highlighted: rgba(243, 139, 168, 0.2);
+    --menu-item-active: rgba(243, 139, 168, 0.3);
+    --menu-item-open: rgba(243, 139, 168, 0.3);
+  }
+  .light * code:not(pre > code) {
+    background-color: #313244;
+  }
+  .light * code[class*="language-"],
+  .light * pre[class*="language-"],
+  .light * code.hljs {
+    color: #cdd6f4 !important;
+  }
+  .light * .btn-primary {
+    background-color: #cdd6f4;
+    color: #1e1e2e;
+  }
+  .light * .btn-purple {
+    color: #1e1e2e;
+    background-color: #cba6f7;
+  }
+  .light * .btn-purple:hover {
+    background-color: #d9bdf9;
+  }
+  .light * .btn-purple:focus,
+  .light * .btn-purple:active {
+    background-color: #bd8ff5;
+  }
+  .light * .btn-danger-outline {
+    color: #f38ba8;
+    border-color: #f38ba8;
+  }
+  .light * .btn-ghost:not(:disabled):hover {
+    background-color: #313244;
+  }
+  .light * .bg-token-bg-primary {
+    background-color: var(--bg-primary);
+  }
+  .light * .bg-token-main-surface-primary {
+    background-color: var(--main-surface-primary);
+  }
+  .light * .bg-token-sidebar-surface {
+    background-color: var(--sidebar-surface);
+  }
+  .light * .text-green-600,
+  .light * .dark\:text-green-600 {
+    color: #a6e3a1;
+  }
+  .light * .bg-green-600,
+  .light * .dark\:bg-green-600 {
+    background-color: #a6e3a1;
+  }
+  .light * .border-green-600 {
+    border-color: #a6e3a1;
+  }
+  .light * .radix-state-checked\:bg-green-600[data-state="checked"] {
+    background-color: #a6e3a1;
+  }
+  .light * .text-red-500,
+  .light * .dark\:text-red-500 {
+    color: #f38ba8;
+  }
+  .light * .bg-red-500,
+  .light * .dark\:bg-red-500 {
+    background-color: #f38ba8;
+  }
+  .light * .border-red-500 {
+    border-color: #f38ba8;
+  }
+  .light * .radix-state-checked\:bg-red-500[data-state="checked"] {
+    background-color: #f38ba8;
+  }
+  .light * .text-blue-400,
+  .light * .dark\:text-blue-400 {
+    color: #cba6f7;
+  }
+  .light * .bg-blue-400,
+  .light * .dark\:bg-blue-400 {
+    background-color: #cba6f7;
+  }
+  .light * .border-blue-400 {
+    border-color: #cba6f7;
+  }
+  .light * .radix-state-checked\:bg-blue-400[data-state="checked"] {
+    background-color: #cba6f7;
+  }
+  .light * .text-gray-600,
+  .light * .dark\:text-gray-600 {
+    color: #6c7086;
+  }
+  .light * .bg-gray-600,
+  .light * .dark\:bg-gray-600 {
+    background-color: #6c7086;
+  }
+  .light * .border-gray-600 {
+    border-color: #6c7086;
+  }
+  .light * .radix-state-checked\:bg-gray-600[data-state="checked"] {
+    background-color: #6c7086;
+  }
+  .light * .text-gray-500,
+  .light * .dark\:text-gray-500 {
+    color: #9399b2;
+  }
+  .light * .bg-gray-500,
+  .light * .dark\:bg-gray-500 {
+    background-color: #9399b2;
+  }
+  .light * .border-gray-500 {
+    border-color: #9399b2;
+  }
+  .light * .radix-state-checked\:bg-gray-500[data-state="checked"] {
+    background-color: #9399b2;
+  }
+  .light * .text-white {
+    color: #1e1e2e;
+  }
+  .light * .bg-black {
+    background-color: #181825;
+  }
+  .dark {
+    color-scheme: dark;
+  }
+  .dark ::selection {
+    background-color: rgba(203, 166, 247, 0.3);
+  }
+  .dark input::placeholder,
+  .dark textarea::placeholder {
+    color: #a6adc8 !important;
+  }
+  .dark * {
+    --text-primary: #cdd6f4;
+    --text-secondary: #bac2de;
+    --text-tertiary: #a6adc8;
+    --text-quaternary: #9399b2;
+    --bg-primary: #1e1e2e;
+    --bg-secondary: #313244;
+    --bg-tertiary: #45475a;
+    --bg-secondary-surface: #181825;
+    --bg-elevated-primary: #1e1e2e;
+    --bg-elevated-secondary: #181825;
+    --bg-tooltip: #11111b;
+    --main-surface-primary: #1e1e2e;
+    --main-surface-secondary: #313244;
+    --main-surface-tertiary: #45475a;
+    --interactive-bg-secondary-hover: #45475a;
+    --interactive-bg-secondary-press: #313244;
+    --interactive-label-accent-default: #cba6f7;
+    --border-light: #313244;
+    --border-default: #45475a;
+    --border-medium: #585b70;
+    --interactive-border-focus: #6c7086;
+    --theme-user-msg-bg: #313244;
+    --theme-user-msg-text: #cdd6f4;
+    --theme-submit-btn-bg: #cba6f7;
+    --theme-submit-btn-text: #1e1e2e;
+    --theme-secondary-btn-bg: #45475a;
+    --theme-secondary-btn-text: #cdd6f4;
+    --sidebar-surface: #181825;
+    --sidebar-surface-primary: #181825;
+    --surface-hover: #313244;
+    --icon-tertiary: #9399b2;
+    --text-status-error: #f38ba8;
+    --shadow-color-1: rgba(24, 24, 37, 0.5);
+    --shadow-color-2: rgba(205, 214, 244, 0.8);
+    /* Markdown */
+    /* Inline code */
+    /* Components */
+    /* Dark Overrides */
+    /* Tailwind Utilities */
+  }
+  .dark * .__menu-item[data-sidebar-item] {
+    --menu-item-highlighted: #313244;
+  }
+  .dark * .__menu-item[data-color="danger"] {
+    --menu-item-highlighted: rgba(243, 139, 168, 0.2);
+    --menu-item-active: rgba(243, 139, 168, 0.3);
+    --menu-item-open: rgba(243, 139, 168, 0.3);
+  }
+  .dark * code:not(pre > code) {
+    background-color: #313244;
+  }
+  .dark * code[class*="language-"],
+  .dark * pre[class*="language-"],
+  .dark * code.hljs {
+    color: #cdd6f4 !important;
+  }
+  .dark * .btn-primary {
+    background-color: #cdd6f4;
+    color: #1e1e2e;
+  }
+  .dark * .btn-purple {
+    color: #1e1e2e;
+    background-color: #cba6f7;
+  }
+  .dark * .btn-purple:hover {
+    background-color: #d9bdf9;
+  }
+  .dark * .btn-purple:focus,
+  .dark * .btn-purple:active {
+    background-color: #bd8ff5;
+  }
+  .dark * .btn-danger-outline {
+    color: #f38ba8;
+    border-color: #f38ba8;
+  }
+  .dark * .btn-ghost:not(:disabled):hover {
+    background-color: #313244;
+  }
+  .dark * .bg-token-bg-primary {
+    background-color: var(--bg-primary);
+  }
+  .dark * .bg-token-main-surface-primary {
+    background-color: var(--main-surface-primary);
+  }
+  .dark * .bg-token-sidebar-surface {
+    background-color: var(--sidebar-surface);
+  }
+  .dark * .text-green-600,
+  .dark * .dark\:text-green-600 {
+    color: #a6e3a1;
+  }
+  .dark * .bg-green-600,
+  .dark * .dark\:bg-green-600 {
+    background-color: #a6e3a1;
+  }
+  .dark * .border-green-600 {
+    border-color: #a6e3a1;
+  }
+  .dark * .radix-state-checked\:bg-green-600[data-state="checked"] {
+    background-color: #a6e3a1;
+  }
+  .dark * .text-red-500,
+  .dark * .dark\:text-red-500 {
+    color: #f38ba8;
+  }
+  .dark * .bg-red-500,
+  .dark * .dark\:bg-red-500 {
+    background-color: #f38ba8;
+  }
+  .dark * .border-red-500 {
+    border-color: #f38ba8;
+  }
+  .dark * .radix-state-checked\:bg-red-500[data-state="checked"] {
+    background-color: #f38ba8;
+  }
+  .dark * .text-blue-400,
+  .dark * .dark\:text-blue-400 {
+    color: #cba6f7;
+  }
+  .dark * .bg-blue-400,
+  .dark * .dark\:bg-blue-400 {
+    background-color: #cba6f7;
+  }
+  .dark * .border-blue-400 {
+    border-color: #cba6f7;
+  }
+  .dark * .radix-state-checked\:bg-blue-400[data-state="checked"] {
+    background-color: #cba6f7;
+  }
+  .dark * .text-gray-600,
+  .dark * .dark\:text-gray-600 {
+    color: #6c7086;
+  }
+  .dark * .bg-gray-600,
+  .dark * .dark\:bg-gray-600 {
+    background-color: #6c7086;
+  }
+  .dark * .border-gray-600 {
+    border-color: #6c7086;
+  }
+  .dark * .radix-state-checked\:bg-gray-600[data-state="checked"] {
+    background-color: #6c7086;
+  }
+  .dark * .text-gray-500,
+  .dark * .dark\:text-gray-500 {
+    color: #9399b2;
+  }
+  .dark * .bg-gray-500,
+  .dark * .dark\:bg-gray-500 {
+    background-color: #9399b2;
+  }
+  .dark * .border-gray-500 {
+    border-color: #9399b2;
+  }
+  .dark * .radix-state-checked\:bg-gray-500[data-state="checked"] {
+    background-color: #9399b2;
+  }
+  .dark * .text-white {
+    color: #1e1e2e;
+  }
+  .dark * .bg-black {
+    background-color: #181825;
+  }
+}
+@-moz-document domain("auth.openai.com") {
+  @media (prefers-color-scheme: light) {
+    :root {
+      color-scheme: dark;
+      color: #cdd6f4;
+      background-color: #1e1e2e;
+      --main-page-background: #1e1e2e;
+      --text-primary: #cdd6f4;
+      --text-secondary: #bac2de;
+      --text-tertiary: #a6adc8;
+      --text-placeholder: #a6adc8;
+      --accent-blue: #cba6f7;
+      --link: #cba6f7;
+      --border-medium: #585b70;
+      --button-primary-background: #cdd6f4;
+      --button-primary-hover: #bac2de;
+      --button-text-on-primary: #1e1e2e;
+      --button-outline-hover: #313244;
+      --gray-100: #585b70;
+    }
+    :root ::selection {
+      background-color: rgba(203, 166, 247, 0.3);
+    }
+    :root input::placeholder,
+    :root textarea::placeholder {
+      color: #a6adc8 !important;
+    }
+    :root a[href="https://chatgpt.com"] > svg {
+      filter: brightness(0) saturate(100%) invert(75%) sepia(82%) saturate(1008%) hue-rotate(189deg) brightness(120%) contrast(90%);
+    }
+    :root input {
+      color: #cdd6f4;
+    }
+    :root [class*="_toggleVisibilityButton"]:where(:hover, :focus-visible)::before {
+      background-color: #313244;
+    }
+    :root [data-overlay-container] [class*="_tooltip"] {
+      --tooltip-background-color: #181825 !important;
+      --tooltip-color: #cdd6f4 !important;
+    }
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      color: #cdd6f4;
+      background-color: #1e1e2e;
+      --main-page-background: #1e1e2e;
+      --text-primary: #cdd6f4;
+      --text-secondary: #bac2de;
+      --text-tertiary: #a6adc8;
+      --text-placeholder: #a6adc8;
+      --accent-blue: #cba6f7;
+      --link: #cba6f7;
+      --border-medium: #585b70;
+      --button-primary-background: #cdd6f4;
+      --button-primary-hover: #bac2de;
+      --button-text-on-primary: #1e1e2e;
+      --button-outline-hover: #313244;
+      --gray-100: #585b70;
+    }
+    :root ::selection {
+      background-color: rgba(203, 166, 247, 0.3);
+    }
+    :root input::placeholder,
+    :root textarea::placeholder {
+      color: #a6adc8 !important;
+    }
+    :root a[href="https://chatgpt.com"] > svg {
+      filter: brightness(0) saturate(100%) invert(75%) sepia(82%) saturate(1008%) hue-rotate(189deg) brightness(120%) contrast(90%);
+    }
+    :root input {
+      color: #cdd6f4;
+    }
+    :root [class*="_toggleVisibilityButton"]:where(:hover, :focus-visible)::before {
+      background-color: #313244;
+    }
+    :root [data-overlay-container] [class*="_tooltip"] {
+      --tooltip-background-color: #181825 !important;
+      --tooltip-color: #cdd6f4 !important;
+    }
+  }
+}

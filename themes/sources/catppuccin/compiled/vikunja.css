@@ -1,0 +1,513 @@
+/* Compiled from Catppuccin Userstyles 5ef4cc64231826f46d12a2721fa72571f5aa8a27; do not edit. */
+/* deno-fmt-ignore */
+/* deno-fmt-ignore */
+@-moz-document domain("try.vikunja.io") {
+  :root.dark {
+    color-scheme: dark;
+    --primary-h: 267.40740741 !important;
+    --primary-s: 83.50515464% !important;
+    --primary-l: 80.98039216% !important;
+    --primary-light-l: 80.98039216% !important;
+    --primary-dark-l: 80.98039216% !important;
+    --primary-invert-l: 80.98039216% !important;
+    --grey-100-hsl: 240 21.31147541% 11.96078431%;
+    --site-background: #181825;
+    --content-heading-color: #cdd6f4;
+    --card-header-color: #cdd6f4;
+    --card-color: #cdd6f4;
+    --body-color: #cdd6f4;
+    --label-color: #cdd6f4;
+    --strong-color: #cdd6f4;
+    --primary: #cba6f7;
+    --primary-invert: #1e1e2e;
+    --switch-view-color: #1e1e2e;
+    --input-background-color: #1e1e2e;
+    --input-icon-color: #cdd6f4;
+    --table-row-hover-background-color: #181825;
+    --table-head-cell-color: #cdd6f4;
+    --input-border-color: #6c7086;
+    --link-hover: #cba6f7;
+    --white: #1e1e2e;
+    --grey: #6c7086;
+    --card-content-background-color: #1e1e2e;
+    --success: #a6e3a1;
+    --danger: #f38ba8;
+    --warning: #f9e2af;
+    --text: #cdd6f4;
+    --text-strong: #cdd6f4;
+    --button-text-hover-background-color: #1e1e2e;
+    --table-striped-row-even-background-color: #181825;
+    --code-background: #181825;
+    --code: #cdd6f4;
+    /* Gantt */
+    /* Kaban */
+    /* Command Palette */
+    /* Keyboard Shortcuts modal */
+    /* Popups */
+    /* Vue Notifications */
+  }
+  :root.dark ::selection {
+    background-color: rgba(203, 166, 247, 0.3);
+  }
+  :root.dark input::placeholder,
+  :root.dark textarea::placeholder {
+    color: #a6adc8 !important;
+  }
+  :root.dark body,
+  :root.dark div#app,
+  :root.dark header,
+  :root.dark aside.menu-container,
+  :root.dark footer.card-footer {
+    background: #181825 !important;
+  }
+  :root.dark svg.llama-cool > circle,
+  :root.dark svg.logo > path[fill="#196aff"] {
+    fill: #cba6f7;
+  }
+  :root.dark svg.logo,
+  :root.dark h1,
+  :root.dark .action-heading,
+  :root.dark .subtitle a,
+  :root.dark .project-menu-title {
+    color: #cdd6f4 !important;
+  }
+  :root.dark p.nothing,
+  :root.dark .has-text-grey-light {
+    color: #a6adc8 !important;
+  }
+  :root.dark h1.title.task-id,
+  :root.dark div.detail-title,
+  :root.dark div.detail-title span {
+    color: #6c7086;
+  }
+  :root.dark button {
+    box-shadow: none !important;
+  }
+  :root.dark button.is-danger {
+    color: #f38ba8 !important;
+    background: none;
+  }
+  :root.dark button.is-danger:hover {
+    background: #f38ba8 !important;
+    color: #313244 !important;
+  }
+  :root.dark button.is-danger:active {
+    background: #ee5d85 !important;
+    color: #313244 !important;
+  }
+  :root.dark .has-text-danger {
+    --has-text-hover-color: #f38ba8;
+  }
+  :root.dark button.is-success {
+    color: #a6e3a1;
+  }
+  :root.dark button.is-success:hover {
+    background: #a6e3a1 !important;
+    color: #313244 !important;
+  }
+  :root.dark button.is-success:active {
+    background: #81d77a !important;
+  }
+  :root.dark .base-button.is-primary {
+    color: #1e1e2e;
+  }
+  :root.dark .base-button.is-primary:hover {
+    background: #cba6f7;
+  }
+  :root.dark .base-button.is-primary:active {
+    background: #b077f3;
+  }
+  :root.dark .base-button.is-primary span.icon {
+    color: #1e1e2e !important;
+  }
+  :root.dark button.base-button:not(.is-primary) {
+    color: #cdd6f4;
+  }
+  :root.dark div.action-buttons > button:hover,
+  :root.dark button.search-result-button:hover,
+  :root.dark .button.is-text:active,
+  :root.dark .single-task:hover {
+    background: #181825;
+  }
+  :root.dark p.is-editor-empty::before {
+    color: #6c7086;
+  }
+  :root.dark header > button.base-button.menu-button::before,
+  :root.dark header > button.base-button.menu-button::after {
+    background: #cdd6f4;
+  }
+  :root.dark .menu .menu-list li > a,
+  :root.dark .menu .menu-list li > a > span {
+    color: #cdd6f4;
+  }
+  :root.dark .menu .menu-list li > a.router-link-active {
+    color: #cba6f7;
+  }
+  :root.dark .menu .menu-list li:hover {
+    background: #181825;
+  }
+  :root.dark a.base-button.menu-bottom-link {
+    color: #6c7086;
+  }
+  :root.dark a.base-button.menu-bottom-link:hover {
+    color: #9399b2;
+  }
+  :root.dark div.is-done {
+    background: #a6e3a1;
+    color: #313244;
+  }
+  :root.dark div.tiptap__editor a {
+    color: #cba6f7;
+  }
+  :root.dark div.tiptap__editor pre,
+  :root.dark div.tiptap__editor code {
+    background: #313244;
+    color: #cdd6f4;
+  }
+  :root.dark blockquote,
+  :root.dark hr {
+    background: #313244;
+  }
+  :root.dark emoji-picker {
+    --background: #313244;
+    --border-color: #6c7086;
+    --button-hover-background: #6c7086;
+    --input-border-color: #6c7086;
+    scrollbar-color: #6c7086 #313244 !important;
+  }
+  :root.dark .reaction-button.current-user-has-reacted {
+    border-color: #cba6f7;
+    background: rgba(203, 166, 247, 0.3);
+  }
+  :root.dark p.created {
+    color: #6c7086;
+  }
+  :root.dark .progress-bar {
+    --progress-bar-background-color: #11111b;
+    --progress-value-background-color: #cba6f7;
+  }
+  :root.dark .loader-container.is-loading::after {
+    --loader-border-color: #cba6f7;
+  }
+  :root.dark div.gantt-container {
+    --grey-300: #313244;
+  }
+  :root.dark div.g-gantt-chart .g-upper-timeunit,
+  :root.dark div.g-gantt-chart .g-timeunit {
+    color: #cdd6f4 !important;
+  }
+  :root.dark div.g-gantt-chart .g-timeunit .today {
+    color: #313244;
+  }
+  :root.dark div.g-gantt-chart .g-gantt-row {
+    background: #1e1e2e;
+  }
+  :root.dark div.g-gantt-chart div.g-gantt-bar div.g-gantt-bar-label > div {
+    color: #313244;
+  }
+  :root.dark div.g-gantt-chart div.g-gantt-bar .g-gantt-bar-handle-left,
+  :root.dark div.g-gantt-chart div.g-gantt-bar .g-gantt-bar-handle-right {
+    background: #b077f3;
+  }
+  :root.dark div.bucket-header,
+  :root.dark div.task-item,
+  :root.dark div.bucket-footer,
+  :root.dark div.bucket > button.base-button {
+    background: #1e1e2e;
+  }
+  :root.dark div.task-item > .task {
+    background: #181825;
+  }
+  :root.dark div.task-item > .task span.priority-label {
+    background: #313244;
+  }
+  :root.dark span.result-title,
+  :root.dark div.active-cmd.tag {
+    background: #1e1e2e;
+  }
+  :root.dark kbd {
+    color: #cdd6f4;
+    border-color: #6c7086;
+    background: #1e1e2e;
+  }
+  :root.dark div.message-wrapper > div.message.info {
+    background: #1e1e2e;
+  }
+  :root.dark div.v-popper__inner {
+    background: #181825;
+    color: #cdd6f4;
+  }
+  :root.dark div.v-popper__arrow-outer {
+    border-color: #181825;
+  }
+  :root.dark .modal-mask span,
+  :root.dark .modal-mask p,
+  :root.dark .modal-mask strong {
+    color: #cdd6f4 !important;
+  }
+  :root.dark .vue-notification {
+    color: #313244 !important;
+  }
+  :root.dark .vue-notification button {
+    background: none;
+    color: #6c7086 !important;
+  }
+  :root.dark .vue-notification.success {
+    background: #a6e3a1;
+    border-left-color: #93dd8d;
+  }
+  :root.light {
+    color-scheme: dark;
+    --primary-h: 267.40740741 !important;
+    --primary-s: 83.50515464% !important;
+    --primary-l: 80.98039216% !important;
+    --primary-light-l: 80.98039216% !important;
+    --primary-dark-l: 80.98039216% !important;
+    --primary-invert-l: 80.98039216% !important;
+    --grey-100-hsl: 240 21.31147541% 11.96078431%;
+    --site-background: #181825;
+    --content-heading-color: #cdd6f4;
+    --card-header-color: #cdd6f4;
+    --card-color: #cdd6f4;
+    --body-color: #cdd6f4;
+    --label-color: #cdd6f4;
+    --strong-color: #cdd6f4;
+    --primary: #cba6f7;
+    --primary-invert: #1e1e2e;
+    --switch-view-color: #1e1e2e;
+    --input-background-color: #1e1e2e;
+    --input-icon-color: #cdd6f4;
+    --table-row-hover-background-color: #181825;
+    --table-head-cell-color: #cdd6f4;
+    --input-border-color: #6c7086;
+    --link-hover: #cba6f7;
+    --white: #1e1e2e;
+    --grey: #6c7086;
+    --card-content-background-color: #1e1e2e;
+    --success: #a6e3a1;
+    --danger: #f38ba8;
+    --warning: #f9e2af;
+    --text: #cdd6f4;
+    --text-strong: #cdd6f4;
+    --button-text-hover-background-color: #1e1e2e;
+    --table-striped-row-even-background-color: #181825;
+    --code-background: #181825;
+    --code: #cdd6f4;
+    /* Gantt */
+    /* Kaban */
+    /* Command Palette */
+    /* Keyboard Shortcuts modal */
+    /* Popups */
+    /* Vue Notifications */
+  }
+  :root.light ::selection {
+    background-color: rgba(203, 166, 247, 0.3);
+  }
+  :root.light input::placeholder,
+  :root.light textarea::placeholder {
+    color: #a6adc8 !important;
+  }
+  :root.light body,
+  :root.light div#app,
+  :root.light header,
+  :root.light aside.menu-container,
+  :root.light footer.card-footer {
+    background: #181825 !important;
+  }
+  :root.light svg.llama-cool > circle,
+  :root.light svg.logo > path[fill="#196aff"] {
+    fill: #cba6f7;
+  }
+  :root.light svg.logo,
+  :root.light h1,
+  :root.light .action-heading,
+  :root.light .subtitle a,
+  :root.light .project-menu-title {
+    color: #cdd6f4 !important;
+  }
+  :root.light p.nothing,
+  :root.light .has-text-grey-light {
+    color: #a6adc8 !important;
+  }
+  :root.light h1.title.task-id,
+  :root.light div.detail-title,
+  :root.light div.detail-title span {
+    color: #6c7086;
+  }
+  :root.light button {
+    box-shadow: none !important;
+  }
+  :root.light button.is-danger {
+    color: #f38ba8 !important;
+    background: none;
+  }
+  :root.light button.is-danger:hover {
+    background: #f38ba8 !important;
+    color: #313244 !important;
+  }
+  :root.light button.is-danger:active {
+    background: #ee5d85 !important;
+    color: #313244 !important;
+  }
+  :root.light .has-text-danger {
+    --has-text-hover-color: #f38ba8;
+  }
+  :root.light button.is-success {
+    color: #a6e3a1;
+  }
+  :root.light button.is-success:hover {
+    background: #a6e3a1 !important;
+    color: #313244 !important;
+  }
+  :root.light button.is-success:active {
+    background: #81d77a !important;
+  }
+  :root.light .base-button.is-primary {
+    color: #1e1e2e;
+  }
+  :root.light .base-button.is-primary:hover {
+    background: #cba6f7;
+  }
+  :root.light .base-button.is-primary:active {
+    background: #b077f3;
+  }
+  :root.light .base-button.is-primary span.icon {
+    color: #1e1e2e !important;
+  }
+  :root.light button.base-button:not(.is-primary) {
+    color: #cdd6f4;
+  }
+  :root.light div.action-buttons > button:hover,
+  :root.light button.search-result-button:hover,
+  :root.light .button.is-text:active,
+  :root.light .single-task:hover {
+    background: #181825;
+  }
+  :root.light p.is-editor-empty::before {
+    color: #6c7086;
+  }
+  :root.light header > button.base-button.menu-button::before,
+  :root.light header > button.base-button.menu-button::after {
+    background: #cdd6f4;
+  }
+  :root.light .menu .menu-list li > a,
+  :root.light .menu .menu-list li > a > span {
+    color: #cdd6f4;
+  }
+  :root.light .menu .menu-list li > a.router-link-active {
+    color: #cba6f7;
+  }
+  :root.light .menu .menu-list li:hover {
+    background: #181825;
+  }
+  :root.light a.base-button.menu-bottom-link {
+    color: #6c7086;
+  }
+  :root.light a.base-button.menu-bottom-link:hover {
+    color: #9399b2;
+  }
+  :root.light div.is-done {
+    background: #a6e3a1;
+    color: #313244;
+  }
+  :root.light div.tiptap__editor a {
+    color: #cba6f7;
+  }
+  :root.light div.tiptap__editor pre,
+  :root.light div.tiptap__editor code {
+    background: #313244;
+    color: #cdd6f4;
+  }
+  :root.light blockquote,
+  :root.light hr {
+    background: #313244;
+  }
+  :root.light emoji-picker {
+    --background: #313244;
+    --border-color: #6c7086;
+    --button-hover-background: #6c7086;
+    --input-border-color: #6c7086;
+    scrollbar-color: #6c7086 #313244 !important;
+  }
+  :root.light .reaction-button.current-user-has-reacted {
+    border-color: #cba6f7;
+    background: rgba(203, 166, 247, 0.3);
+  }
+  :root.light p.created {
+    color: #6c7086;
+  }
+  :root.light .progress-bar {
+    --progress-bar-background-color: #11111b;
+    --progress-value-background-color: #cba6f7;
+  }
+  :root.light .loader-container.is-loading::after {
+    --loader-border-color: #cba6f7;
+  }
+  :root.light div.gantt-container {
+    --grey-300: #313244;
+  }
+  :root.light div.g-gantt-chart .g-upper-timeunit,
+  :root.light div.g-gantt-chart .g-timeunit {
+    color: #cdd6f4 !important;
+  }
+  :root.light div.g-gantt-chart .g-timeunit .today {
+    color: #313244;
+  }
+  :root.light div.g-gantt-chart .g-gantt-row {
+    background: #1e1e2e;
+  }
+  :root.light div.g-gantt-chart div.g-gantt-bar div.g-gantt-bar-label > div {
+    color: #313244;
+  }
+  :root.light div.g-gantt-chart div.g-gantt-bar .g-gantt-bar-handle-left,
+  :root.light div.g-gantt-chart div.g-gantt-bar .g-gantt-bar-handle-right {
+    background: #b077f3;
+  }
+  :root.light div.bucket-header,
+  :root.light div.task-item,
+  :root.light div.bucket-footer,
+  :root.light div.bucket > button.base-button {
+    background: #1e1e2e;
+  }
+  :root.light div.task-item > .task {
+    background: #181825;
+  }
+  :root.light div.task-item > .task span.priority-label {
+    background: #313244;
+  }
+  :root.light span.result-title,
+  :root.light div.active-cmd.tag {
+    background: #1e1e2e;
+  }
+  :root.light kbd {
+    color: #cdd6f4;
+    border-color: #6c7086;
+    background: #1e1e2e;
+  }
+  :root.light div.message-wrapper > div.message.info {
+    background: #1e1e2e;
+  }
+  :root.light div.v-popper__inner {
+    background: #181825;
+    color: #cdd6f4;
+  }
+  :root.light div.v-popper__arrow-outer {
+    border-color: #181825;
+  }
+  :root.light .modal-mask span,
+  :root.light .modal-mask p,
+  :root.light .modal-mask strong {
+    color: #cdd6f4 !important;
+  }
+  :root.light .vue-notification {
+    color: #313244 !important;
+  }
+  :root.light .vue-notification button {
+    background: none;
+    color: #6c7086 !important;
+  }
+  :root.light .vue-notification.success {
+    background: #a6e3a1;
+    border-left-color: #93dd8d;
+  }
+}

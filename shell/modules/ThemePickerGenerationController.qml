@@ -42,7 +42,7 @@ QtObject {
             "glow": ["glow/style.json"],
             "code": ["code/settings.json", "code/package.json", "code/themes/blox-dark-2026.json"],
             "cursor_editor": ["cursor-editor/settings.json"],
-            "stylus": ["stylus/blox-system.user.css"],
+            "stylus": ["stylus/blox-system.user.css", "stylus/manifest.json"],
             "obsidian": ["obsidian/style-settings.json"],
             "powerlevel10k": ["powerlevel10k/theme.zsh"]
         };

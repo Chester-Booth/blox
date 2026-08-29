@@ -35,7 +35,7 @@ TARGET_FILES = {
     "glow": ("glow/style.json",),
     "code": ("code/settings.json", "code/package.json", "code/themes/blox-dark-2026.json"),
     "cursor_editor": ("cursor-editor/settings.json",),
-    "stylus": ("stylus/blox-system.user.css",),
+    "stylus": ("stylus/blox-system.user.css", "stylus/manifest.json"),
     "obsidian": ("obsidian/style-settings.json",),
     "powerlevel10k": ("powerlevel10k/theme.zsh",),
 }
@@ -809,30 +809,36 @@ def _remove_managed_loader(link: Path, expected: Path) -> None:
     link.unlink()
 
 
-def sync_dynamic_loaders(root: Path, enabled_targets: Iterable[str]) -> None:
+def sync_dynamic_loaders(root: Path, enabled_targets: Iterable[str], targets_to_sync: Iterable[str] | None = None) -> None:
     enabled = set(enabled_targets)
-    kitty = kitty_theme_link()
-    kitty_expected = root / "current/kitty/theme.conf"
-    if "kitty" in enabled:
-        ensure_kitty_loader(root)
-    else:
-        _remove_managed_loader(kitty, kitty_expected)
-    if "gtk" in enabled:
-        ensure_gtk_loaders(root, True)
-    else:
-        generated_links = []
-        for version in ("3", "4"):
-            config = gtk_config_path(version)
-            generated_links.extend((
-                (config / "settings.ini", root / f"current/gtk/gtk-{version}.0/settings.ini"),
-                (config / "blox-theme.css", root / f"current/gtk/gtk-{version}.0/gtk.css"),
-            ))
-        if any(link.is_symlink() and os.readlink(link) == str(expected) for link, expected in generated_links):
-            ensure_gtk_loaders(root, False)
-    ensure_cursor_loader(root, "cursor" in enabled)
+    selected = set(TARGET_FILES) if targets_to_sync is None else set(targets_to_sync)
+    if "kitty" in selected:
+        kitty = kitty_theme_link()
+        kitty_expected = root / "current/kitty/theme.conf"
+        if "kitty" in enabled:
+            ensure_kitty_loader(root)
+        else:
+            _remove_managed_loader(kitty, kitty_expected)
+    if "gtk" in selected:
+        if "gtk" in enabled:
+            ensure_gtk_loaders(root, True)
+        else:
+            generated_links = []
+            for version in ("3", "4"):
+                config = gtk_config_path(version)
+                generated_links.extend((
+                    (config / "settings.ini", root / f"current/gtk/gtk-{version}.0/settings.ini"),
+                    (config / "blox-theme.css", root / f"current/gtk/gtk-{version}.0/gtk.css"),
+                ))
+            if any(link.is_symlink() and os.readlink(link) == str(expected) for link, expected in generated_links):
+                ensure_gtk_loaders(root, False)
+    if "cursor" in selected:
+        ensure_cursor_loader(root, "cursor" in enabled)
     for target in phase7_loader_specs(root):
-        ensure_phase7_loader(root, target, target in enabled)
-    _sync_hyprtoolkit_loader(root, "hyprland" in enabled)
+        if target in selected:
+            ensure_phase7_loader(root, target, target in enabled)
+    if "hyprland" in selected:
+        _sync_hyprtoolkit_loader(root, "hyprland" in enabled)
 
 
 def cleanup_managed_loaders(root: Path) -> None:
@@ -1178,7 +1184,7 @@ def run_reload_actions(root: Path, targets: Iterable[str], mode: str = "reload",
                 except (OSError, json.JSONDecodeError, EditorSettingsFailure) as error:
                     warnings.append(f"{editor} settings were not changed: {error}")
         elif target == "stylus":
-            warnings.append("Stylus's generated UserCSS was removed; manually remove any previously imported copy" if mode == "reset" else f"Stylus requires manual import or refresh of {root / 'current/stylus/blox-system.user.css'}")
+            warnings.append("Stylus's generated UserCSS was removed; manually remove any previously imported copy" if mode == "reset" else f"Open {root / 'current/stylus/blox-system.user.css'} in a browser with Stylus and choose Install style or Reinstall; manifest.json lists included and excluded sites")
         elif target == "obsidian":
             warnings.append("Obsidian's generated Style Settings import was removed; existing vault settings were not changed" if mode == "reset" else f"Obsidian requires Minimal and Style Settings; manually import {root / 'current/obsidian/style-settings.json'}")
         elif target == "powerlevel10k":
@@ -1308,13 +1314,13 @@ def apply_theme(theme_path: Path, theme: dict[str, Any], targets: Iterable[str],
             validate_generation(final)
             _switch_generation(root, final)
             try:
-                sync_dynamic_loaders(root, enabled)
+                sync_dynamic_loaders(root, enabled, selected)
             except (OSError, RuntimeFailure):
                 try:
                     if previous_path:
                         _switch_generation(root, previous_path)
                         try:
-                            sync_dynamic_loaders(root, previous_manifest["enabled_targets"] if previous_manifest else ())
+                            sync_dynamic_loaders(root, previous_manifest["enabled_targets"] if previous_manifest else (), selected)
                         except (OSError, RuntimeFailure):
                             pass
                     else:
@@ -1458,12 +1464,12 @@ def reset_target(target: str, run_command: Callable[[list[str]], subprocess.Comp
             validate_generation(final)
             _switch_generation(root, final)
             try:
-                sync_dynamic_loaders(root, enabled)
+                sync_dynamic_loaders(root, enabled, (target,))
             except (OSError, RuntimeFailure):
                 try:
                     _switch_generation(root, previous)
                     try:
-                        sync_dynamic_loaders(root, previous_manifest["enabled_targets"])
+                        sync_dynamic_loaders(root, previous_manifest["enabled_targets"], (target,))
                     except (OSError, RuntimeFailure):
                         pass
                 finally:

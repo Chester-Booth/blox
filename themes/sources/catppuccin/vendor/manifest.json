@@ -1,0 +1,41 @@
+{
+  "baseline": {
+    "accentColor": "mauve",
+    "darkFlavor": "mocha",
+    "lightFlavor": "mocha"
+  },
+  "imports": {
+    "https://catppuccin.github.io/gitea/theme-catppuccin-mocha-mauve.css": {
+      "bytes": 22683,
+      "file": "catppuccin-github-io-theme-catppuccin-mocha-mauve.css-61f12f032886.css",
+      "sha256": "61f12f0328865caa7b5c74c03f270312eecfc368a793396c3caa058d85140421"
+    },
+    "https://chroma.catppuccin.com/mocha-chroma-style.css": {
+      "bytes": 3106,
+      "file": "chroma-catppuccin-com-mocha-chroma-style.css-cb05e5295aef.css",
+      "sha256": "cb05e5295aef54363d511217f206527124cefcbae7f0dc6f5d73b6fe620fa386"
+    },
+    "https://prismjs.catppuccin.com/variables.important.css": {
+      "bytes": 1741,
+      "file": "prismjs-catppuccin-com-variables.important.css-62e85e603a6a.css",
+      "sha256": "62e85e603a6a27f15f3cec4f743f978a8c72546aa59a4acf8a9edde931e852b7"
+    },
+    "https://python.catppuccin.com/pygments/catppuccin-variables.important.css": {
+      "bytes": 3564,
+      "file": "python-catppuccin-com-catppuccin-variables.important.css-5d58e2e63631.css",
+      "sha256": "5d58e2e6363197c0a3eb3aa11d7ff6e3d3bbc74a5087dff564374d34efc82b0b"
+    },
+    "https://unpkg.com/@catppuccin/highlightjs@1.0.0/css/catppuccin-variables.css": {
+      "bytes": 2134,
+      "file": "unpkg-com-catppuccin-variables.css-0f0e80d02469.css",
+      "sha256": "0f0e80d0246966b67b09cfa54221a85f8d3a673959087e00fd3561ec3fa05e3e"
+    },
+    "https://unpkg.com/@catppuccin/highlightjs@1.0.0/css/catppuccin-variables.important.css": {
+      "bytes": 2706,
+      "file": "unpkg-com-catppuccin-variables.important.css-6e3fe7244381.css",
+      "sha256": "6e3fe7244381a4e9de729ade97f9415c36376c1bbb12682c8c92545b86d1d53b"
+    }
+  },
+  "schema_version": 1,
+  "upstream_revision": "5ef4cc64231826f46d12a2721fa72571f5aa8a27"
+}

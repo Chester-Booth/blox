@@ -1,0 +1,93 @@
+/* Compiled from Catppuccin Userstyles 5ef4cc64231826f46d12a2721fa72571f5aa8a27; do not edit. */
+/* deno-fmt-ignore */
+/* deno-fmt-ignore */
+@-moz-document domain("npmx.dev") {
+  :root[data-theme="dark"][data-bg-theme] {
+    color-scheme: dark;
+    --bg: #1e1e2e;
+    --bg-subtle: #181825;
+    --bg-muted: #11111b;
+    --bg-elevated: #313244;
+    --fg: #cdd6f4;
+    --fg-subtle: #7f849c;
+    --fg-muted: #a6adc8;
+    --fg-elevated: #a6adc8;
+    --accent: #cba6f7;
+    --accent-muted: #cba6f7;
+    --border: #45475a;
+    --border-subtle: #313244;
+    --border-hover: #6c7086;
+    --swatch-sky: #89dceb;
+    --swatch-coral: #fab387;
+    --swatch-amber: #f9e2af;
+    --swatch-emerald: #a6e3a1;
+    --swatch-violet: #cba6f7;
+    --swatch-magenta: #f5c2e7;
+    --swatch-neutral: #cdd6f4;
+    --badge-orange: #fab387;
+    --badge-yellow: #f9e2af;
+    --badge-green: #a6e3a1;
+    --badge-cyan: #94e2d5;
+    --badge-blue: #89b4fa;
+    --badge-indigo: #b4befe;
+    --badge-purple: #cba6f7;
+    --badge-pink: #f5c2e7;
+    --colors-red-500: #f38ba8;
+    --colors-emerald-500: #a6e3a1;
+    --colors-yellow-600: #f9e2af;
+    --colors-amber-500: #fab387;
+    --colors-emerald-400: #a6e3a1;
+    --colors-orange-500: #fab387;
+  }
+  :root[data-theme="dark"][data-bg-theme] ::selection {
+    background-color: rgba(203, 166, 247, 0.3);
+  }
+  :root[data-theme="dark"][data-bg-theme] input::placeholder,
+  :root[data-theme="dark"][data-bg-theme] textarea::placeholder {
+    color: #a6adc8 !important;
+  }
+  :root[data-theme="light"][data-bg-theme] {
+    color-scheme: dark;
+    --bg: #1e1e2e;
+    --bg-subtle: #181825;
+    --bg-muted: #11111b;
+    --bg-elevated: #313244;
+    --fg: #cdd6f4;
+    --fg-subtle: #7f849c;
+    --fg-muted: #a6adc8;
+    --fg-elevated: #a6adc8;
+    --accent: #cba6f7;
+    --accent-muted: #cba6f7;
+    --border: #45475a;
+    --border-subtle: #313244;
+    --border-hover: #6c7086;
+    --swatch-sky: #89dceb;
+    --swatch-coral: #fab387;
+    --swatch-amber: #f9e2af;
+    --swatch-emerald: #a6e3a1;
+    --swatch-violet: #cba6f7;
+    --swatch-magenta: #f5c2e7;
+    --swatch-neutral: #cdd6f4;
+    --badge-orange: #fab387;
+    --badge-yellow: #f9e2af;
+    --badge-green: #a6e3a1;
+    --badge-cyan: #94e2d5;
+    --badge-blue: #89b4fa;
+    --badge-indigo: #b4befe;
+    --badge-purple: #cba6f7;
+    --badge-pink: #f5c2e7;
+    --colors-red-500: #f38ba8;
+    --colors-emerald-500: #a6e3a1;
+    --colors-yellow-600: #f9e2af;
+    --colors-amber-500: #fab387;
+    --colors-emerald-400: #a6e3a1;
+    --colors-orange-500: #fab387;
+  }
+  :root[data-theme="light"][data-bg-theme] ::selection {
+    background-color: rgba(203, 166, 247, 0.3);
+  }
+  :root[data-theme="light"][data-bg-theme] input::placeholder,
+  :root[data-theme="light"][data-bg-theme] textarea::placeholder {
+    color: #a6adc8 !important;
+  }
+}

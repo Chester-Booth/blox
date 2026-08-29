@@ -1,0 +1,157 @@
+/* Compiled from Catppuccin Userstyles 5ef4cc64231826f46d12a2721fa72571f5aa8a27; do not edit. */
+/* deno-fmt-ignore */
+/* deno-fmt-ignore */
+@-moz-document domain("www.freedesktop.org"), domain("specifications.freedesktop.org") {
+  @media (prefers-color-scheme: light) {
+    :root {
+      color-scheme: dark;
+    }
+    :root ::selection {
+      background-color: rgba(203, 166, 247, 0.3);
+    }
+    :root input::placeholder,
+    :root textarea::placeholder {
+      color: #a6adc8 !important;
+    }
+    :root body {
+      background-color: #1e1e2e;
+      color: #cdd6f4;
+    }
+    :root #content h1,
+    :root #content h2,
+    :root #content h3,
+    :root #content h4,
+    :root #content h5,
+    :root #content h6 {
+      color: #cba6f7;
+    }
+    :root .pageheader {
+      background-color: #181825;
+      border-color: #11111b;
+      color: #bac2de;
+    }
+    :root .pageheader .actions ul li a,
+    :root input[type="submit"] {
+      background-color: transparent;
+      color: #cba6f7;
+      border-color: #cba6f7;
+    }
+    :root input#searchbox {
+      color: #bac2de;
+      background-color: #6c7086;
+      border-color: #7f849c;
+      box-shadow: none;
+    }
+    :root input#searchbox:focus {
+      border-color: #cba6f7;
+      outline-color: none;
+      outline-style: none;
+    }
+    :root .headerpath .title {
+      color: #bac2de;
+    }
+    :root a:link {
+      color: #89b4fa;
+    }
+    :root a:visited {
+      color: #b4befe;
+    }
+    :root code {
+      background-color: #11111b;
+      color: #cdd6f4;
+    }
+    :root pre {
+      background-color: #181825;
+      border-color: #313244;
+    }
+    :root pre code {
+      background-color: #181825;
+      color: #cdd6f4;
+    }
+    :root hr {
+      border-style: solid;
+      border-color: #45475a;
+    }
+    :root .topnav,
+    :root tr:nth-child(2n+1) {
+      border-color: #313244;
+      background-color: #181825;
+    }
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+    }
+    :root ::selection {
+      background-color: rgba(203, 166, 247, 0.3);
+    }
+    :root input::placeholder,
+    :root textarea::placeholder {
+      color: #a6adc8 !important;
+    }
+    :root body {
+      background-color: #1e1e2e;
+      color: #cdd6f4;
+    }
+    :root #content h1,
+    :root #content h2,
+    :root #content h3,
+    :root #content h4,
+    :root #content h5,
+    :root #content h6 {
+      color: #cba6f7;
+    }
+    :root .pageheader {
+      background-color: #181825;
+      border-color: #11111b;
+      color: #bac2de;
+    }
+    :root .pageheader .actions ul li a,
+    :root input[type="submit"] {
+      background-color: transparent;
+      color: #cba6f7;
+      border-color: #cba6f7;
+    }
+    :root input#searchbox {
+      color: #bac2de;
+      background-color: #6c7086;
+      border-color: #7f849c;
+      box-shadow: none;
+    }
+    :root input#searchbox:focus {
+      border-color: #cba6f7;
+      outline-color: none;
+      outline-style: none;
+    }
+    :root .headerpath .title {
+      color: #bac2de;
+    }
+    :root a:link {
+      color: #89b4fa;
+    }
+    :root a:visited {
+      color: #b4befe;
+    }
+    :root code {
+      background-color: #11111b;
+      color: #cdd6f4;
+    }
+    :root pre {
+      background-color: #181825;
+      border-color: #313244;
+    }
+    :root pre code {
+      background-color: #181825;
+      color: #cdd6f4;
+    }
+    :root hr {
+      border-style: solid;
+      border-color: #45475a;
+    }
+    :root .topnav,
+    :root tr:nth-child(2n+1) {
+      border-color: #313244;
+      background-color: #181825;
+    }
+  }
+}

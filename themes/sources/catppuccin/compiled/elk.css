@@ -1,0 +1,149 @@
+/* Compiled from Catppuccin Userstyles 5ef4cc64231826f46d12a2721fa72571f5aa8a27; do not edit. */
+/* deno-fmt-ignore */
+/* deno-fmt-ignore */
+@-moz-document domain("elk.zone") {
+  :root.dark {
+    color-scheme: dark;
+    --c-primary: #cba6f7 !important;
+    --c-primary-active: #e6d5fb !important;
+    --c-primary-light: #313244 !important;
+    --c-border: #313244 !important;
+    --c-border-dark: #45475a !important;
+    --c-bg-base: #1e1e2e !important;
+    --rgb-bg-base: 24, 24, 37 !important;
+    --c-bg-active: #313244 !important;
+    --c-bg-code: #313244 !important;
+    --c-bg-selection: #cba6f7 !important;
+    --c-bg-fade: #313244 !important;
+    --c-text-base: #cdd6f4 !important;
+    --c-text-code: #f5e0dc !important;
+    --c-text-secondary: #a6adc8 !important;
+    --c-text-secondary-light: #bac2de !important;
+    --c-bg-btn-disabled: #45475a !important;
+    --c-text-btn-disabled: #cdd6f4 !important;
+    --c-text-btn: #cdd6f4 !important;
+    --c-success: #a6e3a1 !important;
+    --c-warning: #f9e2af !important;
+    --c-error: #f38ba8 !important;
+    --c-danger: #f38ba8 !important;
+    --c-danger-active: #f8b9cb !important;
+    --c-bg-dm: #313244 !important;
+  }
+  :root.dark ::selection {
+    background-color: rgba(203, 166, 247, 0.3);
+  }
+  :root.dark input::placeholder,
+  :root.dark textarea::placeholder {
+    color: #a6adc8 !important;
+  }
+  :root.dark .btn-solid,
+  :root.dark [btn-solid=""] {
+    color: var(--c-bg-base);
+  }
+  :root.dark ::-webkit-scrollbar-thumb {
+    background: rgba(69, 71, 90, 0.7);
+  }
+  :root.dark ::-webkit-scrollbar-thumb:hover {
+    background: rgba(69, 71, 90, 0.8);
+  }
+  :root.dark [text-red],
+  :root.dark [text-red-600],
+  :root.dark [hover^="text-red"]:hover {
+    color: rgba(243, 139, 168, var(--un-text-opacity));
+  }
+  :root.dark [text-blue],
+  :root.dark [hover^="text-blue"]:hover {
+    color: rgba(137, 180, 250, var(--un-text-opacity));
+  }
+  :root.dark [text-green],
+  :root.dark [hover^="text-green"]:hover {
+    color: rgba(166, 227, 161, var(--un-text-opacity));
+  }
+  :root.dark [text-yellow],
+  :root.dark [hover^="text-yellow"]:hover {
+    color: rgba(249, 226, 175, var(--un-text-opacity));
+  }
+  :root.dark [text-purple],
+  :root.dark [hover^="text-purple"]:hover {
+    color: rgba(180, 190, 254, var(--un-text-opacity));
+  }
+  :root.dark [group-hover^="bg-purple/10"]:hover {
+    background-color: rgba(180, 190, 254, 0.1);
+  }
+  :root.dark .filter-saturate-0,
+  :root.dark [filter-saturate-0=""] {
+    filter: none;
+  }
+  :root.light {
+    color-scheme: dark;
+    --c-primary: #cba6f7 !important;
+    --c-primary-active: #e6d5fb !important;
+    --c-primary-light: #313244 !important;
+    --c-border: #313244 !important;
+    --c-border-dark: #45475a !important;
+    --c-bg-base: #1e1e2e !important;
+    --rgb-bg-base: 24, 24, 37 !important;
+    --c-bg-active: #313244 !important;
+    --c-bg-code: #313244 !important;
+    --c-bg-selection: #cba6f7 !important;
+    --c-bg-fade: #313244 !important;
+    --c-text-base: #cdd6f4 !important;
+    --c-text-code: #f5e0dc !important;
+    --c-text-secondary: #a6adc8 !important;
+    --c-text-secondary-light: #bac2de !important;
+    --c-bg-btn-disabled: #45475a !important;
+    --c-text-btn-disabled: #cdd6f4 !important;
+    --c-text-btn: #cdd6f4 !important;
+    --c-success: #a6e3a1 !important;
+    --c-warning: #f9e2af !important;
+    --c-error: #f38ba8 !important;
+    --c-danger: #f38ba8 !important;
+    --c-danger-active: #f8b9cb !important;
+    --c-bg-dm: #313244 !important;
+  }
+  :root.light ::selection {
+    background-color: rgba(203, 166, 247, 0.3);
+  }
+  :root.light input::placeholder,
+  :root.light textarea::placeholder {
+    color: #a6adc8 !important;
+  }
+  :root.light .btn-solid,
+  :root.light [btn-solid=""] {
+    color: var(--c-bg-base);
+  }
+  :root.light ::-webkit-scrollbar-thumb {
+    background: rgba(69, 71, 90, 0.7);
+  }
+  :root.light ::-webkit-scrollbar-thumb:hover {
+    background: rgba(69, 71, 90, 0.8);
+  }
+  :root.light [text-red],
+  :root.light [text-red-600],
+  :root.light [hover^="text-red"]:hover {
+    color: rgba(243, 139, 168, var(--un-text-opacity));
+  }
+  :root.light [text-blue],
+  :root.light [hover^="text-blue"]:hover {
+    color: rgba(137, 180, 250, var(--un-text-opacity));
+  }
+  :root.light [text-green],
+  :root.light [hover^="text-green"]:hover {
+    color: rgba(166, 227, 161, var(--un-text-opacity));
+  }
+  :root.light [text-yellow],
+  :root.light [hover^="text-yellow"]:hover {
+    color: rgba(249, 226, 175, var(--un-text-opacity));
+  }
+  :root.light [text-purple],
+  :root.light [hover^="text-purple"]:hover {
+    color: rgba(180, 190, 254, var(--un-text-opacity));
+  }
+  :root.light [group-hover^="bg-purple/10"]:hover {
+    background-color: rgba(180, 190, 254, 0.1);
+  }
+  :root.light .filter-saturate-0,
+  :root.light [filter-saturate-0=""] {
+    filter: none;
+  }
+}

@@ -1,0 +1,572 @@
+/* Compiled from Catppuccin Userstyles 5ef4cc64231826f46d12a2721fa72571f5aa8a27; do not edit. */
+/* deno-fmt-ignore */
+/* deno-fmt-ignore */
+@-moz-document domain("cinny.in") {
+  /* https://prismjs.com/tokens.html */
+
+.token.keyword {
+	color: var(--ctp-mauve) !important;
+}
+
+.token.builtin {
+	color: var(--ctp-red) !important;
+}
+
+.token.class-name {
+	color: var(--ctp-yellow) !important;
+}
+
+.token.function {
+	color: var(--ctp-blue) !important;
+}
+
+.token.boolean,
+.token.number {
+	color: var(--ctp-peach) !important;
+}
+
+.token.string,
+.token.char {
+	color: var(--ctp-green) !important;
+}
+
+.token.symbol {
+	color: var(--ctp-yellow) !important;
+}
+
+.token.regex {
+	color: var(--ctp-pink) !important;
+}
+
+.token.url {
+	color: var(--ctp-green) !important;
+}
+
+.token.operator {
+	color: var(--ctp-sky) !important;
+}
+
+.token.variable {
+	color: var(--ctp-text) !important;
+}
+
+.token.constant {
+	color: var(--ctp-peach) !important;
+}
+
+.token.property {
+	color: var(--ctp-blue) !important;
+}
+
+.token.punctuation {
+	color: var(--ctp-overlay2) !important;
+}
+
+.token.important {
+	color: var(--ctp-mauve) !important;
+}
+
+.token.comment {
+	color: var(--ctp-overlay2) !important;
+}
+
+.token.tag {
+	color: var(--ctp-blue) !important;
+}
+
+.token.attr-name {
+	color: var(--ctp-yellow) !important;
+}
+
+.token.attr-value {
+	color: var(--ctp-green) !important;
+}
+
+.token.namespace {
+	color: var(--ctp-yellow) !important;
+}
+
+.token.prolog,
+.token.doctype {
+	color: var(--ctp-mauve) !important;
+}
+
+.token.cdata {
+	color: var(--ctp-teal) !important;
+}
+
+.token.entity {
+	color: var(--ctp-red) !important;
+}
+
+.token.atrule {
+	color: var(--ctp-mauve) !important;
+}
+
+.token.selector {
+	color: var(--ctp-blue) !important;
+}
+
+/* Diff */
+
+.token.deleted {
+	color: var(--ctp-red) !important;
+}
+
+.token.inserted {
+	color: var(--ctp-green) !important
+}
+
+/* Other */
+
+.token.important,
+.token.bold {
+	font-weight: bold;
+}
+.token.italic {
+	font-style: italic;
+}
+
+
+  code .token {
+    opacity: 1 !important;
+  }
+  :root,
+  .silver-theme {
+    color-scheme: dark;
+    --ctp-rosewater: #f5e0dc;
+    --ctp-flamingo: #f2cdcd;
+    --ctp-pink: #f5c2e7;
+    --ctp-mauve: #cba6f7;
+    --ctp-red: #f38ba8;
+    --ctp-maroon: #eba0ac;
+    --ctp-peach: #fab387;
+    --ctp-yellow: #f9e2af;
+    --ctp-green: #a6e3a1;
+    --ctp-teal: #94e2d5;
+    --ctp-sky: #89dceb;
+    --ctp-sapphire: #74c7ec;
+    --ctp-blue: #89b4fa;
+    --ctp-lavender: #b4befe;
+    --ctp-text: #cdd6f4;
+    --ctp-subtext1: #bac2de;
+    --ctp-subtext0: #a6adc8;
+    --ctp-overlay2: #9399b2;
+    --ctp-overlay1: #7f849c;
+    --ctp-overlay0: #6c7086;
+    --ctp-surface2: #585b70;
+    --ctp-surface1: #45475a;
+    --ctp-surface0: #313244;
+    --ctp-base: #1e1e2e;
+    --ctp-mantle: #181825;
+    --ctp-crust: #11111b;
+    /* Legacy user colors */
+    --mx-uc-1: #89b4fa;
+    --mx-uc-2: #f5c2e7;
+    --mx-uc-3: #94e2d5;
+    --mx-uc-4: #f38ba8;
+    --mx-uc-5: #fab387;
+    --mx-uc-6: #89dceb;
+    --mx-uc-7: #cba6f7;
+    --mx-uc-8: #a6e3a1;
+    /* Search results */
+    /* Footer */
+    /* I don't think these actually do anything anymore, but they are
+    still defined in the app. They _might_ be removed in a future release. */
+    /* Backgrounds */
+    --bg-surface: #1e1e2e;
+    --bg-surface-transparent: rgba(30, 30, 46, 0);
+    --bg-surface-low: #181825;
+    --bg-surface-low-transparent: rgba(24, 24, 37, 0);
+    --bg-surface-extra-low: #11111b;
+    --bg-surface-extra-low-transparent: rgba(17, 17, 27, 0);
+    --bg-surface-border: rgba(17, 17, 27, 0.2);
+    --bg-surface-hover: #313244;
+    --bg-surface-active: #45475a;
+    --bg-overlay: rgba(17, 17, 27, 0.6);
+    --bg-overlay-low: rgba(17, 17, 27, 0.8);
+    --bg-primary: #cba6f7;
+    --bg-primary-hover: rgba(203, 166, 247, 0.8);
+    --bg-primary-active: rgba(203, 166, 247, 0.7);
+    --bg-primary-border: rgba(203, 166, 247, 0.38);
+    --bg-tooltip: #313244;
+    --bg-badge: #b4befe;
+    --bg-positive: #a6e3a1;
+    --bg-positive-hover: rgba(166, 227, 161, 0.08);
+    --bg-positive-active: rgba(166, 227, 161, 0.15);
+    --bg-positive-border: rgba(166, 227, 161, 0.4);
+    --bg-caution: #fab387;
+    --bg-caution-hover: rgba(250, 179, 135, 0.08);
+    --bg-caution-active: rgba(250, 179, 135, 0.15);
+    --bg-caution-border: rgba(250, 179, 135, 0.4);
+    --bg-danger: #eba0ac;
+    --bg-danger-hover: rgba(235, 160, 172, 0.05);
+    --bg-danger-active: rgba(235, 160, 172, 0.1);
+    --bg-danger-border: rgba(235, 160, 172, 0.2);
+    --bg-ping: rgba(166, 227, 161, 0.4);
+    --bg-ping-hover: rgba(166, 227, 161, 0.5);
+    /* Texts */
+    --tc-surface-high: #cdd6f4;
+    --tc-surface-normal: #cdd6f4;
+    --tc-surface-normal-low: #bac2de;
+    --tc-surface-low: #a6adc8;
+    --tc-primary-high: #11111b;
+    --tc-primary-normal: #cdd6f4;
+    --tc-primary-low: #bac2de;
+    --tc-tooltip: #a6adc8;
+    --tc-code: #cba6f7;
+    --tc-link: #89b4fa;
+    --tc-badge: #11111b;
+    --tc-positive-high: #a6e3a1;
+    --tc-positive-normal: #a6e3a1;
+    --tc-positive-low: #a6e3a1;
+    --tc-caution-high: #fab387;
+    --tc-caution-normal: #fab387;
+    --tc-caution-low: #fab387;
+    --tc-danger-high: #eba0ac;
+    --tc-danger-normal: #eba0ac;
+    --tc-danger-low: #eba0ac;
+    /* Icons */
+    --ic-surface-high: #cdd6f4;
+    --ic-surface-normal: #cdd6f4;
+    --ic-surface-low: #bac2de;
+    --ic-primary-high: #11111b;
+    --ic-primary-normal: #11111b;
+    --ic-primary-low: #11111b;
+    --ic-positive-high: #a6e3a1;
+    --ic-positive-normal: #eba0ac;
+    --ic-caution-high: #fab387;
+    --ic-caution-normal: #fab387;
+    --ic-danger-high: #eba0ac;
+    --ic-danger-normal: #eba0ac;
+  }
+  :root ::selection,
+  .silver-theme ::selection {
+    background-color: rgba(203, 166, 247, 0.3);
+  }
+  :root input::placeholder,
+  .silver-theme input::placeholder,
+  :root textarea::placeholder,
+  .silver-theme textarea::placeholder {
+    color: #a6adc8 !important;
+  }
+  :root body.oq6d071w,
+  .silver-theme body.oq6d071w,
+  :root._15q3ngn0,
+  .silver-theme._15q3ngn0,
+  :root._15q3ngn1,
+  .silver-theme._15q3ngn1,
+  :root._15q3ngn2,
+  .silver-theme._15q3ngn2 {
+    --oq6d070: #181825;
+    --oq6d071: #1e1e2e;
+    --oq6d072: #313244;
+    --oq6d073: #45475a;
+    --oq6d074: #cdd6f4;
+    --oq6d075: #1e1e2e;
+    --oq6d076: #313244;
+    --oq6d077: #45475a;
+    --oq6d078: #585b70;
+    --oq6d079: #cdd6f4;
+    --oq6d07a: #181825;
+    --oq6d07b: #1e1e2e;
+    --oq6d07c: #313244;
+    --oq6d07d: #45475a;
+    --oq6d07e: #cdd6f4;
+    --oq6d07f: #a6adc8;
+    --oq6d07g: #9399b2;
+    --oq6d07h: #7f849c;
+    --oq6d07i: #6c7086;
+    --oq6d07j: #1e1e2e;
+    --oq6d07k: rgba(203, 166, 247, 0.5);
+    --oq6d07l: rgba(203, 166, 247, 0.4);
+    --oq6d07m: rgba(203, 166, 247, 0.3);
+    --oq6d07n: rgba(203, 166, 247, 0.2);
+    --oq6d07o: #cdd6f4;
+    --oq6d07p: #bac2de;
+    --oq6d07q: #a6adc8;
+    --oq6d07r: #9399b2;
+    --oq6d07s: #7f849c;
+    --oq6d07t: #181825;
+    --oq6d07u: #313244;
+    --oq6d07v: #45475a;
+    --oq6d07w: #585b70;
+    --oq6d07x: #6c7086;
+    --oq6d07y: #cdd6f4;
+    --oq6d07z: rgba(166, 227, 161, 0.9);
+    --oq6d0710: rgba(166, 227, 161, 0.95);
+    --oq6d0711: rgba(166, 227, 161, 0.975);
+    --oq6d0712: #a6e3a1;
+    --oq6d0713: #313244;
+    --oq6d0714: rgba(49, 50, 68, 0.975);
+    --oq6d0715: rgba(49, 50, 68, 0.95);
+    --oq6d0716: rgba(49, 50, 68, 0.9);
+    --oq6d0717: rgba(49, 50, 68, 0.8);
+    --oq6d0718: #a6e3a1;
+    --oq6d0719: rgba(250, 179, 135, 0.9);
+    --oq6d071a: rgba(250, 179, 135, 0.95);
+    --oq6d071b: rgba(250, 179, 135, 0.975);
+    --oq6d071c: #fab387;
+    --oq6d071d: rgba(49, 50, 68, 0.975);
+    --oq6d071e: rgba(49, 50, 68, 0.95);
+    --oq6d071f: rgba(49, 50, 68, 0.9);
+    --oq6d071g: rgba(49, 50, 68, 0.8);
+    --oq6d071h: rgba(49, 50, 68, 0.7);
+    --oq6d071i: rgba(235, 160, 172, 0.9);
+    --oq6d071j: rgba(235, 160, 172, 0.95);
+    --oq6d071k: rgba(235, 160, 172, 0.975);
+    --oq6d071l: #eba0ac;
+    --oq6d071m: rgba(49, 50, 68, 0.975);
+    --oq6d071n: rgba(49, 50, 68, 0.95);
+    --oq6d071o: rgba(49, 50, 68, 0.9);
+    --oq6d071p: rgba(49, 50, 68, 0.8);
+    --oq6d071q: rgba(49, 50, 68, 0.7);
+    --oq6d071r: rgba(49, 50, 68, 0.6);
+    --oq6d071s: rgba(235, 160, 172, 0.9);
+    --oq6d071t: rgba(205, 214, 244, 0.5);
+    --oq6d071u: #11111b;
+    --oq6d071v: rgba(17, 17, 27, 0.6);
+  }
+  :root ._1m2qi7rq,
+  .silver-theme ._1m2qi7rq {
+    background-color: #cba6f7;
+    color: #1e1e2e;
+  }
+  :root .footer,
+  .silver-theme .footer {
+    background-color: #1e1e2e;
+  }
+  :root .footer .text-s1,
+  .silver-theme .footer .text-s1,
+  :root .footer .text-h2,
+  .silver-theme .footer .text-h2,
+  :root .footer a,
+  .silver-theme .footer a {
+    color: #cdd6f4;
+  }
+  :root .footer .footer__creator,
+  .silver-theme .footer .footer__creator,
+  :root .footer .footer__menu-container .text-b3,
+  .silver-theme .footer .footer__menu-container .text-b3 {
+    color: #a6adc8;
+  }
+  .dark-theme,
+  .butter-theme {
+    color-scheme: dark;
+    --ctp-rosewater: #f5e0dc;
+    --ctp-flamingo: #f2cdcd;
+    --ctp-pink: #f5c2e7;
+    --ctp-mauve: #cba6f7;
+    --ctp-red: #f38ba8;
+    --ctp-maroon: #eba0ac;
+    --ctp-peach: #fab387;
+    --ctp-yellow: #f9e2af;
+    --ctp-green: #a6e3a1;
+    --ctp-teal: #94e2d5;
+    --ctp-sky: #89dceb;
+    --ctp-sapphire: #74c7ec;
+    --ctp-blue: #89b4fa;
+    --ctp-lavender: #b4befe;
+    --ctp-text: #cdd6f4;
+    --ctp-subtext1: #bac2de;
+    --ctp-subtext0: #a6adc8;
+    --ctp-overlay2: #9399b2;
+    --ctp-overlay1: #7f849c;
+    --ctp-overlay0: #6c7086;
+    --ctp-surface2: #585b70;
+    --ctp-surface1: #45475a;
+    --ctp-surface0: #313244;
+    --ctp-base: #1e1e2e;
+    --ctp-mantle: #181825;
+    --ctp-crust: #11111b;
+    /* Legacy user colors */
+    --mx-uc-1: #89b4fa;
+    --mx-uc-2: #f5c2e7;
+    --mx-uc-3: #94e2d5;
+    --mx-uc-4: #f38ba8;
+    --mx-uc-5: #fab387;
+    --mx-uc-6: #89dceb;
+    --mx-uc-7: #cba6f7;
+    --mx-uc-8: #a6e3a1;
+    /* Search results */
+    /* Footer */
+    /* I don't think these actually do anything anymore, but they are
+    still defined in the app. They _might_ be removed in a future release. */
+    /* Backgrounds */
+    --bg-surface: #1e1e2e;
+    --bg-surface-transparent: rgba(30, 30, 46, 0);
+    --bg-surface-low: #181825;
+    --bg-surface-low-transparent: rgba(24, 24, 37, 0);
+    --bg-surface-extra-low: #11111b;
+    --bg-surface-extra-low-transparent: rgba(17, 17, 27, 0);
+    --bg-surface-border: rgba(17, 17, 27, 0.2);
+    --bg-surface-hover: #313244;
+    --bg-surface-active: #45475a;
+    --bg-overlay: rgba(17, 17, 27, 0.6);
+    --bg-overlay-low: rgba(17, 17, 27, 0.8);
+    --bg-primary: #cba6f7;
+    --bg-primary-hover: rgba(203, 166, 247, 0.8);
+    --bg-primary-active: rgba(203, 166, 247, 0.7);
+    --bg-primary-border: rgba(203, 166, 247, 0.38);
+    --bg-tooltip: #313244;
+    --bg-badge: #b4befe;
+    --bg-positive: #a6e3a1;
+    --bg-positive-hover: rgba(166, 227, 161, 0.08);
+    --bg-positive-active: rgba(166, 227, 161, 0.15);
+    --bg-positive-border: rgba(166, 227, 161, 0.4);
+    --bg-caution: #fab387;
+    --bg-caution-hover: rgba(250, 179, 135, 0.08);
+    --bg-caution-active: rgba(250, 179, 135, 0.15);
+    --bg-caution-border: rgba(250, 179, 135, 0.4);
+    --bg-danger: #eba0ac;
+    --bg-danger-hover: rgba(235, 160, 172, 0.05);
+    --bg-danger-active: rgba(235, 160, 172, 0.1);
+    --bg-danger-border: rgba(235, 160, 172, 0.2);
+    --bg-ping: rgba(166, 227, 161, 0.4);
+    --bg-ping-hover: rgba(166, 227, 161, 0.5);
+    /* Texts */
+    --tc-surface-high: #cdd6f4;
+    --tc-surface-normal: #cdd6f4;
+    --tc-surface-normal-low: #bac2de;
+    --tc-surface-low: #a6adc8;
+    --tc-primary-high: #11111b;
+    --tc-primary-normal: #cdd6f4;
+    --tc-primary-low: #bac2de;
+    --tc-tooltip: #a6adc8;
+    --tc-code: #cba6f7;
+    --tc-link: #89b4fa;
+    --tc-badge: #11111b;
+    --tc-positive-high: #a6e3a1;
+    --tc-positive-normal: #a6e3a1;
+    --tc-positive-low: #a6e3a1;
+    --tc-caution-high: #fab387;
+    --tc-caution-normal: #fab387;
+    --tc-caution-low: #fab387;
+    --tc-danger-high: #eba0ac;
+    --tc-danger-normal: #eba0ac;
+    --tc-danger-low: #eba0ac;
+    /* Icons */
+    --ic-surface-high: #cdd6f4;
+    --ic-surface-normal: #cdd6f4;
+    --ic-surface-low: #bac2de;
+    --ic-primary-high: #11111b;
+    --ic-primary-normal: #11111b;
+    --ic-primary-low: #11111b;
+    --ic-positive-high: #a6e3a1;
+    --ic-positive-normal: #eba0ac;
+    --ic-caution-high: #fab387;
+    --ic-caution-normal: #fab387;
+    --ic-danger-high: #eba0ac;
+    --ic-danger-normal: #eba0ac;
+  }
+  .dark-theme ::selection,
+  .butter-theme ::selection {
+    background-color: rgba(203, 166, 247, 0.3);
+  }
+  .dark-theme input::placeholder,
+  .butter-theme input::placeholder,
+  .dark-theme textarea::placeholder,
+  .butter-theme textarea::placeholder {
+    color: #a6adc8 !important;
+  }
+  .dark-theme body.oq6d071w,
+  .butter-theme body.oq6d071w,
+  .dark-theme._15q3ngn0,
+  .butter-theme._15q3ngn0,
+  .dark-theme._15q3ngn1,
+  .butter-theme._15q3ngn1,
+  .dark-theme._15q3ngn2,
+  .butter-theme._15q3ngn2 {
+    --oq6d070: #181825;
+    --oq6d071: #1e1e2e;
+    --oq6d072: #313244;
+    --oq6d073: #45475a;
+    --oq6d074: #cdd6f4;
+    --oq6d075: #1e1e2e;
+    --oq6d076: #313244;
+    --oq6d077: #45475a;
+    --oq6d078: #585b70;
+    --oq6d079: #cdd6f4;
+    --oq6d07a: #181825;
+    --oq6d07b: #1e1e2e;
+    --oq6d07c: #313244;
+    --oq6d07d: #45475a;
+    --oq6d07e: #cdd6f4;
+    --oq6d07f: #a6adc8;
+    --oq6d07g: #9399b2;
+    --oq6d07h: #7f849c;
+    --oq6d07i: #6c7086;
+    --oq6d07j: #1e1e2e;
+    --oq6d07k: rgba(203, 166, 247, 0.5);
+    --oq6d07l: rgba(203, 166, 247, 0.4);
+    --oq6d07m: rgba(203, 166, 247, 0.3);
+    --oq6d07n: rgba(203, 166, 247, 0.2);
+    --oq6d07o: #cdd6f4;
+    --oq6d07p: #bac2de;
+    --oq6d07q: #a6adc8;
+    --oq6d07r: #9399b2;
+    --oq6d07s: #7f849c;
+    --oq6d07t: #181825;
+    --oq6d07u: #313244;
+    --oq6d07v: #45475a;
+    --oq6d07w: #585b70;
+    --oq6d07x: #6c7086;
+    --oq6d07y: #cdd6f4;
+    --oq6d07z: rgba(166, 227, 161, 0.9);
+    --oq6d0710: rgba(166, 227, 161, 0.95);
+    --oq6d0711: rgba(166, 227, 161, 0.975);
+    --oq6d0712: #a6e3a1;
+    --oq6d0713: #313244;
+    --oq6d0714: rgba(49, 50, 68, 0.975);
+    --oq6d0715: rgba(49, 50, 68, 0.95);
+    --oq6d0716: rgba(49, 50, 68, 0.9);
+    --oq6d0717: rgba(49, 50, 68, 0.8);
+    --oq6d0718: #a6e3a1;
+    --oq6d0719: rgba(250, 179, 135, 0.9);
+    --oq6d071a: rgba(250, 179, 135, 0.95);
+    --oq6d071b: rgba(250, 179, 135, 0.975);
+    --oq6d071c: #fab387;
+    --oq6d071d: rgba(49, 50, 68, 0.975);
+    --oq6d071e: rgba(49, 50, 68, 0.95);
+    --oq6d071f: rgba(49, 50, 68, 0.9);
+    --oq6d071g: rgba(49, 50, 68, 0.8);
+    --oq6d071h: rgba(49, 50, 68, 0.7);
+    --oq6d071i: rgba(235, 160, 172, 0.9);
+    --oq6d071j: rgba(235, 160, 172, 0.95);
+    --oq6d071k: rgba(235, 160, 172, 0.975);
+    --oq6d071l: #eba0ac;
+    --oq6d071m: rgba(49, 50, 68, 0.975);
+    --oq6d071n: rgba(49, 50, 68, 0.95);
+    --oq6d071o: rgba(49, 50, 68, 0.9);
+    --oq6d071p: rgba(49, 50, 68, 0.8);
+    --oq6d071q: rgba(49, 50, 68, 0.7);
+    --oq6d071r: rgba(49, 50, 68, 0.6);
+    --oq6d071s: rgba(235, 160, 172, 0.9);
+    --oq6d071t: rgba(205, 214, 244, 0.5);
+    --oq6d071u: #11111b;
+    --oq6d071v: rgba(17, 17, 27, 0.6);
+  }
+  .dark-theme ._1m2qi7rq,
+  .butter-theme ._1m2qi7rq {
+    background-color: #cba6f7;
+    color: #1e1e2e;
+  }
+  .dark-theme .footer,
+  .butter-theme .footer {
+    background-color: #1e1e2e;
+  }
+  .dark-theme .footer .text-s1,
+  .butter-theme .footer .text-s1,
+  .dark-theme .footer .text-h2,
+  .butter-theme .footer .text-h2,
+  .dark-theme .footer a,
+  .butter-theme .footer a {
+    color: #cdd6f4;
+  }
+  .dark-theme .footer .footer__creator,
+  .butter-theme .footer .footer__creator,
+  .dark-theme .footer .footer__menu-container .text-b3,
+  .butter-theme .footer .footer__menu-container .text-b3 {
+    color: #a6adc8;
+  }
+}

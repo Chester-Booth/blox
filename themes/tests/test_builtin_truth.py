@@ -34,6 +34,7 @@ OPTIONAL_STATE_LEAVES = {
     "shell.bar.radius_scale",
     "shell.bar.density_automatic",
     "shell.bar.density_scale",
+    "stylus.style_set",
 }
 
 
@@ -112,6 +113,7 @@ class BuiltinTruthTests(unittest.TestCase):
                 "shell.bar.radius_scale",
                 "shell.bar.density_automatic",
                 "shell.bar.density_scale",
+                "stylus.style_set",
             },
         )
         for name, document in self.documents():

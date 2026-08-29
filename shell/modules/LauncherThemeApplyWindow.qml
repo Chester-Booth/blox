@@ -9,7 +9,7 @@ FloatingWindow {
     required property LauncherMainController controller
     property var targetScreen
     readonly property int targetWindowHeight: Math.min(targetScreen ? targetScreen.height - 80 : 900, Math.max(680, 232 + Math.ceil(controller.applyProgressRows.length / 2) * 56))
-    readonly property int preferredWindowHeight: controller.applyProgressShowTargets ? targetWindowHeight : 430
+    readonly property int preferredWindowHeight: controller.applyGuideTarget.length > 0 ? Math.min(targetScreen ? targetScreen.height - 80 : 900, 760) : controller.applyProgressShowTargets ? targetWindowHeight : 430
 
     title: "Blox Theme Application"
     implicitWidth: 770
@@ -111,7 +111,7 @@ FloatingWindow {
             anchors.right: parent.right
             anchors.top: titleBar.bottom
             anchors.margins: Theme.scaledSpacing(28)
-            spacing: Theme.scaledSpacing(16)
+            spacing: Theme.scaledSpacing(8)
             visible: controller.applyGuideTarget.length > 0
 
             Text {
@@ -123,8 +123,106 @@ FloatingWindow {
             }
 
             Text {
+                visible: controller.applyGuideTarget === "stylus"
                 width: parent.width
-                text: controller.applyGuideTarget === "obsidian" ? "1. Install and select the Minimal theme, then enable Style Settings.\n2. Open Style Settings and choose Import.\n3. Import ~/.local/state/blox-theme/current/obsidian/style-settings.json." : "1. Open the Stylus extension dashboard.\n2. Choose Import.\n3. Import ~/.local/state/blox-theme/current/stylus/blox-system.user.css and enable it."
+                text: "In your browser, press Ctrl+O and open the Stylus file at:"
+                color: Theme.foreground
+                font.family: Theme.bodyFontFamily
+                font.pixelSize: 13
+                wrapMode: Text.Wrap
+            }
+
+            Row {
+                visible: controller.applyGuideTarget === "stylus"
+                width: parent.width
+                spacing: Theme.scaledSpacing(8)
+
+                Text {
+                    width: parent.width - copyStylusPath.width - parent.spacing
+                    text: Theme.stateRoot + "/blox-theme/current/stylus/blox-system.user.css"
+                    color: Theme.muted
+                    font.family: Theme.monoFontFamily
+                    font.pixelSize: 12
+                    elide: Text.ElideMiddle
+                    verticalAlignment: Text.AlignVCenter
+                }
+
+                CopyPathButton {
+                    id: copyStylusPath
+
+                    value: Theme.stateRoot + "/blox-theme/current/stylus/blox-system.user.css"
+                }
+
+            }
+
+            Text {
+                visible: controller.applyGuideTarget === "stylus"
+                width: parent.width
+                text: "Then click Install style."
+                color: Theme.foreground
+                font.family: Theme.bodyFontFamily
+                font.pixelSize: 13
+                wrapMode: Text.Wrap
+            }
+
+            Image {
+                visible: controller.applyGuideTarget === "stylus"
+                width: parent.width
+                height: 45
+                source: "../assets/stylus-install-style.png"
+                fillMode: Image.PreserveAspectFit
+            }
+
+            Text {
+                visible: controller.applyGuideTarget === "stylus"
+                width: parent.width
+                text: "Note: You may need to give Stylus permission to access local files in your extension settings."
+                color: Theme.muted
+                font.family: Theme.bodyFontFamily
+                font.pixelSize: 13
+                wrapMode: Text.Wrap
+            }
+
+            Text {
+                visible: controller.applyGuideTarget === "stylus"
+                width: parent.width
+                text: "Chrome or Chromium: Allow access to file URLs"
+                color: Theme.muted
+                font.family: Theme.bodyFontFamily
+                font.pixelSize: 13
+                wrapMode: Text.Wrap
+            }
+
+            Image {
+                visible: controller.applyGuideTarget === "stylus"
+                width: parent.width
+                height: 70
+                source: "../assets/stylus-file-urls.png"
+                fillMode: Image.PreserveAspectFit
+            }
+
+            Text {
+                visible: controller.applyGuideTarget === "stylus"
+                width: parent.width
+                text: "Firefox or Zen: Access local files on your computer"
+                color: Theme.muted
+                font.family: Theme.bodyFontFamily
+                font.pixelSize: 13
+                wrapMode: Text.Wrap
+            }
+
+            Image {
+                visible: controller.applyGuideTarget === "stylus"
+                width: parent.width
+                height: 180
+                source: "../assets/stylus-file-access-firefox.png"
+                fillMode: Image.PreserveAspectFit
+            }
+
+            Text {
+                visible: controller.applyGuideTarget === "obsidian"
+                width: parent.width
+                text: "1. Install and select the Minimal theme, then enable Style Settings.\n2. Open Style Settings and choose Import.\n3. Import ~/.local/state/blox-theme/current/obsidian/style-settings.json."
                 color: Theme.foreground
                 wrapMode: Text.Wrap
                 font.family: Theme.bodyFontFamily

@@ -1,0 +1,207 @@
+/* Compiled from Catppuccin Userstyles 5ef4cc64231826f46d12a2721fa72571f5aa8a27; do not edit. */
+/* deno-fmt-ignore */
+/* deno-fmt-ignore */
+@-moz-document domain("rust-lang.github.io"), domain("doc.rust-lang.org"), domain("rust-book.cs.brown.edu"), domain("rustc-dev-guide.rust-lang.org"), domain("forge.rust-lang.org"), domain("lang-team.rust-lang.org"), domain("doc.redox-os.org"), url-prefix("https://lukaswirth.dev/tlborm/") {
+  code.hljs{color:var(--ctp-text);background:var(--ctp-base)}code .hljs-keyword{color:var(--ctp-mauve)}code .hljs-built_in{color:var(--ctp-red)}code .hljs-type{color:var(--ctp-yellow)}code .hljs-literal{color:var(--ctp-peach)}code .hljs-number{color:var(--ctp-peach)}code .hljs-operator{color:var(--ctp-sky)}code .hljs-punctuation{color:var(--ctp-subtext1)}code .hljs-property{color:var(--ctp-teal)}code .hljs-regexp{color:var(--ctp-pink)}code .hljs-string{color:var(--ctp-green)}code .hljs-char.escape_{color:var(--ctp-green)}code .hljs-subst{color:var(--ctp-subtext0)}code .hljs-symbol{color:var(--ctp-flamingo)}code .hljs-variable{color:var(--ctp-mauve)}code .hljs-variable.language_{color:var(--ctp-mauve)}code .hljs-variable.constant_{color:var(--ctp-peach)}code .hljs-title{color:var(--ctp-blue)}code .hljs-title.class_{color:var(--ctp-yellow)}code .hljs-title.function_{color:var(--ctp-blue)}code .hljs-params{color:var(--ctp-text)}code .hljs-comment{color:var(--ctp-overlay2)}code .hljs-doctag{color:var(--ctp-red)}code .hljs-meta{color:var(--ctp-peach)}code .hljs-section{color:var(--ctp-blue)}code .hljs-tag{color:var(--ctp-teal)}code .hljs-name{color:var(--ctp-mauve)}code .hljs-attr{color:var(--ctp-blue)}code .hljs-attribute{color:var(--ctp-green)}code .hljs-bullet{color:var(--ctp-teal)}code .hljs-code{color:var(--ctp-green)}code .hljs-emphasis{color:var(--ctp-red);font-style:italic}code .hljs-strong{color:var(--ctp-red);font-weight:bold}code .hljs-formula{color:var(--ctp-teal)}code .hljs-link{color:var(--ctp-sapphire);font-style:italic}code .hljs-quote{color:var(--ctp-green);font-style:italic}code .hljs-selector-tag{color:var(--ctp-yellow)}code .hljs-selector-id{color:var(--ctp-blue)}code .hljs-selector-class{color:var(--ctp-teal)}code .hljs-selector-attr{color:var(--ctp-mauve)}code .hljs-selector-pseudo{color:var(--ctp-teal)}code .hljs-template-tag{color:var(--ctp-flamingo)}code .hljs-template-variable{color:var(--ctp-flamingo)}code .hljs-addition{color:var(--ctp-green);background:rgb(from var(--ctp-green) r g b/15%)}code .hljs-deletion{color:var(--ctp-red);background:rgb(from var(--ctp-red) r g b/15%)}
+
+  @media (prefers-color-scheme: light) {
+    :root {
+      color-scheme: dark;
+      --ctp-rosewater: #f5e0dc;
+      --ctp-flamingo: #f2cdcd;
+      --ctp-pink: #f5c2e7;
+      --ctp-mauve: #cba6f7;
+      --ctp-red: #f38ba8;
+      --ctp-maroon: #eba0ac;
+      --ctp-peach: #fab387;
+      --ctp-yellow: #f9e2af;
+      --ctp-green: #a6e3a1;
+      --ctp-teal: #94e2d5;
+      --ctp-sky: #89dceb;
+      --ctp-sapphire: #74c7ec;
+      --ctp-blue: #89b4fa;
+      --ctp-lavender: #b4befe;
+      --ctp-text: #cdd6f4;
+      --ctp-subtext1: #bac2de;
+      --ctp-subtext0: #a6adc8;
+      --ctp-overlay2: #9399b2;
+      --ctp-overlay1: #7f849c;
+      --ctp-overlay0: #6c7086;
+      --ctp-surface2: #585b70;
+      --ctp-surface1: #45475a;
+      --ctp-surface0: #313244;
+      --ctp-base: #1e1e2e;
+      --ctp-mantle: #181825;
+      --ctp-crust: #11111b;
+      --bg: #1e1e2e;
+      --fg: #cdd6f4;
+      --sidebar-bg: #181825;
+      --sidebar-fg: #cdd6f4;
+      --sidebar-non-existant: #6c7086;
+      --sidebar-active: #89b4fa;
+      --sidebar-spacer: #6c7086;
+      --scrollbar: #6c7086;
+      --icons: #6c7086;
+      --icons-hover: #9399b2;
+      --links: #89b4fa;
+      --inline-code-color: #cdd6f4;
+      --theme-popup-bg: #181825;
+      --theme-popup-border: #6c7086;
+      --theme-hover: #6c7086;
+      --quote-bg: #181825;
+      --quote-border: #11111b;
+      --table-border-color: #313244;
+      --table-header-bg: #52476a;
+      --table-alternate-bg: #181825;
+      --searchbar-border-color: #313244;
+      --searchbar-bg: #181825;
+      --searchbar-fg: #cdd6f4;
+      --searchbar-shadow-color: #11111b;
+      --searchresults-header-fg: #cdd6f4;
+      --searchresults-border-color: #585b70;
+      --searchresults-li-bg: #1e1e2e;
+      --sidebar-header-border-color: #b4befe;
+      --search-mark-bg: #fab387;
+      --warning-border: #fab387;
+      --copy-button-filter: brightness(0) saturate(100%) invert(79%) sepia(13%) saturate(517%) hue-rotate(191deg) brightness(93%) contrast(71%);
+      --copy-button-filter-hover: brightness(0) saturate(100%) invert(57%) sepia(66%) saturate(1020%) hue-rotate(195deg) brightness(115%) contrast(96%);
+      --blockquote-note-color: #89b4fa;
+      --blockquote-tip-color: #a6e3a1;
+      --blockquote-important-color: #cba6f7;
+      --blockquote-warning-color: #f9e2af;
+      --blockquote-caution-color: #f38ba8;
+      /* https://github.com/cognitive-engineering-lab/mdbook-quiz */
+      --mdbook-incorrect: #f38ba8;
+      --mdbook-correct: #a6e3a1;
+    }
+    :root ::selection {
+      background-color: rgba(203, 166, 247, 0.3);
+    }
+    :root input::placeholder,
+    :root textarea::placeholder {
+      color: #a6adc8 !important;
+    }
+    :root code.hljs {
+      color: #cdd6f4;
+      background: #181825;
+    }
+    :root blockquote blockquote {
+      border-top-color: #585b70;
+      border-bottom-color: #585b70;
+    }
+    :root hr {
+      color: #585b70;
+    }
+    :root del {
+      color: #9399b2;
+    }
+    :root .ace_gutter {
+      color: #7f849c;
+      background: #181825;
+    }
+    :root .ace_gutter-active-line.ace_gutter-cell {
+      color: #f5c2e7;
+      background: #181825;
+    }
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --ctp-rosewater: #f5e0dc;
+      --ctp-flamingo: #f2cdcd;
+      --ctp-pink: #f5c2e7;
+      --ctp-mauve: #cba6f7;
+      --ctp-red: #f38ba8;
+      --ctp-maroon: #eba0ac;
+      --ctp-peach: #fab387;
+      --ctp-yellow: #f9e2af;
+      --ctp-green: #a6e3a1;
+      --ctp-teal: #94e2d5;
+      --ctp-sky: #89dceb;
+      --ctp-sapphire: #74c7ec;
+      --ctp-blue: #89b4fa;
+      --ctp-lavender: #b4befe;
+      --ctp-text: #cdd6f4;
+      --ctp-subtext1: #bac2de;
+      --ctp-subtext0: #a6adc8;
+      --ctp-overlay2: #9399b2;
+      --ctp-overlay1: #7f849c;
+      --ctp-overlay0: #6c7086;
+      --ctp-surface2: #585b70;
+      --ctp-surface1: #45475a;
+      --ctp-surface0: #313244;
+      --ctp-base: #1e1e2e;
+      --ctp-mantle: #181825;
+      --ctp-crust: #11111b;
+      --bg: #1e1e2e;
+      --fg: #cdd6f4;
+      --sidebar-bg: #181825;
+      --sidebar-fg: #cdd6f4;
+      --sidebar-non-existant: #6c7086;
+      --sidebar-active: #89b4fa;
+      --sidebar-spacer: #6c7086;
+      --scrollbar: #6c7086;
+      --icons: #6c7086;
+      --icons-hover: #9399b2;
+      --links: #89b4fa;
+      --inline-code-color: #cdd6f4;
+      --theme-popup-bg: #181825;
+      --theme-popup-border: #6c7086;
+      --theme-hover: #6c7086;
+      --quote-bg: #181825;
+      --quote-border: #11111b;
+      --table-border-color: #313244;
+      --table-header-bg: #52476a;
+      --table-alternate-bg: #181825;
+      --searchbar-border-color: #313244;
+      --searchbar-bg: #181825;
+      --searchbar-fg: #cdd6f4;
+      --searchbar-shadow-color: #11111b;
+      --searchresults-header-fg: #cdd6f4;
+      --searchresults-border-color: #585b70;
+      --searchresults-li-bg: #1e1e2e;
+      --sidebar-header-border-color: #b4befe;
+      --search-mark-bg: #fab387;
+      --warning-border: #fab387;
+      --copy-button-filter: brightness(0) saturate(100%) invert(79%) sepia(13%) saturate(517%) hue-rotate(191deg) brightness(93%) contrast(71%);
+      --copy-button-filter-hover: brightness(0) saturate(100%) invert(57%) sepia(66%) saturate(1020%) hue-rotate(195deg) brightness(115%) contrast(96%);
+      --blockquote-note-color: #89b4fa;
+      --blockquote-tip-color: #a6e3a1;
+      --blockquote-important-color: #cba6f7;
+      --blockquote-warning-color: #f9e2af;
+      --blockquote-caution-color: #f38ba8;
+      /* https://github.com/cognitive-engineering-lab/mdbook-quiz */
+      --mdbook-incorrect: #f38ba8;
+      --mdbook-correct: #a6e3a1;
+    }
+    :root ::selection {
+      background-color: rgba(203, 166, 247, 0.3);
+    }
+    :root input::placeholder,
+    :root textarea::placeholder {
+      color: #a6adc8 !important;
+    }
+    :root code.hljs {
+      color: #cdd6f4;
+      background: #181825;
+    }
+    :root blockquote blockquote {
+      border-top-color: #585b70;
+      border-bottom-color: #585b70;
+    }
+    :root hr {
+      color: #585b70;
+    }
+    :root del {
+      color: #9399b2;
+    }
+    :root .ace_gutter {
+      color: #7f849c;
+      background: #181825;
+    }
+    :root .ace_gutter-active-line.ace_gutter-cell {
+      color: #f5c2e7;
+      background: #181825;
+    }
+  }
+}

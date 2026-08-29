@@ -1,0 +1,109 @@
+/* Compiled from Catppuccin Userstyles 5ef4cc64231826f46d12a2721fa72571f5aa8a27; do not edit. */
+/* deno-fmt-ignore */
+/* deno-fmt-ignore */
+@-moz-document domain("hyperpipe.surge.sh") {
+  @media (prefers-color-scheme: light) {
+    body {
+      color-scheme: dark;
+      --color-foreground: #cba6f7 !important;
+      --color-background: #1e1e2e !important;
+      --color-background-soft: #313244 !important;
+      --color-background-mute: #45475a !important;
+      --color-border: #313244 !important;
+      --color-border-hover: #6c7086 !important;
+      --color-shadow: #11111b !important;
+      --color-blur: rgba(24, 24, 37, 0.45) !important;
+      --color-gradient: linear-gradient(45deg, #cba6f7, rgba(203, 166, 247, 0.45));
+      --color-scrollbar: #cba6f7 !important;
+      --color-heading: #cdd6f4 !important;
+      --color-text: #cdd6f4 !important;
+    }
+    body ::selection {
+      background-color: rgba(203, 166, 247, 0.3);
+    }
+    body input::placeholder,
+    body textarea::placeholder {
+      color: #a6adc8 !important;
+    }
+  }
+  @media (prefers-color-scheme: dark) {
+    body {
+      color-scheme: dark;
+      --color-foreground: #cba6f7 !important;
+      --color-background: #1e1e2e !important;
+      --color-background-soft: #313244 !important;
+      --color-background-mute: #45475a !important;
+      --color-border: #313244 !important;
+      --color-border-hover: #6c7086 !important;
+      --color-shadow: #11111b !important;
+      --color-blur: rgba(24, 24, 37, 0.45) !important;
+      --color-gradient: linear-gradient(45deg, #cba6f7, rgba(203, 166, 247, 0.45));
+      --color-scrollbar: #cba6f7 !important;
+      --color-heading: #cdd6f4 !important;
+      --color-text: #cdd6f4 !important;
+    }
+    body ::selection {
+      background-color: rgba(203, 166, 247, 0.3);
+    }
+    body input::placeholder,
+    body textarea::placeholder {
+      color: #a6adc8 !important;
+    }
+  }
+  body[data-theme^="light"] {
+    color-scheme: dark;
+    --color-foreground: #cba6f7 !important;
+    --color-background: #1e1e2e !important;
+    --color-background-soft: #313244 !important;
+    --color-background-mute: #45475a !important;
+    --color-border: #313244 !important;
+    --color-border-hover: #6c7086 !important;
+    --color-shadow: #11111b !important;
+    --color-blur: rgba(24, 24, 37, 0.45) !important;
+    --color-gradient: linear-gradient(45deg, #cba6f7, rgba(203, 166, 247, 0.45));
+    --color-scrollbar: #cba6f7 !important;
+    --color-heading: #cdd6f4 !important;
+    --color-text: #cdd6f4 !important;
+  }
+  body[data-theme^="light"] ::selection {
+    background-color: rgba(203, 166, 247, 0.3);
+  }
+  body[data-theme^="light"] input::placeholder,
+  body[data-theme^="light"] textarea::placeholder {
+    color: #a6adc8 !important;
+  }
+  body[data-theme^="dark"],
+  body[data-theme^="black"],
+  body[data-theme^="dracula"],
+  body[data-theme^="nord"] {
+    color-scheme: dark;
+    --color-foreground: #cba6f7 !important;
+    --color-background: #1e1e2e !important;
+    --color-background-soft: #313244 !important;
+    --color-background-mute: #45475a !important;
+    --color-border: #313244 !important;
+    --color-border-hover: #6c7086 !important;
+    --color-shadow: #11111b !important;
+    --color-blur: rgba(24, 24, 37, 0.45) !important;
+    --color-gradient: linear-gradient(45deg, #cba6f7, rgba(203, 166, 247, 0.45));
+    --color-scrollbar: #cba6f7 !important;
+    --color-heading: #cdd6f4 !important;
+    --color-text: #cdd6f4 !important;
+  }
+  body[data-theme^="dark"] ::selection,
+  body[data-theme^="black"] ::selection,
+  body[data-theme^="dracula"] ::selection,
+  body[data-theme^="nord"] ::selection {
+    background-color: rgba(203, 166, 247, 0.3);
+  }
+  body[data-theme^="dark"] input::placeholder,
+  body[data-theme^="black"] input::placeholder,
+  body[data-theme^="dracula"] input::placeholder,
+  body[data-theme^="nord"] input::placeholder,
+  body[data-theme^="dark"] textarea::placeholder,
+  body[data-theme^="black"] textarea::placeholder,
+  body[data-theme^="dracula"] textarea::placeholder,
+  body[data-theme^="nord"] textarea::placeholder {
+    color: #a6adc8 !important;
+  }
+}

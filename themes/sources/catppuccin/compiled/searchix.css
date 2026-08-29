@@ -1,0 +1,57 @@
+/* Compiled from Catppuccin Userstyles 5ef4cc64231826f46d12a2721fa72571f5aa8a27; do not edit. */
+/* deno-fmt-ignore */
+/* deno-fmt-ignore */
+@-moz-document domain("searchix.ovh") {
+  @media (prefers-color-scheme: light) {
+    :root {
+      color-scheme: dark;
+      --bg: #1e1e2e;
+      --accent-bg: #181825;
+      --text: #cdd6f4;
+      --text-light: #a6adc8;
+      --accent: #cba6f7;
+      --accent-hover: #cba6f7;
+      --accent-error: rgba(243, 139, 168, 0.2);
+      --border: #6c7086;
+      --code: #b4befe;
+      --preformatted: #cdd6f4;
+      --disabled: #11111b;
+    }
+    :root ::selection {
+      background-color: rgba(203, 166, 247, 0.3);
+    }
+    :root input::placeholder,
+    :root textarea::placeholder {
+      color: #a6adc8 !important;
+    }
+    :root dialog {
+      color: var(--text);
+    }
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --bg: #1e1e2e;
+      --accent-bg: #181825;
+      --text: #cdd6f4;
+      --text-light: #a6adc8;
+      --accent: #cba6f7;
+      --accent-hover: #cba6f7;
+      --accent-error: rgba(243, 139, 168, 0.2);
+      --border: #6c7086;
+      --code: #b4befe;
+      --preformatted: #cdd6f4;
+      --disabled: #11111b;
+    }
+    :root ::selection {
+      background-color: rgba(203, 166, 247, 0.3);
+    }
+    :root input::placeholder,
+    :root textarea::placeholder {
+      color: #a6adc8 !important;
+    }
+    :root dialog {
+      color: var(--text);
+    }
+  }
+}

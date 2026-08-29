@@ -93,6 +93,13 @@
             "watch_background": {"$ref": "#/$defs/colour"}
           }
         },
+        "stylus": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "style_set": {"enum": ["recommended", "unmaintained", "all"]}
+          }
+        },
         "shell": {
           "type": "object",
           "additionalProperties": false,

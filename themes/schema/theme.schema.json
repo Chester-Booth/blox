@@ -113,6 +113,13 @@
         "watch_background": {"$ref": "#/$defs/colour"}
       }
     },
+    "stylus": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "style_set": {"enum": ["recommended", "unmaintained", "all"]}
+      }
+    },
     "terminal": {
       "type": "object", "additionalProperties": false, "required": ["canvas", "chrome_background", "ansi_source"],
       "properties": {"canvas": {"$ref": "#/$defs/colour"}, "chrome_background": {"$ref": "#/$defs/colour"}, "ansi_source": {"enum": ["derived", "override"]}}

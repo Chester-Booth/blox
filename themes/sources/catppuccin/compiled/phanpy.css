@@ -1,0 +1,125 @@
+/* Compiled from Catppuccin Userstyles 5ef4cc64231826f46d12a2721fa72571f5aa8a27; do not edit. */
+/* deno-fmt-ignore */
+/* deno-fmt-ignore */
+@-moz-document domain("phanpy.social") {
+  :root:not(:has(.is-light)) {
+    color-scheme: dark;
+    --text-color: #cdd6f4;
+    --text-insignificant-color: #a6adc8;
+    --link-color: #cba6f7;
+    --link-text-color: #cba6f7;
+    --link-faded-color: #cba6f7;
+    --link-light-color: #cba6f7;
+    --button-bg-blur-color: #cba6f7;
+    --button-bg-color: #cba6f7;
+    --button-text-color: #1e1e2e;
+    --bg-faded-color: #1e1e2e;
+    --bg-faded-blur-color: #181825;
+    --bg-blur-color: #181825;
+    --close-button-bg-color: #181825;
+    --close-button-color: #a6adc8;
+    --bg-color: #1e1e2e;
+    --link-bg-hover-color: #181825;
+    --divider-color: #313244;
+    --outline-color: #313244;
+    --outline-hover-color: #585b70;
+    --reblog-faded-color: rgba(203, 166, 247, 0.2);
+    --reblog-color: #cba6f7;
+    --reply-to-faded-color: rgba(249, 226, 175, 0.2);
+    --reply-to-text-color: #f9e2af;
+    --reply-to-color: #f9e2af;
+    --favourite-color: #f38ba8;
+    --green-color: #a6e3a1;
+    --red-color: #f38ba8;
+    --comment-line-color: #45475a;
+    --media-bg-color: #1e1e2e;
+    --media-fg-color: #cdd6f4;
+    --media-outline-color: #cdd6f4;
+  }
+  :root:not(:has(.is-light)) ::selection {
+    background-color: rgba(203, 166, 247, 0.3);
+  }
+  :root:not(:has(.is-light)) input::placeholder,
+  :root:not(:has(.is-light)) textarea::placeholder {
+    color: #a6adc8 !important;
+  }
+  :root:not(:has(.is-light)) .szh-menu__item--disabled {
+    color: #a6adc8;
+  }
+  :root:not(:has(.is-light)) .button.plain2 {
+    background-color: #181825;
+  }
+  :root:not(:has(.is-light)) .replies-parent-link {
+    background-color: #313244 !important;
+  }
+  :root:not(:has(.is-light)) .account-container {
+    --original-color: #89b4fa;
+  }
+  :root:not(:has(.is-light)) .account-container .profile-field,
+  :root:not(:has(.is-light)) .account-container .stats,
+  :root:not(:has(.is-light)) .account-container .posting-stats-button {
+    background-color: #181825;
+    -webkit-filter: none;
+    filter: none;
+  }
+  :root.is-light {
+    color-scheme: dark;
+    --text-color: #cdd6f4;
+    --text-insignificant-color: #a6adc8;
+    --link-color: #cba6f7;
+    --link-text-color: #cba6f7;
+    --link-faded-color: #cba6f7;
+    --link-light-color: #cba6f7;
+    --button-bg-blur-color: #cba6f7;
+    --button-bg-color: #cba6f7;
+    --button-text-color: #1e1e2e;
+    --bg-faded-color: #1e1e2e;
+    --bg-faded-blur-color: #181825;
+    --bg-blur-color: #181825;
+    --close-button-bg-color: #181825;
+    --close-button-color: #a6adc8;
+    --bg-color: #1e1e2e;
+    --link-bg-hover-color: #181825;
+    --divider-color: #313244;
+    --outline-color: #313244;
+    --outline-hover-color: #585b70;
+    --reblog-faded-color: rgba(203, 166, 247, 0.2);
+    --reblog-color: #cba6f7;
+    --reply-to-faded-color: rgba(249, 226, 175, 0.2);
+    --reply-to-text-color: #f9e2af;
+    --reply-to-color: #f9e2af;
+    --favourite-color: #f38ba8;
+    --green-color: #a6e3a1;
+    --red-color: #f38ba8;
+    --comment-line-color: #45475a;
+    --media-bg-color: #1e1e2e;
+    --media-fg-color: #cdd6f4;
+    --media-outline-color: #cdd6f4;
+  }
+  :root.is-light ::selection {
+    background-color: rgba(203, 166, 247, 0.3);
+  }
+  :root.is-light input::placeholder,
+  :root.is-light textarea::placeholder {
+    color: #a6adc8 !important;
+  }
+  :root.is-light .szh-menu__item--disabled {
+    color: #a6adc8;
+  }
+  :root.is-light .button.plain2 {
+    background-color: #181825;
+  }
+  :root.is-light .replies-parent-link {
+    background-color: #313244 !important;
+  }
+  :root.is-light .account-container {
+    --original-color: #89b4fa;
+  }
+  :root.is-light .account-container .profile-field,
+  :root.is-light .account-container .stats,
+  :root.is-light .account-container .posting-stats-button {
+    background-color: #181825;
+    -webkit-filter: none;
+    filter: none;
+  }
+}

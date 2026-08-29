@@ -1,0 +1,315 @@
+/* Compiled from Catppuccin Userstyles 5ef4cc64231826f46d12a2721fa72571f5aa8a27; do not edit. */
+/* deno-fmt-ignore */
+/* deno-fmt-ignore */
+@-moz-document domain("adventofcode.com") {
+  @media (prefers-color-scheme: light) {
+    :root {
+      color-scheme: dark;
+    }
+    :root ::selection {
+      background-color: rgba(203, 166, 247, 0.3);
+    }
+    :root input::placeholder,
+    :root textarea::placeholder {
+      color: #a6adc8 !important;
+    }
+    :root body {
+      background: #1e1e2e;
+      color: #cdd6f4;
+    }
+    :root body header h1 a,
+    :root body header h1 span {
+      color: #a6e3a1;
+      text-shadow: 0 0 2px #a6e3a1, 0 0 5px #a6e3a1;
+    }
+    :root body a {
+      color: #a6e3a1;
+    }
+    :root body .star-count {
+      color: #f9e2af;
+    }
+    :root body .quiet {
+      color: #a6adc8;
+      opacity: 1;
+    }
+    :root body .share,
+    :root body .share:hover,
+    :root body input[type="submit"] {
+      color: #a6e3a1;
+    }
+    :root body main article em {
+      color: #cdd6f4;
+      text-shadow: 0 0 5px #cdd6f4;
+    }
+    :root body main article h2 {
+      color: #cdd6f4;
+    }
+    :root body main article input[type="radio"]:checked ~ span,
+    :root body main article input[type="checkbox"]:checked ~ span {
+      color: #cdd6f4;
+    }
+    :root body main article input[type="radio"] ~ span:hover,
+    :root body main article input[type="radio"] ~ span:focus,
+    :root body main article input[type="checkbox"]:hover ~ span,
+    :root body main article input[type="checkbox"]:focus ~ span {
+      background-color: #11111b;
+    }
+    :root body main .supporter-badge {
+      color: #f9e2af;
+    }
+    :root body main .supporter-badge:hover {
+      color: #f9e2af;
+      text-shadow: 0 0 5px #f9e2af;
+    }
+    :root body main .sponsor-badge {
+      color: #89b4fa;
+    }
+    :root body main .sponsor-badge:hover,
+    :root body main .sponsor-badge:focus {
+      color: #89b4fa;
+      text-shadow: 0 0 5px #89b4fa;
+    }
+    :root body main .leaderboard-entry .leaderboard-position {
+      color: #bac2de;
+    }
+    :root body main .leaderboard-entry .leaderboard-totalscore {
+      color: #cdd6f4;
+    }
+    :root body main .leaderboard-daylinks-selected {
+      color: #cdd6f4;
+      text-shadow: 0 0 5px #cdd6f4;
+    }
+    :root body main .leaderboard-daylinks-selected:hover {
+      color: #a6e3a1;
+    }
+    :root body main .leaderboard-anon {
+      opacity: 1;
+      color: #a6adc8;
+    }
+    :root body main .calendar .calendar-color-w {
+      color: #cdd6f4;
+    }
+    :root body main .calendar .calendar-color-s {
+      color: #f9e2af;
+    }
+    :root body main .calendar .calendar-color-c {
+      color: #bac2de;
+    }
+    :root body main .calendar .calendar-color-g3 {
+      color: #9bdf95;
+    }
+    :root body main .calendar .calendar-color-g2 {
+      color: #a6e3a1;
+    }
+    :root body main .calendar .calendar-color-g4 {
+      color: #99df93;
+    }
+    :root body main .calendar .calendar-color-u {
+      color: #89dceb;
+    }
+    :root body main .calendar .calendar-color-a {
+      color: #a6adc8;
+    }
+    :root body main .calendar .calendar-color-g1 {
+      color: #9de097;
+    }
+    :root body main .calendar .calendar-color-g0 {
+      color: #9fe199;
+    }
+    :root body main .calendar .calendar-color-l {
+      color: #f38ba8;
+    }
+    :root body main .calendar .calendar-mark-complete {
+      color: #f9e2af;
+    }
+    :root body main .calendar .calendar-mark-verycomplete {
+      color: #f9e2af;
+    }
+    :root body main .calendar .calendar-day {
+      color: #bac2de;
+    }
+    :root body main .calendar #calendar-countdown {
+      color: #bac2de;
+    }
+    :root body main .calendar span {
+      color: #313244;
+    }
+    :root body main .calendar a {
+      color: #585b70;
+    }
+    :root body main .day-success {
+      color: #f9e2af;
+      text-shadow: 0 0 5px #f9e2af;
+    }
+    :root body main .stats-both {
+      color: #f9e2af;
+    }
+    :root body main .stats-firstonly {
+      color: #6c7086;
+    }
+    :root body main a:hover {
+      background-color: #181825 !important;
+    }
+    :root body main input[type="text"],
+    :root body main textarea,
+    :root body main code::before {
+      border-color: #313244;
+      background: #11111b;
+    }
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+    }
+    :root ::selection {
+      background-color: rgba(203, 166, 247, 0.3);
+    }
+    :root input::placeholder,
+    :root textarea::placeholder {
+      color: #a6adc8 !important;
+    }
+    :root body {
+      background: #1e1e2e;
+      color: #cdd6f4;
+    }
+    :root body header h1 a,
+    :root body header h1 span {
+      color: #a6e3a1;
+      text-shadow: 0 0 2px #a6e3a1, 0 0 5px #a6e3a1;
+    }
+    :root body a {
+      color: #a6e3a1;
+    }
+    :root body .star-count {
+      color: #f9e2af;
+    }
+    :root body .quiet {
+      color: #a6adc8;
+      opacity: 1;
+    }
+    :root body .share,
+    :root body .share:hover,
+    :root body input[type="submit"] {
+      color: #a6e3a1;
+    }
+    :root body main article em {
+      color: #cdd6f4;
+      text-shadow: 0 0 5px #cdd6f4;
+    }
+    :root body main article h2 {
+      color: #cdd6f4;
+    }
+    :root body main article input[type="radio"]:checked ~ span,
+    :root body main article input[type="checkbox"]:checked ~ span {
+      color: #cdd6f4;
+    }
+    :root body main article input[type="radio"] ~ span:hover,
+    :root body main article input[type="radio"] ~ span:focus,
+    :root body main article input[type="checkbox"]:hover ~ span,
+    :root body main article input[type="checkbox"]:focus ~ span {
+      background-color: #11111b;
+    }
+    :root body main .supporter-badge {
+      color: #f9e2af;
+    }
+    :root body main .supporter-badge:hover {
+      color: #f9e2af;
+      text-shadow: 0 0 5px #f9e2af;
+    }
+    :root body main .sponsor-badge {
+      color: #89b4fa;
+    }
+    :root body main .sponsor-badge:hover,
+    :root body main .sponsor-badge:focus {
+      color: #89b4fa;
+      text-shadow: 0 0 5px #89b4fa;
+    }
+    :root body main .leaderboard-entry .leaderboard-position {
+      color: #bac2de;
+    }
+    :root body main .leaderboard-entry .leaderboard-totalscore {
+      color: #cdd6f4;
+    }
+    :root body main .leaderboard-daylinks-selected {
+      color: #cdd6f4;
+      text-shadow: 0 0 5px #cdd6f4;
+    }
+    :root body main .leaderboard-daylinks-selected:hover {
+      color: #a6e3a1;
+    }
+    :root body main .leaderboard-anon {
+      opacity: 1;
+      color: #a6adc8;
+    }
+    :root body main .calendar .calendar-color-w {
+      color: #cdd6f4;
+    }
+    :root body main .calendar .calendar-color-s {
+      color: #f9e2af;
+    }
+    :root body main .calendar .calendar-color-c {
+      color: #bac2de;
+    }
+    :root body main .calendar .calendar-color-g3 {
+      color: #9bdf95;
+    }
+    :root body main .calendar .calendar-color-g2 {
+      color: #a6e3a1;
+    }
+    :root body main .calendar .calendar-color-g4 {
+      color: #99df93;
+    }
+    :root body main .calendar .calendar-color-u {
+      color: #89dceb;
+    }
+    :root body main .calendar .calendar-color-a {
+      color: #a6adc8;
+    }
+    :root body main .calendar .calendar-color-g1 {
+      color: #9de097;
+    }
+    :root body main .calendar .calendar-color-g0 {
+      color: #9fe199;
+    }
+    :root body main .calendar .calendar-color-l {
+      color: #f38ba8;
+    }
+    :root body main .calendar .calendar-mark-complete {
+      color: #f9e2af;
+    }
+    :root body main .calendar .calendar-mark-verycomplete {
+      color: #f9e2af;
+    }
+    :root body main .calendar .calendar-day {
+      color: #bac2de;
+    }
+    :root body main .calendar #calendar-countdown {
+      color: #bac2de;
+    }
+    :root body main .calendar span {
+      color: #313244;
+    }
+    :root body main .calendar a {
+      color: #585b70;
+    }
+    :root body main .day-success {
+      color: #f9e2af;
+      text-shadow: 0 0 5px #f9e2af;
+    }
+    :root body main .stats-both {
+      color: #f9e2af;
+    }
+    :root body main .stats-firstonly {
+      color: #6c7086;
+    }
+    :root body main a:hover {
+      background-color: #181825 !important;
+    }
+    :root body main input[type="text"],
+    :root body main textarea,
+    :root body main code::before {
+      border-color: #313244;
+      background: #11111b;
+    }
+  }
+}

@@ -1,0 +1,377 @@
+/* Compiled from Catppuccin Userstyles 5ef4cc64231826f46d12a2721fa72571f5aa8a27; do not edit. */
+/* deno-fmt-ignore */
+/* deno-fmt-ignore */
+@-moz-document regexp("^https?:\\/\\/(www|[a-z]{2}).pinterest.(com(.(au|mx))?|co(.(uk|kr))?|at|ca|ch|cl|de|dk|es|fr|ie|it|jp|nz|ph|pt|ru|se)\\/.*") {
+  @media (prefers-color-scheme: light) {
+    :root {
+      color-scheme: dark;
+      --sema-color-background-default: #1e1e2e;
+      --sema-color-background-secondary: #313244;
+      --sema-color-hover-background-secondary: #45475a;
+      --sema-color-background-tertiary: #6c7086;
+      --sema-color-hover-background-tertiary: #9399b2;
+      --sema-color-text-default: #cdd6f4;
+      --sema-color-text-subtle: #bac2de;
+      --sema-color-text-link: #cba6f7;
+      --sema-color-text-dark: #cdd6f4;
+      --sema-color-text-light: #cdd6f4;
+      --sema-color-icon-primary: #cba6f7;
+      --sema-color-icon-inverse: #181825;
+      --sema-color-border-decorative: #585b70;
+      --sema-color-border-interactive: #6c7086;
+      --sema-color-hover-border-interactive: #7f849c;
+      --sema-color-border-focus-outer-default: #cba6f7;
+      --sema-color-border-focus-inner-default: #1e1e2e;
+      --sema-color-border-disabled: #45475a;
+      --sema-color-icon-disabled: #a6adc8;
+      /* Pins */
+      --sema-color-background-primary: #cba6f7;
+      --sema-color-hover-background-primary: #bd8ff5;
+      --sema-color-background-wash-light: #1e1e2e;
+      --sema-color-pressed-background-primary: #bd8ff5;
+      --comp-button-color-background-primary-selected: #45475a;
+      --comp-button-color-background-tertiary-semi-transparent-default: rgba(30, 30, 46, 0.5);
+      --comp-button-color-hover-background-tertiary-semi-transparent-default: rgba(30, 30, 46, 0.5);
+      --sema-color-text-error: #f38ba8;
+      --sema-color-background-error-default: #eba0ac;
+      --sema-color-icon-error: #f38ba8;
+      --sema-color-border-error: #f38ba8;
+      /* Boards */
+      --sema-color-background-checked: #cba6f7;
+      --sema-color-hover-background-checked: #bd8ff5;
+      --sema-color-pressed-background-checked: #b077f3;
+      --comp-switch-color-background-container-enabled-off: #585b70;
+      --comp-switch-color-hover-background-container-enabled-off: #6c7086;
+      --comp-button-color-hover-background-secondary-default: #45475a;
+      --sema-color-border-inverse: #1e1e2e;
+      --sema-color-pressed-background-default: #585b70;
+      --comp-button-color-pressed-background-secondary-default: #585b70;
+      --sema-color-pressed-background-elevation: #585b70;
+      /* Sidebar */
+      --sema-color-icon-default: #cdd6f4;
+      --sema-color-hover-background-default: #313244;
+      --base-color-grayscale-100: #313244;
+      --sema-color-background-elevation: #181825;
+      --sema-color-hover-background-elevation: #1e1e2e;
+      --sema-color-icon-dark: #cdd6f4;
+      --sema-color-background-inverse: #cdd6f4;
+      --sema-color-text-inverse: #1e1e2e;
+      /* Search */
+      --sema-color-icon-subtle: #9399b2;
+      /* Home */
+      --sema-color-background-selected: #cba6f7;
+      --sema-color-hover-background-selected: #bd8ff5;
+      --sema-color-pressed-background-selected: #b077f3;
+      /* Settings */
+      --sema-color-text-disabled: #9399b2;
+      /* Messages */
+      /* Loading */
+      /* Emoji Picker */
+      /* suggestion bar */
+      --sema-color-pressed-background-secondary: #585b70;
+      /* Toasts */
+      --comp-toast-color-background-default: #9399b2;
+      /* SaveButton */
+    }
+    :root ::selection {
+      background-color: rgba(203, 166, 247, 0.3);
+    }
+    :root input::placeholder,
+    :root textarea::placeholder {
+      color: #a6adc8 !important;
+    }
+    :root,
+    :root body {
+      color: #cdd6f4;
+      background: #1e1e2e;
+    }
+    :root [data-test-id="more-description-container"] {
+      background-color: #1e1e2e !important;
+    }
+    :root [data-test-id="more-description-container"] [style*="background: linear-gradient"] {
+      background: linear-gradient(90deg, transparent 0%, #1e1e2e 100%) !important;
+    }
+    :root [data-test-id="closeup-metadata-details-divider"] {
+      border-top-color: var(--sema-color-border-decorative) !important;
+    }
+    :root [data-test-id="PinBetterSaveDropdown"] {
+      --sema-color-text-inverse: #cdd6f4;
+      --sema-color-icon-inverse: #cdd6f4;
+    }
+    :root [data-test-id="profile-board-card"] [style*="border-color: white;"] {
+      border-color: #1e1e2e !important;
+    }
+    :root [data-test-id="pinRepSelectionBorder"][style*="border-color: rgb(255, 255, 255);"] {
+      border-color: #1e1e2e !important;
+    }
+    :root [data-test-id="pinRepSelectionBorder"][style*="box-shadow: rgb(255, 255, 255) 0px 0px 0px 3px inset;"] {
+      box-shadow: #cba6f7 0 0 0 3px inset !important;
+    }
+    :root [aria-label="You have new Updates"] {
+      --sema-color-text-light: #1e1e2e;
+    }
+    :root [data-test-id="topic-rep-title"] {
+      --sema-color-text-inverse: #cdd6f4;
+    }
+    :root [data-test-id="drag-behavior-container"] {
+      --sema-color-text-default: #585b70;
+    }
+    :root #searchBoxContainer > div {
+      background-color: #181825 !important;
+    }
+    :root #searchBoxContainer > div > div[style*="box-shadow:"] {
+      box-shadow: rgba(203, 166, 247, 0.5) 0 0 0 4px !important;
+    }
+    :root #searchBoxContainer > div [style*="background:#d8d8d8;"],
+    :root #searchBoxContainer > div [style*="background: rgb(216, 216, 216);"] {
+      background: #45475a !important;
+    }
+    :root #searchBoxContainer > div input {
+      color: #bac2de !important;
+    }
+    :root [id^="SuggestionGroup-Option"][aria-selected="true"] > a > div {
+      background-color: #45475a;
+    }
+    :root [data-test-id="homefeed-feed"] div:has(
+        > [data-root-margin="more-ideas-tabs"]
+      )[style*="background-color: rgb(255, 255, 255);"] {
+      background-color: #1e1e2e !important;
+    }
+    :root [data-test-id="lego-share-social-bar-auth"] button {
+      background-color: #1e1e2e !important;
+    }
+    :root textarea#messageDraft {
+      background-color: transparent !important;
+      color: #bac2de;
+      caret-color: #cdd6f4 !important;
+    }
+    :root div[data-test-id="add-pin-to-conversation"] div[style="border: 1px solid rgb(218, 218, 218); box-shadow: rgba(0, 132, 255, 0) 0px 0px 0px 4px; min-height: 48px; width: 100%;"] {
+      border-color: #181825 !important;
+    }
+    :root div[data-test-id="add-pin-to-conversation"] div[style="border: 1px solid transparent; box-shadow: rgba(0, 132, 255, 0.5) 0px 0px 0px 4px; min-height: 48px; width: 100%;"] {
+      box-shadow: rgba(203, 166, 247, 0.5) 0 0 0 4px !important;
+    }
+    :root .mainContainer > div[style*="background-color: rgba(255, 255, 255, 0.5); height: 100%; width: 100%; z-index: 1;"] {
+      background-color: #1e1e2e !important;
+    }
+    :root .EmojiPickerReact {
+      --epr-bg-color: #1e1e2e;
+      --epr-text-color: #cdd6f4;
+      --epr-picker-border-color: #1e1e2e;
+      --epr-category-label-bg-color: #1e1e2e;
+      --epr-search-input-bg-color: #181825;
+      --epr-skin-tone-picker-menu-color: #181825;
+      --epr-category-icon-active-color: #cba6f7;
+      --epr-highlight-color: #cba6f7;
+      --epr-hover-bg-color: #313244;
+      --epr-focus-bg-color: #313244;
+    }
+    :root [data-test-id="one-bar-pill"] {
+      --sema-color-text-dark: #1e1e2e;
+    }
+    :root [data-test-id="one-bar-navigation-arrows"][style*="to left"]:not([style*="to right"]) {
+      background: linear-gradient(to left, #1e1e2e, transparent 40px) !important;
+    }
+    :root [data-test-id="one-bar-navigation-arrows"][style*="to right"]:not([style*="to left"]) {
+      background: linear-gradient(to right, #1e1e2e, transparent 40px) !important;
+    }
+    :root [data-test-id="one-bar-navigation-arrows"][style*="to left"][style*="to right"] {
+      background: linear-gradient(to left, #1e1e2e, transparent 40px), linear-gradient(to right, #1e1e2e, transparent 40px) !important;
+    }
+    :root [data-test-id="multi-select-filter-fade-bottom-edge"] {
+      background: linear-gradient(0deg, #1e1e2e 0%, transparent 100%) !important;
+    }
+    :root [data-test-id="SaveButton"] > [class^="SaveButton"] {
+      background-color: var(--sema-color-background-primary);
+    }
+    :root [data-test-id="SaveButton"] > [class^="SaveButton"]:hover {
+      background-color: var(--sema-color-hover-background-primary);
+    }
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --sema-color-background-default: #1e1e2e;
+      --sema-color-background-secondary: #313244;
+      --sema-color-hover-background-secondary: #45475a;
+      --sema-color-background-tertiary: #6c7086;
+      --sema-color-hover-background-tertiary: #9399b2;
+      --sema-color-text-default: #cdd6f4;
+      --sema-color-text-subtle: #bac2de;
+      --sema-color-text-link: #cba6f7;
+      --sema-color-text-dark: #cdd6f4;
+      --sema-color-text-light: #cdd6f4;
+      --sema-color-icon-primary: #cba6f7;
+      --sema-color-icon-inverse: #181825;
+      --sema-color-border-decorative: #585b70;
+      --sema-color-border-interactive: #6c7086;
+      --sema-color-hover-border-interactive: #7f849c;
+      --sema-color-border-focus-outer-default: #cba6f7;
+      --sema-color-border-focus-inner-default: #1e1e2e;
+      --sema-color-border-disabled: #45475a;
+      --sema-color-icon-disabled: #a6adc8;
+      /* Pins */
+      --sema-color-background-primary: #cba6f7;
+      --sema-color-hover-background-primary: #bd8ff5;
+      --sema-color-background-wash-light: #1e1e2e;
+      --sema-color-pressed-background-primary: #bd8ff5;
+      --comp-button-color-background-primary-selected: #45475a;
+      --comp-button-color-background-tertiary-semi-transparent-default: rgba(30, 30, 46, 0.5);
+      --comp-button-color-hover-background-tertiary-semi-transparent-default: rgba(30, 30, 46, 0.5);
+      --sema-color-text-error: #f38ba8;
+      --sema-color-background-error-default: #eba0ac;
+      --sema-color-icon-error: #f38ba8;
+      --sema-color-border-error: #f38ba8;
+      /* Boards */
+      --sema-color-background-checked: #cba6f7;
+      --sema-color-hover-background-checked: #bd8ff5;
+      --sema-color-pressed-background-checked: #b077f3;
+      --comp-switch-color-background-container-enabled-off: #585b70;
+      --comp-switch-color-hover-background-container-enabled-off: #6c7086;
+      --comp-button-color-hover-background-secondary-default: #45475a;
+      --sema-color-border-inverse: #1e1e2e;
+      --sema-color-pressed-background-default: #585b70;
+      --comp-button-color-pressed-background-secondary-default: #585b70;
+      --sema-color-pressed-background-elevation: #585b70;
+      /* Sidebar */
+      --sema-color-icon-default: #cdd6f4;
+      --sema-color-hover-background-default: #313244;
+      --base-color-grayscale-100: #313244;
+      --sema-color-background-elevation: #181825;
+      --sema-color-hover-background-elevation: #1e1e2e;
+      --sema-color-icon-dark: #cdd6f4;
+      --sema-color-background-inverse: #cdd6f4;
+      --sema-color-text-inverse: #1e1e2e;
+      /* Search */
+      --sema-color-icon-subtle: #9399b2;
+      /* Home */
+      --sema-color-background-selected: #cba6f7;
+      --sema-color-hover-background-selected: #bd8ff5;
+      --sema-color-pressed-background-selected: #b077f3;
+      /* Settings */
+      --sema-color-text-disabled: #9399b2;
+      /* Messages */
+      /* Loading */
+      /* Emoji Picker */
+      /* suggestion bar */
+      --sema-color-pressed-background-secondary: #585b70;
+      /* Toasts */
+      --comp-toast-color-background-default: #9399b2;
+      /* SaveButton */
+    }
+    :root ::selection {
+      background-color: rgba(203, 166, 247, 0.3);
+    }
+    :root input::placeholder,
+    :root textarea::placeholder {
+      color: #a6adc8 !important;
+    }
+    :root,
+    :root body {
+      color: #cdd6f4;
+      background: #1e1e2e;
+    }
+    :root [data-test-id="more-description-container"] {
+      background-color: #1e1e2e !important;
+    }
+    :root [data-test-id="more-description-container"] [style*="background: linear-gradient"] {
+      background: linear-gradient(90deg, transparent 0%, #1e1e2e 100%) !important;
+    }
+    :root [data-test-id="closeup-metadata-details-divider"] {
+      border-top-color: var(--sema-color-border-decorative) !important;
+    }
+    :root [data-test-id="PinBetterSaveDropdown"] {
+      --sema-color-text-inverse: #cdd6f4;
+      --sema-color-icon-inverse: #cdd6f4;
+    }
+    :root [data-test-id="profile-board-card"] [style*="border-color: white;"] {
+      border-color: #1e1e2e !important;
+    }
+    :root [data-test-id="pinRepSelectionBorder"][style*="border-color: rgb(255, 255, 255);"] {
+      border-color: #1e1e2e !important;
+    }
+    :root [data-test-id="pinRepSelectionBorder"][style*="box-shadow: rgb(255, 255, 255) 0px 0px 0px 3px inset;"] {
+      box-shadow: #cba6f7 0 0 0 3px inset !important;
+    }
+    :root [aria-label="You have new Updates"] {
+      --sema-color-text-light: #1e1e2e;
+    }
+    :root [data-test-id="topic-rep-title"] {
+      --sema-color-text-inverse: #cdd6f4;
+    }
+    :root [data-test-id="drag-behavior-container"] {
+      --sema-color-text-default: #585b70;
+    }
+    :root #searchBoxContainer > div {
+      background-color: #181825 !important;
+    }
+    :root #searchBoxContainer > div > div[style*="box-shadow:"] {
+      box-shadow: rgba(203, 166, 247, 0.5) 0 0 0 4px !important;
+    }
+    :root #searchBoxContainer > div [style*="background:#d8d8d8;"],
+    :root #searchBoxContainer > div [style*="background: rgb(216, 216, 216);"] {
+      background: #45475a !important;
+    }
+    :root #searchBoxContainer > div input {
+      color: #bac2de !important;
+    }
+    :root [id^="SuggestionGroup-Option"][aria-selected="true"] > a > div {
+      background-color: #45475a;
+    }
+    :root [data-test-id="homefeed-feed"] div:has(
+        > [data-root-margin="more-ideas-tabs"]
+      )[style*="background-color: rgb(255, 255, 255);"] {
+      background-color: #1e1e2e !important;
+    }
+    :root [data-test-id="lego-share-social-bar-auth"] button {
+      background-color: #1e1e2e !important;
+    }
+    :root textarea#messageDraft {
+      background-color: transparent !important;
+      color: #bac2de;
+      caret-color: #cdd6f4 !important;
+    }
+    :root div[data-test-id="add-pin-to-conversation"] div[style="border: 1px solid rgb(218, 218, 218); box-shadow: rgba(0, 132, 255, 0) 0px 0px 0px 4px; min-height: 48px; width: 100%;"] {
+      border-color: #181825 !important;
+    }
+    :root div[data-test-id="add-pin-to-conversation"] div[style="border: 1px solid transparent; box-shadow: rgba(0, 132, 255, 0.5) 0px 0px 0px 4px; min-height: 48px; width: 100%;"] {
+      box-shadow: rgba(203, 166, 247, 0.5) 0 0 0 4px !important;
+    }
+    :root .mainContainer > div[style*="background-color: rgba(255, 255, 255, 0.5); height: 100%; width: 100%; z-index: 1;"] {
+      background-color: #1e1e2e !important;
+    }
+    :root .EmojiPickerReact {
+      --epr-bg-color: #1e1e2e;
+      --epr-text-color: #cdd6f4;
+      --epr-picker-border-color: #1e1e2e;
+      --epr-category-label-bg-color: #1e1e2e;
+      --epr-search-input-bg-color: #181825;
+      --epr-skin-tone-picker-menu-color: #181825;
+      --epr-category-icon-active-color: #cba6f7;
+      --epr-highlight-color: #cba6f7;
+      --epr-hover-bg-color: #313244;
+      --epr-focus-bg-color: #313244;
+    }
+    :root [data-test-id="one-bar-pill"] {
+      --sema-color-text-dark: #1e1e2e;
+    }
+    :root [data-test-id="one-bar-navigation-arrows"][style*="to left"]:not([style*="to right"]) {
+      background: linear-gradient(to left, #1e1e2e, transparent 40px) !important;
+    }
+    :root [data-test-id="one-bar-navigation-arrows"][style*="to right"]:not([style*="to left"]) {
+      background: linear-gradient(to right, #1e1e2e, transparent 40px) !important;
+    }
+    :root [data-test-id="one-bar-navigation-arrows"][style*="to left"][style*="to right"] {
+      background: linear-gradient(to left, #1e1e2e, transparent 40px), linear-gradient(to right, #1e1e2e, transparent 40px) !important;
+    }
+    :root [data-test-id="multi-select-filter-fade-bottom-edge"] {
+      background: linear-gradient(0deg, #1e1e2e 0%, transparent 100%) !important;
+    }
+    :root [data-test-id="SaveButton"] > [class^="SaveButton"] {
+      background-color: var(--sema-color-background-primary);
+    }
+    :root [data-test-id="SaveButton"] > [class^="SaveButton"]:hover {
+      background-color: var(--sema-color-hover-background-primary);
+    }
+  }
+}

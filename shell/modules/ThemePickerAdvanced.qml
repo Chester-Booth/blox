@@ -974,8 +974,7 @@ ColumnLayout {
                         visible: controller.targetApplyMode(modelData) === "manual"
                         text: "Guide"
                         onClicked: {
-                            controller.guideTarget = modelData;
-                            controller.showModal("guide");
+                            controller.openGuide(modelData, "");
                         }
                     }
 
@@ -1043,6 +1042,19 @@ ColumnLayout {
 
         }
 
+    }
+
+    Label {
+        text: "Stylus"
+        color: Theme.blue
+        font.bold: true
+    }
+
+    BloxComboBox {
+        Layout.fillWidth: true
+        model: controller.stylusStyleSetNames
+        currentIndex: controller.stylusStyleSetIndex()
+        onActivated: (index, value) => controller.setStylusStyleSet(index)
     }
 
     Label {

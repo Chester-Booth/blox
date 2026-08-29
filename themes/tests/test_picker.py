@@ -334,9 +334,27 @@ class PickerIntegrationSourceTests(unittest.TestCase):
         self.assertIn("signal completeRequested()", progress)
         self.assertIn("showCompleteButton: true", launcher_window)
         self.assertIn("function completeThemeApply()", launcher)
+        self.assertIn('text: "In your browser, press Ctrl+O and open the Stylus file at:"', launcher_window)
+        self.assertIn('source: "../assets/stylus-install-style.png"', launcher_window)
+        self.assertNotIn('source: "../assets/stylus-import.png"', launcher_window)
+        self.assertIn("CopyPathButton", launcher_window)
         self.assertIn('iconName: controller.modalKind === "guide" ? "x" : ""', modal)
         self.assertNotIn('iconName: controller.modalKind === "progress" || controller.modalKind === "guide" ? "x" : ""', modal)
         self.assertIn("controller.completeApply()", modal)
+
+    def test_picker_guides_return_to_their_origin(self) -> None:
+        controller = qml_source("Controller")
+        advanced = qml_source("Advanced")
+        progress = qml_source("ProgressFlow")
+        modal = qml_source("Modal")
+
+        self.assertIn('property string guideReturnModalKind: ""', controller)
+        self.assertIn("function openGuide(target, returnModalKind)", controller)
+        self.assertIn("function closeGuide()", controller)
+        self.assertIn('controller.openGuide(modelData, "");', advanced)
+        self.assertIn('controller.openGuide(target, "progress");', progress)
+        self.assertIn("controller.closeGuide();", modal)
+        self.assertNotIn('controller.modalKind = "progress";', modal)
 
     def test_icon_theme_picker_uses_the_shared_compact_target_block(self) -> None:
         controller = qml_source("Controller")
@@ -510,8 +528,13 @@ class PickerIntegrationSourceTests(unittest.TestCase):
         self.assertIn('text: "Applications"', advanced)
         self.assertIn('text: "Browsers"', advanced)
         self.assertIn('model: controller.browserTargetKeys', advanced)
+        self.assertIn('text: "Stylus"', advanced)
+        self.assertIn('model: controller.stylusStyleSetNames', advanced)
+        self.assertIn('controller.setStylusStyleSet(index)', advanced)
+        self.assertIn('readonly property var stylusStyleSetValues: ["recommended", "unmaintained", "all"]', controller)
         self.assertIn('"helium": ["helium/manifest.json"]', generation)
         self.assertIn('"chromium": ["chromium/manifest.json"]', generation)
+        self.assertIn('"stylus": ["stylus/blox-system.user.css", "stylus/manifest.json"]', generation)
         self.assertIn('["helium", "chromium"].indexOf(key) >= 0', controller)
 
     def test_creation_and_application_flows_expose_progress_and_apply_modes(self) -> None:
@@ -555,7 +578,19 @@ class PickerIntegrationSourceTests(unittest.TestCase):
         self.assertIn('if (["gtk", "helium", "chromium", "hyprlock", "btop", "micro", "glow", "code", "cursor_editor", "powerlevel10k"]', qml)
         self.assertNotIn('"helium", "cursor", "hyprlock"', qml)
         self.assertIn('key === "code" || key === "cursor_editor" ? "Reload Window"', qml)
-        self.assertIn('source: "../assets/stylus-import.png"', qml)
+        self.assertNotIn('source: "../assets/stylus-import.png"', qml)
+        self.assertIn('source: "../assets/stylus-install-style.png"', qml)
+        self.assertIn('source: "../assets/stylus-file-urls.png"', qml)
+        self.assertIn('source: "../assets/stylus-file-access-firefox.png"', qml)
+        self.assertIn("CopyPathButton", qml)
+        self.assertIn('text: "In your browser, press Ctrl+O and open the Stylus file at:"', qml)
+        self.assertIn('Theme.stateRoot + "/blox-theme/current/stylus/blox-system.user.css"', qml)
+        self.assertIn('text: "Then click Install style."', qml)
+        self.assertIn("Note: You may need to give Stylus permission to access local files in your extension settings.", qml)
+        self.assertIn("Allow access to file URLs", qml)
+        self.assertIn("Access local files on your computer", qml)
+        self.assertIn("Ctrl+O", qml)
+        self.assertIn("Install style", qml)
         self.assertIn('text: "Generated Files"', qml)
         self.assertIn("function generatedFiles()", qml)
         self.assertIn('const order = ["stylus"]', qml)
@@ -660,7 +695,7 @@ class PickerIntegrationSourceTests(unittest.TestCase):
     def test_custom_controls_are_registered_and_font_rows_preview_their_family(self) -> None:
         shared = REPOSITORY / "shell/shared"
         qmldir = (shared / "qmldir").read_text(encoding="utf-8")
-        for control in ("BloxButton", "BloxTextField", "BloxComboBox", "BloxCheckBox", "BloxFontPicker"):
+        for control in ("BloxButton", "CopyPathButton", "BloxTextField", "BloxComboBox", "BloxCheckBox", "BloxFontPicker"):
             self.assertIn(f"{control} 1.0 {control}.qml", qmldir)
         button = (shared / "BloxButton.qml").read_text(encoding="utf-8")
         self.assertNotIn("Lucide", qmldir)

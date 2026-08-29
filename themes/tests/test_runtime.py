@@ -339,6 +339,24 @@ class RuntimeTests(unittest.TestCase):
         self.assertEqual("phase2-alternate", manifest["target_sources"]["quickshell"]["theme_id"])
         self.assertEqual("catppuccin-mocha", manifest["target_sources"]["kitty"]["theme_id"])
 
+    def test_partial_apply_does_not_touch_an_unselected_gtk_loader(self) -> None:
+        self.apply_canonical()
+        loader = self.root / "config/gtk-3.0/gtk.css"
+        loader.unlink()
+        loader.write_text("/* foreign GTK loader */\n", encoding="utf-8")
+        alternate = copy.deepcopy(self.alternate)
+        alternate["targets"]["stylus"] = True
+
+        manifest, _ = apply_theme(
+            self.alternate_path,
+            alternate,
+            ("stylus",),
+            run_command=FakeCommands(),
+        )
+
+        self.assertIn("stylus", manifest["enabled_targets"])
+        self.assertEqual("/* foreign GTK loader */\n", loader.read_text(encoding="utf-8"))
+
     def test_legacy_gtk_owned_helium_file_is_not_carried_forward(self) -> None:
         self.apply_canonical()
         active = (self.state / "current").resolve()

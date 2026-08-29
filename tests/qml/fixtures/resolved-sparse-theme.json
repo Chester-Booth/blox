@@ -53,6 +53,9 @@
     "density_scale": 1.0,
     "radius_scale": 1.25
   },
+  "stylus": {
+    "style_set": "recommended"
+  },
   "shell": {
     "bar": {
       "items": [

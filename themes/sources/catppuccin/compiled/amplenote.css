@@ -1,0 +1,275 @@
+/* Compiled from Catppuccin Userstyles 5ef4cc64231826f46d12a2721fa72571f5aa8a27; do not edit. */
+/* deno-fmt-ignore */
+/* deno-fmt-ignore */
+@-moz-document domain("amplenote.com") {
+  body:not(.theme-light) {
+    color-scheme: dark;
+  }
+  body:not(.theme-light) ::selection {
+    background-color: rgba(203, 166, 247, 0.3);
+  }
+  body:not(.theme-light) input::placeholder,
+  body:not(.theme-light) textarea::placeholder {
+    color: #a6adc8 !important;
+  }
+  body:not(.theme-light).themeable {
+    --color-background-primary: #1e1e2e;
+    --color-background-primary-rgb: 30, 30, 46;
+    --color-background-secondary: #181825;
+    --color-background-tertiary: #181825;
+    --color-background-popup: #1e1e2e;
+    --color-background-dialog: #181825;
+    --color-background-header: #181825;
+    --color-background-nav: #181825;
+    --color-background-nav-active: #313244;
+    --color-background-search-bar: #11111b;
+    --color-background-nav-menu: #181825;
+    --color-background-nav-menu-divider: #11111b;
+    --color-background-nav-avatar: #11111b;
+    --color-background-popup-small: #313244;
+    --color-background-reversed: #313244;
+    --color-background-reversed-secondary: #585b70;
+    --color-background-element-high-contrast: rgba(147, 153, 178, 0.4);
+    --color-background-element-medium-contrast: rgba(203, 166, 247, 0.4);
+    --color-background-element-medium-contrast-rgb: fade(#cba6f7. 40%);
+    --color-background-element-low-contrast: #11111b;
+    --color-background-note-menu-button: #313244;
+    --color-background-banner: #313244;
+    --color-background-banner-alt: #1e1e2e;
+    --color-background-nav-divider: #313244;
+    --color-background-action-low-contrast: rgba(203, 166, 247, 0.5);
+    --color-background-action-medium-contrast: rgba(203, 166, 247, 0.6);
+    --color-background-action-high-contrast: #cba6f7;
+    --color-background-action-high-contrast-rgb: 203, 166, 247;
+    --color-background-action-high-contrast-alt: rgba(203, 166, 247, 0.75);
+    --color-background-error-high-contrast: #f38ba8;
+    --color-background-error-medium-contrast: rgba(243, 139, 168, 0.5);
+    --color-border-primary: #313244;
+    --color-border-secondary: #45475a;
+    --color-border-tertiary: #45475a;
+    --color-text-reversed: #cdd6f4;
+    --color-text-high-contrast: #cdd6f4;
+    --color-text-nav-high-contrast: #cdd6f4;
+    --color-text-medium-contrast: #bac2de;
+    --color-text-nav-medium-contrast: #bac2de;
+    --color-text-low-contrast: #a6adc8;
+    --color-text-nav-low-contrast: #a6adc8;
+    --color-text-lower-contrast: #9399b2;
+    --color-text-nav-lower-contrast: #585b70;
+    --color-text-error-low-contrast: #fab387;
+    --color-text-error-low-contrast-rgb: 250, 179, 135;
+    --color-text-error-medium-contrast: #f38ba8;
+    --color-text-error-high-contrast: #f38ba8;
+    --color-text-status: #a6e3a1;
+    --color-text-link: #cba6f7;
+    --color-text-button: #11111b;
+    --color-background-task-value: #45475a;
+    --color-background-sidebar-task: #313244;
+    --color-overlay-low-contrast: #cba6f7;
+    --mdc-theme-surface: #1e1e2e;
+  }
+  body:not(.theme-light) header.note-header-container .logo-wrapper .ample-svg-logo .logo-icon {
+    fill: #cdd6f4;
+  }
+  body:not(.theme-light) .notes-list .notes-list-item:hover {
+    background-color: #11111b;
+  }
+  body:not(.theme-light) .ample-editor .editor-tabs .tab:not(.current) {
+    border-bottom-color: #313244 !important;
+  }
+  body:not(.theme-light) .referencing-notes,
+  body:not(.theme-light) .tab.current,
+  body:not(.theme-light) .editor-title-input-wrapper textarea,
+  body:not(.theme-light) .completed-tasks,
+  body:not(.theme-light) .no-tasks-message {
+    background-color: #1e1e2e !important;
+  }
+  body:not(.theme-light) .new-note-button {
+    color: #11111b !important;
+  }
+  body:not(.theme-light) .ample-editor .check-list-item.value-1 .row-wrapper {
+    border-left-color: #74c7ec;
+  }
+  body:not(.theme-light) .menu-button.synced {
+    color: #a6e3a1 !important;
+  }
+  body:not(.theme-light) .menu-button .refreshing {
+    color: #89b4fa !important;
+  }
+  body:not(.theme-light) .primary-side-nav .section-link.default .shortcut-icon {
+    color: #f9e2af;
+  }
+  body:not(.theme-light) .ample-editor:not(.mobile-embed) .check-list-item:hover:not(.expanded) .row-wrapper {
+    background-color: #313244;
+  }
+  body:not(.theme-light) .mdc-chip-set.mdc-chip-set--choice .mdc-chip.mdc-chip--selected .mdc-chip__icon--leading,
+  body:not(.theme-light) .mdc-chip.mdc-chip--selected .mdc-chip__icon--leading {
+    color: #11111b;
+  }
+  body:not(.theme-light) .account-appearance-app .mdc-chip i.material-icons.mdc-chip__icon--leading {
+    color: #cdd6f4;
+  }
+  body:not(.theme-light) .DayPicker-Weekday {
+    color: #a6adc8;
+  }
+  body:not(.theme-light) .calendar-pane .fc .fc-timegrid-now-indicator-arrow .line {
+    border-bottom-color: #cba6f7;
+  }
+  body:not(.theme-light) .calendar-pane .fc .fc-timegrid-now-indicator-arrow .material-icons {
+    color: #cba6f7;
+  }
+  body:not(.theme-light) .calendar-pane .fc .fc-timegrid-now-indicator-line {
+    border-color: #b077f3;
+  }
+  body:not(.theme-light) .calendar-pane .fc .fc-timegrid .fc-daygrid-day-events,
+  body:not(.theme-light) .calendar-pane .fc .fc-timegrid .all-day-slot {
+    background-color: #1e1e2e;
+  }
+  body:not(.theme-light) #completed-tasks-stroke-gradient [offset="0%"],
+  body:not(.theme-light) #completed-tasks-fill-gradient [offset="0%"] {
+    stop-color: #eba0ac;
+  }
+  body:not(.theme-light) #completed-tasks-stroke-gradient [offset="50%"],
+  body:not(.theme-light) #completed-tasks-fill-gradient [offset="50%"] {
+    stop-color: #fab387;
+  }
+  body:not(.theme-light) #completed-tasks-stroke-gradient [offset="100%"],
+  body:not(.theme-light) #completed-tasks-fill-gradient [offset="100%"] {
+    stop-color: #f9e2af;
+  }
+  body.theme-light {
+    color-scheme: dark;
+  }
+  body.theme-light ::selection {
+    background-color: rgba(203, 166, 247, 0.3);
+  }
+  body.theme-light input::placeholder,
+  body.theme-light textarea::placeholder {
+    color: #a6adc8 !important;
+  }
+  body.theme-light.themeable {
+    --color-background-primary: #1e1e2e;
+    --color-background-primary-rgb: 30, 30, 46;
+    --color-background-secondary: #181825;
+    --color-background-tertiary: #181825;
+    --color-background-popup: #1e1e2e;
+    --color-background-dialog: #181825;
+    --color-background-header: #181825;
+    --color-background-nav: #181825;
+    --color-background-nav-active: #313244;
+    --color-background-search-bar: #11111b;
+    --color-background-nav-menu: #181825;
+    --color-background-nav-menu-divider: #11111b;
+    --color-background-nav-avatar: #11111b;
+    --color-background-popup-small: #313244;
+    --color-background-reversed: #313244;
+    --color-background-reversed-secondary: #585b70;
+    --color-background-element-high-contrast: rgba(147, 153, 178, 0.4);
+    --color-background-element-medium-contrast: rgba(203, 166, 247, 0.4);
+    --color-background-element-medium-contrast-rgb: fade(#cba6f7. 40%);
+    --color-background-element-low-contrast: #11111b;
+    --color-background-note-menu-button: #313244;
+    --color-background-banner: #313244;
+    --color-background-banner-alt: #1e1e2e;
+    --color-background-nav-divider: #313244;
+    --color-background-action-low-contrast: rgba(203, 166, 247, 0.5);
+    --color-background-action-medium-contrast: rgba(203, 166, 247, 0.6);
+    --color-background-action-high-contrast: #cba6f7;
+    --color-background-action-high-contrast-rgb: 203, 166, 247;
+    --color-background-action-high-contrast-alt: rgba(203, 166, 247, 0.75);
+    --color-background-error-high-contrast: #f38ba8;
+    --color-background-error-medium-contrast: rgba(243, 139, 168, 0.5);
+    --color-border-primary: #313244;
+    --color-border-secondary: #45475a;
+    --color-border-tertiary: #45475a;
+    --color-text-reversed: #cdd6f4;
+    --color-text-high-contrast: #cdd6f4;
+    --color-text-nav-high-contrast: #cdd6f4;
+    --color-text-medium-contrast: #bac2de;
+    --color-text-nav-medium-contrast: #bac2de;
+    --color-text-low-contrast: #a6adc8;
+    --color-text-nav-low-contrast: #a6adc8;
+    --color-text-lower-contrast: #9399b2;
+    --color-text-nav-lower-contrast: #585b70;
+    --color-text-error-low-contrast: #fab387;
+    --color-text-error-low-contrast-rgb: 250, 179, 135;
+    --color-text-error-medium-contrast: #f38ba8;
+    --color-text-error-high-contrast: #f38ba8;
+    --color-text-status: #a6e3a1;
+    --color-text-link: #cba6f7;
+    --color-text-button: #11111b;
+    --color-background-task-value: #45475a;
+    --color-background-sidebar-task: #313244;
+    --color-overlay-low-contrast: #cba6f7;
+    --mdc-theme-surface: #1e1e2e;
+  }
+  body.theme-light header.note-header-container .logo-wrapper .ample-svg-logo .logo-icon {
+    fill: #cdd6f4;
+  }
+  body.theme-light .notes-list .notes-list-item:hover {
+    background-color: #11111b;
+  }
+  body.theme-light .ample-editor .editor-tabs .tab:not(.current) {
+    border-bottom-color: #313244 !important;
+  }
+  body.theme-light .referencing-notes,
+  body.theme-light .tab.current,
+  body.theme-light .editor-title-input-wrapper textarea,
+  body.theme-light .completed-tasks,
+  body.theme-light .no-tasks-message {
+    background-color: #1e1e2e !important;
+  }
+  body.theme-light .new-note-button {
+    color: #11111b !important;
+  }
+  body.theme-light .ample-editor .check-list-item.value-1 .row-wrapper {
+    border-left-color: #74c7ec;
+  }
+  body.theme-light .menu-button.synced {
+    color: #a6e3a1 !important;
+  }
+  body.theme-light .menu-button .refreshing {
+    color: #89b4fa !important;
+  }
+  body.theme-light .primary-side-nav .section-link.default .shortcut-icon {
+    color: #f9e2af;
+  }
+  body.theme-light .ample-editor:not(.mobile-embed) .check-list-item:hover:not(.expanded) .row-wrapper {
+    background-color: #313244;
+  }
+  body.theme-light .mdc-chip-set.mdc-chip-set--choice .mdc-chip.mdc-chip--selected .mdc-chip__icon--leading,
+  body.theme-light .mdc-chip.mdc-chip--selected .mdc-chip__icon--leading {
+    color: #11111b;
+  }
+  body.theme-light .account-appearance-app .mdc-chip i.material-icons.mdc-chip__icon--leading {
+    color: #cdd6f4;
+  }
+  body.theme-light .DayPicker-Weekday {
+    color: #a6adc8;
+  }
+  body.theme-light .calendar-pane .fc .fc-timegrid-now-indicator-arrow .line {
+    border-bottom-color: #cba6f7;
+  }
+  body.theme-light .calendar-pane .fc .fc-timegrid-now-indicator-arrow .material-icons {
+    color: #cba6f7;
+  }
+  body.theme-light .calendar-pane .fc .fc-timegrid-now-indicator-line {
+    border-color: #b077f3;
+  }
+  body.theme-light .calendar-pane .fc .fc-timegrid .fc-daygrid-day-events,
+  body.theme-light .calendar-pane .fc .fc-timegrid .all-day-slot {
+    background-color: #1e1e2e;
+  }
+  body.theme-light #completed-tasks-stroke-gradient [offset="0%"],
+  body.theme-light #completed-tasks-fill-gradient [offset="0%"] {
+    stop-color: #eba0ac;
+  }
+  body.theme-light #completed-tasks-stroke-gradient [offset="50%"],
+  body.theme-light #completed-tasks-fill-gradient [offset="50%"] {
+    stop-color: #fab387;
+  }
+  body.theme-light #completed-tasks-stroke-gradient [offset="100%"],
+  body.theme-light #completed-tasks-fill-gradient [offset="100%"] {
+    stop-color: #f9e2af;
+  }
+}

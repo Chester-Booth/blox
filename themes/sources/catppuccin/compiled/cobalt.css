@@ -1,0 +1,145 @@
+/* Compiled from Catppuccin Userstyles 5ef4cc64231826f46d12a2721fa72571f5aa8a27; do not edit. */
+/* deno-fmt-ignore */
+/* deno-fmt-ignore */
+@-moz-document domain("cobalt.tools") {
+  [data-theme="dark"] {
+    color-scheme: dark;
+    --primary: #1e1e2e;
+    --secondary: #cdd6f4;
+    --gray: #a6adc8;
+    --blue: #89b4fa;
+    --green: #a6e3a1;
+    --red: #eba0ac;
+    --medium-red: #f38ba8;
+    --dark-red: #f38ba8;
+    --white: #11111b;
+    --button: #313244;
+    --button-hover: #262735;
+    --button-active-hover: #969ebe;
+    --button-elevated: #45475a;
+    --button-elevated-hover: #3a3c4c;
+    --button-text: #cdd6f4;
+    --sidebar-bg: #181825;
+    --sidebar-hover: #313244;
+    --sidebar-highlight: #cdd6f4;
+    --input-border: #585b70;
+    --popup-bg: #181825;
+    --toggle-bg-enabled: #cba6f7;
+  }
+  [data-theme="dark"] ::selection {
+    background-color: rgba(203, 166, 247, 0.3);
+  }
+  [data-theme="dark"] input::placeholder,
+  [data-theme="dark"] textarea::placeholder {
+    color: #a6adc8 !important;
+  }
+  [data-theme="dark"] #donate-page {
+    --donate-gradient-start: #45475a !important;
+    --donate-gradient-end: #313244 !important;
+  }
+  [data-theme="dark"] #banner-left {
+    color: #cdd6f4;
+  }
+  [data-theme="dark"] #banner-subtitle {
+    color: #a6adc8;
+    opacity: 1;
+  }
+  [data-theme="dark"] .donate-card button {
+    color: #cdd6f4 !important;
+  }
+  [data-theme="dark"] .donate-card {
+    color: #cdd6f4;
+  }
+  [data-theme="dark"] .donate-card-title {
+    color: #cdd6f4;
+  }
+  [data-theme="dark"] .donate-card-subtitle {
+    color: #a6adc8;
+    opacity: 1;
+  }
+  [data-theme="dark"] #input-container.focused {
+    box-shadow: 0 0 0 2px #cdd6f4 inset !important;
+  }
+  [data-theme="dark"] #input-dollar-sign {
+    color: #cdd6f4;
+  }
+  [data-theme="dark"] #donation-custom-input {
+    color: #cdd6f4 !important;
+  }
+  [data-theme="dark"] #cobalt-logo path {
+    fill: #cdd6f4;
+  }
+  [data-theme="dark"] .sidebar-tab.active {
+    background-color: #cba6f7 !important;
+  }
+  [data-theme="light"] {
+    color-scheme: dark;
+    --primary: #1e1e2e;
+    --secondary: #cdd6f4;
+    --gray: #a6adc8;
+    --blue: #89b4fa;
+    --green: #a6e3a1;
+    --red: #eba0ac;
+    --medium-red: #f38ba8;
+    --dark-red: #f38ba8;
+    --white: #11111b;
+    --button: #313244;
+    --button-hover: #262735;
+    --button-active-hover: #969ebe;
+    --button-elevated: #45475a;
+    --button-elevated-hover: #3a3c4c;
+    --button-text: #cdd6f4;
+    --sidebar-bg: #181825;
+    --sidebar-hover: #313244;
+    --sidebar-highlight: #cdd6f4;
+    --input-border: #585b70;
+    --popup-bg: #181825;
+    --toggle-bg-enabled: #cba6f7;
+  }
+  [data-theme="light"] ::selection {
+    background-color: rgba(203, 166, 247, 0.3);
+  }
+  [data-theme="light"] input::placeholder,
+  [data-theme="light"] textarea::placeholder {
+    color: #a6adc8 !important;
+  }
+  [data-theme="light"] #donate-page {
+    --donate-gradient-start: #45475a !important;
+    --donate-gradient-end: #313244 !important;
+  }
+  [data-theme="light"] #banner-left {
+    color: #cdd6f4;
+  }
+  [data-theme="light"] #banner-subtitle {
+    color: #a6adc8;
+    opacity: 1;
+  }
+  [data-theme="light"] .donate-card button {
+    color: #cdd6f4 !important;
+  }
+  [data-theme="light"] .donate-card {
+    color: #cdd6f4;
+  }
+  [data-theme="light"] .donate-card-title {
+    color: #cdd6f4;
+  }
+  [data-theme="light"] .donate-card-subtitle {
+    color: #a6adc8;
+    opacity: 1;
+  }
+  [data-theme="light"] #input-container.focused {
+    box-shadow: 0 0 0 2px #cdd6f4 inset !important;
+  }
+  [data-theme="light"] #input-dollar-sign {
+    color: #cdd6f4;
+  }
+  [data-theme="light"] #donation-custom-input {
+    color: #cdd6f4 !important;
+  }
+  [data-theme="light"] #cobalt-logo path {
+    fill: #cdd6f4;
+  }
+  [data-theme="light"] .sidebar-tab.active {
+    background-color: #cba6f7 !important;
+  }
+}

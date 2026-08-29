@@ -1,7 +1,7 @@
 SHELL := /usr/bin/env bash
 QS := shell
 
-.PHONY: check ci qmllint py-compile shellcheck test-launcher test-status-contracts test-bloxctl test-lifecycle test-doctor test-cutover test-qml-paths test-qml-tokens validate-status validate-themes unit-check diff-check hygiene
+.PHONY: check ci qmllint py-compile shellcheck test-launcher test-status-contracts test-bloxctl test-lifecycle test-doctor test-cutover test-qml-paths test-qml-tokens validate-status validate-themes stylus-vendor stylus-source unit-check diff-check hygiene
 
 check: qmllint py-compile shellcheck test-launcher test-status-contracts test-bloxctl test-lifecycle test-doctor test-cutover test-qml-paths test-qml-tokens validate-status validate-themes unit-check diff-check
 
@@ -59,6 +59,12 @@ validate-status:
 
 validate-themes:
 	@PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s themes/tests -v
+
+stylus-vendor:
+	@deno run -A themes/tools/vendor_catppuccin.ts
+
+stylus-source:
+	@deno run -A themes/tools/build_catppuccin.ts
 
 unit-check:
 	@python3 packaging/unit_check.py

@@ -27,6 +27,7 @@ NotificationHeader 1.0 NotificationHeader.qml
 NotificationBody 1.0 NotificationBody.qml
 NotificationContent 1.0 NotificationContent.qml
 BloxButton 1.0 BloxButton.qml
+CopyPathButton 1.0 CopyPathButton.qml
 BloxTextField 1.0 BloxTextField.qml
 BloxToolTip 1.0 BloxToolTip.qml
 CalendarNotice 1.0 CalendarNotice.qml

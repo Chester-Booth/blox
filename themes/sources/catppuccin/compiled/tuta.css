@@ -1,0 +1,261 @@
+/* Compiled from Catppuccin Userstyles 5ef4cc64231826f46d12a2721fa72571f5aa8a27; do not edit. */
+/* deno-fmt-ignore */
+/* deno-fmt-ignore */
+@-moz-document domain("app.tuta.com"), domain("mail.tutanota.com") {
+  @media (prefers-color-scheme: light) {
+    :root {
+      color-scheme: dark;
+      /* logo */
+    }
+    :root ::selection {
+      background-color: rgba(203, 166, 247, 0.3);
+    }
+    :root input::placeholder,
+    :root textarea::placeholder {
+      color: #a6adc8 !important;
+    }
+    :root body,
+    :root drawer-menu,
+    :root .list-bg {
+      background-color: #181825 !important;
+      color: #cdd6f4;
+    }
+    :root .list-row {
+      background-color: #1e1e2e;
+    }
+    :root .odd-row {
+      background-color: #313244;
+    }
+    :root .header-nav {
+      background-color: #1e1e2e;
+    }
+    :root .elevated-bg,
+    :root .folder-column,
+    :root div[aria-modal] {
+      background-color: #1e1e2e !important;
+    }
+    :root .icon[style*="fill: rgb(78, 78, 78);"] {
+      fill: #cdd6f4 !important;
+    }
+    :root .icon[style*="fill: rgb(174, 174, 174);"] {
+      fill: #a6adc8 !important;
+    }
+    :root .icon[style*="fill: rgb(255, 83, 83);"] {
+      fill: #cba6f7 !important;
+    }
+    :root .h2 {
+      color: #bac2de !important;
+    }
+    :root .bottom-nav {
+      background: #181825 !important;
+      color: #cdd6f4 !important;
+    }
+    :root .dropdown-button,
+    :root .dropdown-button div {
+      color: #cdd6f4 !important;
+    }
+    :root .dropdown-button:hover {
+      background-color: #45475a !important;
+    }
+    :root path[style*="fill: #00d2a7;"] {
+      fill: #cba6f7 !important;
+    }
+    :root path[style*="fill: #c5c7c7;"] {
+      fill: #cdd6f4 !important;
+    }
+    :root .row-selected {
+      border-color: #cba6f7 !important;
+      color: #cba6f7 !important;
+    }
+    :root .row-selected > .nav-button {
+      color: #cba6f7 !important;
+    }
+    :root .row-selected > .nav-button > .icon {
+      fill: #cba6f7 !important;
+    }
+    :root .secondary {
+      color: #cba6f7 !important;
+    }
+    :root .nav-button,
+    :root .sidebar-section.mb {
+      color: #a6adc8 !important;
+    }
+    :root .bubble {
+      background-color: #1e1e2e;
+      color: #cdd6f4;
+    }
+    :root :where(.mouse-nav) .state-bg:hover,
+    :root :where(.keyboard-nav) .state-bg:hover,
+    :root [style*="background: rgba(139, 139, 139, 0.22)"] {
+      background-color: #313244 !important;
+    }
+    :root .nav-bg,
+    :root .content-bg,
+    :root [style*="background-color: rgb(35, 35, 35)"] {
+      background-color: #1e1e2e !important;
+    }
+    :root [style*="background-color: rgb(17, 17, 17);"] {
+      background-color: #181825 !important;
+    }
+    :root [style*="background-color: rgba(139, 139, 139, 0.22);"] {
+      background-color: #313244 !important;
+    }
+    :root [style*="background-color: rgba(139, 139, 139, 0.38);"] {
+      background-color: #45475a !important;
+    }
+    :root [style*="color: rgb(221, 221, 221);"] {
+      color: #cdd6f4 !important;
+    }
+    :root [style*="color: rgb(174, 174, 174);"] {
+      color: #bac2de !important;
+    }
+    :root .teamLabel {
+      background-color: #cba6f7;
+      color: #181825;
+    }
+    :root [style*="border: 2px solid rgb(255, 83, 83);"] {
+      border-color: #cba6f7 !important;
+    }
+    :root [style*="color: rgb(255, 83, 83);"],
+    :root .content-accent-fg {
+      color: #cba6f7 !important;
+    }
+    :root button.expander {
+      color: #a6adc8 !important;
+    }
+    :root .logo-height > svg:nth-child(1) > path:nth-child(2) {
+      fill: #cba6f7 !important;
+    }
+    :root ::-webkit-scrollbar-thumb {
+      background-color: #45475a;
+    }
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      /* logo */
+    }
+    :root ::selection {
+      background-color: rgba(203, 166, 247, 0.3);
+    }
+    :root input::placeholder,
+    :root textarea::placeholder {
+      color: #a6adc8 !important;
+    }
+    :root body,
+    :root drawer-menu,
+    :root .list-bg {
+      background-color: #181825 !important;
+      color: #cdd6f4;
+    }
+    :root .list-row {
+      background-color: #1e1e2e;
+    }
+    :root .odd-row {
+      background-color: #313244;
+    }
+    :root .header-nav {
+      background-color: #1e1e2e;
+    }
+    :root .elevated-bg,
+    :root .folder-column,
+    :root div[aria-modal] {
+      background-color: #1e1e2e !important;
+    }
+    :root .icon[style*="fill: rgb(78, 78, 78);"] {
+      fill: #cdd6f4 !important;
+    }
+    :root .icon[style*="fill: rgb(174, 174, 174);"] {
+      fill: #a6adc8 !important;
+    }
+    :root .icon[style*="fill: rgb(255, 83, 83);"] {
+      fill: #cba6f7 !important;
+    }
+    :root .h2 {
+      color: #bac2de !important;
+    }
+    :root .bottom-nav {
+      background: #181825 !important;
+      color: #cdd6f4 !important;
+    }
+    :root .dropdown-button,
+    :root .dropdown-button div {
+      color: #cdd6f4 !important;
+    }
+    :root .dropdown-button:hover {
+      background-color: #45475a !important;
+    }
+    :root path[style*="fill: #00d2a7;"] {
+      fill: #cba6f7 !important;
+    }
+    :root path[style*="fill: #c5c7c7;"] {
+      fill: #cdd6f4 !important;
+    }
+    :root .row-selected {
+      border-color: #cba6f7 !important;
+      color: #cba6f7 !important;
+    }
+    :root .row-selected > .nav-button {
+      color: #cba6f7 !important;
+    }
+    :root .row-selected > .nav-button > .icon {
+      fill: #cba6f7 !important;
+    }
+    :root .secondary {
+      color: #cba6f7 !important;
+    }
+    :root .nav-button,
+    :root .sidebar-section.mb {
+      color: #a6adc8 !important;
+    }
+    :root .bubble {
+      background-color: #1e1e2e;
+      color: #cdd6f4;
+    }
+    :root :where(.mouse-nav) .state-bg:hover,
+    :root :where(.keyboard-nav) .state-bg:hover,
+    :root [style*="background: rgba(139, 139, 139, 0.22)"] {
+      background-color: #313244 !important;
+    }
+    :root .nav-bg,
+    :root .content-bg,
+    :root [style*="background-color: rgb(35, 35, 35)"] {
+      background-color: #1e1e2e !important;
+    }
+    :root [style*="background-color: rgb(17, 17, 17);"] {
+      background-color: #181825 !important;
+    }
+    :root [style*="background-color: rgba(139, 139, 139, 0.22);"] {
+      background-color: #313244 !important;
+    }
+    :root [style*="background-color: rgba(139, 139, 139, 0.38);"] {
+      background-color: #45475a !important;
+    }
+    :root [style*="color: rgb(221, 221, 221);"] {
+      color: #cdd6f4 !important;
+    }
+    :root [style*="color: rgb(174, 174, 174);"] {
+      color: #bac2de !important;
+    }
+    :root .teamLabel {
+      background-color: #cba6f7;
+      color: #181825;
+    }
+    :root [style*="border: 2px solid rgb(255, 83, 83);"] {
+      border-color: #cba6f7 !important;
+    }
+    :root [style*="color: rgb(255, 83, 83);"],
+    :root .content-accent-fg {
+      color: #cba6f7 !important;
+    }
+    :root button.expander {
+      color: #a6adc8 !important;
+    }
+    :root .logo-height > svg:nth-child(1) > path:nth-child(2) {
+      fill: #cba6f7 !important;
+    }
+    :root ::-webkit-scrollbar-thumb {
+      background-color: #45475a;
+    }
+  }
+}

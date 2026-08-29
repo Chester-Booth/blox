@@ -1,0 +1,401 @@
+/* Compiled from Catppuccin Userstyles 5ef4cc64231826f46d12a2721fa72571f5aa8a27; do not edit. */
+/* deno-fmt-ignore */
+/* deno-fmt-ignore */
+@-moz-document domain("ollama.com") {
+  code.hljs{color:var(--ctp-text);background:var(--ctp-base)}code .hljs-keyword{color:var(--ctp-mauve)}code .hljs-built_in{color:var(--ctp-red)}code .hljs-type{color:var(--ctp-yellow)}code .hljs-literal{color:var(--ctp-peach)}code .hljs-number{color:var(--ctp-peach)}code .hljs-operator{color:var(--ctp-sky)}code .hljs-punctuation{color:var(--ctp-subtext1)}code .hljs-property{color:var(--ctp-teal)}code .hljs-regexp{color:var(--ctp-pink)}code .hljs-string{color:var(--ctp-green)}code .hljs-char.escape_{color:var(--ctp-green)}code .hljs-subst{color:var(--ctp-subtext0)}code .hljs-symbol{color:var(--ctp-flamingo)}code .hljs-variable{color:var(--ctp-mauve)}code .hljs-variable.language_{color:var(--ctp-mauve)}code .hljs-variable.constant_{color:var(--ctp-peach)}code .hljs-title{color:var(--ctp-blue)}code .hljs-title.class_{color:var(--ctp-yellow)}code .hljs-title.function_{color:var(--ctp-blue)}code .hljs-params{color:var(--ctp-text)}code .hljs-comment{color:var(--ctp-overlay2)}code .hljs-doctag{color:var(--ctp-red)}code .hljs-meta{color:var(--ctp-peach)}code .hljs-section{color:var(--ctp-blue)}code .hljs-tag{color:var(--ctp-teal)}code .hljs-name{color:var(--ctp-mauve)}code .hljs-attr{color:var(--ctp-blue)}code .hljs-attribute{color:var(--ctp-green)}code .hljs-bullet{color:var(--ctp-teal)}code .hljs-code{color:var(--ctp-green)}code .hljs-emphasis{color:var(--ctp-red);font-style:italic}code .hljs-strong{color:var(--ctp-red);font-weight:bold}code .hljs-formula{color:var(--ctp-teal)}code .hljs-link{color:var(--ctp-sapphire);font-style:italic}code .hljs-quote{color:var(--ctp-green);font-style:italic}code .hljs-selector-tag{color:var(--ctp-yellow)}code .hljs-selector-id{color:var(--ctp-blue)}code .hljs-selector-class{color:var(--ctp-teal)}code .hljs-selector-attr{color:var(--ctp-mauve)}code .hljs-selector-pseudo{color:var(--ctp-teal)}code .hljs-template-tag{color:var(--ctp-flamingo)}code .hljs-template-variable{color:var(--ctp-flamingo)}code .hljs-addition{color:var(--ctp-green);background:rgb(from var(--ctp-green) r g b/15%)}code .hljs-deletion{color:var(--ctp-red);background:rgb(from var(--ctp-red) r g b/15%)}
+
+  @media (prefers-color-scheme: light) {
+    :root {
+      color-scheme: dark;
+      --ctp-rosewater: #f5e0dc;
+      --ctp-flamingo: #f2cdcd;
+      --ctp-pink: #f5c2e7;
+      --ctp-mauve: #cba6f7;
+      --ctp-red: #f38ba8;
+      --ctp-maroon: #eba0ac;
+      --ctp-peach: #fab387;
+      --ctp-yellow: #f9e2af;
+      --ctp-green: #a6e3a1;
+      --ctp-teal: #94e2d5;
+      --ctp-sky: #89dceb;
+      --ctp-sapphire: #74c7ec;
+      --ctp-blue: #89b4fa;
+      --ctp-lavender: #b4befe;
+      --ctp-text: #cdd6f4;
+      --ctp-subtext1: #bac2de;
+      --ctp-subtext0: #a6adc8;
+      --ctp-overlay2: #9399b2;
+      --ctp-overlay1: #7f849c;
+      --ctp-overlay0: #6c7086;
+      --ctp-surface2: #585b70;
+      --ctp-surface1: #45475a;
+      --ctp-surface0: #313244;
+      --ctp-base: #1e1e2e;
+      --ctp-mantle: #181825;
+      --ctp-crust: #11111b;
+      background-color: #1e1e2e;
+      color: #cdd6f4;
+      /* Llama logos */
+      /* Tailwind */
+      /* Models page, color for non-weight pills/tags. Background color is solid from `.bg-indigo-50`. */
+    }
+    :root ::selection {
+      background-color: rgba(203, 166, 247, 0.3);
+    }
+    :root input::placeholder,
+    :root textarea::placeholder {
+      color: #a6adc8 !important;
+    }
+    :root img[src="/public/ollama.png"],
+    :root img[src="/public/shades.png"],
+    :root img[src="/public/glasses.png"] {
+      filter: brightness(0) saturate(100%) invert(75%) sepia(82%) saturate(1008%) hue-rotate(189deg) brightness(120%) contrast(90%);
+    }
+    :root code,
+    :root pre {
+      background-color: #181825;
+      color: #cdd6f4 !important;
+    }
+    :root input {
+      background-color: #181825;
+    }
+    :root main,
+    :root section,
+    :root strong,
+    :root h3,
+    :root ul,
+    :root button,
+    :root li,
+    :root li::marker {
+      color: #cdd6f4;
+    }
+    :root blockquote {
+      color: #a6adc8;
+    }
+    :root a[class~=""] {
+      color: #89b4fa;
+    }
+    :root #query,
+    :root #filter,
+    :root #search {
+      background-color: #181825;
+      color: #cdd6f4;
+    }
+    :root #readme,
+    :root #display,
+    :root #file-explorer {
+      color: #cdd6f4;
+    }
+    :root .command {
+      color: #cdd6f4;
+    }
+    :root .truncate {
+      color: #cdd6f4;
+    }
+    :root * {
+      border-color: #45475a;
+    }
+    :root .prose {
+      --tw-prose-headings: #cdd6f4;
+      --tw-prose-links: #cba6f7;
+    }
+    :root .text-white,
+    :root .text-black {
+      color: #cdd6f4;
+    }
+    :root .text-gray-900 {
+      color: #bac2de;
+    }
+    :root .text-green-500,
+    :root .text-emerald-500,
+    :root .text-green-700 {
+      color: #a6e3a1;
+    }
+    :root .text-yellow-900 {
+      color: #f9e2af;
+    }
+    :root .text-neutral-300,
+    :root .text-neutral-400,
+    :root .text-neutral-500 {
+      color: #a6adc8;
+    }
+    :root .text-neutral-700,
+    :root .text-neutral-800,
+    :root .text-neutral-900 {
+      color: #bac2de !important;
+    }
+    :root .text-red-500 {
+      color: #f38ba8;
+    }
+    :root .text-blue-500,
+    :root .text-blue-600 {
+      color: #cba6f7;
+    }
+    :root .text-indigo-600 {
+      color: #11111b;
+    }
+    :root .bg-neutral-100 pre,
+    :root .bg-neutral-100 .command {
+      background-color: unset !important;
+    }
+    :root .bg-white {
+      background-color: #181825;
+    }
+    :root .bg-black,
+    :root .hover\:bg-black:hover {
+      background-color: #313244 !important;
+    }
+    :root .bg-neutral-50 {
+      background-color: #313244;
+    }
+    :root .bg-neutral-100,
+    :root .hover\:bg-neutral-100:hover {
+      background-color: #585b70 !important;
+    }
+    :root .bg-neutral-700,
+    :root .bg-neutral-800 {
+      background-color: #45475a;
+    }
+    :root .bg-green-50 {
+      background-color: rgba(166, 227, 161, 0.1);
+    }
+    :root .bg-yellow-50 {
+      background-color: rgba(249, 226, 175, 0.1);
+    }
+    :root .bg-indigo-50 {
+      background-color: #cba6f7;
+    }
+    :root .bg-\[\#ddf4ff\] {
+      background-color: rgba(203, 166, 247, 0.1);
+    }
+    :root .border {
+      border-color: #cba6f7;
+    }
+    :root .border-neutral-200,
+    :root .border-neutral-300,
+    :root .divide-gray-200 > :not([hidden]) ~ :not([hidden]),
+    :root .divide-neutral-200 > :not([hidden]) ~ :not([hidden]) {
+      border-color: #45475a;
+    }
+    :root .focus\:border-blue-400:focus {
+      border-color: #cba6f7;
+    }
+    :root .focus\:border-red-400:focus {
+      border-color: #f38ba8;
+    }
+    :root .ring-neutral-300 {
+      --tw-ring-color: #45475a !important;
+    }
+    :root .ring-green-600\/20 {
+      --tw-ring-color: #a6e3a1;
+    }
+    :root .ring-yellow-600\/20 {
+      --tw-ring-color: #f9e2af;
+    }
+    :root select:focus,
+    :root .ring-blue-300,
+    :root .focus\:ring-blue-300:focus {
+      --tw-ring-color: rgba(203, 166, 247, var(--tw-ring-opacity));
+    }
+    :root .focus\:ring-red-300:focus {
+      --tw-ring-color: rgba(243, 139, 168, var(--tw-ring-opacity));
+    }
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --ctp-rosewater: #f5e0dc;
+      --ctp-flamingo: #f2cdcd;
+      --ctp-pink: #f5c2e7;
+      --ctp-mauve: #cba6f7;
+      --ctp-red: #f38ba8;
+      --ctp-maroon: #eba0ac;
+      --ctp-peach: #fab387;
+      --ctp-yellow: #f9e2af;
+      --ctp-green: #a6e3a1;
+      --ctp-teal: #94e2d5;
+      --ctp-sky: #89dceb;
+      --ctp-sapphire: #74c7ec;
+      --ctp-blue: #89b4fa;
+      --ctp-lavender: #b4befe;
+      --ctp-text: #cdd6f4;
+      --ctp-subtext1: #bac2de;
+      --ctp-subtext0: #a6adc8;
+      --ctp-overlay2: #9399b2;
+      --ctp-overlay1: #7f849c;
+      --ctp-overlay0: #6c7086;
+      --ctp-surface2: #585b70;
+      --ctp-surface1: #45475a;
+      --ctp-surface0: #313244;
+      --ctp-base: #1e1e2e;
+      --ctp-mantle: #181825;
+      --ctp-crust: #11111b;
+      background-color: #1e1e2e;
+      color: #cdd6f4;
+      /* Llama logos */
+      /* Tailwind */
+      /* Models page, color for non-weight pills/tags. Background color is solid from `.bg-indigo-50`. */
+    }
+    :root ::selection {
+      background-color: rgba(203, 166, 247, 0.3);
+    }
+    :root input::placeholder,
+    :root textarea::placeholder {
+      color: #a6adc8 !important;
+    }
+    :root img[src="/public/ollama.png"],
+    :root img[src="/public/shades.png"],
+    :root img[src="/public/glasses.png"] {
+      filter: brightness(0) saturate(100%) invert(75%) sepia(82%) saturate(1008%) hue-rotate(189deg) brightness(120%) contrast(90%);
+    }
+    :root code,
+    :root pre {
+      background-color: #181825;
+      color: #cdd6f4 !important;
+    }
+    :root input {
+      background-color: #181825;
+    }
+    :root main,
+    :root section,
+    :root strong,
+    :root h3,
+    :root ul,
+    :root button,
+    :root li,
+    :root li::marker {
+      color: #cdd6f4;
+    }
+    :root blockquote {
+      color: #a6adc8;
+    }
+    :root a[class~=""] {
+      color: #89b4fa;
+    }
+    :root #query,
+    :root #filter,
+    :root #search {
+      background-color: #181825;
+      color: #cdd6f4;
+    }
+    :root #readme,
+    :root #display,
+    :root #file-explorer {
+      color: #cdd6f4;
+    }
+    :root .command {
+      color: #cdd6f4;
+    }
+    :root .truncate {
+      color: #cdd6f4;
+    }
+    :root * {
+      border-color: #45475a;
+    }
+    :root .prose {
+      --tw-prose-headings: #cdd6f4;
+      --tw-prose-links: #cba6f7;
+    }
+    :root .text-white,
+    :root .text-black {
+      color: #cdd6f4;
+    }
+    :root .text-gray-900 {
+      color: #bac2de;
+    }
+    :root .text-green-500,
+    :root .text-emerald-500,
+    :root .text-green-700 {
+      color: #a6e3a1;
+    }
+    :root .text-yellow-900 {
+      color: #f9e2af;
+    }
+    :root .text-neutral-300,
+    :root .text-neutral-400,
+    :root .text-neutral-500 {
+      color: #a6adc8;
+    }
+    :root .text-neutral-700,
+    :root .text-neutral-800,
+    :root .text-neutral-900 {
+      color: #bac2de !important;
+    }
+    :root .text-red-500 {
+      color: #f38ba8;
+    }
+    :root .text-blue-500,
+    :root .text-blue-600 {
+      color: #cba6f7;
+    }
+    :root .text-indigo-600 {
+      color: #11111b;
+    }
+    :root .bg-neutral-100 pre,
+    :root .bg-neutral-100 .command {
+      background-color: unset !important;
+    }
+    :root .bg-white {
+      background-color: #181825;
+    }
+    :root .bg-black,
+    :root .hover\:bg-black:hover {
+      background-color: #313244 !important;
+    }
+    :root .bg-neutral-50 {
+      background-color: #313244;
+    }
+    :root .bg-neutral-100,
+    :root .hover\:bg-neutral-100:hover {
+      background-color: #585b70 !important;
+    }
+    :root .bg-neutral-700,
+    :root .bg-neutral-800 {
+      background-color: #45475a;
+    }
+    :root .bg-green-50 {
+      background-color: rgba(166, 227, 161, 0.1);
+    }
+    :root .bg-yellow-50 {
+      background-color: rgba(249, 226, 175, 0.1);
+    }
+    :root .bg-indigo-50 {
+      background-color: #cba6f7;
+    }
+    :root .bg-\[\#ddf4ff\] {
+      background-color: rgba(203, 166, 247, 0.1);
+    }
+    :root .border {
+      border-color: #cba6f7;
+    }
+    :root .border-neutral-200,
+    :root .border-neutral-300,
+    :root .divide-gray-200 > :not([hidden]) ~ :not([hidden]),
+    :root .divide-neutral-200 > :not([hidden]) ~ :not([hidden]) {
+      border-color: #45475a;
+    }
+    :root .focus\:border-blue-400:focus {
+      border-color: #cba6f7;
+    }
+    :root .focus\:border-red-400:focus {
+      border-color: #f38ba8;
+    }
+    :root .ring-neutral-300 {
+      --tw-ring-color: #45475a !important;
+    }
+    :root .ring-green-600\/20 {
+      --tw-ring-color: #a6e3a1;
+    }
+    :root .ring-yellow-600\/20 {
+      --tw-ring-color: #f9e2af;
+    }
+    :root select:focus,
+    :root .ring-blue-300,
+    :root .focus\:ring-blue-300:focus {
+      --tw-ring-color: rgba(203, 166, 247, var(--tw-ring-opacity));
+    }
+    :root .focus\:ring-red-300:focus {
+      --tw-ring-color: rgba(243, 139, 168, var(--tw-ring-opacity));
+    }
+  }
+}

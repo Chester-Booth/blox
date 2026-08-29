@@ -1,0 +1,191 @@
+/* Compiled from Catppuccin Userstyles 5ef4cc64231826f46d12a2721fa72571f5aa8a27; do not edit. */
+/* deno-fmt-ignore */
+/* deno-fmt-ignore */
+@-moz-document domain("neovim.io") {
+  code.hljs{color:var(--ctp-text) !important;background:var(--ctp-base) !important}code .hljs-keyword{color:var(--ctp-mauve) !important}code .hljs-built_in{color:var(--ctp-red) !important}code .hljs-type{color:var(--ctp-yellow) !important}code .hljs-literal{color:var(--ctp-peach) !important}code .hljs-number{color:var(--ctp-peach) !important}code .hljs-operator{color:var(--ctp-sky) !important}code .hljs-punctuation{color:var(--ctp-subtext1) !important}code .hljs-property{color:var(--ctp-teal) !important}code .hljs-regexp{color:var(--ctp-pink) !important}code .hljs-string{color:var(--ctp-green) !important}code .hljs-char.escape_{color:var(--ctp-green) !important}code .hljs-subst{color:var(--ctp-subtext0) !important}code .hljs-symbol{color:var(--ctp-flamingo) !important}code .hljs-variable{color:var(--ctp-mauve) !important}code .hljs-variable.language_{color:var(--ctp-mauve) !important}code .hljs-variable.constant_{color:var(--ctp-peach) !important}code .hljs-title{color:var(--ctp-blue) !important}code .hljs-title.class_{color:var(--ctp-yellow) !important}code .hljs-title.function_{color:var(--ctp-blue) !important}code .hljs-params{color:var(--ctp-text) !important}code .hljs-comment{color:var(--ctp-overlay2) !important}code .hljs-doctag{color:var(--ctp-red) !important}code .hljs-meta{color:var(--ctp-peach) !important}code .hljs-section{color:var(--ctp-blue) !important}code .hljs-tag{color:var(--ctp-teal) !important}code .hljs-name{color:var(--ctp-mauve) !important}code .hljs-attr{color:var(--ctp-blue) !important}code .hljs-attribute{color:var(--ctp-green) !important}code .hljs-bullet{color:var(--ctp-teal) !important}code .hljs-code{color:var(--ctp-green) !important}code .hljs-emphasis{color:var(--ctp-red) !important;font-style:italic !important}code .hljs-strong{color:var(--ctp-red) !important;font-weight:bold !important}code .hljs-formula{color:var(--ctp-teal) !important}code .hljs-link{color:var(--ctp-sapphire) !important;font-style:italic !important}code .hljs-quote{color:var(--ctp-green) !important;font-style:italic !important}code .hljs-selector-tag{color:var(--ctp-yellow) !important}code .hljs-selector-id{color:var(--ctp-blue) !important}code .hljs-selector-class{color:var(--ctp-teal) !important}code .hljs-selector-attr{color:var(--ctp-mauve) !important}code .hljs-selector-pseudo{color:var(--ctp-teal) !important}code .hljs-template-tag{color:var(--ctp-flamingo) !important}code .hljs-template-variable{color:var(--ctp-flamingo) !important}code .hljs-addition{color:var(--ctp-green) !important;background:rgb(from var(--ctp-green) r g b/15%) !important}code .hljs-deletion{color:var(--ctp-red) !important;background:rgb(from var(--ctp-red) r g b/15%) !important}
+
+  @media (prefers-color-scheme: light) {
+    :root {
+      color-scheme: dark;
+      --ctp-rosewater: #f5e0dc;
+      --ctp-flamingo: #f2cdcd;
+      --ctp-pink: #f5c2e7;
+      --ctp-mauve: #cba6f7;
+      --ctp-red: #f38ba8;
+      --ctp-maroon: #eba0ac;
+      --ctp-peach: #fab387;
+      --ctp-yellow: #f9e2af;
+      --ctp-green: #a6e3a1;
+      --ctp-teal: #94e2d5;
+      --ctp-sky: #89dceb;
+      --ctp-sapphire: #74c7ec;
+      --ctp-blue: #89b4fa;
+      --ctp-lavender: #b4befe;
+      --ctp-text: #cdd6f4;
+      --ctp-subtext1: #bac2de;
+      --ctp-subtext0: #a6adc8;
+      --ctp-overlay2: #9399b2;
+      --ctp-overlay1: #7f849c;
+      --ctp-overlay0: #6c7086;
+      --ctp-surface2: #585b70;
+      --ctp-surface1: #45475a;
+      --ctp-surface0: #313244;
+      --ctp-base: #1e1e2e;
+      --ctp-mantle: #181825;
+      --ctp-crust: #11111b;
+      --fg-color: #cdd6f4;
+      --inverse-fg-color: #313244;
+      --bg-color: #1e1e2e;
+      --accent-bg-color: #181825;
+      --link-color: #89b4fa;
+      --accent-color: #cba6f7;
+      --border-color: #cba6f7;
+      --code-color: #cba6f7;
+      --bs-btn-active-color: #1e1e2e;
+      --tag-color: #cba6f7;
+      --docsearch-container-background: rgba(30, 30, 46, 0.3);
+      --docsearch-modal-background: #181825;
+      --docsearch-highlight-color: #cba6f7;
+      --docsearch-logo-color: #cba6f7;
+    }
+    :root ::selection {
+      background-color: rgba(203, 166, 247, 0.3);
+    }
+    :root input::placeholder,
+    :root textarea::placeholder {
+      color: #a6adc8 !important;
+    }
+    :root a:not([class]) {
+      text-decoration-color: var(--link-color);
+    }
+    :root a:not([class]):hover,
+    :root a:not([class]):focus {
+      color: var(--link-color);
+    }
+    :root a[aria-label="logo"] svg[aria-label="Neovim"] path[fill="url(#a)"] {
+      fill: #89b4fa;
+    }
+    :root a[aria-label="logo"] svg[aria-label="Neovim"] path[fill="url(#b)"],
+    :root a[aria-label="logo"] svg[aria-label="Neovim"] path[fill="url(#c)"] {
+      fill: #a6e3a1;
+    }
+    :root a[aria-label="logo"] svg[aria-label="Neovim"] g[fill="#444"] path {
+      fill: #89b4fa;
+    }
+    :root .btn {
+      color: #1e1e2e;
+      background: linear-gradient(#cba6f7 0% 95%, #b077f3 95% 100%);
+    }
+    :root .btn:hover,
+    :root .btn:focus {
+      box-shadow: 0 0 10px #cba6f7;
+      outline-color: #cdd6f4;
+    }
+    :root code,
+    :root code.hljs,
+    :root pre,
+    :root samp {
+      background-color: #181825 !important;
+      color: #cdd6f4;
+    }
+    :root .generator-stats {
+      color: #a6adc8;
+    }
+    :root .DocSearch-Logo .cls-1,
+    :root .DocSearch-Logo .cls-2 {
+      fill: var(--docsearch-logo-color);
+    }
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --ctp-rosewater: #f5e0dc;
+      --ctp-flamingo: #f2cdcd;
+      --ctp-pink: #f5c2e7;
+      --ctp-mauve: #cba6f7;
+      --ctp-red: #f38ba8;
+      --ctp-maroon: #eba0ac;
+      --ctp-peach: #fab387;
+      --ctp-yellow: #f9e2af;
+      --ctp-green: #a6e3a1;
+      --ctp-teal: #94e2d5;
+      --ctp-sky: #89dceb;
+      --ctp-sapphire: #74c7ec;
+      --ctp-blue: #89b4fa;
+      --ctp-lavender: #b4befe;
+      --ctp-text: #cdd6f4;
+      --ctp-subtext1: #bac2de;
+      --ctp-subtext0: #a6adc8;
+      --ctp-overlay2: #9399b2;
+      --ctp-overlay1: #7f849c;
+      --ctp-overlay0: #6c7086;
+      --ctp-surface2: #585b70;
+      --ctp-surface1: #45475a;
+      --ctp-surface0: #313244;
+      --ctp-base: #1e1e2e;
+      --ctp-mantle: #181825;
+      --ctp-crust: #11111b;
+      --fg-color: #cdd6f4;
+      --inverse-fg-color: #313244;
+      --bg-color: #1e1e2e;
+      --accent-bg-color: #181825;
+      --link-color: #89b4fa;
+      --accent-color: #cba6f7;
+      --border-color: #cba6f7;
+      --code-color: #cba6f7;
+      --bs-btn-active-color: #1e1e2e;
+      --tag-color: #cba6f7;
+      --docsearch-container-background: rgba(30, 30, 46, 0.3);
+      --docsearch-modal-background: #181825;
+      --docsearch-highlight-color: #cba6f7;
+      --docsearch-logo-color: #cba6f7;
+    }
+    :root ::selection {
+      background-color: rgba(203, 166, 247, 0.3);
+    }
+    :root input::placeholder,
+    :root textarea::placeholder {
+      color: #a6adc8 !important;
+    }
+    :root a:not([class]) {
+      text-decoration-color: var(--link-color);
+    }
+    :root a:not([class]):hover,
+    :root a:not([class]):focus {
+      color: var(--link-color);
+    }
+    :root a[aria-label="logo"] svg[aria-label="Neovim"] path[fill="url(#a)"] {
+      fill: #89b4fa;
+    }
+    :root a[aria-label="logo"] svg[aria-label="Neovim"] path[fill="url(#b)"],
+    :root a[aria-label="logo"] svg[aria-label="Neovim"] path[fill="url(#c)"] {
+      fill: #a6e3a1;
+    }
+    :root a[aria-label="logo"] svg[aria-label="Neovim"] g[fill="#444"] path {
+      fill: #89b4fa;
+    }
+    :root .btn {
+      color: #1e1e2e;
+      background: linear-gradient(#cba6f7 0% 95%, #b077f3 95% 100%);
+    }
+    :root .btn:hover,
+    :root .btn:focus {
+      box-shadow: 0 0 10px #cba6f7;
+      outline-color: #cdd6f4;
+    }
+    :root code,
+    :root code.hljs,
+    :root pre,
+    :root samp {
+      background-color: #181825 !important;
+      color: #cdd6f4;
+    }
+    :root .generator-stats {
+      color: #a6adc8;
+    }
+    :root .DocSearch-Logo .cls-1,
+    :root .DocSearch-Logo .cls-2 {
+      fill: var(--docsearch-logo-color);
+    }
+  }
+}

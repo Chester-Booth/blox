@@ -223,12 +223,12 @@ class ThemeLibraryMutationTests(unittest.TestCase):
 
     def test_generated_target_files_can_be_exported_without_path_escape(self) -> None:
         state = self.root / "state"
-        generated = state / "current/code/themes/blox-dark-2026.json"
+        generated = state / "current/code/themes/blox-generated-color-theme.json"
         generated.parent.mkdir(parents=True)
         generated.write_text('{"name":"Blox"}', encoding="utf-8")
-        output = self.root / "downloads/blox-dark-2026.json"
+        output = self.root / "downloads/blox-generated-color-theme.json"
         with mock.patch("blox_theme.cli.state_dir", return_value=state):
-            response, code = self.invoke("export-target", "code", "--file", "code/themes/blox-dark-2026.json", "--output", str(output), "--json")
+            response, code = self.invoke("export-target", "code", "--file", "code/themes/blox-generated-color-theme.json", "--output", str(output), "--json")
             self.assertEqual(0, code, response)
             self.assertEqual('{"name":"Blox"}', output.read_text(encoding="utf-8"))
 
@@ -241,7 +241,7 @@ class ThemeLibraryMutationTests(unittest.TestCase):
         expected = {
             "code/settings.json": "settings",
             "code/package.json": "package",
-            "code/themes/blox-dark-2026.json": "theme",
+            "code/themes/blox-generated-color-theme.json": "theme",
         }
         for name, content in expected.items():
             generated = state / "current" / name

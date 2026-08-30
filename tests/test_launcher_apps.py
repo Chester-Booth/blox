@@ -67,12 +67,14 @@ class FakeIconTheme:
 
 
 class AppControllerTests(unittest.TestCase):
-    def test_code_launcher_avoids_the_transient_systemd_scope(self):
-        self.assertTrue(desktop_exec._launches_code("code", ["code"]))
-        self.assertTrue(desktop_exec._launches_code("code.desktop", ["/usr/bin/code"]))
-        self.assertTrue(desktop_exec._launches_code("code-url-handler.desktop", ["code"]))
-        self.assertFalse(desktop_exec._launches_code("org.example.desktop", ["code"]))
-        self.assertFalse(desktop_exec._launches_code("code.desktop", ["kitty"]))
+    def test_electron_editors_avoid_the_transient_systemd_scope(self):
+        self.assertTrue(desktop_exec._launches_detached_editor("code", ["code"]))
+        self.assertTrue(desktop_exec._launches_detached_editor("code.desktop", ["/usr/bin/code"]))
+        self.assertTrue(desktop_exec._launches_detached_editor("code-url-handler.desktop", ["code"]))
+        self.assertTrue(desktop_exec._launches_detached_editor("cursor.desktop", ["/usr/share/cursor/cursor"]))
+        self.assertTrue(desktop_exec._launches_detached_editor("cursor-url-handler.desktop", ["cursor"]))
+        self.assertFalse(desktop_exec._launches_detached_editor("org.example.desktop", ["code"]))
+        self.assertFalse(desktop_exec._launches_detached_editor("code.desktop", ["kitty"]))
 
     @mock.patch.object(desktop_exec.subprocess, "run")
     @mock.patch.object(desktop_exec.subprocess, "Popen")

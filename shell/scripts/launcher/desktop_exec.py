@@ -89,11 +89,11 @@ def active_cursor_environment() -> dict[str, str]:
     return environment
 
 
-def _launches_code(desktop_id: str, command: list[str]) -> bool:
-    """Keep Code out of the transient systemd scope used by the app menu."""
+def _launches_detached_editor(desktop_id: str, command: list[str]) -> bool:
+    """Keep Electron editors out of the transient systemd scope used by the app menu."""
     entry_name = Path(desktop_id.removesuffix(".desktop")).name.lower()
     executable_name = Path(command[0]).name.lower() if command else ""
-    return entry_name in {"code", "code-url-handler"} and executable_name in {"code", "code-insiders"}
+    return entry_name in {"code", "code-url-handler", "cursor", "cursor-url-handler"} and executable_name in {"code", "code-insiders", "cursor"}
 
 
 def main() -> int:
@@ -105,7 +105,7 @@ def main() -> int:
         command, working_directory = resolve_command(sys.argv[1])
         launch_environment = os.environ.copy()
         launch_environment.update(active_cursor_environment())
-        if _launches_code(sys.argv[1], command):
+        if _launches_detached_editor(sys.argv[1], command):
             process = subprocess.Popen(
                 command,
                 cwd=str(Path(working_directory).expanduser()) if working_directory else None,

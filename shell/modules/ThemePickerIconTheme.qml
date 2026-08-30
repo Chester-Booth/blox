@@ -11,6 +11,7 @@ ColumnLayout {
     property string quickshellDetail: "Launcher and notifications"
 
     Layout.fillWidth: true
+    opacity: controller.themeControlsEnabled ? 1 : 0.48
     spacing: Theme.scaledSpacing(5)
 
     Label {
@@ -30,6 +31,7 @@ ColumnLayout {
 
             Layout.fillWidth: true
             Layout.minimumWidth: 205
+            enabled: controller.themeControlsEnabled
             model: controller.iconThemeNames
             currentIndex: controller.iconThemeIndex()
             onActivated: (index, value) => controller.setIconTheme(controller.iconThemeIdAt(index))
@@ -79,7 +81,7 @@ ColumnLayout {
 
             BloxCheckBox {
                 text: "GTK applications"
-                enabled: controller.targetAvailable("gtk")
+                enabled: controller.themeControlsEnabled && controller.targetAvailable("gtk")
                 checked: {
                     controller.candidateRevision;
                     return controller.candidate && controller.candidate.targets ? controller.candidate.targets.gtk === true : false;
@@ -106,7 +108,7 @@ ColumnLayout {
 
             BloxCheckBox {
                 text: "Quickshell"
-                enabled: controller.targetAvailable("quickshell")
+                enabled: controller.themeControlsEnabled && controller.targetAvailable("quickshell")
                 checked: {
                     controller.candidateRevision;
                     return controller.candidate && controller.candidate.targets ? controller.candidate.targets.quickshell === true : false;

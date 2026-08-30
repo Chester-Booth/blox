@@ -115,10 +115,11 @@ Scope {
     readonly property bool selectedThemeBuiltin: themes.some((entry) => {
         return entry && entry.id === selectedId && entry.builtin === true;
     })
-    readonly property var targetKeys: ["quickshell", "widgets", "gtk", "helium", "chromium", "cursor", "wallpaper", "kitty", "hyprland", "hyprlock", "btop", "micro", "glow", "code", "cursor_editor", "stylus", "obsidian", "powerlevel10k", "sddm", "grub"]
+    readonly property bool themeControlsEnabled: !selectedThemeBuiltin
+    readonly property var targetKeys: ["quickshell", "widgets", "gtk", "helium", "chromium", "cursor", "wallpaper", "kitty", "hyprland", "hyprlock", "btop", "micro", "glow", "code", "cursor_editor", "t3code", "stylus", "obsidian", "powerlevel10k", "sddm", "grub"]
     readonly property var unavailableTargetKeys: ["sddm", "grub"]
     readonly property var coreTargetKeys: ["quickshell", "widgets", "wallpaper", "hyprland", "hyprlock", "cursor"]
-    readonly property var applicationTargetKeys: ["kitty", "gtk", "btop", "micro", "glow", "code", "cursor_editor", "stylus", "obsidian", "powerlevel10k"]
+    readonly property var applicationTargetKeys: ["kitty", "gtk", "btop", "micro", "glow", "code", "cursor_editor", "t3code", "stylus", "obsidian", "powerlevel10k"]
     readonly property var stylusStyleSetValues: ["recommended", "unmaintained", "all"]
     readonly property var stylusStyleSetNames: ["Recommended", "Include unmaintained", "All eligible"]
     readonly property var browserTargetKeys: browserTargets.filter((entry) => {
@@ -273,6 +274,9 @@ Scope {
     function targetLabel(key) {
         if (key === "sddm" || key === "grub")
             return key + " · unavailable";
+
+        if (key === "t3code")
+            return "T3Code";
 
         const browser = browserTargetInfo(key);
         if (browser !== null && browser.label)
@@ -705,7 +709,10 @@ Scope {
         statusMessage = dirty ? "Temporary Quickshell preview — unsaved" : "Temporary Quickshell preview";
     }
 
-    function markCandidatePaths(value, paths) {
+    function markCandidatePaths(value, paths, allowBuiltinChange) {
+        if (selectedThemeBuiltin && !allowBuiltinChange)
+            return false;
+
         candidate = value;
         const nextTouchedPaths = touchedPaths.slice();
         for (const path of paths || []) {
@@ -717,10 +724,11 @@ Scope {
         candidateValid = false;
         validationPending = true;
         validationDelay.restart();
+        return true;
     }
 
-    function markCandidate(value, touchedPath) {
-        markCandidatePaths(value, touchedPath ? [touchedPath] : []);
+    function markCandidate(value, touchedPath, allowBuiltinChange) {
+        return markCandidatePaths(value, touchedPath ? [touchedPath] : [], allowBuiltinChange);
     }
 
     function setTopLevel(key, value) {
@@ -958,12 +966,14 @@ Scope {
     }
 
     function setTarget(key, value) {
+        if (!candidate)
+            return ;
         if (!targetAvailable(key))
             return ;
 
         const next = cloneCandidate();
         next.targets[key] = value;
-        markCandidate(next, "targets." + key);
+        markCandidate(next, "targets." + key, true);
     }
 
     function setOverride(target, key, value) {
@@ -1140,6 +1150,25 @@ Scope {
         widgetController.setItems(items);
     }
 
+    function widgetItemsChangeAllowed(nextItems) {
+        if (!selectedThemeBuiltin)
+            return true;
+
+        const currentItems = widgetItems();
+        if (!Array.isArray(nextItems) || nextItems.length !== currentItems.length)
+            return false;
+
+        for (let index = 0; index < currentItems.length; ++index) {
+            const current = JSON.parse(JSON.stringify(currentItems[index]));
+            const next = JSON.parse(JSON.stringify(nextItems[index]));
+            delete current.enabled;
+            delete next.enabled;
+            if (JSON.stringify(current) !== JSON.stringify(next))
+                return false;
+        }
+        return true;
+    }
+
     function updateWidgetGeometry(index, anchor, offsetX, offsetY, width, height) {
         widgetController.updateGeometry(index, anchor, offsetX, offsetY, width, height);
     }
@@ -1293,19 +1322,11 @@ Scope {
             });
         });
         showModal("progress");
+        if (selectedThemeBuiltin) {
+            runApi("apply-inline", ["apply-inline", JSON.stringify(candidate), "--defer-quickshell-restart"]);
+            return ;
+        }
         if (dirty || !sourceDigest) {
-            if (selectedThemeBuiltin) {
-                applyProgressStages = applyProgressStages.map((stage) => {
-                    return stage.id === "prepare" ? Object.assign({}, stage, {
-                        "state": "failed",
-                        "message": "Duplicate this built-in theme before saving changes"
-                    }) : stage;
-                });
-                applyProgressMessage = "Duplicate this built-in theme before saving changes";
-                errorMessage = "Built-in themes are read-only; duplicate the theme first.";
-                applyProgressComplete = true;
-                return ;
-            }
             saveCandidate("apply");
             return ;
         }

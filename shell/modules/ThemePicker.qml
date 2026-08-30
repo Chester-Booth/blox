@@ -353,7 +353,7 @@ FloatingWindow {
                     BloxButton {
                         iconName: "floppy-disk"
                         text: "Save"
-                        enabled: pickerController.candidate && pickerController.dirty && pickerController.candidateValid && !pickerController.busy
+                        enabled: pickerController.candidate && pickerController.dirty && pickerController.candidateValid && !pickerController.selectedThemeBuiltin && !pickerController.busy
                         onClicked: pickerController.saveCandidate("")
                     }
 

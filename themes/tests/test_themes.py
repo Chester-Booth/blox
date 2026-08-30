@@ -550,6 +550,7 @@ class RendererTests(unittest.TestCase):
             "glow": "glow/style.json", "code": ["code/package.json", "code/settings.json", "code/themes/blox-generated-color-theme.json"],
             "helium": "helium/manifest.json",
             "cursor_editor": ["cursor-editor/package.json", "cursor-editor/settings.json", "cursor-editor/themes/blox-generated-color-theme.json"], "stylus": ["stylus/blox-system.user.css", "stylus/manifest.json"],
+            "t3code": "t3code/theme.json",
             "powerlevel10k": "powerlevel10k/theme.zsh",
             "widgets": "widgets/profile.json",
             "chromium": "chromium/manifest.json",

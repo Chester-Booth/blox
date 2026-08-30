@@ -27,10 +27,10 @@ EXIT_LOCKED = 8
 
 THEME_TARGET_KEYS = (
     "quickshell", "widgets", "gtk", "helium", "chromium", "cursor", "wallpaper", "kitty",
-    "hyprland", "hyprlock", "btop", "micro", "glow", "code", "cursor_editor",
+    "hyprland", "hyprlock", "btop", "micro", "glow", "code", "cursor_editor", "t3code",
     "stylus", "obsidian", "powerlevel10k", "sddm", "grub",
 )
-IMPLEMENTED_TARGETS = ("quickshell", "widgets", "kitty", "wallpaper", "gtk", "helium", "chromium", "cursor", "hyprland", "hyprlock", "btop", "micro", "glow", "code", "cursor_editor", "stylus", "obsidian", "powerlevel10k")
+IMPLEMENTED_TARGETS = ("quickshell", "widgets", "kitty", "wallpaper", "gtk", "helium", "chromium", "cursor", "hyprland", "hyprlock", "btop", "micro", "glow", "code", "cursor_editor", "t3code", "stylus", "obsidian", "powerlevel10k")
 DEFERRED_TARGETS = {}
 TARGET_LIMITATIONS = {
     "hyprland": "Hyprtoolkit apps must be restarted after Apply",
@@ -39,6 +39,7 @@ TARGET_LIMITATIONS = {
     "micro": "Micro must be restarted after Apply",
     "code": "Code theme package and settings apply automatically; Modern UI follows roundness; use Reload Window for existing windows",
     "cursor_editor": "Cursor theme package and font family apply automatically; Modern UI is not managed by this version; use Reload Window for existing windows",
+    "t3code": "Needs T3Code 0.0.37 nightly or newer with environment themes; this can update other T3Code clients connected to this machine",
     "stylus": "Open or reload the generated .user.css in a browser with Stylus, then choose Install style the first time or Reinstall style after an earlier import; remove older duplicate Blox Web Theme entries first; manifest.json lists included and excluded sites",
     "obsidian": "Obsidian requires Minimal, Style Settings, and manual import of the generated settings JSON",
     "powerlevel10k": "Powerlevel10k changes apply to new shells",
@@ -1278,6 +1279,83 @@ def render_cursor_editor(theme: dict[str, Any]) -> str:
     })
 
 
+def render_t3code(theme: dict[str, Any]) -> str:
+    """Render T3Code's supported environment-theme document.
+
+    T3Code does not consume the VS Code theme format. Its environment route
+    accepts a palette keyed by T3Code's semantic colour roles, so keep this
+    projection separate from the Code and Cursor packages.
+    """
+    c = theme["colours"]
+    colours = {
+        "canvas": c["background"],
+        "chrome": c["background"],
+        "toolbar": c["background"],
+        "toolbarForeground": c["foreground"],
+        "toolbarBorder": c["border"],
+        "toolbarControl": c["surface_alt"],
+        "toolbarControlForeground": c["foreground"],
+        "toolbarControlHover": c["surface_alt"],
+        "surface": c["surface"],
+        "surfaceRaised": c["surface_alt"],
+        "surfaceOverlay": c["surface_alt"],
+        "text": c["foreground"],
+        "textMuted": c["muted"],
+        "border": c["border"],
+        "input": c["surface_alt"],
+        "focus": c["accent"],
+        "accent": c["accent"],
+        "accentForeground": c["selection_foreground"],
+        "secondary": c["surface"],
+        "secondaryForeground": c["foreground"],
+        "muted": c["surface"],
+        "mutedForeground": c["muted"],
+        "placeholder": c["muted"],
+        "secondaryLabel": c["muted"],
+        "iconMuted": c["muted"],
+        "error": c["danger"],
+        "errorForeground": c["danger"],
+        "errorSurface": c["surface_alt"],
+        "warning": c["warning"],
+        "warningForeground": c["warning"],
+        "warningSurface": c["surface_alt"],
+        "update": c["info"],
+        "updateForeground": c["info"],
+        "updateSurface": c["surface_alt"],
+        "accentSurface": c["selection_background"],
+        "accentSurfaceForeground": c["selection_foreground"],
+        "messageSurface": c["surface_alt"],
+        "messageForeground": c["foreground"],
+        "messageAction": c["accent"],
+        "messageActionForeground": c["selection_foreground"],
+        "messageActionHover": c["info"],
+        "codeBackground": c["background"],
+        "codeForeground": c["foreground"],
+        "sidebar": c["surface"],
+        "sidebarForeground": c["foreground"],
+        "sidebarMutedForeground": c["muted"],
+        "sidebarControlSurface": c["surface_alt"],
+        "sidebarRowHover": c["surface_alt"],
+        "sidebarRowActive": c["surface_alt"],
+        "sidebarRowSelected": c["selection_background"],
+        "sidebarBorder": c["border"],
+        "terminalBackground": c["background"],
+        "terminalForeground": c["foreground"],
+        "terminalCursor": c["accent"],
+        "terminalSelection": c["selection_background"],
+        "terminalScrollbar": c["border"],
+        "terminalScrollbarHover": c["muted"],
+    }
+    return canonical_json({
+        "version": 1,
+        "name": theme["name"],
+        "appearance": theme["variant"],
+        "canvas": c["background"],
+        "accent": c["accent"],
+        "colors": colours,
+    })
+
+
 def render_code_extension(theme: dict[str, Any]) -> dict[str, str]:
     colour_theme = _editor_theme(theme)
     return {
@@ -1381,6 +1459,8 @@ def render_theme(theme: dict[str, Any], source_path: Path | None = None) -> tupl
         files.update(render_code_extension(theme))
     if targets["cursor_editor"]:
         files.update(render_cursor_extension(theme))
+    if targets.get("t3code", False):
+        files["t3code/theme.json"] = render_t3code(theme)
     if targets["stylus"]:
         from .stylus import render_stylus, render_stylus_manifest
 

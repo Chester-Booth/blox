@@ -32,7 +32,7 @@ Item {
             "touchpad": contentController.touchpad.json
         };
         const status = sources[root.itemId];
-        return status && status.capability && status.capability.available === false;
+        return !!(status && status.capability && status.capability.available === false);
     }
     function suppressForRuntimeState() {
         return itemId === "privacy" ? contentController.privacy.json.active !== true : itemId === "touchpad" ? contentController.touchpad.json.enabled !== false : itemId === "fan" ? contentController.systemInfo.json.profile === undefined || contentController.systemInfo.json.profile === "Quiet" : itemId === "gpu" ? contentController.systemInfo.json.gpuMode === undefined || contentController.systemInfo.json.gpuMode === "eco" : false;

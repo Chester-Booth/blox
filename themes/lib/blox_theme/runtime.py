@@ -35,6 +35,7 @@ TARGET_FILES = {
     "glow": ("glow/style.json",),
     "code": ("code/settings.json", "code/package.json", "code/themes/blox-generated-color-theme.json"),
     "cursor_editor": ("cursor-editor/settings.json", "cursor-editor/package.json", "cursor-editor/themes/blox-generated-color-theme.json"),
+    "t3code": ("t3code/theme.json",),
     "stylus": ("stylus/blox-system.user.css", "stylus/manifest.json"),
     "obsidian": ("obsidian/style-settings.json",),
     "powerlevel10k": ("powerlevel10k/theme.zsh",),
@@ -63,6 +64,7 @@ EDITOR_SETTING_KEYS = {
 EDITOR_MODERN_UI_SUPPORT = {"code": True, "cursor_editor": False}
 EDITOR_LEGACY_EXTENSION_DIR = "blox.blox-dark-2026-1.0.0"
 EDITOR_EXTENSION_DIR = f"{EDITOR_THEME_PUBLISHER}.{EDITOR_THEME_PACKAGE_NAME}-{EDITOR_THEME_VERSION}"
+T3CODE_THEME_ID = "blox-theme"
 
 
 class RuntimeFailure(Exception):
@@ -87,6 +89,18 @@ def _write_text(path: Path, content: str) -> None:
         handle.write(content)
         handle.flush()
         os.fsync(handle.fileno())
+
+
+def _atomic_write_text(path: Path, content: str) -> None:
+    """Replace a text file without exposing a partial document to its watcher."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.parent / f".{path.name}.{uuid.uuid4().hex}.tmp"
+    try:
+        _write_text(temporary, content)
+        os.replace(temporary, path)
+        _fsync_directory(path.parent)
+    finally:
+        temporary.unlink(missing_ok=True)
 
 
 def _file_sha256(path: Path) -> str:
@@ -418,6 +432,194 @@ def apply_editor_settings(root: Path, target: str, fragment: dict[str, Any]) -> 
     settings, data, values = _capture_editor_settings(root, target, fragment)
     apply_fragment(settings, values)
     _record_editor_settings_applied(root, target, data, values)
+
+
+def t3code_base_dir() -> Path:
+    """Return the T3Code base directory used by its desktop server."""
+    return Path(os.environ.get("T3CODE_HOME", Path.home() / ".t3")).expanduser()
+
+
+def t3code_paths() -> tuple[Path, Path, Path]:
+    base = t3code_base_dir()
+    userdata = base / "userdata"
+    return userdata / "themes" / f"{T3CODE_THEME_ID}.json", userdata / "settings.json", userdata / "themes"
+
+
+def t3code_integration_path(root: Path) -> Path:
+    return root / "integration/t3code.json"
+
+
+def _empty_t3code_integration(paths: tuple[Path, Path, Path], settings: dict[str, Any], published_content: str | None) -> dict[str, Any]:
+    previous_default = settings.get("defaultTheme")
+    previous_set_at = settings.get("defaultThemeSetAt")
+    if previous_default is not None and not isinstance(previous_default, str):
+        raise RuntimeFailure("T3Code settings defaultTheme is not a string")
+    if previous_set_at is not None and not isinstance(previous_set_at, str):
+        raise RuntimeFailure("T3Code settings defaultThemeSetAt is not a string")
+    return {
+        "schema_version": 1,
+        "theme_id": T3CODE_THEME_ID,
+        "base_dir": str(t3code_base_dir()),
+        "published_path": str(paths[0]),
+        "settings_path": str(paths[1]),
+        "previous_default_theme": previous_default,
+        "previous_default_theme_set_at": previous_set_at,
+        "previous_published_content": published_content,
+        "last_published_sha256": "",
+        "last_default_theme_set_at": "",
+    }
+
+
+def _load_t3code_integration(root: Path) -> dict[str, Any] | None:
+    path = t3code_integration_path(root)
+    if not path.is_file():
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        raise RuntimeFailure(f"T3Code integration record is invalid: {path}") from error
+    expected = {
+        "schema_version", "theme_id", "base_dir", "published_path", "settings_path",
+        "previous_default_theme", "previous_default_theme_set_at", "previous_published_content",
+        "last_published_sha256", "last_default_theme_set_at",
+    }
+    if not isinstance(data, dict) or set(data) != expected or data["schema_version"] != 1 or data["theme_id"] != T3CODE_THEME_ID:
+        raise RuntimeFailure(f"T3Code integration record is invalid: {path}")
+    string_keys = ("base_dir", "published_path", "settings_path", "last_published_sha256", "last_default_theme_set_at")
+    if any(not isinstance(data[key], str) for key in string_keys):
+        raise RuntimeFailure(f"T3Code integration record is invalid: {path}")
+    for key in ("previous_default_theme", "previous_default_theme_set_at"):
+        if data[key] is not None and not isinstance(data[key], str):
+            raise RuntimeFailure(f"T3Code integration record is invalid: {path}")
+    if data["previous_published_content"] is not None and not isinstance(data["previous_published_content"], str):
+        raise RuntimeFailure(f"T3Code integration record is invalid: {path}")
+    if data["last_published_sha256"] and not re.fullmatch(r"[0-9a-f]{64}", data["last_published_sha256"]):
+        raise RuntimeFailure(f"T3Code integration record is invalid: {path}")
+    return data
+
+
+def _save_t3code_integration(root: Path, data: dict[str, Any]) -> None:
+    _atomic_write_text(t3code_integration_path(root), canonical_json(data))
+
+
+def _read_t3code_settings(path: Path) -> tuple[dict[str, Any], bool]:
+    if not path.is_file():
+        return {}, False
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        raise RuntimeFailure(f"T3Code settings are invalid: {path}") from error
+    if not isinstance(data, dict):
+        raise RuntimeFailure(f"T3Code settings are invalid: {path}")
+    return data, True
+
+
+def _restore_t3code_settings(path: Path, settings: dict[str, Any], existed: bool) -> None:
+    if settings or existed:
+        _atomic_write_text(path, canonical_json(settings))
+    elif path.exists() or path.is_symlink():
+        path.unlink()
+
+
+def _t3code_write_path(path: Path, label: str) -> None:
+    if path.is_symlink():
+        raise RuntimeFailure(f"refusing to replace symlinked T3Code {label}: {path}")
+
+
+def _publish_t3code_theme(root: Path) -> None:
+    source = root / "current/t3code/theme.json"
+    if not source.is_file():
+        raise RuntimeFailure(f"generated T3Code theme is missing: {source}")
+    published_path, settings_path, _ = t3code_paths()
+    _t3code_write_path(published_path, "theme")
+    _t3code_write_path(settings_path, "settings")
+    settings, settings_existed = _read_t3code_settings(settings_path)
+    integration = _load_t3code_integration(root)
+    if integration is not None and (
+        integration["published_path"] != str(published_path) or integration["settings_path"] != str(settings_path)
+    ):
+        raise RuntimeFailure("T3Code integration record points to a different base directory")
+
+    previous_published = None
+    if published_path.is_file():
+        try:
+            previous_published = published_path.read_text(encoding="utf-8")
+        except OSError as error:
+            raise RuntimeFailure(f"could not read the existing T3Code theme: {published_path}") from error
+    created_integration = integration is None
+    if integration is None:
+        integration = _empty_t3code_integration((published_path, settings_path, t3code_paths()[2]), settings, previous_published)
+        _save_t3code_integration(root, integration)
+
+    content = source.read_text(encoding="utf-8")
+    previous_settings = dict(settings)
+    set_at = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+    try:
+        _atomic_write_text(published_path, content)
+        next_settings = dict(settings)
+        next_settings["defaultTheme"] = T3CODE_THEME_ID
+        next_settings["defaultThemeSetAt"] = set_at
+        _atomic_write_text(settings_path, canonical_json(next_settings))
+        integration["last_published_sha256"] = sha256_text(content)
+        integration["last_default_theme_set_at"] = set_at
+        _save_t3code_integration(root, integration)
+    except (OSError, RuntimeFailure):
+        try:
+            if previous_published is None:
+                published_path.unlink(missing_ok=True)
+            else:
+                _atomic_write_text(published_path, previous_published)
+            _restore_t3code_settings(settings_path, previous_settings, settings_existed)
+        finally:
+            if created_integration:
+                t3code_integration_path(root).unlink(missing_ok=True)
+        raise
+
+
+def _reset_t3code_theme(root: Path) -> list[str]:
+    integration = _load_t3code_integration(root)
+    if integration is None:
+        return ["T3Code has no Blox ownership record; its published theme was left untouched"]
+    published_path, settings_path, _ = t3code_paths()
+    warnings: list[str] = []
+    if published_path.is_symlink():
+        warnings.append(f"T3Code published theme is a symlink; left untouched: {published_path}")
+    elif published_path.is_file():
+        if integration["last_published_sha256"] and _file_sha256(published_path) != integration["last_published_sha256"]:
+            warnings.append(f"T3Code published theme changed outside Blox; left untouched: {published_path}")
+        elif integration["previous_published_content"] is None:
+            published_path.unlink()
+        else:
+            _atomic_write_text(published_path, integration["previous_published_content"])
+    elif integration["previous_published_content"] is not None:
+        warnings.append(f"T3Code published theme is missing; left untouched: {published_path}")
+
+    if settings_path.is_symlink():
+        warnings.append(f"T3Code settings are a symlink; left untouched: {settings_path}")
+    else:
+        settings, existed = _read_t3code_settings(settings_path)
+        owns_default = (
+            settings.get("defaultTheme") == T3CODE_THEME_ID
+            and settings.get("defaultThemeSetAt") == integration["last_default_theme_set_at"]
+        )
+        if owns_default:
+            previous_default = integration["previous_default_theme"]
+            previous_set_at = integration["previous_default_theme_set_at"]
+            if previous_default is None:
+                settings.pop("defaultTheme", None)
+                settings.pop("defaultThemeSetAt", None)
+            else:
+                settings["defaultTheme"] = previous_default
+                if previous_set_at is None:
+                    settings.pop("defaultThemeSetAt", None)
+                else:
+                    settings["defaultThemeSetAt"] = previous_set_at
+            _restore_t3code_settings(settings_path, settings, existed)
+        else:
+            warnings.append("T3Code default theme changed outside Blox; left the current setting untouched")
+    if not warnings:
+        t3code_integration_path(root).unlink(missing_ok=True)
+    return warnings
 
 
 def _setting_matches(value: dict[str, Any], expected: Any) -> bool:
@@ -925,7 +1127,25 @@ def ensure_kitty_loader(root: Path) -> None:
     os.replace(temporary, link)
 
 
-def _replace_known_symlink(link: Path, expected: Path, allowed: Iterable[Path], adopt_existing_file: bool = False) -> None:
+def _link_target_path(link: Path, target: str) -> Path:
+    path = Path(target)
+    return path if path.is_absolute() else link.parent / path
+
+
+def _same_file_content(first: Path, second: Path) -> bool:
+    try:
+        return first.is_file() and second.is_file() and _file_sha256(first) == _file_sha256(second)
+    except OSError:
+        return False
+
+
+def _replace_known_symlink(
+    link: Path,
+    expected: Path,
+    allowed: Iterable[Path],
+    adopt_existing_file: bool = False,
+    allow_matching_content: Path | None = None,
+) -> None:
     allowed_targets = {str(path) for path in allowed}
     if link.is_symlink():
         current = os.readlink(link)
@@ -935,7 +1155,10 @@ def _replace_known_symlink(link: Path, expected: Path, allowed: Iterable[Path], 
         # adopted instead of refused (its content is preserved on disk and
         # the swap is recorded by the caller's own flow).
         if current not in allowed_targets:
-            if not (adopt_existing_file and Path(current).is_absolute() and Path(current).is_file()):
+            current_path = _link_target_path(link, current)
+            matching_content = allow_matching_content is not None and _same_file_content(current_path, allow_matching_content)
+            adoptable_file = adopt_existing_file and current_path.is_file()
+            if not (matching_content or adoptable_file):
                 raise RuntimeFailure(f"refusing to replace unexpected theme loader: {link}")
     elif link.exists():
         raise RuntimeFailure(f"refusing to replace conflicting theme loader: {link}")
@@ -976,7 +1199,12 @@ def ensure_gtk_loaders(root: Path, active: bool) -> None:
             allowed_loaders = [source_loader]
             if entry["kind"] == "symlink":
                 allowed_loaders.append(Path(entry["target"]))
-            _replace_known_symlink(live_loader, source_loader, allowed_loaders)
+            _replace_known_symlink(
+                live_loader,
+                source_loader,
+                allowed_loaders,
+                allow_matching_content=source_loader,
+            )
             dynamic_css = config / dynamic_name
             css_target = generated_css if active and metadata and metadata["generated_css"] else original
             # The neutral empty stylesheet is a legal prior state too (an
@@ -1161,7 +1389,7 @@ def verify_tracked_loaders(targets: Iterable[str]) -> None:
                 path = config / name
                 if path.exists() and not path.is_symlink():
                     raise RuntimeFailure(f"refusing to replace conflicting GTK loader: {path}")
-                if path.is_symlink() and os.readlink(path) not in {str(item) for item in targets_allowed}:
+                if path.is_symlink() and os.readlink(path) not in {str(item) for item in targets_allowed} and not _same_file_content(_link_target_path(path, os.readlink(path)), gtk_source_path(version, name)):
                     raise RuntimeFailure(f"refusing to replace unexpected GTK loader: {path}")
 
 
@@ -1435,6 +1663,14 @@ def run_reload_actions(root: Path, targets: Iterable[str], mode: str = "reload",
                     warnings.append(f"{editor} theme package and settings applied; use Reload Window for existing windows")
                 except (OSError, json.JSONDecodeError, EditorSettingsFailure, RuntimeFailure) as error:
                     warnings.append(f"{editor} settings were not changed: {error}")
+        elif target == "t3code":
+            try:
+                if mode == "reset":
+                    warnings.extend(_reset_t3code_theme(root))
+                else:
+                    _publish_t3code_theme(root)
+            except (OSError, RuntimeFailure) as error:
+                warnings.append(f"T3Code theme was not changed: {error}")
         elif target == "stylus":
             warnings.append("Stylus's generated UserCSS was removed; manually remove any previously imported copy" if mode == "reset" else f"Open or reload {root / 'current/stylus/blox-system.user.css'} in a browser with Stylus, then choose Install style the first time or Reinstall style after an earlier import; remove older duplicate Blox Web Theme entries first; manifest.json lists included and excluded sites")
         elif target == "obsidian":

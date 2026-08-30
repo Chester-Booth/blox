@@ -23,6 +23,7 @@ ColumnLayout {
 
     BloxComboBox {
         Layout.fillWidth: true
+        enabled: controller.themeControlsEnabled
         model: ["minimal", "compact", "comfortable"]
         currentIndex: {
             controller.candidateRevision;
@@ -48,24 +49,28 @@ ColumnLayout {
         BloxButton {
             iconName: "squares-four"
             text: "Edit mode"
+            enabled: controller.themeControlsEnabled
             onClicked: controller.openWidgetEditMode()
         }
 
         BloxButton {
             iconName: "plus"
             text: "New Widget"
+            enabled: controller.themeControlsEnabled
             onClicked: controller.openWidgetEditor(-1)
         }
 
         BloxButton {
             iconName: "download-simple"
             text: "Import"
+            enabled: controller.themeControlsEnabled
             onClicked: controller.openWidgetImportDialog()
         }
 
         BloxButton {
             iconName: "upload-simple"
             text: "Export"
+            enabled: controller.themeControlsEnabled
             onClicked: controller.openWidgetExportDialog()
         }
 
@@ -97,7 +102,7 @@ ColumnLayout {
                 BloxCheckBox {
                     checked: modelData.enabled
                     onToggled: (value) => {
-                        const items = controller.widgetItems().slice();
+                        const items = JSON.parse(JSON.stringify(controller.widgetItems()));
                         items[index].enabled = value;
                         controller.setWidgetItems(items);
                     }
@@ -111,14 +116,16 @@ ColumnLayout {
 
                 BloxButton {
                     text: "Edit"
+                    enabled: controller.themeControlsEnabled
                     onClicked: controller.openWidgetEditor(index)
                 }
 
                 BloxButton {
                     text: "Delete"
                     destructive: true
+                    enabled: controller.themeControlsEnabled
                     onClicked: {
-                        const items = controller.widgetItems().slice();
+                        const items = JSON.parse(JSON.stringify(controller.widgetItems()));
                         items.splice(index, 1);
                         controller.setWidgetItems(items);
                     }

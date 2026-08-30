@@ -23,6 +23,7 @@ ColumnLayout {
 
     ColumnLayout {
         Layout.fillWidth: true
+        enabled: controller.themeControlsEnabled
         spacing: Theme.scaledSpacing(8)
 
         RowLayout {
@@ -124,6 +125,7 @@ ColumnLayout {
 
     GridLayout {
         Layout.fillWidth: true
+        enabled: controller.themeControlsEnabled
         columns: 2
         columnSpacing: 12
         rowSpacing: 8
@@ -181,6 +183,7 @@ ColumnLayout {
     BloxSlider {
         wheelSession: controller
         Layout.fillWidth: true
+        enabled: controller.themeControlsEnabled
         label: "Roundness"
         from: 0
         to: 2
@@ -191,6 +194,7 @@ ColumnLayout {
     BloxSlider {
         wheelSession: controller
         Layout.fillWidth: true
+        enabled: controller.themeControlsEnabled
         label: "Density"
         from: 0.75
         to: 1.5
@@ -200,6 +204,7 @@ ColumnLayout {
 
     RowLayout {
         Layout.fillWidth: true
+        enabled: controller.themeControlsEnabled
         spacing: Theme.scaledSpacing(12)
 
         BloxCheckBox {
@@ -232,6 +237,7 @@ ColumnLayout {
 
     RowLayout {
         Layout.fillWidth: true
+        enabled: controller.themeControlsEnabled
         spacing: Theme.scaledSpacing(12)
 
         BloxCheckBox {
@@ -263,12 +269,13 @@ ColumnLayout {
         to: 48
         decimals: 0
         value: controller.cursorSize()
-        enabled: controller.candidate !== null
+        enabled: controller.themeControlsEnabled && controller.candidate !== null
         onMoved: value => controller.setCursorSize(Math.round(value))
     }
 
     RowLayout {
         Layout.fillWidth: true
+        enabled: controller.themeControlsEnabled
         spacing: Theme.scaledSpacing(12)
 
         Label {
@@ -298,6 +305,7 @@ ColumnLayout {
 
     GridLayout {
         Layout.fillWidth: true
+        enabled: controller.themeControlsEnabled
         columns: 3
         columnSpacing: 10
         rowSpacing: 8
@@ -365,6 +373,7 @@ ColumnLayout {
 
     GridLayout {
         Layout.fillWidth: true
+        enabled: controller.themeControlsEnabled
         columns: 4
         columnSpacing: 10
         rowSpacing: 8
@@ -440,6 +449,7 @@ ColumnLayout {
 
     ColumnLayout {
         Layout.fillWidth: true
+        enabled: controller.themeControlsEnabled
         spacing: Theme.scaledSpacing(10)
 
         Repeater {
@@ -713,6 +723,7 @@ ColumnLayout {
 
     GridLayout {
         Layout.fillWidth: true
+        enabled: controller.themeControlsEnabled
         columns: 6
         columnSpacing: 8
         rowSpacing: 8
@@ -816,6 +827,7 @@ ColumnLayout {
 
     GridLayout {
         Layout.fillWidth: true
+        enabled: controller.themeControlsEnabled
         columns: 3
 
         Repeater {
@@ -833,6 +845,7 @@ ColumnLayout {
 
                 BloxFontPicker {
                     Layout.fillWidth: true
+                    enabled: controller.themeControlsEnabled
                     families: controller.fontFamilies
                     value: {
                         controller.candidateRevision;
@@ -1052,6 +1065,7 @@ ColumnLayout {
 
     BloxComboBox {
         Layout.fillWidth: true
+        enabled: controller.themeControlsEnabled
         model: controller.stylusStyleSetNames
         currentIndex: controller.stylusStyleSetIndex()
         onActivated: (index, value) => controller.setStylusStyleSet(index)
@@ -1170,11 +1184,14 @@ ColumnLayout {
 
     Repeater {
         model: ["gtk", "hyprlock"]
+        enabled: controller.themeControlsEnabled
 
         ColumnLayout {
             required property string modelData
 
             Layout.fillWidth: true
+            enabled: controller.themeControlsEnabled
+            opacity: enabled ? 1 : 0.48
 
             Label {
                 text: modelData
@@ -1214,7 +1231,7 @@ ColumnLayout {
                                 height: 38
                                 radius: Theme.scaledRadius(9)
                                 color: overrideEditor.overrideValue || Theme.background
-                                border.color: overrideHover.hovered ? Theme.foreground : Theme.border
+                                border.color: !overrideEditor.enabled ? Theme.border : overrideHover.hovered ? Theme.foreground : Theme.border
                                 border.width: overrideHover.hovered ? 2 : 1
 
                                 Text {
@@ -1231,10 +1248,12 @@ ColumnLayout {
                                 HoverHandler {
                                     id: overrideHover
 
-                                    cursorShape: Qt.PointingHandCursor
+                                    enabled: overrideEditor.enabled
+                                    cursorShape: overrideEditor.enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
                                 }
 
                                 TapHandler {
+                                    enabled: overrideEditor.enabled
                                     onTapped: controller.openColourPicker(overrideEditor.modelData, overrideEditor.targetName)
                                 }
 
@@ -1242,6 +1261,7 @@ ColumnLayout {
 
                             BloxButton {
                                 visible: overrideEditor.overrideValue.length > 0
+                                enabled: overrideEditor.enabled
                                 Layout.preferredWidth: 38
                                 iconName: "arrow-counter-clockwise"
                                 text: ""

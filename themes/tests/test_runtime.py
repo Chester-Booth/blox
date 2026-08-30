@@ -19,7 +19,7 @@ sys.path.insert(0, str(THEMES / "lib"))
 
 from blox_theme.core import editor_colours, load_theme, render_theme, repository_root, resolve_wallpaper_path
 from blox_theme.editor import read_settings_values
-from blox_theme.runtime import ApplicationLock, EDITOR_EXTENSION_DIR, EDITOR_LEGACY_EXTENSION_DIR, LockContended, RuntimeFailure, TARGET_FILES, TARGET_NAMES, apply_theme, current_generation, cursor_icon_link, editor_settings_integration_path, hyprtoolkit_theme_link, kitty_theme_link, phase7_loader_specs, reconcile, reset_target, rollback, setup_gtk, validate_generation
+from blox_theme.runtime import ApplicationLock, EDITOR_EXTENSION_DIR, EDITOR_LEGACY_EXTENSION_DIR, LockContended, RuntimeFailure, TARGET_FILES, TARGET_NAMES, T3CODE_THEME_ID, apply_theme, current_generation, cursor_icon_link, editor_settings_integration_path, hyprtoolkit_theme_link, kitty_theme_link, phase7_loader_specs, reconcile, reset_target, rollback, setup_gtk, t3code_integration_path, t3code_paths, validate_generation
 
 PHASE2_TARGETS = ("quickshell", "kitty", "wallpaper")
 
@@ -53,6 +53,7 @@ class RuntimeTests(unittest.TestCase):
             "XDG_DATA_HOME": str(self.root / "data"),
             "VSCODE_EXTENSIONS": str(self.root / "vscode-extensions"),
             "CURSOR_EXTENSIONS": str(self.root / "cursor-extensions"),
+            "T3CODE_HOME": str(self.root / "t3code"),
         })
         self.environment.start()
         self.browser_probe = mock.patch(
@@ -540,6 +541,26 @@ class RuntimeTests(unittest.TestCase):
         self.assertEqual(before, os.readlink(self.state / "current"))
         self.assertEqual("owned", loader.read_text(encoding="utf-8"))
 
+    def test_gtk_loader_from_another_blox_checkout_is_adopted(self) -> None:
+        self.apply_canonical()
+        alternate = self.root / "other-checkout/gtk-3.0/gtk.css"
+        alternate.parent.mkdir(parents=True)
+        alternate.write_bytes((REPOSITORY / "gtk/.config/gtk-3.0/gtk.css").read_bytes())
+        loader = self.root / "config/gtk-3.0/gtk.css"
+        loader.unlink()
+        loader.symlink_to(alternate)
+
+        manifest, warnings = apply_theme(
+            self.canonical_path,
+            self.canonical,
+            ("gtk",),
+            run_command=FakeCommands(),
+        )
+
+        self.assertEqual("catppuccin-mocha", manifest["theme_id"])
+        self.assertEqual([], warnings)
+        self.assertEqual(REPOSITORY / "gtk/.config/gtk-3.0/gtk.css", Path(os.readlink(loader)))
+
     def test_explicit_gtk_setup_records_and_preserves_legacy_symlinks(self) -> None:
         legacy_light = self.root / "legacy-light.css"
         legacy_dark = self.root / "legacy-dark.css"
@@ -665,6 +686,61 @@ class RuntimeTests(unittest.TestCase):
         self.assertTrue(cursor_theme)
         self.assertEqual(["cursor_editor"], manifest["enabled_targets"])
         self.assertTrue(any("Cursor theme package and settings applied" in warning for warning in warnings))
+
+    def test_t3code_publishes_supported_environment_theme_and_restores_prior_state(self) -> None:
+        t3_home = self.root / "t3code"
+        settings = t3_home / "userdata/settings.json"
+        settings.parent.mkdir(parents=True)
+        settings.write_text(
+            json.dumps({"defaultTheme": "ocean", "defaultThemeSetAt": "2026-08-29T00:00:00Z", "keep": True}) + "\n",
+            encoding="utf-8",
+        )
+        previous = t3_home / "userdata/themes/blox-theme.json"
+        previous.parent.mkdir(parents=True)
+        previous.write_text('{"name":"old","appearance":"dark","canvas":"#000000","accent":"#ffffff"}\n', encoding="utf-8")
+
+        manifest, warnings = apply_theme(self.canonical_path, self.canonical, ("t3code",), run_command=FakeCommands())
+
+        published_path, settings_path, _ = t3code_paths()
+        self.assertEqual(["t3code"], manifest["enabled_targets"])
+        self.assertEqual([], warnings)
+        published = json.loads(published_path.read_text(encoding="utf-8"))
+        self.assertEqual(self.canonical["name"], published["name"])
+        self.assertEqual(self.canonical["variant"], published["appearance"])
+        self.assertEqual(self.canonical["colours"]["background"], published["canvas"])
+        self.assertEqual(self.canonical["colours"]["accent"], published["accent"])
+        self.assertEqual(self.canonical["colours"]["surface"], published["colors"]["surface"])
+        self.assertEqual(T3CODE_THEME_ID, json.loads(settings_path.read_text(encoding="utf-8"))["defaultTheme"])
+        self.assertTrue(t3code_integration_path(self.state).is_file())
+
+        reset_manifest, reset_warnings = reset_target("t3code", run_command=FakeCommands())
+        self.assertNotIn("t3code", reset_manifest["enabled_targets"])
+        self.assertEqual([], reset_warnings)
+        self.assertEqual('{"name":"old","appearance":"dark","canvas":"#000000","accent":"#ffffff"}\n', previous.read_text(encoding="utf-8"))
+        self.assertEqual(
+            {"defaultTheme": "ocean", "defaultThemeSetAt": "2026-08-29T00:00:00Z", "keep": True},
+            json.loads(settings_path.read_text(encoding="utf-8")),
+        )
+        self.assertFalse(t3code_integration_path(self.state).exists())
+
+    def test_t3code_reset_preserves_an_external_deletion(self) -> None:
+        published_path, settings_path, _ = t3code_paths()
+        published_path.parent.mkdir(parents=True, exist_ok=True)
+        published_path.write_text('{"name":"old"}\n', encoding="utf-8")
+        apply_theme(self.canonical_path, self.canonical, ("t3code",), run_command=FakeCommands())
+        published_path.unlink()
+        settings_data = json.loads(settings_path.read_text(encoding="utf-8"))
+        settings_data["defaultTheme"] = "user-choice"
+        settings_data["defaultThemeSetAt"] = "2026-08-30T00:00:00Z"
+        settings_path.write_text(json.dumps(settings_data), encoding="utf-8")
+
+        _, warnings = reset_target("t3code", run_command=FakeCommands())
+
+        self.assertTrue(any("published theme is missing" in warning for warning in warnings))
+        self.assertTrue(any("default theme changed outside Blox" in warning for warning in warnings))
+        self.assertFalse(published_path.exists())
+        self.assertEqual("user-choice", json.loads(settings_path.read_text(encoding="utf-8"))["defaultTheme"])
+        self.assertTrue(t3code_integration_path(self.state).is_file())
 
     def test_code_apply_tracks_prior_presence_and_reset_removes_only_blox_values(self) -> None:
         settings = self.root / "config/Code/User/settings.json"

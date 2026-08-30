@@ -111,7 +111,7 @@ QtObject {
             if (completedAction === "generate" || completedAction === "new-template")
                 host.creationBusy = false;
 
-            if (completedAction === "apply" || completedAction === "apply-retry") {
+            if (completedAction === "apply" || completedAction === "apply-inline" || completedAction === "apply-retry") {
                 host.applyProgressComplete = true;
                 if (completedAction === "apply-retry")
                     host.applyProgressRows = host.applyProgressRows.map((entry) => {
@@ -194,11 +194,14 @@ QtObject {
             host.statusMessage = "Theme source saved.";
             if (host.pendingAfterSave === "apply") {
                 host.pendingAfterSave = "";
-                host.runApi("apply", ["apply", host.candidate.id, "--defer-quickshell-restart"]);
+                // The picker owns the complete target selection. Apply the
+                // resolved candidate authoritatively so a target that the user
+                // unticked is removed from the active generation as well.
+                host.runApi("apply-inline", ["apply-inline", JSON.stringify(host.candidate), "--defer-quickshell-restart"]);
             } else {
                 host.refreshThemes(true);
             }
-        } else if (completedAction === "apply" || completedAction === "apply-retry") {
+        } else if (completedAction === "apply" || completedAction === "apply-inline" || completedAction === "apply-retry") {
             Theme.reload();
             const pendingReloads = response.data && Array.isArray(response.data.pending_reloads) ? response.data.pending_reloads : [];
             host.applyQuickshellReloadPending = host.applyQuickshellReloadPending || pendingReloads.indexOf("quickshell") >= 0;
@@ -209,7 +212,10 @@ QtObject {
             host.applyProgressComplete = true;
             host.applyProgressValue = 1;
             host.applyProgressMessage = "Application finished · Review follow-up actions";
-            host.applyProgressRows = host.applyProgressRows.map((entry) => {
+            const unappliedTargets = changedTargets ? changedTargets.filter((target) => {
+                return host.candidate && host.candidate.targets && host.candidate.targets[target] !== true;
+            }) : [];
+            const completedRows = host.applyProgressRows.map((entry) => {
                 if (completedAction === "apply-retry" && entry.state !== "active")
                     return entry;
 
@@ -245,6 +251,16 @@ QtObject {
                     "message": mode === "manual" ? "Apply Manually" : mode === "restart" ? host.targetModeLabel(entry.target) : "Applied"
                 };
             });
+            const unappliedRows = unappliedTargets.filter((target) => {
+                return !completedRows.some((entry) => entry.target === target);
+            }).map((target) => {
+                return {
+                    "target": target,
+                    "state": "unapplied",
+                    "message": "Unapplied"
+                };
+            });
+            host.applyProgressRows = completedRows.concat(unappliedRows);
             host.refreshThemes(true);
         } else if (completedAction === "duplicate") {
             host.statusMessage = "Theme duplicated.";

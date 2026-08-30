@@ -10,6 +10,7 @@ ColumnLayout {
     required property ThemePickerController controller
 
     visible: controller.editorMode === "overview"
+    enabled: controller.themeControlsEnabled
     Layout.fillWidth: true
     spacing: Theme.scaledSpacing(14)
 
@@ -176,9 +177,11 @@ ColumnLayout {
 
                     Layout.fillWidth: true
                     Layout.preferredHeight: 116
+                    enabled: controller.themeControlsEnabled
+                    opacity: enabled ? 1 : 0.48
                     radius: Theme.cardRadius
-                    color: selected ? Theme.withAlpha(Theme.accent, 0.14) : Theme.background
-                    border.color: selected ? Theme.accent : styleHover.hovered ? Theme.foreground : Theme.border
+                    color: !enabled ? Theme.withAlpha(Theme.background, 0.68) : selected ? Theme.withAlpha(Theme.accent, 0.14) : Theme.background
+                    border.color: !enabled ? Theme.border : selected ? Theme.accent : styleHover.hovered ? Theme.foreground : Theme.border
                     border.width: selected ? 2 : 1
 
                     ColumnLayout {
@@ -205,10 +208,12 @@ ColumnLayout {
                     HoverHandler {
                         id: styleHover
 
-                        cursorShape: Qt.PointingHandCursor
+                        enabled: styleChoice.enabled
+                        cursorShape: styleChoice.enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
                     }
 
                     TapHandler {
+                        enabled: styleChoice.enabled
                         onTapped: controller.setShapeValue("radius_scale", styleChoice.modelData.value)
                     }
                 }
@@ -243,9 +248,11 @@ ColumnLayout {
 
                     Layout.fillWidth: true
                     Layout.preferredHeight: 116
+                    enabled: controller.themeControlsEnabled
+                    opacity: enabled ? 1 : 0.48
                     radius: Theme.cardRadius
-                    color: selected ? Theme.withAlpha(Theme.accent, 0.14) : Theme.background
-                    border.color: selected ? Theme.accent : densityHover.hovered ? Theme.foreground : Theme.border
+                    color: !enabled ? Theme.withAlpha(Theme.background, 0.68) : selected ? Theme.withAlpha(Theme.accent, 0.14) : Theme.background
+                    border.color: !enabled ? Theme.border : selected ? Theme.accent : densityHover.hovered ? Theme.foreground : Theme.border
                     border.width: selected ? 2 : 1
 
                     ColumnLayout {
@@ -274,10 +281,12 @@ ColumnLayout {
                     HoverHandler {
                         id: densityHover
 
-                        cursorShape: Qt.PointingHandCursor
+                        enabled: densityChoice.enabled
+                        cursorShape: densityChoice.enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
                     }
 
                     TapHandler {
+                        enabled: densityChoice.enabled
                         onTapped: controller.setShapeValue("density_scale", densityChoice.modelData.value)
                     }
                 }
@@ -458,6 +467,7 @@ ColumnLayout {
 
                     BloxFontPicker {
                         Layout.fillWidth: true
+                        enabled: controller.themeControlsEnabled
                         families: controller.fontFamilies
                         value: {
                             controller.candidateRevision;

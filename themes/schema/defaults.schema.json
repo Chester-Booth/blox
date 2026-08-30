@@ -122,7 +122,7 @@
         "targets": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["quickshell", "widgets", "gtk", "helium", "chromium", "cursor", "wallpaper", "kitty", "hyprland", "hyprlock", "btop", "micro", "glow", "code", "cursor_editor", "stylus", "powerlevel10k", "sddm", "grub"],
+          "required": ["quickshell", "widgets", "gtk", "helium", "chromium", "cursor", "wallpaper", "kitty", "hyprland", "hyprlock", "btop", "micro", "glow", "code", "cursor_editor", "t3code", "stylus", "powerlevel10k", "sddm", "grub"],
           "properties": {
             "quickshell": {"type": "boolean"},
             "widgets": {"type": "boolean"},
@@ -139,6 +139,7 @@
             "glow": {"type": "boolean"},
             "code": {"type": "boolean"},
             "cursor_editor": {"type": "boolean"},
+            "t3code": {"type": "boolean"},
             "stylus": {"type": "boolean"},
             "obsidian": {"type": "boolean"},
             "powerlevel10k": {"type": "boolean"},

@@ -84,8 +84,9 @@ Rectangle {
     implicitHeight: 40
     implicitWidth: 250
     radius: Theme.scaledRadius(9)
-    color: Theme.background
-    border.color: editor.activeFocus || popup.visible ? Theme.blue : hover.hovered ? Theme.withAlpha(Theme.foreground, 0.34) : Theme.border
+    opacity: enabled ? 1 : 0.48
+    color: enabled ? Theme.background : Theme.withAlpha(Theme.background, 0.68)
+    border.color: !enabled ? Theme.border : editor.activeFocus || popup.visible ? Theme.blue : hover.hovered ? Theme.withAlpha(Theme.foreground, 0.34) : Theme.border
     border.width: editor.activeFocus || popup.visible ? 2 : 1
     onVisibleChanged: {
         if (!visible)
@@ -108,7 +109,8 @@ Rectangle {
         anchors.leftMargin: Theme.scaledSpacing(11)
         anchors.rightMargin: Theme.scaledSpacing(8)
         text: root.value
-        color: Theme.foreground
+        enabled: root.enabled
+        color: root.enabled ? Theme.foreground : Theme.muted
         selectionColor: Theme.withAlpha(Theme.blue, 0.5)
         selectedTextColor: Theme.foreground
         font.family: text.length > 0 ? text : Theme.bodyFontFamily
@@ -156,7 +158,7 @@ Rectangle {
     Canvas {
         id: indicator
 
-        property color strokeColour: hover.hovered || popup.visible ? Theme.foreground : Theme.muted
+        property color strokeColour: root.enabled && (hover.hovered || popup.visible) ? Theme.foreground : Theme.muted
 
         anchors.right: parent.right
         anchors.rightMargin: Theme.scaledSpacing(8)
@@ -181,8 +183,9 @@ Rectangle {
 
         MouseArea {
             anchors.fill: parent
+            enabled: root.enabled
             hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
+            cursorShape: root.enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
             onClicked: root.openList()
         }
 
@@ -191,10 +194,12 @@ Rectangle {
     HoverHandler {
         id: hover
 
-        cursorShape: Qt.IBeamCursor
+        enabled: root.enabled
+        cursorShape: root.enabled ? Qt.IBeamCursor : Qt.ArrowCursor
     }
 
     TapHandler {
+        enabled: root.enabled
         onTapped: root.openList()
     }
 

@@ -105,17 +105,17 @@ Item {
             audioIcon: root.contentController.audio.json.icon || "󰕾"
             audioMuted: !!root.contentController.audio.json.muted
             micMuted: !!root.contentController.audio.json.micMuted
-            audioCanChange: root.contentController.audio.json.capability && root.contentController.audio.json.capability.canChange === true
+            audioCanChange: !!(root.contentController.audio.json.capability && root.contentController.audio.json.capability.canChange === true)
             networkEnabled: root.contentController.network.json.class !== "disabled"
-            networkCanChange: root.contentController.network.json.capability && root.contentController.network.json.capability.canChange === true
+            networkCanChange: !!(root.contentController.network.json.capability && root.contentController.network.json.capability.canChange === true)
             bluetoothEnabled: root.contentController.bluetooth.json.class !== "disabled"
-            bluetoothCanChange: root.contentController.bluetooth.json.capability && root.contentController.bluetooth.json.capability.canChange === true
+            bluetoothCanChange: !!(root.contentController.bluetooth.json.capability && root.contentController.bluetooth.json.capability.canChange === true)
             wifiIcon: root.contentController.network.json.icon || "󰤩"
             wifiText: root.contentController.network.json.ssid || root.contentController.network.json.class || "Wi-Fi"
             bluetoothIcon: root.contentController.bluetooth.json.icon || "󰂯"
             brightnessIcon: root.contentController.brightness.json.icon || "󰃠"
             brightnessPercent: root.contentController.brightness.json.percent || 0
-            brightnessCanChange: root.contentController.brightness.json.capability && root.contentController.brightness.json.capability.canChange === true
+            brightnessCanChange: !!(root.contentController.brightness.json.capability && root.contentController.brightness.json.capability.canChange === true)
             blueLightMode: root.contentController.brightness.json.blueLightMode || "auto"
             blueLightActive: !!root.contentController.brightness.json.blueLightActive
             scriptRoot: root.surfaceController.scriptRoot

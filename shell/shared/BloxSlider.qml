@@ -15,6 +15,7 @@ ColumnLayout {
     signal moved(real value)
 
     spacing: Theme.scaledSpacing(6)
+    opacity: enabled ? 1 : 0.48
 
     function valueAt(position) {
         const ratio = Math.max(0, Math.min(1, position / track.width));

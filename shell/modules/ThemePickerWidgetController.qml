@@ -60,6 +60,9 @@ QtObject {
     }
 
     function setItems(items) {
+        if (!host.widgetItemsChangeAllowed(items))
+            return ;
+
         const next = host.cloneCandidate();
         if (!next.widgets)
             next.widgets = {
@@ -67,7 +70,7 @@ QtObject {
         };
 
         next.widgets.items = items;
-        host.markCandidate(next, "widgets.items");
+        host.markCandidate(next, "widgets.items", true);
     }
 
     function updateGeometry(index, anchor, offsetX, offsetY, width, height) {

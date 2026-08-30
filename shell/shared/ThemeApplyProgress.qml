@@ -16,8 +16,14 @@ Item {
     property string error: ""
     property bool showCompleteButton: false
     property bool pendingQuickshellReload: false
+    readonly property int enabledTargetCount: targets.filter((target) => {
+        return target.state !== "unapplied";
+    }).length
     readonly property int completedTargets: targets.filter((target) => {
-        return target.state !== "queued" && target.state !== "active";
+        return target.state !== "queued" && target.state !== "active" && target.state !== "unapplied";
+    }).length
+    readonly property int unappliedCount: targets.filter((target) => {
+        return target.state === "unapplied";
     }).length
     readonly property int followUpCount: targets.filter((target) => {
         return target.state === "restart" || target.state === "failed" || target.state === "manual";
@@ -34,6 +40,9 @@ Item {
             return Theme.green;
 
         if (state === "restart")
+            return Theme.yellow;
+
+        if (state === "unapplied")
             return Theme.yellow;
 
         if (state === "failed" || state === "manual")
@@ -55,6 +64,9 @@ Item {
         if (state === "restart")
             return "arrows-clockwise";
 
+        if (state === "unapplied")
+            return "arrows-clockwise";
+
         if (state === "active")
             return "spinner-gap";
 
@@ -71,6 +83,9 @@ Item {
     }
 
     function resultLabel(target) {
+        if (target.state === "unapplied")
+            return "Unapplied";
+
         if (target.message)
             return target.message;
 
@@ -147,8 +162,34 @@ Item {
 
         }
 
+        RowLayout {
+            visible: root.showTargets
+            Layout.fillWidth: true
+
+            Text {
+                text: root.completedTargets + " of " + root.enabledTargetCount + " enabled targets"
+                color: Theme.muted
+                font.family: Theme.monoFontFamily
+                font.pixelSize: 10
+            }
+
+            Item {
+                Layout.fillWidth: true
+            }
+
+            Text {
+                visible: root.unappliedCount > 0
+                text: root.unappliedCount + " unapplied"
+                color: Theme.yellow
+                font.family: Theme.monoFontFamily
+                font.pixelSize: 10
+            }
+
+        }
+
         Text {
-            text: root.showTargets ? root.completedTargets + " of " + root.targets.length + " enabled targets" : root.stages.filter((stage) => {
+            visible: !root.showTargets
+            text: root.stages.filter((stage) => {
                 return stage.state === "done";
             }).length + " of " + root.stages.length + " stages"
             color: Theme.muted

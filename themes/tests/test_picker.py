@@ -196,7 +196,7 @@ class ThemeLibraryMutationTests(unittest.TestCase):
         self.assertEqual(1.1, written["shape"]["density_scale"])
         self.assertNotIn("overrides", written)
 
-    def test_inline_preview_is_side_effect_free_and_inline_apply_is_rejected(self) -> None:
+    def test_inline_preview_is_side_effect_free_and_only_inline_apply_can_apply_it(self) -> None:
         candidate = copy.deepcopy(self.source)
         for target in candidate["targets"]:
             candidate["targets"][target] = target == "quickshell"
@@ -212,6 +212,16 @@ class ThemeLibraryMutationTests(unittest.TestCase):
             self.assertEqual(3, code)
             self.assertIn("saved source theme", response["errors"][0])
             apply_theme.assert_not_called()
+
+            apply_theme.return_value = ({
+                "generation_id": "test-generation",
+                "theme_id": candidate["id"],
+                "enabled_targets": ["quickshell"],
+            }, [])
+            response, code = self.invoke("apply-inline", inline, "--json")
+            self.assertEqual(0, code, response)
+            self.assertTrue(response["ok"])
+            self.assertTrue(apply_theme.call_args.kwargs["authoritative_targets"])
 
     def test_mutations_reject_a_non_object_source(self) -> None:
         path = self.user_library / "themes/broken.json"
@@ -327,14 +337,23 @@ class PickerIntegrationSourceTests(unittest.TestCase):
 
         for source in (controller, api, launcher):
             self.assertIn("--defer-quickshell-restart", source)
+        self.assertIn('host.runApi("apply-inline", ["apply-inline", JSON.stringify(host.candidate), "--defer-quickshell-restart"]);', api)
         self.assertIn("function completeApply()", controller)
         self.assertIn("Theme.reloadCursor()", controller)
         self.assertIn("readonly property bool selectedThemeBuiltin:", controller)
         self.assertIn("if (selectedThemeBuiltin)", controller)
-        self.assertIn("Built-in themes are read-only; duplicate the theme first.", controller)
+        self.assertIn('runApi("apply-inline"', controller)
+        self.assertNotIn("Duplicate this built-in theme before saving changes", controller)
         self.assertIn("pending_reloads", api)
         self.assertIn('text: root.pendingQuickshellReload ? "Complete and reload" : "Complete"', progress)
         self.assertIn('text: root.error.length ? "Could not apply " + root.themeName : root.complete ? root.themeName + " applied" : "Applying " + root.themeName', progress)
+        self.assertIn('readonly property int enabledTargetCount:', progress)
+        self.assertIn('readonly property int unappliedCount:', progress)
+        self.assertIn('root.completedTargets + " of " + root.enabledTargetCount + " enabled targets"', progress)
+        self.assertIn('root.unappliedCount + " unapplied"', progress)
+        self.assertIn('target.state === "unapplied"', progress)
+        self.assertIn('"state": "unapplied"', api)
+        self.assertIn('const unappliedTargets = changedTargets ? changedTargets.filter', api)
         self.assertIn("Layout.preferredHeight: controller.applyProgressShowTargets ? 570 : 300", qml_source("ProgressFlow"))
         self.assertIn("Layout.preferredHeight: controller.modalKind === \"progress\" ? controller.applyProgressShowTargets ? 570 : 300 : 0", modal)
         self.assertIn("signal completeRequested()", progress)
@@ -423,7 +442,7 @@ class PickerIntegrationSourceTests(unittest.TestCase):
 
     def test_picker_uses_json_api_and_has_confirmation_paths(self) -> None:
         qml = "\n".join(path.read_text(encoding="utf-8") for path in sorted(PICKER_MODULES.glob("ThemePicker*.qml")))
-        for action in ("list", "show", "preview", "generate", "save", "apply", "duplicate", "rename", "delete"):
+        for action in ("list", "show", "preview", "generate", "save", "apply", "apply-inline", "duplicate", "rename", "delete"):
             self.assertIn(f'"{action}"', qml)
         self.assertIn("FloatingWindow {", qml)
         self.assertNotIn("PanelWindow {", qml)
@@ -533,6 +552,8 @@ class PickerIntegrationSourceTests(unittest.TestCase):
         self.assertIn("enabled: controller.targetAvailable(modelData)", advanced)
         self.assertIn('readonly property var coreTargetKeys:', controller)
         self.assertIn('readonly property var applicationTargetKeys:', controller)
+        self.assertIn('"t3code"', controller)
+        self.assertIn('if (key === "t3code")', controller)
         self.assertIn('text: "Core"', advanced)
         self.assertIn('text: "Applications"', advanced)
         self.assertIn('text: "Browsers"', advanced)
@@ -543,8 +564,35 @@ class PickerIntegrationSourceTests(unittest.TestCase):
         self.assertIn('readonly property var stylusStyleSetValues: ["recommended", "unmaintained", "all"]', controller)
         self.assertIn('"helium": ["helium/manifest.json"]', generation)
         self.assertIn('"chromium": ["chromium/manifest.json"]', generation)
+        self.assertIn('"t3code": ["t3code/theme.json"]', generation)
         self.assertIn('"stylus": ["stylus/blox-system.user.css", "stylus/manifest.json"]', generation)
         self.assertIn('["helium", "chromium"].indexOf(key) >= 0', controller)
+
+    def test_builtin_picker_fields_are_read_only_but_target_and_widget_selection_remains_available(self) -> None:
+        controller = qml_source("Controller")
+        overview = qml_source("Overview")
+        advanced = qml_source("Advanced")
+        widgets = qml_source("Widgets")
+        widget_controller = qml_source("WidgetController")
+        picker = qml_source("")
+
+        self.assertIn("readonly property bool themeControlsEnabled: !selectedThemeBuiltin", controller)
+        self.assertIn("if (selectedThemeBuiltin && !allowBuiltinChange)", controller)
+        self.assertIn('markCandidate(next, "targets." + key, true)', controller)
+        self.assertIn("function widgetItemsChangeAllowed(nextItems)", controller)
+        self.assertIn("host.widgetItemsChangeAllowed(items)", widget_controller)
+        self.assertIn('host.markCandidate(next, "widgets.items", true)', widget_controller)
+        self.assertIn("enabled: controller.themeControlsEnabled", overview)
+        self.assertIn("enabled: controller.themeControlsEnabled", advanced)
+        self.assertIn("enabled: controller.themeControlsEnabled", widgets)
+        self.assertIn('enabled: controller.targetAvailable(modelData)', advanced)
+        icon_picker = (REPOSITORY / "shell/modules/ThemePickerIconTheme.qml").read_text(encoding="utf-8")
+        self.assertIn('enabled: controller.themeControlsEnabled && controller.targetAvailable("gtk")', icon_picker)
+        self.assertIn('enabled: controller.themeControlsEnabled && controller.targetAvailable("quickshell")', icon_picker)
+        self.assertIn('opacity: controller.themeControlsEnabled ? 1 : 0.48', icon_picker)
+        self.assertIn('opacity: enabled ? 1 : 0.48', (REPOSITORY / "shell/shared/BloxFontPicker.qml").read_text(encoding="utf-8"))
+        self.assertIn('text: "Save"', picker)
+        self.assertIn("!pickerController.selectedThemeBuiltin", picker)
 
     def test_creation_and_application_flows_expose_progress_and_apply_modes(self) -> None:
         controller = qml_source("Controller")

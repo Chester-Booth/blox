@@ -40,8 +40,9 @@ QtObject {
             "btop": ["btop/theme.theme"],
             "micro": ["micro/blox-theme.micro"],
             "glow": ["glow/style.json"],
-            "code": ["code/settings.json", "code/package.json", "code/themes/blox-dark-2026.json"],
-            "cursor_editor": ["cursor-editor/settings.json"],
+            "code": ["code/settings.json", "code/package.json", "code/themes/blox-generated-color-theme.json"],
+            "cursor_editor": ["cursor-editor/settings.json", "cursor-editor/package.json", "cursor-editor/themes/blox-generated-color-theme.json"],
+            "t3code": ["t3code/theme.json"],
             "stylus": ["stylus/blox-system.user.css", "stylus/manifest.json"],
             "obsidian": ["obsidian/style-settings.json"],
             "powerlevel10k": ["powerlevel10k/theme.zsh"]

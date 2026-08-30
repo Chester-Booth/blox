@@ -118,6 +118,11 @@ def parser() -> argparse.ArgumentParser:
         action="store_true",
         help="leave the Blox surface reload to the caller after Apply completes",
     )
+    inline_apply_parser = subcommands.add_parser("apply-inline", help=argparse.SUPPRESS)
+    inline_apply_parser.add_argument("theme")
+    inline_apply_parser.add_argument("--json", action="store_true")
+    inline_apply_parser.add_argument("--progress-ndjson", action="store_true", help=argparse.SUPPRESS)
+    inline_apply_parser.add_argument("--defer-quickshell-restart", action="store_true", help=argparse.SUPPRESS)
     reconcile_parser = subcommands.add_parser("reconcile")
     reconcile_parser.add_argument("--targets", help="comma-separated active targets")
     reconcile_parser.add_argument("--json", action="store_true")
@@ -556,12 +561,12 @@ def run(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
         data = {"generation": manifest["generation_id"], "theme_id": manifest["theme_id"], "active_targets": manifest["enabled_targets"]}
         return envelope(command, data, warnings=warnings), EXIT_RELOAD_WARNING if warnings else EXIT_OK
 
-    path, theme, failure, code = checked_theme(command, args.theme, check_dependencies=command not in ("show", "apply"), dependency_gate=command == "apply")
+    path, theme, failure, code = checked_theme(command, args.theme, check_dependencies=command not in ("show", "apply", "apply-inline"), dependency_gate=command in ("apply", "apply-inline"))
     if failure:
         return failure, code
     assert path is not None and theme is not None
 
-    checked = validate_theme(theme, check_dependencies=command != "show", source_path=path, dependency_gate=command == "apply")
+    checked = validate_theme(theme, check_dependencies=command != "show", source_path=path, dependency_gate=command in ("apply", "apply-inline"))
     if command == "show":
         try:
             source = load_json(path)
@@ -575,15 +580,16 @@ def run(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
         data = {"id": theme["id"], "path": str(path), "valid": True}
         return envelope(command, data, warnings=checked.warnings), EXIT_OK
 
-    if command == "apply":
+    if command in ("apply", "apply-inline"):
+        authoritative_targets = command == "apply-inline"
         try:
-            selected = configured_targets(theme, args.targets)
+            selected = configured_targets(theme) if authoritative_targets else configured_targets(theme, args.targets)
         except RuntimeFailure as error:
             return envelope(command, errors=[str(error)]), EXIT_VALIDATION
         checked = validate_theme(theme, check_dependencies=True, targets=set(selected), source_path=path)
         if checked.errors:
             return envelope(command, errors=checked.errors, warnings=checked.warnings), EXIT_VALIDATION
-        progress_total = 3 + len(selected)
+        progress_total = 3 + len(TARGET_NAMES if authoritative_targets else selected)
         last_progress: dict[str, Any] = {}
         apply_details: dict[str, Any] = {
             "changed_targets": list(selected),
@@ -626,9 +632,10 @@ def run(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
             manifest, warnings = apply_theme(
                 path,
                 theme,
-                selected,
+                TARGET_NAMES if authoritative_targets else selected,
                 progress=emit_progress,
                 defer_quickshell_restart=args.defer_quickshell_restart,
+                authoritative_targets=authoritative_targets,
             )
         except LockContended as error:
             emit_failure(error)

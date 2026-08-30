@@ -333,12 +333,20 @@ class RendererTests(unittest.TestCase):
         files, _ = render_theme(self.theme)
         code_settings = json.loads(files["code/settings.json"])
         self.assertEqual(self.theme["fonts"]["mono"], code_settings["editor.fontFamily"])
-        self.assertEqual("Blox Dark 2026", code_settings["workbench.colorTheme"])
+        self.assertEqual("blox-theme", code_settings["workbench.colorTheme"])
+        self.assertTrue(code_settings["workbench.experimental.modernUI"])
+        self.assertNotIn("editor.fontSize", code_settings)
         self.assertNotIn("workbench.colorCustomizations", code_settings)
         package = json.loads(files["code/package.json"])
-        self.assertEqual("./themes/blox-dark-2026.json", package["contributes"]["themes"][0]["path"])
-        code_theme = json.loads(files["code/themes/blox-dark-2026.json"])
+        self.assertEqual("blox-theme", package["name"])
+        self.assertEqual("^1.90.0", package["engines"]["vscode"])
+        self.assertEqual("./themes/blox-generated-color-theme.json", package["contributes"]["themes"][0]["path"])
+        self.assertEqual("Blox: Catppuccin Mocha", package["contributes"]["themes"][0]["label"])
+        code_theme = json.loads(files["code/themes/blox-generated-color-theme.json"])
         self.assertIn("sideBarSectionHeader.background", code_theme["colors"])
+        self.assertGreater(len(code_theme["colors"]), 300)
+        self.assertGreater(len(code_theme["tokenColors"]), 100)
+        self.assertNotIn("include", code_theme)
         self.assertTrue(code_theme["semanticHighlighting"])
         obsidian = json.loads(files["obsidian/style-settings.json"])
         self.assertEqual(self.theme["colours"]["background"], obsidian["minimal-style@@bg1@@dark"])
@@ -357,7 +365,14 @@ class RendererTests(unittest.TestCase):
         )
         self.assertEqual(expected_shell.get("osd", {}).get("position", "top-left"), shell["osd"]["position"])
         self.assertEqual(expected_shell.get("notifications", {}).get("position", "bottom-right"), shell["notifications"]["position"])
-        self.assertIn("workbench.colorCustomizations", json.loads(files["cursor-editor/settings.json"]))
+        cursor_settings = json.loads(files["cursor-editor/settings.json"])
+        self.assertEqual("blox-theme", cursor_settings["workbench.colorTheme"])
+        self.assertEqual(self.theme["fonts"]["mono"], cursor_settings["editor.fontFamily"])
+        self.assertNotIn("workbench.experimental.modernUI", cursor_settings)
+        self.assertNotIn("workbench.colorCustomizations", cursor_settings)
+        self.assertIn("cursor-editor/package.json", files)
+        self.assertIn("cursor-editor/themes/blox-generated-color-theme.json", files)
+        self.assertEqual(files["code/themes/blox-generated-color-theme.json"], files["cursor-editor/themes/blox-generated-color-theme.json"])
         self.assertIn("@-moz-document", files["stylus/blox-system.user.css"])
         stylus_manifest = json.loads(files["stylus/manifest.json"])
         self.assertEqual("catppuccin-mocha", stylus_manifest["theme_id"])
@@ -371,6 +386,20 @@ class RendererTests(unittest.TestCase):
         self.assertIn("accent = 0xFF89B4FA", hyprtoolkit)
         self.assertIn("icon_theme = Adwaita", hyprtoolkit)
         self.assertIn("font_family = Outfit", hyprtoolkit)
+
+    def test_editor_package_tracks_light_variant_and_square_modern_ui(self) -> None:
+        _, theme = load_theme("catppuccin-latte")
+        theme["shape"]["radius_scale"] = 0
+        theme["targets"]["code"] = True
+        files, _ = render_theme(theme)
+        settings = json.loads(files["code/settings.json"])
+        package = json.loads(files["code/package.json"])
+        colour_theme = json.loads(files["code/themes/blox-generated-color-theme.json"])
+        self.assertFalse(settings["workbench.experimental.modernUI"])
+        self.assertEqual("vs", package["contributes"]["themes"][0]["uiTheme"])
+        self.assertEqual("light", colour_theme["type"])
+        self.assertEqual(theme["colours"]["background"], colour_theme["colors"]["editor.background"])
+        self.assertNotIn("include", colour_theme)
 
     def test_bar_item_overrides_are_rendered_with_complete_registry(self) -> None:
         self.theme["shell"] = {
@@ -518,9 +547,9 @@ class RendererTests(unittest.TestCase):
             "hyprland": ["hyprland/hyprtoolkit.conf", "hyprland/theme.lua"],
             "hyprlock": "hyprlock/theme.conf",
             "btop": "btop/theme.theme", "micro": "micro/blox-theme.micro",
-            "glow": "glow/style.json", "code": ["code/package.json", "code/settings.json", "code/themes/blox-dark-2026.json"],
+            "glow": "glow/style.json", "code": ["code/package.json", "code/settings.json", "code/themes/blox-generated-color-theme.json"],
             "helium": "helium/manifest.json",
-            "cursor_editor": "cursor-editor/settings.json", "stylus": ["stylus/blox-system.user.css", "stylus/manifest.json"],
+            "cursor_editor": ["cursor-editor/package.json", "cursor-editor/settings.json", "cursor-editor/themes/blox-generated-color-theme.json"], "stylus": ["stylus/blox-system.user.css", "stylus/manifest.json"],
             "powerlevel10k": "powerlevel10k/theme.zsh",
             "widgets": "widgets/profile.json",
             "chromium": "chromium/manifest.json",

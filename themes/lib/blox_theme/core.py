@@ -37,8 +37,8 @@ TARGET_LIMITATIONS = {
     "hyprlock": "Hyprlock changes apply when the next lock process starts",
     "btop": "btop must be restarted after Apply",
     "micro": "Micro must be restarted after Apply",
-    "code": "Code theme installs and applies automatically; use Reload Window for existing windows",
-    "cursor_editor": "Cursor settings apply automatically; use Reload Window for existing windows",
+    "code": "Code theme package and settings apply automatically; Modern UI follows roundness; use Reload Window for existing windows",
+    "cursor_editor": "Cursor theme package and font family apply automatically; Modern UI is not managed by this version; use Reload Window for existing windows",
     "stylus": "Open or reload the generated .user.css in a browser with Stylus, then choose Install style the first time or Reinstall style after an earlier import; remove older duplicate Blox Web Theme entries first; manifest.json lists included and excluded sites",
     "obsidian": "Obsidian requires Minimal, Style Settings, and manual import of the generated settings JSON",
     "powerlevel10k": "Powerlevel10k changes apply to new shells",
@@ -1131,48 +1131,169 @@ def editor_colours(theme: dict[str, Any]) -> dict[str, str]:
     return custom
 
 
-def render_editor(theme: dict[str, Any]) -> str:
-    """Render the small settings fragment shared by Code and Cursor.
+EDITOR_THEME_PACKAGE_NAME = "blox-theme"
+EDITOR_THEME_PUBLISHER = "blox"
+EDITOR_THEME_VERSION = "1.0.0"
+EDITOR_THEME_LABEL_PREFIX = "Blox: "
+EDITOR_THEME_RELATIVE_PATH = "themes/blox-generated-color-theme.json"
+EDITOR_MINIMUM_VERSION = "^1.90.0"
 
-    Code receives its colours from a generated extension rather than from
-    ``workbench.colorCustomizations``. Cursor retains this fragment until it
-    grows an equivalent packaged-theme installer.
-    """
-    return canonical_json({"workbench.colorTheme": "Blox Dark 2026", "editor.fontFamily": theme["fonts"]["mono"], "editor.fontSize": theme["fonts"]["editor_size"]})
+
+def editor_theme_label(theme: dict[str, Any]) -> str:
+    return f"{EDITOR_THEME_LABEL_PREFIX}{theme['name']}"
+
+
+def editor_theme_setting_value(theme: dict[str, Any]) -> str:
+    """Return the generated package id that Code uses to restore the theme."""
+    return EDITOR_THEME_PACKAGE_NAME
+
+
+def editor_modern_ui_value(theme: dict[str, Any]) -> bool:
+    """Map Blox's square/rounded boundary to Code's binary UI mode."""
+    return theme["shape"]["radius_scale"] > 0
+
+
+def _vscode_source_path(variant: str) -> Path:
+    if variant not in ("dark", "light"):
+        raise ValueError(f"unsupported VS Code theme variant: {variant}")
+    return themes_dir() / "sources/vscode" / f"2026-{variant}.json"
+
+
+def _merge_vscode_theme(base: dict[str, Any], overlay: dict[str, Any]) -> dict[str, Any]:
+    merged = copy.deepcopy(base)
+    for key, value in overlay.items():
+        if key == "include":
+            continue
+        if key == "colors":
+            colours = dict(merged.get(key, {}))
+            colours.update(value)
+            merged[key] = colours
+        elif key == "semanticTokenColors":
+            semantic = dict(merged.get(key, {}))
+            semantic.update(value)
+            merged[key] = semantic
+        elif key == "tokenColors":
+            merged[key] = list(merged.get(key, [])) + list(value)
+        else:
+            merged[key] = copy.deepcopy(value)
+    return merged
+
+
+def _load_vscode_theme(path: Path, stack: tuple[Path, ...] = ()) -> dict[str, Any]:
+    path = path.resolve()
+    source_root = (themes_dir() / "sources/vscode").resolve()
+    try:
+        path.relative_to(source_root)
+    except ValueError as error:
+        raise ValueError(f"VS Code theme include escapes the pinned source directory: {path}") from error
+    if path in stack:
+        raise ValueError(f"cyclic VS Code theme include: {path}")
+    document = load_json(path)
+    if not isinstance(document, dict):
+        raise ValueError(f"VS Code theme source must be an object: {path}")
+    include = document.get("include")
+    parent: dict[str, Any] = {}
+    if include is not None:
+        if not isinstance(include, str):
+            raise ValueError(f"VS Code theme include must be a path: {path}")
+        parent = _load_vscode_theme(path.parent / include, (*stack, path))
+    return _merge_vscode_theme(parent, document)
+
+
+def _editor_token_colours(theme: dict[str, Any]) -> list[dict[str, Any]]:
+    c = theme["colours"]
+    return [
+        {"scope": ["comment", "punctuation.definition.comment"], "settings": {"foreground": c["muted"]}},
+        {"scope": ["keyword", "storage", "storage.type"], "settings": {"foreground": c["danger"]}},
+        {"scope": ["string", "string.quoted"], "settings": {"foreground": c["info"]}},
+        {"scope": ["entity.name.function", "support.function"], "settings": {"foreground": c["mauve"]}},
+        {"scope": ["entity.name.tag", "support.class.component", "entity.name.type", "support.type"], "settings": {"foreground": c["success"]}},
+        {"scope": ["constant", "support", "meta.property-name"], "settings": {"foreground": c["info"]}},
+        {"scope": ["variable", "variable.other", "meta.object.member"], "settings": {"foreground": c["foreground"]}},
+        {"scope": ["constant.numeric", "constant.language"], "settings": {"foreground": c["warning"]}},
+        {"scope": ["string.regexp", "source.regexp"], "settings": {"foreground": c["teal"]}},
+        {"scope": ["invalid", "invalid.illegal", "invalid.deprecated"], "settings": {"foreground": c["danger"], "fontStyle": "italic"}},
+        {"scope": ["markup.heading", "markup.heading entity.name"], "settings": {"foreground": c["accent"], "fontStyle": "bold"}},
+        {"scope": ["markup.italic"], "settings": {"foreground": c["foreground"], "fontStyle": "italic"}},
+        {"scope": ["markup.bold"], "settings": {"foreground": c["foreground"], "fontStyle": "bold"}},
+    ]
+
+
+def _editor_theme(theme: dict[str, Any]) -> dict[str, Any]:
+    source = _load_vscode_theme(_vscode_source_path(theme["variant"]))
+    colours = dict(source.get("colors", {}))
+    colours.update(editor_colours(theme))
+    semantic = dict(source.get("semanticTokenColors", {}))
+    c = theme["colours"]
+    semantic.update({
+        "comment": c["muted"], "keyword": c["danger"], "string": c["info"],
+        "function": c["mauve"], "class": c["success"], "type": c["success"],
+        "variable": c["foreground"], "property": c["teal"], "number": c["warning"],
+        "enumMember": c["info"],
+    })
+    return {
+        "$schema": "vscode://schemas/color-theme",
+        "name": editor_theme_label(theme),
+        "type": theme["variant"],
+        "semanticHighlighting": True,
+        "colors": colours,
+        "tokenColors": list(source.get("tokenColors", [])) + _editor_token_colours(theme),
+        "semanticTokenColors": semantic,
+    }
+
+
+def _editor_package(theme: dict[str, Any]) -> str:
+    package = {
+        "name": EDITOR_THEME_PACKAGE_NAME,
+        "displayName": "Blox editor theme",
+        "description": "Generated Blox colour and syntax theme.",
+        "version": EDITOR_THEME_VERSION,
+        "publisher": EDITOR_THEME_PUBLISHER,
+        "engines": {"vscode": EDITOR_MINIMUM_VERSION},
+        "categories": ["Themes"],
+        "contributes": {"themes": [{
+            "id": EDITOR_THEME_PACKAGE_NAME,
+            "label": editor_theme_label(theme),
+            "uiTheme": "vs-dark" if theme["variant"] == "dark" else "vs",
+            "path": f"./{EDITOR_THEME_RELATIVE_PATH}",
+        }]},
+    }
+    return canonical_json(package)
+
+
+def render_editor(theme: dict[str, Any]) -> str:
+    """Render Code's settings fragment alongside the generated package."""
+    return canonical_json({
+        "workbench.colorTheme": editor_theme_setting_value(theme),
+        "workbench.experimental.modernUI": editor_modern_ui_value(theme),
+        "editor.fontFamily": theme["fonts"]["mono"],
+    })
 
 
 def render_cursor_editor(theme: dict[str, Any]) -> str:
-    return canonical_json({"workbench.colorTheme": "Dark 2026", "editor.fontFamily": theme["fonts"]["mono"], "editor.fontSize": theme["fonts"]["editor_size"], "workbench.colorCustomizations": editor_colours(theme)})
+    """Render Cursor's settings fragment without unsupported Code settings."""
+    return canonical_json({
+        "workbench.colorTheme": editor_theme_setting_value(theme),
+        "editor.fontFamily": theme["fonts"]["mono"],
+    })
 
 
 def render_code_extension(theme: dict[str, Any]) -> dict[str, str]:
-    package = {
-        "name": "blox-dark-2026", "displayName": "Blox Dark 2026",
-        "description": "Generated Blox colour theme based on Visual Studio Code Dark 2026.",
-        "version": "1.0.0", "publisher": "blox", "engines": {"vscode": "*"},
-        "categories": ["Themes"],
-        "contributes": {"themes": [{"id": "Blox Dark 2026", "label": "Blox Dark 2026", "uiTheme": "vs-dark", "path": "./themes/blox-dark-2026.json"}]},
-    }
-    c = theme["colours"]
-    colour_theme = {
-        "$schema": "vscode://schemas/color-theme", "name": "Blox Dark 2026",
-        "type": "dark", "semanticHighlighting": True,
-        "colors": editor_colours(theme),
-        # Dark 2026 uses the GitHub dark token palette. Preserve that language
-        # while applying the canonical semantic roles to the workbench.
-        "tokenColors": [
-            {"scope": ["comment", "punctuation.definition.comment"], "settings": {"foreground": c["muted"]}},
-            {"scope": ["keyword", "storage", "storage.type"], "settings": {"foreground": c["danger"]}},
-            {"scope": ["string", "string.quoted"], "settings": {"foreground": c["info"]}},
-            {"scope": ["entity.name.function"], "settings": {"foreground": c["mauve"]}},
-            {"scope": ["entity.name.tag", "support.class.component"], "settings": {"foreground": c["success"]}},
-            {"scope": ["constant", "support", "meta.property-name"], "settings": {"foreground": c["info"]}},
-        ],
-    }
+    colour_theme = _editor_theme(theme)
     return {
-        "code/package.json": canonical_json(package),
-        "code/themes/blox-dark-2026.json": canonical_json(colour_theme),
+        "code/package.json": _editor_package(theme),
+        "code/themes/blox-generated-color-theme.json": canonical_json(colour_theme),
         "code/settings.json": render_editor(theme),
+    }
+
+
+def render_cursor_extension(theme: dict[str, Any]) -> dict[str, str]:
+    """Render Cursor's package using the same resolved theme JSON as Code."""
+    colour_theme = canonical_json(_editor_theme(theme))
+    return {
+        "cursor-editor/package.json": _editor_package(theme),
+        "cursor-editor/themes/blox-generated-color-theme.json": colour_theme,
+        "cursor-editor/settings.json": render_cursor_editor(theme),
     }
 
 
@@ -1259,7 +1380,7 @@ def render_theme(theme: dict[str, Any], source_path: Path | None = None) -> tupl
     if targets["code"]:
         files.update(render_code_extension(theme))
     if targets["cursor_editor"]:
-        files["cursor-editor/settings.json"] = render_cursor_editor(theme)
+        files.update(render_cursor_extension(theme))
     if targets["stylus"]:
         from .stylus import render_stylus, render_stylus_manifest
 

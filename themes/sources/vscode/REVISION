@@ -1,0 +1,8 @@
+Source: Microsoft Visual Studio Code theme-defaults extension
+VS Code version: 1.135.0
+VS Code commit: 08d4889f9ec4a1685d257b9b95de036c8e1ce1e5
+Source files copied from: /usr/share/code/resources/app/extensions/theme-defaults/themes
+Retrieved: 2026-08-30
+
+The generated Blox package resolves these local include files before it is
+installed. Do not fetch or update them during Apply.

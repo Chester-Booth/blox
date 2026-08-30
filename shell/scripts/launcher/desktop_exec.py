@@ -89,6 +89,13 @@ def active_cursor_environment() -> dict[str, str]:
     return environment
 
 
+def _launches_code(desktop_id: str, command: list[str]) -> bool:
+    """Keep Code out of the transient systemd scope used by the app menu."""
+    entry_name = Path(desktop_id.removesuffix(".desktop")).name.lower()
+    executable_name = Path(command[0]).name.lower() if command else ""
+    return entry_name in {"code", "code-url-handler"} and executable_name in {"code", "code-insiders"}
+
+
 def main() -> int:
     if len(sys.argv) != 2:
         print("Usage: desktop_exec.py <desktop-id>", file=sys.stderr)
@@ -96,6 +103,19 @@ def main() -> int:
 
     try:
         command, working_directory = resolve_command(sys.argv[1])
+        launch_environment = os.environ.copy()
+        launch_environment.update(active_cursor_environment())
+        if _launches_code(sys.argv[1], command):
+            process = subprocess.Popen(
+                command,
+                cwd=str(Path(working_directory).expanduser()) if working_directory else None,
+                env=launch_environment,
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                start_new_session=True,
+            )
+            return 0 if process.pid > 0 else 1
         service_command = ["systemd-run", "--user", "--collect", "--quiet"]
         inherited = {name: os.environ.get(name) for name in ("DISPLAY", "WAYLAND_DISPLAY", "XDG_CURRENT_DESKTOP", "XDG_SESSION_TYPE")}
         inherited.update(active_cursor_environment())

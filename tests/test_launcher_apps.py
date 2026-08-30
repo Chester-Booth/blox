@@ -67,6 +67,24 @@ class FakeIconTheme:
 
 
 class AppControllerTests(unittest.TestCase):
+    def test_code_launcher_avoids_the_transient_systemd_scope(self):
+        self.assertTrue(desktop_exec._launches_code("code", ["code"]))
+        self.assertTrue(desktop_exec._launches_code("code.desktop", ["/usr/bin/code"]))
+        self.assertTrue(desktop_exec._launches_code("code-url-handler.desktop", ["code"]))
+        self.assertFalse(desktop_exec._launches_code("org.example.desktop", ["code"]))
+        self.assertFalse(desktop_exec._launches_code("code.desktop", ["kitty"]))
+
+    @mock.patch.object(desktop_exec.subprocess, "run")
+    @mock.patch.object(desktop_exec.subprocess, "Popen")
+    @mock.patch.object(desktop_exec, "resolve_command", return_value=(["code"], None))
+    @mock.patch.object(desktop_exec.sys, "argv", ["desktop_exec.py", "code.desktop"])
+    def test_code_launcher_detaches_without_systemd(self, _resolve, popen, run):
+        popen.return_value.pid = 1234
+        self.assertEqual(0, desktop_exec.main())
+        run.assert_not_called()
+        self.assertEqual(["code"], popen.call_args.args[0])
+        self.assertTrue(popen.call_args.kwargs["start_new_session"])
+
     def test_helium_launcher_loads_the_active_blox_theme(self):
         root = Path(tempfile.mkdtemp(prefix="blox-helium-launcher-"))
         self.addCleanup(shutil.rmtree, root, ignore_errors=True)

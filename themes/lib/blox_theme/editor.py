@@ -82,6 +82,11 @@ def members(text: str) -> tuple[dict[str, Member], int]:
         index = _skip(text, index)
         if index >= len(text):
             raise EditorSettingsFailure("unterminated settings object")
+        # Older Blox versions could leave a second comma on its own line.
+        # Accept it during migration; newly written members remain normal.
+        if text[index] == ",":
+            index += 1
+            continue
         if text[index] == "}":
             return found, index
         start = index
@@ -104,9 +109,111 @@ def members(text: str) -> tuple[dict[str, Member], int]:
 
 def _decode(text: str, member: Member) -> Any:
     try:
-        return json.loads(text[member.value_start : member.value_end])
+        return _jsonc_loads(text[member.value_start : member.value_end])
     except json.JSONDecodeError as error:
-        raise EditorSettingsFailure(f"owned settings value is not strict JSON: {error}") from error
+        raise EditorSettingsFailure(f"owned settings value is not valid JSONC: {error}") from error
+
+
+def _jsonc_loads(text: str) -> Any:
+    """Decode a JSONC value without changing the source document."""
+    output: list[str] = []
+    index = 0
+    in_string = False
+    escaped = False
+    while index < len(text):
+        character = text[index]
+        if in_string:
+            output.append(character)
+            if escaped:
+                escaped = False
+            elif character == "\\":
+                escaped = True
+            elif character == '"':
+                in_string = False
+            index += 1
+            continue
+        if character == '"':
+            in_string = True
+            output.append(character)
+            index += 1
+        elif text.startswith("//", index):
+            newline = text.find("\n", index + 2)
+            if newline < 0:
+                break
+            output.append("\n")
+            index = newline + 1
+        elif text.startswith("/*", index):
+            end = text.find("*/", index + 2)
+            if end < 0:
+                raise json.JSONDecodeError("unterminated comment", text, index)
+            comment = text[index:end + 2]
+            output.extend("\n" if item == "\n" else " " for item in comment)
+            index = end + 2
+        else:
+            output.append(character)
+            index += 1
+    without_comments = "".join(output)
+    output = []
+    index = 0
+    in_string = False
+    escaped = False
+    while index < len(without_comments):
+        character = without_comments[index]
+        if in_string:
+            output.append(character)
+            if escaped:
+                escaped = False
+            elif character == "\\":
+                escaped = True
+            elif character == '"':
+                in_string = False
+            index += 1
+            continue
+        if character == '"':
+            in_string = True
+            output.append(character)
+            index += 1
+            continue
+        if character == ",":
+            lookahead = index + 1
+            while lookahead < len(without_comments) and without_comments[lookahead].isspace():
+                lookahead += 1
+            if lookahead < len(without_comments) and without_comments[lookahead] in "]}":
+                index += 1
+                continue
+        output.append(character)
+        index += 1
+    return json.loads("".join(output))
+
+
+def _settings_destination(settings: Path) -> Path:
+    if not settings.is_symlink():
+        return settings
+    try:
+        destination = settings.resolve(strict=True)
+    except (OSError, RuntimeError) as error:
+        raise EditorSettingsFailure(f"cannot resolve symlinked editor settings: {settings}") from error
+    if not destination.is_file():
+        raise EditorSettingsFailure(f"editor settings symlink does not target a regular file: {settings}")
+    return destination
+
+
+def _settings_text(settings: Path) -> tuple[Path, str]:
+    destination = _settings_destination(settings)
+    return destination, destination.read_text(encoding="utf-8") if destination.exists() else "{}\n"
+
+
+def read_settings_values(settings: Path, keys: list[str] | tuple[str, ...]) -> dict[str, dict[str, Any]]:
+    """Read selected JSONC settings while retaining explicit key presence."""
+    _, original = _settings_text(settings)
+    parsed, _ = members(original)
+    values: dict[str, dict[str, Any]] = {}
+    for key in keys:
+        member = parsed.get(key)
+        values[key] = {"present": member is not None}
+        if member is not None:
+            values[key]["value"] = _decode(original, member)
+    return values
 
 
 def merge_members(text: str, updates: dict[str, Any]) -> str:
@@ -122,25 +229,77 @@ def merge_members(text: str, updates: dict[str, Any]) -> str:
     for start, end, value in sorted(replacements, reverse=True):
         text = text[:start] + value + text[end:]
     if missing:
-        _, closing = members(text)
-        prefix = "" if not members(text)[0] else ","
-        insertion = prefix + "\n" + "\n".join(f'  {json.dumps(key)}: {json.dumps(value, ensure_ascii=False)},' for key, value in missing) + "\n"
+        parsed, closing = members(text)
+        if parsed:
+            last = max(parsed.values(), key=lambda member: member.start)
+            prefix = "" if last.comma_after is not None else ","
+        else:
+            prefix = ""
+        entries = ",\n".join(
+            f'  {json.dumps(key)}: {json.dumps(value, ensure_ascii=False)}'
+            for key, value in missing
+        )
+        insertion = prefix + "\n" + entries + "\n"
         text = text[:closing] + insertion + text[closing:]
     return text
 
 
+def remove_members(text: str, keys: list[str] | tuple[str, ...] | set[str]) -> str:
+    """Remove top-level JSONC members while leaving other source text intact."""
+    parsed, _ = members(text)
+    removals = []
+    for key in keys:
+        member = parsed.get(key)
+        if member is None:
+            continue
+        if member.comma_after is not None:
+            start = member.start
+            end = member.comma_after + 1
+        else:
+            previous = [candidate for candidate in parsed.values() if candidate.start < member.start]
+            previous_member = max(previous, key=lambda candidate: candidate.start, default=None)
+            start = previous_member.comma_after if previous_member and previous_member.comma_after is not None else member.start
+            end = member.value_end
+        removals.append((start, end))
+    merged: list[tuple[int, int]] = []
+    for start, end in sorted(removals):
+        if merged and start <= merged[-1][1]:
+            merged[-1] = (merged[-1][0], max(merged[-1][1], end))
+        else:
+            merged.append((start, end))
+    for start, end in reversed(merged):
+        text = text[:start] + text[end:]
+    _, closing = members(text)
+    trimmed_end = closing
+    while trimmed_end > 0 and text[trimmed_end - 1].isspace():
+        trimmed_end -= 1
+    if trimmed_end > 0 and text[trimmed_end - 1] == ",":
+        text = text[:trimmed_end - 1] + text[trimmed_end:]
+    return text
+
+
+def _write_settings(destination: Path, updated: str) -> None:
+    normalised: list[str] = []
+    for line in updated.splitlines(keepends=True):
+        if line.strip() == ",":
+            previous = "".join(normalised).rstrip()
+            if previous.endswith(","):
+                continue
+        normalised.append(line)
+    updated = "".join(normalised)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    temporary = destination.parent / f".{destination.name}.{uuid.uuid4().hex}.tmp"
+    with temporary.open("x", encoding="utf-8") as handle:
+        handle.write(updated)
+        handle.flush()
+        os.fsync(handle.fileno())
+    os.replace(temporary, destination)
+
+
 def apply_fragment(settings: Path, fragment: dict[str, Any]) -> None:
-    destination = settings
-    if settings.is_symlink():
-        try:
-            destination = settings.resolve(strict=True)
-        except (OSError, RuntimeError) as error:
-            raise EditorSettingsFailure(f"cannot resolve symlinked editor settings: {settings}") from error
-        if not destination.is_file():
-            raise EditorSettingsFailure(f"editor settings symlink does not target a regular file: {settings}")
-    original = destination.read_text(encoding="utf-8") if destination.exists() else "{}\n"
+    destination, original = _settings_text(settings)
     parsed, _ = members(original)
-    updates = {key: fragment[key] for key in ("workbench.colorTheme", "editor.fontFamily", "editor.fontSize")}
+    updates = {key: value for key, value in fragment.items() if key != "workbench.colorCustomizations"}
     if "workbench.colorCustomizations" in fragment:
         existing_workbench: dict[str, Any] = {}
         if "workbench.colorCustomizations" in parsed:
@@ -151,10 +310,13 @@ def apply_fragment(settings: Path, fragment: dict[str, Any]) -> None:
         existing_workbench.update(fragment["workbench.colorCustomizations"])
         updates["workbench.colorCustomizations"] = existing_workbench
     updated = merge_members(original, updates)
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    temporary = destination.parent / f".{destination.name}.{uuid.uuid4().hex}.tmp"
-    with temporary.open("x", encoding="utf-8") as handle:
-        handle.write(updated)
-        handle.flush()
-        os.fsync(handle.fileno())
-    os.replace(temporary, destination)
+    _write_settings(destination, updated)
+
+
+def restore_settings(settings: Path, values: dict[str, Any], remove: list[str] | tuple[str, ...] = ()) -> None:
+    """Restore or remove selected top-level settings atomically."""
+    destination, original = _settings_text(settings)
+    updated = merge_members(original, values) if values else original
+    if remove:
+        updated = remove_members(updated, remove)
+    _write_settings(destination, updated)

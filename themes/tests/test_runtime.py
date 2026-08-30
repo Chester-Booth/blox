@@ -17,8 +17,9 @@ THEMES = Path(__file__).resolve().parents[1]
 REPOSITORY = THEMES.parent
 sys.path.insert(0, str(THEMES / "lib"))
 
-from blox_theme.core import load_theme, render_theme, repository_root, resolve_wallpaper_path
-from blox_theme.runtime import ApplicationLock, LockContended, RuntimeFailure, TARGET_FILES, TARGET_NAMES, apply_theme, current_generation, cursor_icon_link, hyprtoolkit_theme_link, kitty_theme_link, phase7_loader_specs, reconcile, reset_target, rollback, setup_gtk, validate_generation
+from blox_theme.core import editor_colours, load_theme, render_theme, repository_root, resolve_wallpaper_path
+from blox_theme.editor import read_settings_values
+from blox_theme.runtime import ApplicationLock, EDITOR_EXTENSION_DIR, EDITOR_LEGACY_EXTENSION_DIR, LockContended, RuntimeFailure, TARGET_FILES, TARGET_NAMES, apply_theme, current_generation, cursor_icon_link, editor_settings_integration_path, hyprtoolkit_theme_link, kitty_theme_link, phase7_loader_specs, reconcile, reset_target, rollback, setup_gtk, validate_generation
 
 PHASE2_TARGETS = ("quickshell", "kitty", "wallpaper")
 
@@ -51,6 +52,7 @@ class RuntimeTests(unittest.TestCase):
             "XDG_CONFIG_HOME": str(self.root / "config"),
             "XDG_DATA_HOME": str(self.root / "data"),
             "VSCODE_EXTENSIONS": str(self.root / "vscode-extensions"),
+            "CURSOR_EXTENSIONS": str(self.root / "cursor-extensions"),
         })
         self.environment.start()
         self.browser_probe = mock.patch(
@@ -339,6 +341,27 @@ class RuntimeTests(unittest.TestCase):
         self.assertEqual("phase2-alternate", manifest["target_sources"]["quickshell"]["theme_id"])
         self.assertEqual("catppuccin-mocha", manifest["target_sources"]["kitty"]["theme_id"])
 
+    def test_authoritative_inline_apply_can_remove_a_builtin_target_without_saving_source(self) -> None:
+        first = copy.deepcopy(self.canonical)
+        apply_theme(self.canonical_path, first, ("quickshell", "kitty"), run_command=FakeCommands())
+
+        candidate = copy.deepcopy(self.canonical)
+        candidate["targets"] = {target: target == "quickshell" for target in TARGET_NAMES}
+        manifest, _ = apply_theme(
+            self.canonical_path,
+            candidate,
+            ("quickshell", "kitty"),
+            run_command=FakeCommands(),
+            authoritative_targets=True,
+        )
+
+        active = (self.state / "current").resolve()
+        self.assertEqual(["quickshell"], manifest["enabled_targets"])
+        self.assertTrue((active / "quickshell/theme.json").is_file())
+        self.assertFalse((active / "kitty/theme.conf").exists())
+        self.assertTrue(self.canonical_path.is_file())
+        self.assertTrue(json.loads(self.canonical_path.read_text(encoding="utf-8"))["targets"]["kitty"])
+
     def test_partial_apply_does_not_touch_an_unselected_gtk_loader(self) -> None:
         self.apply_canonical()
         loader = self.root / "config/gtk-3.0/gtk.css"
@@ -610,16 +633,101 @@ class RuntimeTests(unittest.TestCase):
         self.assertTrue(any(command[-1] == "reloadWidgets" for command in runner.commands))
 
     def test_code_installs_generated_theme_extension_and_selects_it(self) -> None:
+        legacy = self.root / f"vscode-extensions/{EDITOR_LEGACY_EXTENSION_DIR}"
+        legacy.mkdir(parents=True)
+        (legacy / "package.json").write_text(json.dumps({"name": "blox-dark-2026", "publisher": "blox"}), encoding="utf-8")
         manifest, warnings = apply_theme(self.canonical_path, self.canonical, ("code",), run_command=FakeCommands())
-        extension = self.root / "vscode-extensions/blox.blox-dark-2026-1.0.0"
+        extension = self.root / f"vscode-extensions/{EDITOR_EXTENSION_DIR}"
         self.assertTrue((extension / "package.json").is_file())
-        self.assertTrue((extension / "themes/blox-dark-2026.json").is_file())
+        self.assertTrue((extension / "themes/blox-generated-color-theme.json").is_file())
         self.assertFalse((extension / "settings.json").exists())
         settings = (self.root / "config/Code/User/settings.json").read_text(encoding="utf-8")
-        self.assertIn('"workbench.colorTheme": "Blox Dark 2026"', settings)
+        self.assertIn('"workbench.colorTheme": "blox-theme"', settings)
+        self.assertIn('"workbench.experimental.modernUI": true', settings)
+        self.assertIn('"editor.fontFamily": "FiraCode Nerd Font Mono"', settings)
+        self.assertTrue(editor_settings_integration_path(self.state).is_file())
+        self.assertFalse(legacy.exists())
         self.assertNotIn("workbench.colorCustomizations", json.loads((self.state / "current/code/settings.json").read_text()))
         self.assertEqual(["code"], manifest["enabled_targets"])
-        self.assertTrue(any("theme applied automatically" in warning for warning in warnings))
+        self.assertTrue(any("theme package and settings applied" in warning for warning in warnings))
+
+    def test_cursor_installs_same_theme_package_without_modern_ui_or_customisations(self) -> None:
+        manifest, warnings = apply_theme(self.canonical_path, self.canonical, ("cursor_editor",), run_command=FakeCommands())
+        extension = self.root / f"cursor-extensions/{EDITOR_EXTENSION_DIR}"
+        self.assertTrue((extension / "package.json").is_file())
+        self.assertTrue((extension / "themes/blox-generated-color-theme.json").is_file())
+        settings = json.loads((self.root / "config/Cursor/User/settings.json").read_text(encoding="utf-8"))
+        self.assertEqual("blox-theme", settings["workbench.colorTheme"])
+        self.assertEqual("FiraCode Nerd Font Mono", settings["editor.fontFamily"])
+        self.assertNotIn("workbench.experimental.modernUI", settings)
+        self.assertNotIn("workbench.colorCustomizations", settings)
+        cursor_theme = (extension / "themes/blox-generated-color-theme.json").read_bytes()
+        self.assertTrue(cursor_theme)
+        self.assertEqual(["cursor_editor"], manifest["enabled_targets"])
+        self.assertTrue(any("Cursor theme package and settings applied" in warning for warning in warnings))
+
+    def test_code_apply_tracks_prior_presence_and_reset_removes_only_blox_values(self) -> None:
+        settings = self.root / "config/Code/User/settings.json"
+        settings.parent.mkdir(parents=True)
+        settings.write_text(
+            '{\n'
+            "  // keep the user's settings\n"
+            '  "editor.fontSize": 17,\n'
+            '  "workbench.experimental.modernUI": false,\n'
+            '  "editor.fontFamily": "User Font",\n'
+            '}\n',
+            encoding="utf-8",
+        )
+        self.canonical["shape"]["radius_scale"] = 0
+        apply_theme(self.canonical_path, self.canonical, ("code",), run_command=FakeCommands())
+        applied = read_settings_values(settings, ("workbench.colorTheme", "workbench.experimental.modernUI", "editor.fontFamily", "editor.fontSize"))
+        self.assertEqual("blox-theme", applied["workbench.colorTheme"]["value"])
+        self.assertFalse(applied["workbench.experimental.modernUI"]["value"])
+        self.assertEqual("FiraCode Nerd Font Mono", applied["editor.fontFamily"]["value"])
+        self.assertEqual(17, applied["editor.fontSize"]["value"])
+        reset_target("code", run_command=FakeCommands())
+        restored = read_settings_values(settings, ("workbench.colorTheme", "workbench.experimental.modernUI", "editor.fontFamily", "editor.fontSize"))
+        self.assertEqual("User Font", restored["editor.fontFamily"]["value"])
+        self.assertFalse(restored["workbench.experimental.modernUI"]["value"])
+        self.assertEqual(17, restored["editor.fontSize"]["value"])
+        self.assertFalse(restored["workbench.colorTheme"]["present"])
+
+    def test_cursor_does_not_write_modern_ui_setting_and_reset_removes_package(self) -> None:
+        settings = self.root / "config/Cursor/User/settings.json"
+        settings.parent.mkdir(parents=True)
+        settings.write_text('{"editor.fontSize": 16}\n', encoding="utf-8")
+        apply_theme(self.canonical_path, self.canonical, ("cursor_editor",), run_command=FakeCommands())
+        settings_data = json.loads(settings.read_text(encoding="utf-8"))
+        self.assertNotIn("workbench.experimental.modernUI", settings_data)
+        self.assertEqual(16, settings_data["editor.fontSize"])
+        reset_target("cursor_editor", run_command=FakeCommands())
+        restored = json.loads(settings.read_text(encoding="utf-8"))
+        self.assertEqual({"editor.fontSize": 16}, restored)
+        self.assertFalse((self.root / f"cursor-extensions/{EDITOR_EXTENSION_DIR}").exists())
+
+    def test_editor_reset_preserves_a_value_changed_after_apply(self) -> None:
+        settings = self.root / "config/Code/User/settings.json"
+        apply_theme(self.canonical_path, self.canonical, ("code",), run_command=FakeCommands())
+        settings.write_text(
+            settings.read_text(encoding="utf-8").replace("FiraCode Nerd Font Mono", "User Font"),
+            encoding="utf-8",
+        )
+        _, warnings = reset_target("code", run_command=FakeCommands())
+        self.assertTrue(any("preserved user-edited code setting: editor.fontFamily" in warning for warning in warnings))
+        values = read_settings_values(settings, ("editor.fontFamily", "workbench.colorTheme"))
+        self.assertEqual("User Font", values["editor.fontFamily"]["value"])
+        self.assertFalse(values["workbench.colorTheme"]["present"])
+
+    def test_editor_apply_migrates_only_matching_legacy_colour_customisations(self) -> None:
+        settings = self.root / "config/Code/User/settings.json"
+        legacy = editor_colours(self.canonical)
+        legacy["user.setting"] = "keep"
+        settings.parent.mkdir(parents=True)
+        settings.write_text(json.dumps({"workbench.colorCustomizations": legacy}) + "\n", encoding="utf-8")
+        _, warnings = self.apply_canonical()
+        settings_data = json.loads(settings.read_text(encoding="utf-8"))
+        self.assertEqual({"user.setting": "keep"}, settings_data["workbench.colorCustomizations"])
+        self.assertTrue(any("Code legacy colour customisations migrated" in warning for warning in warnings))
 
     def test_every_target_reset_path_is_safe(self) -> None:
         for target in TARGET_NAMES:

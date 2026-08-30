@@ -15,8 +15,8 @@ from typing import Any, Callable, Iterable
 
 from . import RENDERER_VERSION
 from .browser_targets import BROWSER_TARGET_BY_ID, browser_target, detect_browser_target
-from .core import DEFAULT_THEME_ID, canonical_json, load_theme, render_theme, repository_root, resolve_wallpaper_path, sha256_text, state_dir
-from .editor import EditorSettingsFailure, apply_fragment
+from .core import DEFAULT_THEME_ID, EDITOR_THEME_PACKAGE_NAME, EDITOR_THEME_PUBLISHER, EDITOR_THEME_RELATIVE_PATH, EDITOR_THEME_VERSION, canonical_json, editor_colours, load_theme, render_theme, repository_root, resolve_wallpaper_path, sha256_text, state_dir
+from .editor import EditorSettingsFailure, apply_fragment, read_settings_values, restore_settings
 
 
 TARGET_FILES = {
@@ -33,8 +33,8 @@ TARGET_FILES = {
     "btop": ("btop/theme.theme",),
     "micro": ("micro/blox-theme.micro",),
     "glow": ("glow/style.json",),
-    "code": ("code/settings.json", "code/package.json", "code/themes/blox-dark-2026.json"),
-    "cursor_editor": ("cursor-editor/settings.json",),
+    "code": ("code/settings.json", "code/package.json", "code/themes/blox-generated-color-theme.json"),
+    "cursor_editor": ("cursor-editor/settings.json", "cursor-editor/package.json", "cursor-editor/themes/blox-generated-color-theme.json"),
     "stylus": ("stylus/blox-system.user.css", "stylus/manifest.json"),
     "obsidian": ("obsidian/style-settings.json",),
     "powerlevel10k": ("powerlevel10k/theme.zsh",),
@@ -45,13 +45,24 @@ TARGET_REQUIRED_FILES = {
 }
 # The GTK-owned Helium path is accepted only while an old generation is being
 # carried forward. New generations never copy it.
-LEGACY_TARGET_FILES = {"obsidian/blox-theme.css": "obsidian", "gtk/helium/manifest.json": "gtk"}
+LEGACY_TARGET_FILES = {
+    "obsidian/blox-theme.css": "obsidian",
+    "gtk/helium/manifest.json": "gtk",
+    "code/themes/blox-dark-2026.json": "code",
+}
 # Chromium writes this cache beside an unpacked theme extension at startup.
 RUNTIME_ARTIFACTS = {"helium/Cached Theme.pak", "chromium/Cached Theme.pak"}
 TARGET_NAMES = tuple(TARGET_FILES)
 GENERATION_PATTERN = re.compile(r"^[0-9]{8}T[0-9]{6}Z-[0-9a-f]{8}$")
 HISTORY_LIMIT = 5
 PHASE7_FALLBACK_TARGETS = ("hyprlock", "btop", "micro", "glow")
+EDITOR_SETTING_KEYS = {
+    "code": ("workbench.colorTheme", "editor.fontFamily", "workbench.experimental.modernUI"),
+    "cursor_editor": ("workbench.colorTheme", "editor.fontFamily"),
+}
+EDITOR_MODERN_UI_SUPPORT = {"code": True, "cursor_editor": False}
+EDITOR_LEGACY_EXTENSION_DIR = "blox.blox-dark-2026-1.0.0"
+EDITOR_EXTENSION_DIR = f"{EDITOR_THEME_PUBLISHER}.{EDITOR_THEME_PACKAGE_NAME}-{EDITOR_THEME_VERSION}"
 
 
 class RuntimeFailure(Exception):
@@ -248,8 +259,11 @@ def _new_generation_id() -> str:
 def _copy_previous(previous: Path | None, candidate: Path) -> None:
     if previous is None:
         return
-    for target_files in TARGET_FILES.values():
-        for name in target_files:
+    for target in TARGET_FILES:
+        names = TARGET_FILES[target]
+        if target == "code":
+            names = (*names, "code/themes/blox-dark-2026.json")
+        for name in names:
             source = previous / name
             if source.is_file():
                 destination = candidate / name
@@ -313,6 +327,243 @@ def _prune_generations(root: Path, current: Path) -> None:
 
 def _command_text(command: list[str]) -> str:
     return " ".join(command)
+
+
+def editor_settings_path(target: str) -> Path:
+    if target not in EDITOR_SETTING_KEYS:
+        raise RuntimeFailure(f"unsupported editor target: {target}")
+    config = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")).expanduser()
+    return config / ("Code/User/settings.json" if target == "code" else "Cursor/User/settings.json")
+
+
+def editor_extensions_path(target: str) -> Path:
+    if target == "code":
+        return Path(os.environ.get("VSCODE_EXTENSIONS", Path.home() / ".vscode/extensions")).expanduser()
+    if target == "cursor_editor":
+        return Path(os.environ.get("CURSOR_EXTENSIONS", Path.home() / ".cursor/extensions")).expanduser()
+    raise RuntimeFailure(f"unsupported editor target: {target}")
+
+
+def editor_modern_ui_supported(target: str) -> bool:
+    """Return the known capability without probing or changing editor state."""
+    try:
+        return EDITOR_MODERN_UI_SUPPORT[target]
+    except KeyError as error:
+        raise RuntimeFailure(f"unsupported editor target: {target}") from error
+
+
+def editor_settings_integration_path(root: Path) -> Path:
+    return root / "integration/editor-settings.json"
+
+
+def _empty_editor_integration() -> dict[str, Any]:
+    return {"schema_version": 1, "editors": {}}
+
+
+def _load_editor_integration(root: Path) -> dict[str, Any]:
+    path = editor_settings_integration_path(root)
+    if not path.is_file():
+        return _empty_editor_integration()
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        raise RuntimeFailure(f"editor settings integration record is invalid: {path}") from error
+    if not isinstance(data, dict) or set(data) != {"schema_version", "editors"} or data["schema_version"] != 1 or not isinstance(data["editors"], dict):
+        raise RuntimeFailure(f"editor settings integration record is invalid: {path}")
+    for target, record in data["editors"].items():
+        if target not in EDITOR_SETTING_KEYS or not isinstance(record, dict) or set(record) != {"settings_path", "keys", "last"}:
+            raise RuntimeFailure(f"editor settings integration record is invalid: {path}")
+        if not isinstance(record["settings_path"], str) or not isinstance(record["keys"], dict) or not isinstance(record["last"], dict):
+            raise RuntimeFailure(f"editor settings integration record is invalid: {path}")
+        for key, prior in record["keys"].items():
+            if key not in EDITOR_SETTING_KEYS[target] or not isinstance(prior, dict) or not isinstance(prior.get("present"), bool):
+                raise RuntimeFailure(f"editor settings integration record is invalid: {path}")
+            if prior["present"] and "value" not in prior:
+                raise RuntimeFailure(f"editor settings integration record is invalid: {path}")
+        if not set(record["last"]).issubset(EDITOR_SETTING_KEYS[target]):
+            raise RuntimeFailure(f"editor settings integration record is invalid: {path}")
+    return data
+
+
+def _save_editor_integration(root: Path, data: dict[str, Any]) -> None:
+    path = editor_settings_integration_path(root)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.parent / f".{path.name}.{uuid.uuid4().hex}.tmp"
+    _write_text(temporary, canonical_json(data))
+    os.replace(temporary, path)
+    _fsync_directory(path.parent)
+
+
+def _capture_editor_settings(root: Path, target: str, fragment: dict[str, Any]) -> tuple[Path, dict[str, Any], dict[str, Any]]:
+    settings = editor_settings_path(target)
+    keys = {key: fragment[key] for key in EDITOR_SETTING_KEYS[target] if key in fragment}
+    if not keys:
+        raise RuntimeFailure(f"renderer produced no managed settings for {target}")
+    data = _load_editor_integration(root)
+    record = data["editors"].setdefault(target, {"settings_path": str(settings), "keys": {}, "last": {}})
+    current = read_settings_values(settings, tuple(keys))
+    for key, value in current.items():
+        record["keys"].setdefault(key, value)
+    record["settings_path"] = str(settings)
+    _save_editor_integration(root, data)
+    return settings, data, keys
+
+
+def _record_editor_settings_applied(root: Path, target: str, data: dict[str, Any], values: dict[str, Any]) -> None:
+    data["editors"][target]["last"] = values
+    _save_editor_integration(root, data)
+
+
+def apply_editor_settings(root: Path, target: str, fragment: dict[str, Any]) -> None:
+    settings, data, values = _capture_editor_settings(root, target, fragment)
+    apply_fragment(settings, values)
+    _record_editor_settings_applied(root, target, data, values)
+
+
+def _setting_matches(value: dict[str, Any], expected: Any) -> bool:
+    return value.get("present") is True and value.get("value") == expected
+
+
+def migrate_legacy_editor_customizations(settings: Path, legacy_theme: dict[str, Any]) -> bool:
+    """Drop only old Blox colour overrides so the packaged theme can win."""
+    values = read_settings_values(settings, ("workbench.colorCustomizations",))
+    current = values["workbench.colorCustomizations"]
+    if not current.get("present") or not isinstance(current.get("value"), dict):
+        return False
+    legacy = editor_colours(legacy_theme)
+    cleaned = {
+        key: value
+        for key, value in current["value"].items()
+        if legacy.get(key) != value
+    }
+    if cleaned == current["value"]:
+        return False
+    if cleaned:
+        restore_settings(settings, {"workbench.colorCustomizations": cleaned})
+    else:
+        restore_settings(settings, {}, ("workbench.colorCustomizations",))
+    return True
+
+
+def reset_editor_settings(root: Path, target: str) -> list[str]:
+    data = _load_editor_integration(root)
+    record = data["editors"].get(target)
+    if record is None:
+        return []
+    settings = editor_settings_path(target)
+    last = record["last"]
+    current = read_settings_values(settings, tuple(last)) if last else {}
+    restore: dict[str, Any] = {}
+    remove: list[str] = []
+    warnings: list[str] = []
+    for key, expected in last.items():
+        if not _setting_matches(current[key], expected):
+            warnings.append(f"preserved user-edited {target} setting: {key}")
+            continue
+        prior = record["keys"][key]
+        if prior["present"]:
+            restore[key] = prior["value"]
+        else:
+            remove.append(key)
+    if restore or remove:
+        restore_settings(settings, restore, remove)
+    del data["editors"][target]
+    _save_editor_integration(root, data)
+    return warnings
+
+
+def _editor_package_source(root: Path, target: str) -> Path:
+    directory = "code" if target == "code" else "cursor-editor" if target == "cursor_editor" else ""
+    if not directory:
+        raise RuntimeFailure(f"unsupported editor target: {target}")
+    return root / "current" / directory
+
+
+def _editor_package_manifest(path: Path) -> dict[str, Any]:
+    try:
+        package = json.loads((path / "package.json").read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        raise RuntimeFailure(f"editor theme package is invalid: {path / 'package.json'}") from error
+    if not isinstance(package, dict) or package.get("name") != EDITOR_THEME_PACKAGE_NAME or package.get("publisher") != EDITOR_THEME_PUBLISHER or package.get("version") != EDITOR_THEME_VERSION:
+        raise RuntimeFailure(f"editor theme package has the wrong identity: {path / 'package.json'}")
+    return package
+
+
+def _copy_fsynced(source: Path, destination: Path) -> None:
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    with source.open("rb") as source_handle, destination.open("xb") as destination_handle:
+        shutil.copyfileobj(source_handle, destination_handle)
+        destination_handle.flush()
+        os.fsync(destination_handle.fileno())
+
+
+def _remove_legacy_editor_extension(extension_root: Path) -> list[str]:
+    legacy = extension_root / EDITOR_LEGACY_EXTENSION_DIR
+    if not legacy.exists() and not legacy.is_symlink():
+        return []
+    if legacy.is_symlink():
+        return [f"left unexpected legacy editor extension symlink in place: {legacy}"]
+    if not legacy.is_dir():
+        return [f"left unexpected legacy editor extension in place: {legacy}"]
+    try:
+        package = json.loads((legacy / "package.json").read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return [f"left legacy editor extension with unreadable manifest in place: {legacy}"]
+    if not isinstance(package, dict) or package.get("name") != "blox-dark-2026" or package.get("publisher") != EDITOR_THEME_PUBLISHER:
+        return [f"left foreign editor extension in place: {legacy}"]
+    shutil.rmtree(legacy)
+    return []
+
+
+def install_editor_extension(root: Path, target: str) -> list[str]:
+    source = _editor_package_source(root, target)
+    _editor_package_manifest(source)
+    theme_source = source / EDITOR_THEME_RELATIVE_PATH
+    if not theme_source.is_file():
+        raise RuntimeFailure(f"editor theme package is missing: {theme_source}")
+    extension_root = editor_extensions_path(target)
+    if extension_root.exists() and not extension_root.is_dir():
+        raise RuntimeFailure(f"editor extension directory is not a directory: {extension_root}")
+    extension_root.mkdir(parents=True, exist_ok=True)
+    destination = extension_root / EDITOR_EXTENSION_DIR
+    if destination.is_symlink():
+        raise RuntimeFailure(f"refusing to replace symlinked editor extension: {destination}")
+    if destination.exists() and not destination.is_dir():
+        raise RuntimeFailure(f"refusing to replace non-directory editor extension: {destination}")
+    if destination.is_dir():
+        _editor_package_manifest(destination)
+    temporary = extension_root / f".{EDITOR_EXTENSION_DIR}.{uuid.uuid4().hex}.tmp"
+    backup = extension_root / f".{EDITOR_EXTENSION_DIR}.{uuid.uuid4().hex}.old"
+    temporary.mkdir(mode=0o700)
+    try:
+        _copy_fsynced(source / "package.json", temporary / "package.json")
+        _copy_fsynced(theme_source, temporary / EDITOR_THEME_RELATIVE_PATH)
+        if destination.exists():
+            os.replace(destination, backup)
+        try:
+            os.replace(temporary, destination)
+        except Exception:
+            if backup.exists() and not destination.exists():
+                os.replace(backup, destination)
+            raise
+        if backup.exists():
+            shutil.rmtree(backup)
+    finally:
+        shutil.rmtree(temporary, ignore_errors=True)
+    return _remove_legacy_editor_extension(extension_root)
+
+
+def remove_editor_extension(target: str) -> None:
+    extension_root = editor_extensions_path(target)
+    destination = extension_root / EDITOR_EXTENSION_DIR
+    if not destination.exists() and not destination.is_symlink():
+        return
+    if destination.is_symlink():
+        raise RuntimeFailure(f"refusing to remove symlinked editor extension: {destination}")
+    if not destination.is_dir():
+        raise RuntimeFailure(f"refusing to remove non-directory editor extension: {destination}")
+    _editor_package_manifest(destination)
+    shutil.rmtree(destination)
 
 
 def _run(command: list[str]) -> subprocess.CompletedProcess[str]:
@@ -1116,7 +1367,7 @@ def _check_browser_targets(targets: Iterable[str]) -> None:
             raise RuntimeFailure(f"{availability['label']} target is unavailable: {availability['reason']}")
 
 
-def run_reload_actions(root: Path, targets: Iterable[str], mode: str = "reload", run_command: Callable[[list[str]], subprocess.CompletedProcess[str]] = _run, progress: Callable[[str, str, str], None] | None = None, defer_quickshell_restart: bool = False, quickshell_restart_pending: bool = False) -> list[str]:
+def run_reload_actions(root: Path, targets: Iterable[str], mode: str = "reload", run_command: Callable[[list[str]], subprocess.CompletedProcess[str]] = _run, progress: Callable[[str, str, str], None] | None = None, defer_quickshell_restart: bool = False, quickshell_restart_pending: bool = False, legacy_editor_theme: dict[str, Any] | None = None) -> list[str]:
     warnings = []
     for target in targets:
         if progress is not None:
@@ -1167,21 +1418,22 @@ def run_reload_actions(root: Path, targets: Iterable[str], mode: str = "reload",
         elif target in ("code", "cursor_editor"):
             editor = "Code" if target == "code" else "Cursor"
             if mode == "reset":
-                warnings.append(f"{editor}'s generated fragment was removed; existing windows retain the last applied values until changed")
+                try:
+                    warnings.extend(reset_editor_settings(root, target))
+                    remove_editor_extension(target)
+                    warnings.append(f"{editor} theme package and owned settings reset; existing windows may need Reload Window")
+                except (OSError, EditorSettingsFailure, RuntimeFailure) as error:
+                    warnings.append(f"{editor} settings or package were not reset: {error}")
             else:
-                config = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
-                settings = config / ("Code/User/settings.json" if target == "code" else "Cursor/User/settings.json")
                 fragment_path = root / ("current/code/settings.json" if target == "code" else "current/cursor-editor/settings.json")
                 try:
                     fragment = json.loads(fragment_path.read_text(encoding="utf-8"))
-                    if target == "code":
-                        extension = Path(os.environ.get("VSCODE_EXTENSIONS", Path.home() / ".vscode/extensions")) / "blox.blox-dark-2026-1.0.0"
-                        extension.parent.mkdir(parents=True, exist_ok=True)
-                        shutil.rmtree(extension, ignore_errors=True)
-                        shutil.copytree(root / "current/code", extension, ignore=shutil.ignore_patterns("settings.json"))
-                    apply_fragment(settings, fragment)
-                    warnings.append(f"{editor} theme applied automatically; use Reload Window for existing windows")
-                except (OSError, json.JSONDecodeError, EditorSettingsFailure) as error:
+                    if legacy_editor_theme is not None and migrate_legacy_editor_customizations(editor_settings_path(target), legacy_editor_theme):
+                        warnings.append(f"{editor} legacy colour customisations migrated to the packaged theme")
+                    warnings.extend(install_editor_extension(root, target))
+                    apply_editor_settings(root, target, fragment)
+                    warnings.append(f"{editor} theme package and settings applied; use Reload Window for existing windows")
+                except (OSError, json.JSONDecodeError, EditorSettingsFailure, RuntimeFailure) as error:
                     warnings.append(f"{editor} settings were not changed: {error}")
         elif target == "stylus":
             warnings.append("Stylus's generated UserCSS was removed; manually remove any previously imported copy" if mode == "reset" else f"Open or reload {root / 'current/stylus/blox-system.user.css'} in a browser with Stylus, then choose Install style the first time or Reinstall style after an earlier import; remove older duplicate Blox Web Theme entries first; manifest.json lists included and excluded sites")
@@ -1207,9 +1459,15 @@ def run_reload_actions(root: Path, targets: Iterable[str], mode: str = "reload",
     return warnings
 
 
-def apply_theme(theme_path: Path, theme: dict[str, Any], targets: Iterable[str], run_command: Callable[[list[str]], subprocess.CompletedProcess[str]] = _run, renderer: Callable[[dict[str, Any]], tuple[dict[str, str], list[str]]] = render_theme, cursor_builder: Callable[[dict[str, Any], Path], tuple[Path, bool]] | None = None, progress: Callable[[dict[str, Any]], None] | None = None, defer_quickshell_restart: bool = False) -> tuple[dict[str, Any], list[str]]:
+def apply_theme(theme_path: Path, theme: dict[str, Any], targets: Iterable[str], run_command: Callable[[list[str]], subprocess.CompletedProcess[str]] = _run, renderer: Callable[[dict[str, Any]], tuple[dict[str, str], list[str]]] = render_theme, cursor_builder: Callable[[dict[str, Any], Path], tuple[Path, bool]] | None = None, progress: Callable[[dict[str, Any]], None] | None = None, defer_quickshell_restart: bool = False, authoritative_targets: bool = False) -> tuple[dict[str, Any], list[str]]:
     root = state_dir()
-    selected = tuple(targets)
+    selected = tuple(dict.fromkeys(targets))
+    enabled_selection = {
+        target
+        for target in selected
+        if not authoritative_targets or theme.get("targets", {}).get(target, False)
+    }
+    enabled = tuple(target for target in selected if target in enabled_selection)
     progress_total = 3 + len(selected)
 
     def report(kind: str, stage: str, state: str, message: str, completed: int, target: str = "", **extra: Any) -> None:
@@ -1223,14 +1481,20 @@ def apply_theme(theme_path: Path, theme: dict[str, Any], targets: Iterable[str],
         raise RuntimeFailure(f"unsupported runtime target(s): {', '.join(unknown)}")
     if not selected:
         raise RuntimeFailure("at least one target is required")
-    _check_browser_targets(selected)
-    verify_tracked_loaders(selected)
+    _check_browser_targets(enabled)
+    verify_tracked_loaders(enabled)
     with ApplicationLock(root):
         generations = root / "generations"
         generations.mkdir(parents=True, exist_ok=True)
         previous_record = current_generation(root)
         previous_path = previous_record[0] if previous_record else None
         previous_manifest = previous_record[1] if previous_record else None
+        legacy_editor_theme = theme
+        if previous_manifest is not None:
+            try:
+                _, legacy_editor_theme = load_theme(previous_manifest["source"])
+            except (FileNotFoundError, OSError, json.JSONDecodeError, ValueError, KeyError, TypeError):
+                pass
         render_input = theme
         if not Path(theme["wallpaper"]["path"]).expanduser().is_absolute():
             render_input = dict(theme)
@@ -1238,7 +1502,7 @@ def apply_theme(theme_path: Path, theme: dict[str, Any], targets: Iterable[str],
             render_input["wallpaper"]["path"] = str(resolve_wallpaper_path(theme["wallpaper"]["path"], theme_path))
         report("stage", "prepare", "active", "Generating target files", 0)
         files, _ = renderer(render_input)
-        for target in selected:
+        for target in enabled:
             missing = [name for name in TARGET_REQUIRED_FILES[target] if name not in files]
             if missing:
                 report("stage", "prepare", "failed", f"Renderer did not produce {target}: {', '.join(missing)}", 0)
@@ -1246,7 +1510,7 @@ def apply_theme(theme_path: Path, theme: dict[str, Any], targets: Iterable[str],
         report("stage", "prepare", "done", f"Theme checked · {len(files)} generated files ready", 1)
         report("stage", "cursor", "active", "Checking generated cursor assets", 1)
         cursor_message = "No cursor assets enabled"
-        if "cursor" in selected:
+        if "cursor" in enabled:
             try:
                 metadata = json.loads(files["cursor/metadata.json"])
                 if metadata["mode"] == "generated":
@@ -1283,16 +1547,30 @@ def apply_theme(theme_path: Path, theme: dict[str, Any], targets: Iterable[str],
             _copy_previous(previous_path, candidate)
             for target in selected:
                 _remove_target(candidate, target)
+            for target in enabled:
                 for name in TARGET_FILES[target]:
                     if name in files:
                         _write_text(candidate / name, files[name])
-            changed_targets = tuple(target for target in selected if _target_changed(previous_path, previous_manifest, candidate, target))
+            if authoritative_targets:
+                previous_enabled = set(previous_manifest.get("enabled_targets", [])) if previous_manifest else set()
+                changed_targets = tuple(
+                    target
+                    for target in selected
+                    if (target in enabled_selection and (
+                        target not in previous_enabled
+                        or _target_signature(previous_path, target) != _target_signature(candidate, target)
+                    )) or (target not in enabled_selection and target in previous_enabled)
+                )
+            else:
+                changed_targets = tuple(target for target in selected if _target_changed(previous_path, previous_manifest, candidate, target))
             unchanged_targets = tuple(target for target in selected if target not in changed_targets)
             icon_theme_changed = "quickshell" in changed_targets and _quickshell_icon_theme_changed(previous_path, theme)
-            pending_reloads = ("quickshell",) if defer_quickshell_restart and ("cursor" in changed_targets or icon_theme_changed) else ()
+            changed_enabled_targets = tuple(target for target in changed_targets if target in enabled_selection)
+            removed_targets = tuple(target for target in changed_targets if target not in enabled_selection)
+            pending_reloads = ("quickshell",) if defer_quickshell_restart and ("cursor" in changed_enabled_targets or icon_theme_changed) else ()
             sources = _target_sources(previous_manifest, selected, theme_path, theme)
-            enabled = sorted(target for target, names in TARGET_FILES.items() if any((candidate / name).is_file() for name in names))
-            sources = {target: sources[target] for target in enabled}
+            active_targets = sorted(target for target, names in TARGET_FILES.items() if any((candidate / name).is_file() for name in names))
+            sources = {target: sources[target] for target in active_targets}
             manifest = {
                 "schema_version": 1,
                 "renderer_version": RENDERER_VERSION,
@@ -1302,7 +1580,7 @@ def apply_theme(theme_path: Path, theme: dict[str, Any], targets: Iterable[str],
                 "source": str(theme_path.resolve()),
                 "source_sha256": sha256_text(canonical_json(theme)),
                 "theme_id": theme["id"],
-                "enabled_targets": enabled,
+                "enabled_targets": active_targets,
                 "target_sources": sources,
                 "files": _manifest_files(candidate),
                 "derived": {"ansi": json.loads(files["quickshell/theme.json"])["ansi"] if "quickshell/theme.json" in files else {}},
@@ -1314,7 +1592,7 @@ def apply_theme(theme_path: Path, theme: dict[str, Any], targets: Iterable[str],
             validate_generation(final)
             _switch_generation(root, final)
             try:
-                sync_dynamic_loaders(root, enabled, selected)
+                sync_dynamic_loaders(root, active_targets, selected)
             except (OSError, RuntimeFailure):
                 try:
                     if previous_path:
@@ -1354,12 +1632,22 @@ def apply_theme(theme_path: Path, theme: dict[str, Any], targets: Iterable[str],
                 report_target(target, "unchanged", "Unchanged")
             reload_warnings = run_reload_actions(
                 root,
-                changed_targets,
+                removed_targets,
+                mode="reset",
                 run_command=run_command,
                 progress=report_target,
                 defer_quickshell_restart=defer_quickshell_restart,
-                quickshell_restart_pending="cursor" in changed_targets or icon_theme_changed,
+                legacy_editor_theme=legacy_editor_theme,
             )
+            reload_warnings.extend(run_reload_actions(
+                root,
+                changed_enabled_targets,
+                run_command=run_command,
+                progress=report_target,
+                defer_quickshell_restart=defer_quickshell_restart,
+                quickshell_restart_pending="cursor" in changed_enabled_targets or icon_theme_changed,
+                legacy_editor_theme=legacy_editor_theme,
+            ))
             report("stage", "applications", "done", "Application targets finished", progress_total)
             _prune_generations(root, final)
             return manifest, reload_warnings
@@ -1380,8 +1668,12 @@ def reconcile(targets: Iterable[str] | None = None, run_command: Callable[[list[
         unknown = sorted(set(selected) - set(manifest["enabled_targets"]))
         if unknown:
             raise RuntimeFailure(f"target(s) are not active: {', '.join(unknown)}")
-        sync_dynamic_loaders(root, manifest["enabled_targets"])
-        warnings = run_reload_actions(root, selected, run_command=run_command)
+        sync_dynamic_loaders(root, manifest["enabled_targets"], selected)
+        try:
+            _, legacy_editor_theme = load_theme(manifest["source"])
+        except (FileNotFoundError, OSError, json.JSONDecodeError, ValueError, KeyError, TypeError):
+            legacy_editor_theme = None
+        warnings = run_reload_actions(root, selected, run_command=run_command, legacy_editor_theme=legacy_editor_theme)
         return manifest, warnings
 
 
@@ -1419,7 +1711,11 @@ def rollback(generation_id: str | None = None, run_command: Callable[[list[str]]
         restored_targets = set(manifest["enabled_targets"])
         removed_targets = sorted(current_targets - restored_targets)
         warnings = run_reload_actions(root, removed_targets, mode="reset", run_command=run_command)
-        warnings.extend(run_reload_actions(root, manifest["enabled_targets"], run_command=run_command))
+        try:
+            _, legacy_editor_theme = load_theme(current_record[1]["source"])
+        except (FileNotFoundError, OSError, json.JSONDecodeError, ValueError, KeyError, TypeError):
+            legacy_editor_theme = None
+        warnings.extend(run_reload_actions(root, manifest["enabled_targets"], run_command=run_command, legacy_editor_theme=legacy_editor_theme))
         return manifest, warnings
 
 

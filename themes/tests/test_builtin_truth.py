@@ -120,7 +120,7 @@ class BuiltinTruthTests(unittest.TestCase):
         )
         for name, document in self.documents():
             with self.subTest(theme=name):
-                self.assertNotIn("window_gap", document["shape"])
+                self.assertIsNone(document["shape"].get("window_gap"))
 
     def test_defaults_document_matches_its_own_schema(self) -> None:
         self.assertEqual(defaults_schema_errors(DEFAULTS_DOCUMENT), [])

@@ -55,7 +55,8 @@
   "schema_version": 1,
   "shape": {
     "density_scale": 1.0,
-    "radius_scale": 1.25
+    "radius_scale": 1.25,
+    "window_gap": null
   },
   "stylus": {
     "style_set": "recommended"
@@ -188,7 +189,11 @@
       "position": "top",
       "separate_groups": false,
       "border": false,
-      "edge_inset": 0
+      "edge_inset": 0,
+      "radius_automatic": true,
+      "radius_scale": 1.25,
+      "density_automatic": true,
+      "density_scale": 1.0
     },
     "notifications": {
       "offset_x": 0,

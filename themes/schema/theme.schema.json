@@ -4,7 +4,7 @@
   "title": "Blox theme",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "id", "name", "variant", "shape", "targets", "fonts", "colours", "wallpaper", "gtk", "icons", "cursor", "terminal"],
+  "required": ["schema_version", "id", "name", "variant", "shape", "hyprland", "targets", "fonts", "colours", "wallpaper", "gtk", "icons", "cursor", "terminal"],
   "properties": {
     "schema_version": {"const": 1},
     "id": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$", "minLength": 1, "maxLength": 64},
@@ -16,7 +16,15 @@
       "properties": {
         "radius_scale": {"type": "number", "minimum": 0, "maximum": 2},
         "density_scale": {"type": "number", "minimum": 0.75, "maximum": 1.5},
-        "window_gap": {"type": "integer", "minimum": 0, "maximum": 30}
+        "window_gap": {"type": ["integer", "null"], "minimum": 0, "maximum": 30}
+      }
+    },
+    "hyprland": {
+      "type": "object", "additionalProperties": false,
+      "required": ["inactive_opacity", "border_size"],
+      "properties": {
+        "inactive_opacity": {"type": "number", "minimum": 0.1, "maximum": 1.0},
+        "border_size": {"type": "integer", "minimum": 0, "maximum": 8}
       }
     },
     "shell": {

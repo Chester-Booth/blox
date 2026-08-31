@@ -882,6 +882,11 @@ class PickerIntegrationSourceTests(unittest.TestCase):
         self.assertIn("controller.setCursorFollowsThemeRoundness(value)", advanced)
         self.assertIn("controller.setCursorShape(index)", advanced)
         self.assertIn("controller.setCursorDirection(index)", advanced)
+        self.assertIn('text: "Window appearance"', advanced)
+        self.assertIn('label: "Inactive opacity"', advanced)
+        self.assertIn('label: "Border size"', advanced)
+        self.assertIn('controller.hyprlandValue("inactive_opacity", 1.0)', advanced)
+        self.assertIn('controller.hyprlandValue("border_size", 1)', advanced)
         for function in (
             "cursorGenerated",
             "cursorFollowsThemeRoundness",
@@ -893,10 +898,18 @@ class PickerIntegrationSourceTests(unittest.TestCase):
             "setCursorShape",
             "setCursorDirection",
             "setCursorSize",
+            "hyprlandValue",
+            "setHyprlandValue",
+            "setHyprlandInactiveOpacity",
+            "setHyprlandBorderSize",
         ):
             self.assertIn(f"function {function}", controller)
         self.assertNotIn('text: "Follows theme roundness"', overview)
         self.assertLess(advanced.index('text: "Cursor"'), advanced.index('text: "Semantic colours"'))
+        self.assertLess(advanced.index('text: "Window appearance"'), advanced.index('text: "Semantic colours"'))
+        self.assertIn('hyprlandPreview.preview(source)', controller)
+        self.assertIn('hyprlandPreview.restoreFor("apply")', controller)
+        self.assertIn('hyprlandPreview.restoreFor("close")', controller)
 
     def test_theme_list_uses_source_colours_wallpaper_and_fonts(self) -> None:
         theme_list = qml_source("Library")

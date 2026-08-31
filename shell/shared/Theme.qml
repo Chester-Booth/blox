@@ -33,7 +33,7 @@ Singleton {
     property color terminalCanvas: defaults.ready ? defaults.themeDocument().terminal.canvas : "transparent"
     property real radiusScale: defaults.ready ? defaults.themeDocument().shape.radius_scale : 1.25
     property real densityScale: defaults.ready ? defaults.themeDocument().shape.density_scale : 1.0
-    property var windowGap: defaults.ready && defaults.themeDocument().shape.window_gap !== undefined ? defaults.themeDocument().shape.window_gap : null
+    property var windowGap: defaults.ready && defaults.themeDocument().shape.window_gap !== undefined && defaults.themeDocument().shape.window_gap !== null ? defaults.themeDocument().shape.window_gap : null
     readonly property int railWidth: 34
     readonly property int iconSize: 18
     readonly property int buttonSize: 30

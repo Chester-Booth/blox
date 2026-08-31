@@ -49,6 +49,7 @@ Scope {
     property alias generatorBackend: generationController.backend
     property alias newVariant: generationController.newVariant
     property string pendingAfterSave: ""
+    property string pendingPreviewContinuation: ""
     property string pendingSelection: ""
     property string modalKind: ""
     property string pendingModalConfirmation: ""
@@ -624,6 +625,7 @@ Scope {
         Theme.widgetEditModeCancelRequested();
         open = true;
         rendered = true;
+        hyprlandPreview.recover();
         recoverPickerWorkspace("");
         revealTimer.restart();
         statusMessage = "Loading themes…";
@@ -647,6 +649,7 @@ Scope {
 
     function closePicker() {
         sessionRevision += 1;
+        hyprlandPreview.restoreFor("close");
         editorWheelOwner = null;
         editorWheelSessionTimer.stop();
         validationPending = false;
@@ -667,6 +670,7 @@ Scope {
         guideTarget = "";
         guideReturnModalKind = "";
         pendingAfterSave = "";
+        pendingPreviewContinuation = "";
         pendingSelection = "";
         pendingModalConfirmation = "";
         generateAfterLoad = false;
@@ -701,12 +705,47 @@ Scope {
 
     function applyValidatedPreview(source) {
         if (!dirty && selectedId === Theme.activeThemeId) {
+            hyprlandPreview.restoreFor("active");
             Theme.cancelPreview();
             statusMessage = "Active theme";
             return ;
         }
         Theme.previewSource(source);
+        hyprlandPreview.preview(source);
         statusMessage = dirty ? "Temporary Quickshell preview — unsaved" : "Temporary Quickshell preview";
+    }
+
+    function hyprlandValue(key, fallback) {
+        return candidate && candidate.hyprland && candidate.hyprland[key] !== undefined
+            ? candidate.hyprland[key]
+            : fallback;
+    }
+
+    function setHyprlandValue(key, value) {
+        if (!candidate)
+            return;
+
+        const next = cloneCandidate();
+        next.hyprland = next.hyprland || {};
+        if (value === null || value === undefined)
+            delete next.hyprland[key];
+        else
+            next.hyprland[key] = value;
+        markCandidate(next, "hyprland." + key);
+    }
+
+    function setHyprlandInactiveOpacity(value) {
+        if (!Number.isFinite(value))
+            return;
+
+        setHyprlandValue("inactive_opacity", Math.max(0.1, Math.min(1.0, Math.round(value * 100) / 100)));
+    }
+
+    function setHyprlandBorderSize(value) {
+        if (!Number.isFinite(value))
+            return;
+
+        setHyprlandValue("border_size", Math.max(0, Math.min(8, Math.round(value))));
     }
 
     function markCandidatePaths(value, paths, allowBuiltinChange) {
@@ -1285,6 +1324,18 @@ Scope {
         if (candidate === null || !candidateValid || busy)
             return ;
 
+        pendingPreviewContinuation = "apply";
+        if (hyprlandPreview.restoreFor("apply"))
+            return ;
+
+        pendingPreviewContinuation = "";
+        beginApplyCandidate();
+    }
+
+    function beginApplyCandidate() {
+        if (candidate === null || !candidateValid || busy)
+            return ;
+
         errorMessage = "";
         applyProgressComplete = false;
         applyProgressStages = [{
@@ -1474,11 +1525,9 @@ Scope {
             return ;
 
         if (kind === "navigate") {
-            Theme.cancelPreview();
-            baselineJson = candidate === null ? "" : JSON.stringify(candidate);
-            const id = pendingSelection;
-            pendingSelection = "";
-            requestSelection(id, false);
+            pendingPreviewContinuation = "navigate";
+            if (!hyprlandPreview.restoreFor("navigate"))
+                completePendingNavigation();
         } else if (kind === "close")
             closePicker();
         else if (kind === "delete")
@@ -1495,6 +1544,15 @@ Scope {
             host.dialogs.openExport();
         else if (kind === "generate-current")
             loadActiveForGeneration();
+    }
+
+    function completePendingNavigation() {
+        const id = pendingSelection;
+        pendingSelection = "";
+        pendingPreviewContinuation = "";
+        Theme.cancelPreview();
+        baselineJson = candidate === null ? "" : JSON.stringify(candidate);
+        requestSelection(id, false);
     }
 
     function dismissColourPicker() {
@@ -1530,6 +1588,12 @@ Scope {
         host: root
     }
 
+    ThemePickerHyprlandPreview {
+        id: hyprlandPreview
+
+        host: root
+    }
+
     ThemePickerApiController {
         id: apiController
 
@@ -1540,6 +1604,26 @@ Scope {
         id: generationController
 
         host: root
+    }
+
+    Connections {
+        target: hyprlandPreview
+
+        function onOperationFinished(operation, successful, reason) {
+            if (operation !== "restore" || root.pendingPreviewContinuation.length === 0)
+                return;
+
+            const continuation = root.pendingPreviewContinuation;
+            root.pendingPreviewContinuation = "";
+            if (!successful) {
+                root.errorMessage = hyprlandPreview.lastError || "Could not restore the temporary Hyprland preview.";
+                return;
+            }
+            if (continuation === "apply")
+                Qt.callLater(root.beginApplyCandidate);
+            else if (continuation === "navigate")
+                Qt.callLater(root.completePendingNavigation);
+        }
     }
 
     Connections {

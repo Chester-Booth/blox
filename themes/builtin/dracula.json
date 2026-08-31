@@ -43,6 +43,10 @@
     "colour_source": "theme",
     "mode": "generated"
   },
+  "hyprland": {
+    "inactive_opacity": 1.0,
+    "border_size": 1
+  },
   "icons": {
     "theme": "Adwaita"
   },

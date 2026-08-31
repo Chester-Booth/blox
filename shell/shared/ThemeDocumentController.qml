@@ -49,6 +49,10 @@ QtObject {
             "name": defaultsDocument.name || defaultsDocument.id,
             "fonts": JSON.parse(JSON.stringify(defaultsDocument.fonts)),
             "shape": JSON.parse(JSON.stringify(defaultsDocument.shape)),
+            "hyprland": JSON.parse(JSON.stringify(defaultsDocument.hyprland || {
+                "inactive_opacity": 1.0,
+                "border_size": 1
+            })),
             "shell": shell,
             "wallpaper": JSON.parse(JSON.stringify(defaultsDocument.wallpaper)),
             "terminal": JSON.parse(JSON.stringify(defaultsDocument.terminal)),
@@ -95,7 +99,7 @@ QtObject {
         theme.terminalCanvas = fallback.terminal.canvas;
         theme.radiusScale = shape.radius_scale;
         theme.densityScale = shape.density_scale;
-        theme.windowGap = shape.window_gap === undefined ? null : shape.window_gap;
+        theme.windowGap = shape.window_gap === undefined || shape.window_gap === null ? null : shape.window_gap;
         theme.fontFamily = fonts.panel;
         theme.monoFontFamily = fonts.mono;
         theme.bodyFontFamily = fonts.ui;
@@ -170,7 +174,7 @@ QtObject {
             theme.terminalCanvas = data.terminal.canvas;
             theme.radiusScale = data.shape.radius_scale;
             theme.densityScale = data.shape.density_scale;
-            theme.windowGap = data.shape.window_gap === undefined ? null : data.shape.window_gap;
+            theme.windowGap = data.shape.window_gap === undefined || data.shape.window_gap === null ? null : data.shape.window_gap;
             theme.fontFamily = data.fonts.panel;
             theme.monoFontFamily = data.fonts.mono;
             theme.bodyFontFamily = data.fonts.ui;
@@ -277,7 +281,7 @@ QtObject {
             theme.terminalCanvas = data.terminal.canvas;
             theme.radiusScale = data.shape.radius_scale;
             theme.densityScale = data.shape.density_scale;
-            theme.windowGap = data.shape.window_gap === undefined ? null : data.shape.window_gap;
+            theme.windowGap = data.shape.window_gap === undefined || data.shape.window_gap === null ? null : data.shape.window_gap;
             theme.fontFamily = data.fonts.panel;
             theme.monoFontFamily = data.fonts.mono;
             theme.bodyFontFamily = data.fonts.ui;

@@ -14,7 +14,7 @@ function automaticWindowGap(densityScale) {
 }
 
 function effectiveWindowGap(shape) {
-    return shape.window_gap === undefined
+    return shape.window_gap === undefined || shape.window_gap === null
         ? automaticWindowGap(shape.density_scale)
         : shape.window_gap;
 }

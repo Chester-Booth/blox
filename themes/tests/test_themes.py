@@ -133,6 +133,11 @@ class ThemeSchemaTests(unittest.TestCase):
                 mutate(theme["shape"])
                 self.assertTrue(schema_errors(theme))
 
+    def test_null_window_gap_keeps_density_derived_gap(self) -> None:
+        _, source = load_theme("catppuccin-mocha")
+        source["shape"]["window_gap"] = None
+        self.assertEqual(5, derive_shape(source)["hyprland_gap"])
+
     def test_sparse_save_keeps_explicit_bar_overrides(self) -> None:
         source = json.loads((THEMES / "builtin/catppuccin-mocha.json").read_text(encoding="utf-8"))
         baseline = apply_theme_defaults(source)
@@ -327,6 +332,19 @@ class RendererTests(unittest.TestCase):
                 self.assertIn(f"rounding = {expected_radius},", files["hyprland/theme.lua"])
                 self.assertIn(f"border-radius: {expected_radius}px;", files["gtk/gtk-3.0/gtk.css"])
                 self.assertIn(f"border-radius: {expected_radius}px;", files["gtk/gtk-4.0/gtk.css"])
+
+    def test_hyprland_window_appearance_override_is_rendered(self) -> None:
+        theme = copy.deepcopy(self.theme)
+        theme["hyprland"] = {"inactive_opacity": 0.62, "border_size": 7}
+        derived = derive_shape(theme)
+        self.assertEqual(15, derived["hyprland_rounding"])
+        self.assertEqual(7, derived["hyprland_border_size"])
+        self.assertEqual(0.62, derived["hyprland_inactive_opacity"])
+        files, _ = render_theme(theme)
+        self.assertIn("border_size = 7,", files["hyprland/theme.lua"])
+        self.assertIn('active_border = "rgba(89b4faee)",', files["hyprland/theme.lua"])
+        self.assertIn("rounding = 15,", files["hyprland/theme.lua"])
+        self.assertIn("inactive_opacity = 0.62,", files["hyprland/theme.lua"])
 
     def test_code_target_renders_complete_extension(self) -> None:
         self.theme["targets"]["code"] = True

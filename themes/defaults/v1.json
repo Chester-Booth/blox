@@ -51,14 +51,23 @@
     },
     "shape": {
       "radius_scale": 1.25,
-      "density_scale": 1.0
+      "density_scale": 1.0,
+      "window_gap": null
+    },
+    "hyprland": {
+      "border_size": 1,
+      "inactive_opacity": 1.0
     },
     "shell": {
       "bar": {
-        "position": "left",
-        "separate_groups": false,
         "border": false,
+        "density_automatic": true,
+        "density_scale": 1.0,
         "edge_inset": 0,
+        "position": "left",
+        "radius_automatic": true,
+        "radius_scale": 1.25,
+        "separate_groups": false,
         "items": [
           {"id": "power", "enabled": true, "region": "start", "order": 0},
           {"id": "notes", "enabled": true, "region": "start", "order": 1},

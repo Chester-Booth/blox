@@ -11,7 +11,7 @@
     "theme": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "name", "variant", "colours", "fonts", "shape", "shell", "wallpaper", "gtk", "icons", "cursor", "targets", "terminal"],
+      "required": ["id", "name", "variant", "colours", "fonts", "shape", "hyprland", "shell", "wallpaper", "gtk", "icons", "cursor", "targets", "terminal"],
       "properties": {
         "id": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
         "name": {"type": "string", "minLength": 1},
@@ -19,11 +19,20 @@
         "shape": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["radius_scale", "density_scale"],
+          "required": ["radius_scale", "density_scale", "window_gap"],
           "properties": {
             "radius_scale": {"type": "number", "minimum": 0, "maximum": 2},
             "density_scale": {"type": "number", "minimum": 0.75, "maximum": 1.5},
-            "window_gap": {"type": "integer", "minimum": 0, "maximum": 30}
+            "window_gap": {"type": ["integer", "null"], "minimum": 0, "maximum": 30}
+          }
+        },
+        "hyprland": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["inactive_opacity", "border_size"],
+          "properties": {
+            "inactive_opacity": {"type": "number", "minimum": 0.1, "maximum": 1.0},
+            "border_size": {"type": "integer", "minimum": 0, "maximum": 8}
           }
         },
         "colours": {

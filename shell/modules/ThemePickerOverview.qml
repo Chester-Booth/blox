@@ -272,7 +272,7 @@ ColumnLayout {
                             Layout.fillHeight: true
                             radiusScale: controller.shapeValue("radius_scale", 1.25)
                             densityScale: densityChoice.modelData.value
-                            windowGap: controller.candidate && controller.candidate.shape && controller.candidate.shape.window_gap !== undefined
+                            windowGap: controller.candidate && controller.candidate.shape && controller.candidate.shape.window_gap !== undefined && controller.candidate.shape.window_gap !== null
                                 ? controller.candidate.shape.window_gap
                                 : densityChoice.modelData.gap
                         }

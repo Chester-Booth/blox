@@ -210,14 +210,14 @@ ColumnLayout {
         BloxCheckBox {
             Layout.alignment: Qt.AlignBottom
             text: "Automatic"
-            checked: !controller.candidate || !controller.candidate.shape || controller.candidate.shape.window_gap === undefined
+            checked: !controller.candidate || !controller.candidate.shape || controller.candidate.shape.window_gap === undefined || controller.candidate.shape.window_gap === null
             onToggled: checked => controller.setAutomaticWindowGap(checked)
         }
 
         BloxSlider {
             wheelSession: controller
             Layout.fillWidth: true
-            enabled: controller.candidate && controller.candidate.shape && controller.candidate.shape.window_gap !== undefined
+            enabled: controller.candidate && controller.candidate.shape && controller.candidate.shape.window_gap !== undefined && controller.candidate.shape.window_gap !== null
             label: "Window gap"
             from: 0
             to: 30
@@ -293,6 +293,38 @@ ColumnLayout {
             }
             onActivated: (index, value) => controller.setCursorDirection(index)
         }
+    }
+
+    Label {
+        text: "Window appearance"
+        color: Theme.foreground
+        font.family: Theme.bodyFontFamily
+        font.pixelSize: 17
+        font.bold: true
+    }
+
+    BloxSlider {
+        wheelSession: controller
+        Layout.fillWidth: true
+        enabled: controller.themeControlsEnabled
+        label: "Inactive opacity"
+        from: 0.1
+        to: 1.0
+        decimals: 2
+        value: controller.hyprlandValue("inactive_opacity", 1.0)
+        onMoved: value => controller.setHyprlandInactiveOpacity(value)
+    }
+
+    BloxSlider {
+        wheelSession: controller
+        Layout.fillWidth: true
+        enabled: controller.themeControlsEnabled
+        label: "Border size"
+        from: 0
+        to: 8
+        decimals: 0
+        value: controller.hyprlandValue("border_size", 1)
+        onMoved: value => controller.setHyprlandBorderSize(value)
     }
 
     Label {

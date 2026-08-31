@@ -77,7 +77,8 @@
   "schema_version": 1,
   "shape": {
     "density_scale": 1.0,
-    "radius_scale": 1.25
+    "radius_scale": 1.25,
+    "window_gap": null
   },
   "shell": {
     "bar": {

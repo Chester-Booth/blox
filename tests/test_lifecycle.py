@@ -362,6 +362,38 @@ class ThemeStateRootMigrationTests(unittest.TestCase):
             self.assertTrue(legacy.is_dir())
             self.assertFalse(roots.theme_state.exists())
 
+    def test_state_root_migration_repoints_external_generated_links_and_restores_them(self):
+        with Fixture() as roots:
+            legacy = self._seed_state(roots)
+            config_home = roots.config.parent
+            data_home = roots.data.parent
+            links = {
+                config_home / "hypr/blox-theme.lua": legacy / "current/hyprland/theme.lua",
+                config_home / "gtk-3.0/settings.ini": legacy / "current/gtk/gtk-3.0/settings.ini",
+                config_home / "kitty/blox-theme.conf": legacy / "current/kitty/theme.conf",
+                data_home / "icons/blox-generated": legacy / "cursors/cache/theme",
+            }
+            for link, target in links.items():
+                link.parent.mkdir(parents=True, exist_ok=True)
+                link.symlink_to(target)
+
+            foreign = config_home / "some-app/theme-link"
+            foreign.parent.mkdir(parents=True, exist_ok=True)
+            foreign.symlink_to(legacy / "current/foreign/theme.css")
+
+            results = migrations.run_migrations(roots, from_version="0.1.0", to_version="0.1.1")
+            entry = next(item for item in results if item["migration"] == "theme-state-links")
+
+            self.assertEqual(entry["result"], "applied")
+            for link, target in links.items():
+                self.assertEqual(str(roots.theme_state / target.relative_to(legacy)), os.readlink(link))
+            self.assertEqual(str(legacy / "current/foreign/theme.css"), os.readlink(foreign))
+
+            migrations.restore_ledger_after(roots, 0)
+            for link, target in links.items():
+                self.assertEqual(str(target), os.readlink(link))
+            self.assertEqual(str(legacy / "current/foreign/theme.css"), os.readlink(foreign))
+
 
 class InstallMigrationsTests(unittest.TestCase):
     def test_first_install_runs_migrations_in_the_transaction(self):

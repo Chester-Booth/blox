@@ -546,6 +546,47 @@ class RuntimeTests(unittest.TestCase):
         self.assertTrue(self.canonical_path.is_file())
         self.assertTrue(json.loads(self.canonical_path.read_text(encoding="utf-8"))["targets"]["kitty"])
 
+    def test_authoritative_apply_disables_each_target_and_rolls_back(self) -> None:
+        """Every whole-theme disable removes only that target and is reversible."""
+        for target in TARGET_NAMES:
+            with self.subTest(target=target):
+                before, _ = self.apply_canonical()
+                before_path, before_manifest = current_generation(self.state)
+                before_files = {
+                    name: (before_path / name).read_bytes()
+                    for name in before_manifest["files"]
+                }
+
+                candidate = copy.deepcopy(self.canonical)
+                candidate["targets"][target] = False
+                disabled, _ = apply_theme(
+                    self.canonical_path,
+                    candidate,
+                    TARGET_NAMES,
+                    run_command=FakeCommands(),
+                    cursor_builder=fake_cursor_builder,
+                    authoritative_targets=True,
+                )
+
+                self.assertNotIn(target, disabled["enabled_targets"])
+                self.assertNotIn(target, disabled["target_sources"])
+                for name in TARGET_FILES[target]:
+                    self.assertNotIn(name, disabled["files"])
+                for other in TARGET_NAMES:
+                    if other == target:
+                        continue
+                    for name in TARGET_FILES[other]:
+                        if name in before_files:
+                            self.assertEqual(before_files[name], (self.state / "current" / name).read_bytes(), name)
+
+                restored, _ = rollback(before["generation_id"], run_command=FakeCommands())
+                self.assertIn(target, restored["enabled_targets"])
+                restored_path, _ = current_generation(self.state)
+                self.assertEqual(before_files, {
+                    name: (restored_path / name).read_bytes()
+                    for name in before_files
+                })
+
     def test_partial_apply_does_not_touch_an_unselected_gtk_loader(self) -> None:
         self.apply_canonical()
         loader = self.root / "config/gtk-3.0/gtk.css"

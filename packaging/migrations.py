@@ -289,11 +289,89 @@ def migrate_theme_state_root(roots: Roots, backup_dir: Path) -> dict[str, Any]:
     }
 
 
+def _theme_state_links(roots: Roots) -> list[Path]:
+    """Return the external links owned by the generated theme runtime."""
+    config_home = roots.config.parent
+    data_home = roots.data.parent
+    return [
+        config_home / "hypr/blox-theme.lua",
+        config_home / "hypr/blox-theme.conf",
+        config_home / "hypr/hyprtoolkit.conf",
+        config_home / "kitty/blox-theme.conf",
+        config_home / "gtk-3.0/settings.ini",
+        config_home / "gtk-3.0/blox-theme.css",
+        config_home / "gtk-3.0/blox-theme-dark.css",
+        config_home / "gtk-4.0/settings.ini",
+        config_home / "gtk-4.0/blox-theme.css",
+        config_home / "gtk-4.0/blox-theme-dark.css",
+        config_home / "btop/themes/blox-theme.theme",
+        config_home / "micro/colorschemes/blox-theme.micro",
+        config_home / "glow/blox-theme.json",
+        config_home / "blox-theme/powerlevel10k.zsh",
+        data_home / "icons/blox-generated",
+    ]
+
+
+def migrate_theme_state_links(roots: Roots, backup_dir: Path) -> dict[str, Any]:
+    """Repoint known Blox links left behind by the pre-release state root.
+
+    The state tree moved in an earlier migration, but external links created
+    by the runtime were not part of that tree. Only links at known Blox-owned
+    paths whose target is inside the removed root are changed. Their original
+    link targets are kept in the migration ledger so a failed install can
+    restore the exact links.
+    """
+    legacy = roots.state.parent / "blox-theme"
+    canonical = roots.theme_state
+    changed: list[dict[str, str]] = []
+    replacements: list[tuple[Path, str, Path]] = []
+
+    for link in _theme_state_links(roots):
+        if not link.is_symlink():
+            continue
+        original = os.readlink(link)
+        target = Path(original) if os.path.isabs(original) else (link.parent / original).resolve(strict=False)
+        try:
+            relative = target.relative_to(legacy)
+        except ValueError:
+            continue
+        expected = canonical / relative
+        replacements.append((link, original, expected))
+
+    if not replacements:
+        return {"moved": False}
+
+    temporary: Path | None = None
+    try:
+        for link, original, expected in replacements:
+            temporary = link.parent / f".{link.name}.{uuid.uuid4().hex}.tmp"
+            link.parent.mkdir(parents=True, exist_ok=True)
+            temporary.symlink_to(expected)
+            os.replace(temporary, link)
+            changed.append({"destination": str(link), "target": original})
+    except BaseException:
+        for item in reversed(changed):
+            destination = Path(item["destination"])
+            if destination.is_symlink() or destination.exists():
+                destination.unlink()
+            destination.symlink_to(item["target"])
+        if temporary is not None and (temporary.is_symlink() or temporary.exists()):
+            temporary.unlink()
+        raise
+
+    return {
+        "moved": True,
+        "detail": {"changed": [item["destination"] for item in changed]},
+        "modified_links": changed,
+    }
+
+
 MIGRATIONS: list[Migration] = [
     Migration("calendar-config-xdg", "Move the calendar allow-list into $XDG_CONFIG_HOME/blox.", migrate_calendar_config),
     Migration("shell-env-config", "Move the personal shell environment file into $XDG_CONFIG_HOME/blox.", migrate_shell_env),
     Migration("helium-desktop-id", "Remove the old Blox-owned Helium desktop entry after its ID rename.", migrate_legacy_helium_desktop_entry),
     Migration("theme-state-root", "Move generated theme state under $XDG_STATE_HOME/blox/theme.", migrate_theme_state_root, keep_on_rollback=True),
+    Migration("theme-state-links", "Repoint Blox loaders left behind by the pre-release theme-state root.", migrate_theme_state_links, keep_on_rollback=True),
     Migration("legacy-user-themes", "Relocate imported themes from $XDG_DATA_HOME/blox/themes into the separated user-data root.", migrate_legacy_user_themes, keep_on_rollback=True),
     Migration("active-theme-paths", "Repoint the active theme manifest at the relocated user-data root.", migrate_active_theme_paths, keep_on_rollback=True),
 ]
@@ -336,6 +414,7 @@ def run_migrations(roots: Roots, from_version: str, to_version: str, package_rel
             "pre_image_file": detail.get("pre_image_file"),
             "pre_image_tree": detail.get("pre_image_tree"),
             "moved_original": detail.get("moved_original"),
+            "modified_links": detail.get("modified_links", []),
             "conflicts": detail.get("conflicts", []),
             "sources": detail.get("sources", []),
             "modified": bool(detail.get("pre_image_file")),
@@ -393,6 +472,15 @@ def restore_ledger_after(roots: Roots, lines_before: int) -> int:
         if entry.get("migration") == "theme-state-root" and entry.get("pre_image_tree"):
             _restore_theme_state_root(entry)
             undone += 1
+            continue
+        if entry.get("modified_links"):
+            for item in reversed(entry["modified_links"]):
+                destination = Path(item["destination"])
+                if destination.is_symlink() or destination.exists():
+                    _remove_tree(destination)
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                destination.symlink_to(item["target"])
+                undone += 1
             continue
         if entry.get("modified"):
             pre_image = entry.get("pre_image_file")

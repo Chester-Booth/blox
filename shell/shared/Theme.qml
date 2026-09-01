@@ -79,6 +79,7 @@ Singleton {
         const configured = Quickshell.env("XDG_STATE_HOME") || "";
         return configured.length > 0 ? configured : Quickshell.env("HOME") + "/.local/state";
     }
+    readonly property string themeStateRoot: stateRoot + "/blox/theme"
 
     function scaledRadius(base) {
         return Shape.roundScaled(base, radiusScale);
@@ -95,9 +96,9 @@ Singleton {
     function barScaledSpacing(base) {
         return Shape.roundScaled(base, barDensityScale);
     }
-    readonly property string themePath: stateRoot + "/blox-theme/current/quickshell/theme.json"
-    readonly property string widgetPath: stateRoot + "/blox-theme/current/widgets/profile.json"
-    readonly property string wallpaperPath: stateRoot + "/blox-theme/current/hypr/wallpaper.json"
+    readonly property string themePath: themeStateRoot + "/current/quickshell/theme.json"
+    readonly property string widgetPath: themeStateRoot + "/current/widgets/profile.json"
+    readonly property string wallpaperPath: themeStateRoot + "/current/hypr/wallpaper.json"
     property string activeWallpaperSource: defaults.ready ? wallpaperUrl(defaults.themeDocument().wallpaper.path) : ""
     property string activeWallpaperFit: defaults.ready ? defaults.themeDocument().wallpaper.fit : ""
     property string wallpaperSource: activeWallpaperSource

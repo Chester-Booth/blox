@@ -304,17 +304,9 @@ def install(roots: Roots, dry_run: bool = False, force: bool = False, source_roo
     stamp = time.strftime("%Y%m%dT%H%M%S")
     ledger_before = len(read_ledger(roots))
     report_migrations = None
-    if migrate:
-        # Relocate legacy user data before the package claims its paths,
-        # telling the migration which relative paths the incoming package
-        # owns so package content is never mistaken for user data.
-        incoming = {rel for _, rel in _iter_source_pairs(root)}
-        report_migrations = run_migrations(roots, from_version="fresh-install",
-                                           to_version=version, package_rels=incoming)
-        plan = build_plan(roots, root)
-        report["plan"] = plan.as_json()
     journal: list[dict[str, Any]] = []
     manifest_before = roots.manifest.read_bytes() if roots.manifest.exists() else None
+    generations_before = _read_generations(roots)
 
     def undo_journal() -> None:
         for entry in reversed(journal):
@@ -327,6 +319,19 @@ def install(roots: Roots, dry_run: bool = False, force: bool = False, source_roo
                 target.unlink()
 
     try:
+        if migrate:
+            # Relocate legacy user data inside the same transaction as the
+            # package install. If any later package mutation fails, the
+            # migration ledger and pre-images return the old topology.
+            incoming = {rel for _, rel in _iter_source_pairs(root)}
+            report_migrations = run_migrations(
+                roots,
+                from_version="fresh-install",
+                to_version=version,
+                package_rels=incoming,
+            )
+            plan = build_plan(roots, root)
+            report["plan"] = plan.as_json()
         backed_up: list[str] = []
         for action in plan.actions:
             if action.kind == "mkdir":
@@ -397,8 +402,7 @@ def install(roots: Roots, dry_run: bool = False, force: bool = False, source_roo
         elif manifest_before is not None:
             roots.manifest.write_bytes(manifest_before)
         if migrate:
-            restore_ledger_after(roots, ledger_before)
-            _write_generations(roots, None)
+            _write_generations(roots, generations_before)
         raise
 
     if migrate:

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 browser="${BLOX_HELIUM_BINARY:-/usr/bin/helium-browser}"
-state_root="${XDG_STATE_HOME:-${HOME}/.local/state}/blox-theme"
+state_root="${XDG_STATE_HOME:-${HOME}/.local/state}/blox/theme"
 theme_dir="${state_root}/current/helium"
 cursor_metadata="${state_root}/current/cursor/metadata.json"
 ozone_args=()

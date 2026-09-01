@@ -705,7 +705,7 @@ class PickerIntegrationSourceTests(unittest.TestCase):
         self.assertIn('source: "../assets/stylus-file-access-firefox.png"', qml)
         self.assertIn("CopyPathButton", qml)
         self.assertIn('text: "In your browser, press Ctrl+O and open the generated Stylus file at:"', qml)
-        self.assertIn('Theme.stateRoot + "/blox-theme/current/stylus/blox-system.user.css"', qml)
+        self.assertIn('Theme.themeStateRoot + "/current/stylus/blox-system.user.css"', qml)
         self.assertIn('text: "After changing theme, open or reload this file, then click Install style the first time, or Reinstall style if the style is already installed."', qml)
         self.assertIn('text: "If Stylus lists more than one Blox Web Theme, disable or remove the older copy first."', qml)
         self.assertNotIn('text: "Then click Reinstall style."', qml)

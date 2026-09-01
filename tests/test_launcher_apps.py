@@ -119,7 +119,7 @@ class AppControllerTests(unittest.TestCase):
         root = Path(tempfile.mkdtemp(prefix="blox-helium-launcher-"))
         self.addCleanup(shutil.rmtree, root, ignore_errors=True)
         state = root / "state"
-        theme = state / "blox-theme/current/helium"
+        theme = state / "blox/theme/current/helium"
         theme.mkdir(parents=True)
         (theme / "manifest.json").write_text("{}\n", encoding="utf-8")
         browser = root / "browser"
@@ -162,7 +162,7 @@ class AppControllerTests(unittest.TestCase):
         root = Path(tempfile.mkdtemp(prefix="blox-helium-cursor-"))
         self.addCleanup(shutil.rmtree, root, ignore_errors=True)
         state = root / "state"
-        metadata = state / "blox-theme/current/cursor/metadata.json"
+        metadata = state / "blox/theme/current/cursor/metadata.json"
         metadata.parent.mkdir(parents=True)
         metadata.write_text(
             json.dumps({"theme_name": "blox-generated", "size": 22, "format": "xcursor+hyprcursor-v1"}),
@@ -224,7 +224,7 @@ class AppControllerTests(unittest.TestCase):
         root = Path(tempfile.mkdtemp(prefix="blox-chromium-launcher-"))
         self.addCleanup(shutil.rmtree, root, ignore_errors=True)
         state = root / "state"
-        theme = state / "blox-theme/current/chromium"
+        theme = state / "blox/theme/current/chromium"
         theme.mkdir(parents=True)
         (theme / "manifest.json").write_text("{}\n", encoding="utf-8")
         browser = root / "browser"
@@ -325,7 +325,7 @@ class AppControllerTests(unittest.TestCase):
     def test_active_cursor_environment_uses_the_current_generation(self):
         state = Path(tempfile.mkdtemp(prefix="blox-desktop-cursor-"))
         self.addCleanup(shutil.rmtree, state, ignore_errors=True)
-        metadata = state / "blox-theme/current/cursor/metadata.json"
+        metadata = state / "blox/theme/current/cursor/metadata.json"
         metadata.parent.mkdir(parents=True)
         metadata.write_text(
             json.dumps({"theme_name": "blox-generated", "size": 22, "format": "xcursor+hyprcursor-v1"}),

@@ -44,18 +44,11 @@ def read_payload():
 
 def allow_list(calendars):
     config_root = os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")
-    candidates = [
-        Path(config_root) / "blox" / "calendar.json",
-        # Pre-migration location, read-only fallback until the cutover retires it.
-        Path.home() / ".config" / "quickshell" / "blox" / "calendar.json",
-    ]
-    allowed = None
-    for path in candidates:
-        try:
-            allowed = set(json.loads(path.read_text()).get("writable_calendar_ids", []))
-            break
-        except (OSError, ValueError):
-            continue
+    config_path = Path(config_root) / "blox" / "calendar.json"
+    try:
+        allowed = set(json.loads(config_path.read_text()).get("writable_calendar_ids", []))
+    except (OSError, ValueError):
+        allowed = None
     if allowed is None:
         primary = next((c["id"] for c in calendars if c.get("primary") and c.get("accessRole") in ("writer", "owner")), None)
         allowed = {primary} if primary else set()

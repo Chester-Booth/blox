@@ -46,6 +46,11 @@ class Roots:
         return self.state / "migrations.jsonl"
 
     @property
+    def theme_state(self) -> Path:
+        """Canonical generated theme state below the lifecycle root."""
+        return self.state / "theme"
+
+    @property
     def manifest(self) -> Path:
         return self.pkg_root / "manifest.json"
 

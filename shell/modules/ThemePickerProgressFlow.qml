@@ -52,14 +52,14 @@ ColumnLayout {
             Text {
                 Layout.fillWidth: true
                 Layout.minimumWidth: 0
-                text: Theme.stateRoot + "/blox-theme/current/stylus/blox-system.user.css"
+                text: Theme.themeStateRoot + "/current/stylus/blox-system.user.css"
                 color: Theme.muted
                 font.family: Theme.monoFontFamily
                 elide: Text.ElideMiddle
             }
 
             CopyPathButton {
-                value: Theme.stateRoot + "/blox-theme/current/stylus/blox-system.user.css"
+                value: Theme.themeStateRoot + "/current/stylus/blox-system.user.css"
             }
 
         }

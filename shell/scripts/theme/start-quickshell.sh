@@ -8,7 +8,7 @@ state_home="$(printenv XDG_STATE_HOME || true)"
 if [[ -z "$state_home" ]]; then
 	state_home="$HOME/.local/state"
 fi
-theme_file="$state_home/blox-theme/current/quickshell/theme.json"
+theme_file="$state_home/blox/theme/current/quickshell/theme.json"
 configured_icon_theme="$(printenv QS_ICON_THEME || true)"
 if [[ -z "$configured_icon_theme" && -r "$theme_file" ]]; then
 	icon_theme="$(jq -r '.icons.theme // empty' "$theme_file" 2>/dev/null || true)"

@@ -2,7 +2,6 @@
 
 set -u
 
-script_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd -P)
 install_root=${BLOX_INSTALL_ROOT:-${HOME}/.local/share/blox}
 
 # Startup must use the installed product CLI. The live dotfiles checkout can
@@ -14,8 +13,7 @@ elif [ -x "${HOME}/.local/bin/themectl" ]; then
 elif [ -x "${install_root}/bin/themectl" ]; then
 	theme_cli=${install_root}/bin/themectl
 else
-	repo_root=$(git -C "$script_dir" rev-parse --show-toplevel 2>/dev/null) || repo_root=""
-	theme_cli=${repo_root:+${repo_root}/themes/bin/themectl}
+	theme_cli=""
 fi
 
 log_output() {
@@ -53,7 +51,7 @@ fi
 # IPC paths. Retry only this target after the full reconcile so a startup race
 # cannot leave the compositor with its static fallback cursor.
 cursor_enabled=1
-active_manifest=${XDG_STATE_HOME:-${HOME}/.local/state}/blox-theme/active.json
+active_manifest=${XDG_STATE_HOME:-${HOME}/.local/state}/blox/theme/active.json
 if command -v jq >/dev/null 2>&1 && [ -f "$active_manifest" ]; then
 	if ! jq -e '.enabled_targets | index("cursor") != null' "$active_manifest" >/dev/null 2>&1; then
 		cursor_enabled=0

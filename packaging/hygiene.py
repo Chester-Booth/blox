@@ -16,12 +16,6 @@ PATTERNS = {
     "private-key": re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----"),
 }
 
-ALLOWED_MARKERS = (
-    # The README documents the legacy fallback read by the migration bridge.
-    "quickshell/blox/calendar.json",
-)
-
-
 def tracked_files() -> list[Path]:
     completed = subprocess.run(["git", "-C", str(REPO_ROOT), "ls-files"], capture_output=True, text=True, check=True)
     files = [REPO_ROOT / line for line in completed.stdout.splitlines() if line]

@@ -97,6 +97,37 @@ def _path_checks(roots: layout.Roots) -> list[dict[str, Any]]:
     return checks
 
 
+def _theme_state_checks(roots: layout.Roots) -> list[dict[str, Any]]:
+    """Check the canonical generated theme root."""
+    canonical = roots.theme_state
+    checks = [
+        _check(
+            "paths-theme-state",
+            canonical.is_dir(),
+            str(canonical),
+            severity="info" if canonical.is_dir() else "warn",
+        )
+    ]
+
+    if canonical.is_dir():
+        try:
+            if str(SCRIPT_ROOT.parents[1] / "themes" / "lib") not in sys.path:
+                sys.path.insert(0, str(SCRIPT_ROOT.parents[1] / "themes" / "lib"))
+            from blox_theme.runtime import current_generation
+
+            generation = current_generation(canonical)
+            checks.append(_check(
+                "theme-generation-integrity",
+                True,
+                generation[1]["generation_id"] if generation else "no active generation",
+            ))
+        except (OSError, ValueError, RuntimeError) as error:
+            checks.append(_check("theme-generation-integrity", False, str(error), severity="warn"))
+    else:
+        checks.append(_check("theme-generation-integrity", True, "not created yet", severity="info"))
+    return checks
+
+
 def _unit_checks(roots: layout.Roots) -> list[dict[str, Any]]:
     checks: list[dict[str, Any]] = []
     for unit in ("quickshell.service", "gcal-update.service"):
@@ -166,6 +197,7 @@ def collect() -> dict[str, Any]:
     checks += _host_checks()
     checks += _install_checks(roots)
     checks += _path_checks(roots)
+    checks += _theme_state_checks(roots)
     checks += _unit_checks(roots)
     checks += check_dependencies()
     checks += _defaults_check(roots)

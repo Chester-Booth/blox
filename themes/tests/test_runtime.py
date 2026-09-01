@@ -106,7 +106,7 @@ class RuntimeTests(unittest.TestCase):
 
     @property
     def state(self) -> Path:
-        return Path(os.environ["XDG_STATE_HOME"]) / "blox-theme"
+        return Path(os.environ["XDG_STATE_HOME"]) / "blox/theme"
 
     def apply_canonical(self, runner: FakeCommands | None = None) -> tuple[dict, list[str]]:
         return apply_theme(self.canonical_path, self.canonical, TARGET_NAMES, run_command=runner or FakeCommands(), cursor_builder=fake_cursor_builder)
@@ -143,6 +143,15 @@ class RuntimeTests(unittest.TestCase):
         for executable in ("hyprctl", "kitty"):
             self.assertIn(executable, flattened)
         self.assertTrue(any("shell/scripts/ipc.sh" in part for part in flattened))
+
+    def test_generation_records_reset_origin_and_target_reset_preserves_it(self) -> None:
+        manifest, _ = self.apply_canonical()
+        self.assertEqual(
+            {"kind": "builtin", "theme_id": "catppuccin-mocha", "fallback": False},
+            manifest["origin"],
+        )
+        reset, _ = reset_target("kitty", run_command=FakeCommands())
+        self.assertEqual(manifest["origin"], reset["origin"])
 
     def test_obsidian_publishes_native_package_and_selects_the_open_vault(self) -> None:
         runner = FakeCommands()
@@ -1292,7 +1301,7 @@ class GtkLoaderAdoptionTests(unittest.TestCase):
 
             setup_gtk()
 
-            integration = json.loads((Path(os.environ["XDG_STATE_HOME"]) / "blox-theme/integration/gtk-loaders.json").read_text(encoding="utf-8"))
+            integration = json.loads((Path(os.environ["XDG_STATE_HOME"]) / "blox/theme/integration/gtk-loaders.json").read_text(encoding="utf-8"))
             record = integration["loaders"]["3"]["gtk.css"]
             self.assertEqual(record["kind"], "symlink")
             self.assertEqual(Path(record["target"]).read_text(encoding="utf-8"), "/* foreign checkout loader */\n")
@@ -1304,7 +1313,7 @@ class GtkLoaderAdoptionTests(unittest.TestCase):
             # A second setup snapshots the immediate prior state (the link
             # the first setup wrote), keeping the cycle stable.
             setup_gtk()
-            integration = json.loads((Path(os.environ["XDG_STATE_HOME"]) / "blox-theme/integration/gtk-loaders.json").read_text(encoding="utf-8"))
+            integration = json.loads((Path(os.environ["XDG_STATE_HOME"]) / "blox/theme/integration/gtk-loaders.json").read_text(encoding="utf-8"))
             second = integration["loaders"]["3"]["gtk.css"]
             self.assertEqual(second["kind"], "symlink")
             self.assertTrue(Path(second["target"]).is_absolute())

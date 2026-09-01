@@ -139,7 +139,7 @@ FloatingWindow {
 
                 Text {
                     width: parent.width - copyStylusPath.width - parent.spacing
-                    text: Theme.stateRoot + "/blox-theme/current/stylus/blox-system.user.css"
+                    text: Theme.themeStateRoot + "/current/stylus/blox-system.user.css"
                     color: Theme.muted
                     font.family: Theme.monoFontFamily
                     font.pixelSize: 12
@@ -150,7 +150,7 @@ FloatingWindow {
                 CopyPathButton {
                     id: copyStylusPath
 
-                    value: Theme.stateRoot + "/blox-theme/current/stylus/blox-system.user.css"
+                    value: Theme.themeStateRoot + "/current/stylus/blox-system.user.css"
                 }
 
             }

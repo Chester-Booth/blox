@@ -3,7 +3,8 @@
 Each migration copies the files it is about to change into
 `$XDG_STATE_HOME/blox/backups/<stamp>/migrations/<id>/` before it runs, and
 appends one ledger line per run. Rollback restores the most recent pre-image
-for every applied migration of the generation being rolled back.
+for every applied migration of the generation being rolled back. Pre-release
+paths are migrated once and are not kept as compatibility interfaces.
 """
 
 from __future__ import annotations
@@ -12,6 +13,7 @@ import json
 import os
 import shutil
 import time
+import uuid
 from pathlib import Path
 from typing import Any, Callable
 
@@ -23,10 +25,9 @@ class Migration:
         self.id = identifier
         self.description = description
         self.run = run
-        # Data relocations stay after a version rollback: the originals
-        # remain at the legacy path either way, and dropping the copies
-        # would cut the user off from their own content. Transaction
-        # failures still undo them because they are part of the install.
+        # Data relocations may stay after a package rollback because they
+        # move user data. Transaction failures always undo them because they
+        # are part of the install.
         self.keep_on_rollback = keep_on_rollback
 
 
@@ -148,8 +149,7 @@ def migrate_active_theme_paths(roots: Roots, backup_dir: Path) -> dict[str, Any]
     legacy directory are rewritten under a pre-image for rollback."""
     import json as _json
 
-    state_home = Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local" / "state"))
-    manifest_path = state_home / "blox-theme" / "active.json"
+    manifest_path = roots.theme_state / "active.json"
     if not manifest_path.is_symlink():
         # Real topology: active.json is a symlink through current into the
         # generation tree. Refuse anything else rather than replace it.
@@ -174,7 +174,18 @@ def migrate_active_theme_paths(roots: Roots, backup_dir: Path) -> dict[str, Any]
             return new_root + node[len(legacy_root):]
         return node
 
-    rewritten = rewrite(document)
+    rewritten = dict(document)
+    if isinstance(document.get("source"), str):
+        rewritten["source"] = rewrite(document["source"])
+    target_sources = document.get("target_sources")
+    if isinstance(target_sources, dict):
+        rewritten_targets = dict(target_sources)
+        for target_name, value in target_sources.items():
+            if isinstance(value, dict) and isinstance(value.get("source"), str):
+                rewritten_value = dict(value)
+                rewritten_value["source"] = rewrite(value["source"])
+                rewritten_targets[target_name] = rewritten_value
+        rewritten["target_sources"] = rewritten_targets
     if not changed:
         return {"moved": False}
 
@@ -194,10 +205,95 @@ def migrate_active_theme_paths(roots: Roots, backup_dir: Path) -> dict[str, Any]
     }
 
 
+def _state_tree_paths(root: Path) -> list[Path]:
+    """Return a state tree's entries without following directory links."""
+    return sorted(root.rglob("*"))
+
+
+def _validate_state_tree(root: Path) -> None:
+    """Reject state entries that could make a migration leave its root."""
+    if not root.is_dir() or root.is_symlink():
+        raise RuntimeError(f"theme state root is not a real directory: {root}")
+    resolved_root = root.resolve()
+    for path in _state_tree_paths(root):
+        if not path.is_symlink():
+            if not path.is_file() and not path.is_dir():
+                raise RuntimeError(f"unsupported entry in theme state: {path}")
+            continue
+        link = os.readlink(path)
+        if os.path.isabs(link):
+            raise RuntimeError(f"absolute link is not allowed in theme state: {path}")
+        target = (path.parent / link).resolve()
+        try:
+            target.relative_to(resolved_root)
+        except ValueError as error:
+            raise RuntimeError(f"theme state link escapes its root: {path}") from error
+        if not target.exists():
+            raise RuntimeError(f"broken link in theme state: {path}")
+
+
+def _remove_tree(path: Path) -> None:
+    if path.is_symlink() or path.is_file():
+        path.unlink()
+    elif path.is_dir():
+        shutil.rmtree(path)
+
+
+def migrate_theme_state_root(roots: Roots, backup_dir: Path) -> dict[str, Any]:
+    """Move generated theme state into the lifecycle-owned state tree.
+
+    The old root is a pre-release layout. A complete copy of it is retained
+    in the migration backup so a failed lifecycle transaction can restore the
+    exact old topology, but a successful migration leaves no old path behind.
+    """
+    legacy = roots.state.parent / "blox-theme"
+    canonical = roots.theme_state
+    if legacy.is_symlink():
+        raise RuntimeError(f"refusing unsupported pre-release theme-state link: {legacy}")
+    if not legacy.exists():
+        return {"moved": False, "detail": {"source": "not-found"}}
+    if not legacy.is_dir():
+        raise RuntimeError(f"legacy theme state is not a directory: {legacy}")
+    if canonical.is_symlink() or canonical.exists():
+        raise RuntimeError(f"refusing to replace existing canonical theme state: {canonical}")
+
+    _validate_state_tree(legacy)
+    backup_dir.mkdir(parents=True, exist_ok=True)
+    pre_image = backup_dir / "legacy-theme-state"
+    stage = canonical.parent / f".theme-state-stage-{uuid.uuid4().hex}"
+    moved_original = backup_dir / "legacy-theme-state-original"
+    try:
+        shutil.copytree(legacy, pre_image, symlinks=True)
+        shutil.copytree(legacy, stage, symlinks=True)
+        _validate_state_tree(stage)
+        os.replace(stage, canonical)
+        os.replace(legacy, moved_original)
+    except BaseException:
+        if stage.exists() or stage.is_symlink():
+            _remove_tree(stage)
+        if legacy.is_symlink():
+            legacy.unlink()
+        if moved_original.exists() or moved_original.is_symlink():
+            os.replace(moved_original, legacy)
+        if canonical.exists() or canonical.is_symlink():
+            _remove_tree(canonical)
+        raise
+    return {
+        "moved": True,
+        "detail": {
+            "legacy_root": str(legacy),
+            "destination": str(canonical),
+        },
+        "pre_image_tree": str(pre_image),
+        "moved_original": str(moved_original),
+    }
+
+
 MIGRATIONS: list[Migration] = [
     Migration("calendar-config-xdg", "Move the calendar allow-list into $XDG_CONFIG_HOME/blox.", migrate_calendar_config),
     Migration("shell-env-config", "Move the personal shell environment file into $XDG_CONFIG_HOME/blox.", migrate_shell_env),
     Migration("helium-desktop-id", "Remove the old Blox-owned Helium desktop entry after its ID rename.", migrate_legacy_helium_desktop_entry),
+    Migration("theme-state-root", "Move generated theme state under $XDG_STATE_HOME/blox/theme.", migrate_theme_state_root, keep_on_rollback=True),
     Migration("legacy-user-themes", "Relocate imported themes from $XDG_DATA_HOME/blox/themes into the separated user-data root.", migrate_legacy_user_themes, keep_on_rollback=True),
     Migration("active-theme-paths", "Repoint the active theme manifest at the relocated user-data root.", migrate_active_theme_paths, keep_on_rollback=True),
 ]
@@ -238,6 +334,8 @@ def run_migrations(roots: Roots, from_version: str, to_version: str, package_rel
             "result": "applied" if detail.get("moved") else "nothing-to-do",
             "created": detail.get("created", []),
             "pre_image_file": detail.get("pre_image_file"),
+            "pre_image_tree": detail.get("pre_image_tree"),
+            "moved_original": detail.get("moved_original"),
             "conflicts": detail.get("conflicts", []),
             "sources": detail.get("sources", []),
             "modified": bool(detail.get("pre_image_file")),
@@ -266,6 +364,22 @@ def _prune_empty_dirs(target_root: Path, stop_at: Path) -> None:
         current = current.parent
 
 
+def _restore_theme_state_root(entry: dict[str, Any]) -> None:
+    """Restore the old state directory after a failed transaction."""
+    detail = entry.get("detail") or {}
+    legacy = Path(detail["legacy_root"])
+    canonical = Path(detail["destination"])
+    pre_image = Path(entry["pre_image_tree"])
+    if legacy.is_symlink() or legacy.exists():
+        _remove_tree(legacy)
+    if canonical.is_symlink() or canonical.exists():
+        _remove_tree(canonical)
+    shutil.copytree(pre_image, legacy, symlinks=True)
+    backup_root = Path(entry.get("pre_image", ""))
+    if backup_root.is_dir():
+        shutil.rmtree(backup_root)
+
+
 def restore_ledger_after(roots: Roots, lines_before: int) -> int:
     """Undo every migration appended after `lines_before` and truncate.
 
@@ -276,6 +390,10 @@ def restore_ledger_after(roots: Roots, lines_before: int) -> int:
         return 0
     undone = 0
     for entry in reversed(entries[lines_before:]):
+        if entry.get("migration") == "theme-state-root" and entry.get("pre_image_tree"):
+            _restore_theme_state_root(entry)
+            undone += 1
+            continue
         if entry.get("modified"):
             pre_image = entry.get("pre_image_file")
             destination = (entry.get("detail") or {}).get("destination")
@@ -306,9 +424,12 @@ def restore_ledger_after(roots: Roots, lines_before: int) -> int:
                 break
             parent = parent.parent
     kept = entries[:lines_before]
-    with roots.migrations_ledger.open("w", encoding="utf-8") as handle:
-        for entry in kept:
-            handle.write(json.dumps(entry, sort_keys=True) + "\n")
+    if kept:
+        with roots.migrations_ledger.open("w", encoding="utf-8") as handle:
+            for entry in kept:
+                handle.write(json.dumps(entry, sort_keys=True) + "\n")
+    else:
+        roots.migrations_ledger.unlink(missing_ok=True)
     return undone
 
 

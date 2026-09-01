@@ -21,6 +21,7 @@ EXIT_DENIED = 4
 EXIT_CONFLICT = 5
 EXIT_INVALID_DATA = 6
 EXIT_INTERNAL = 1
+THEME_LIBRARY = SCRIPT_ROOT.parents[1] / "themes" / "lib"
 
 
 def result(ok: bool, code: str, message: str = "", data: Any = None) -> dict[str, Any]:
@@ -130,6 +131,200 @@ def run_doctor(as_json: bool) -> tuple[int, dict[str, Any], bool]:
     return EXIT_OK, result(True, "ok", "", report), False
 
 
+def _theme_modules():
+    """Load the installed theme library without depending on a checkout."""
+    if not THEME_LIBRARY.is_dir():
+        raise ImportError(f"installed theme library is missing: {THEME_LIBRARY}")
+    if str(THEME_LIBRARY) not in sys.path:
+        sys.path.insert(0, str(THEME_LIBRARY))
+    from blox_theme import core, runtime
+
+    return core, runtime
+
+
+def _redact_theme_paths(value: Any) -> Any:
+    """Keep public theme output useful without leaking the home directory."""
+    if isinstance(value, dict):
+        return {key: _redact_theme_paths(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_redact_theme_paths(item) for item in value]
+    if isinstance(value, str):
+        home = str(Path.home())
+        return value.replace(home, "~") if home and home != "/" else value
+    return value
+
+
+def _theme_error(command: str, code: str, message: str, data: Any = None) -> dict[str, Any]:
+    return result(False, code, _redact_theme_paths(message), _redact_theme_paths(data))
+
+
+def _theme_load(command: str, reference: str, core):
+    try:
+        path, resolved = core.load_theme(reference)
+        source = core.load_json(path)
+        if not isinstance(source, dict):
+            raise ValueError("theme source must be a JSON object")
+        checked = core.validate_theme(resolved, check_dependencies=False, source_path=path)
+    except FileNotFoundError as error:
+        return None, None, None, _theme_error(command, "invalid-data", str(error))
+    except (OSError, json.JSONDecodeError, ValueError, TypeError) as error:
+        return None, None, None, _theme_error(command, "invalid-data", str(error))
+    if checked.errors:
+        return None, None, None, _theme_error(command, "invalid-data", "; ".join(checked.errors))
+    return path, source, resolved, None
+
+
+def _theme_origin(path, theme, core) -> dict[str, Any]:
+    if core.is_builtin_theme_path(path):
+        return {"kind": "builtin", "theme_id": theme["id"], "fallback": False}
+    return {"kind": "builtin", "theme_id": core.DEFAULT_THEME_ID, "fallback": True}
+
+
+def _dependency_failure(messages: list[str]) -> bool:
+    markers = ("not installed", "required command", "dependency", "does not exist")
+    return any(marker in message.casefold() for message in messages for marker in markers)
+
+
+def _public_apply(command: str, path, theme, core, runtime, extra_warnings: list[str] | None = None):
+    try:
+        selected = runtime.configured_targets(theme)
+    except runtime.RuntimeFailure as error:
+        return _theme_error(command, "invalid-data", str(error))
+    if not selected:
+        return _theme_error(command, "invalid-data", "theme enables no implemented runtime targets")
+    checked = core.validate_theme(
+        theme,
+        check_dependencies=True,
+        targets=set(selected),
+        source_path=path,
+        dependency_gate=True,
+    )
+    if checked.errors:
+        code = "unavailable" if _dependency_failure(checked.errors) else "invalid-data"
+        return _theme_error(command, code, "; ".join(checked.errors), {"theme_id": theme["id"], "errors": checked.errors})
+    try:
+        manifest, warnings = runtime.apply_theme(
+            path,
+            theme,
+            runtime.TARGET_NAMES,
+            authoritative_targets=True,
+        )
+    except runtime.LockContended as error:
+        return _theme_error(command, "conflict", str(error))
+    except PermissionError as error:
+        return _theme_error(command, "permission-denied", str(error))
+    except (OSError, runtime.RuntimeFailure, TypeError, ValueError) as error:
+        return _theme_error(command, "internal", str(error))
+    all_warnings = list(extra_warnings or []) + checked.warnings + warnings
+    return result(
+        True,
+        "ok",
+        "",
+        _redact_theme_paths({
+            "generation": manifest["generation_id"],
+            "theme_id": manifest["theme_id"],
+            "active_targets": manifest["enabled_targets"],
+            "warnings": all_warnings,
+        }),
+    )
+
+
+def run_theme(args) -> tuple[int, dict[str, Any]]:
+    try:
+        core, runtime = _theme_modules()
+    except (ImportError, OSError) as error:
+        return EXIT_UNAVAILABLE, _theme_error("theme", "unavailable", str(error))
+
+    command = args.theme_command
+    if command == "list":
+        try:
+            entries = core.list_themes()
+        except (OSError, ValueError, TypeError) as error:
+            return EXIT_INTERNAL, _theme_error(command, "internal", str(error))
+        invalid = [entry for entry in entries if entry.get("invalid")]
+        data = {
+            "themes": entries,
+            "invalid": invalid,
+        }
+        if invalid:
+            message = f"{len(invalid)} theme source(s) are invalid"
+            return EXIT_INVALID_DATA, _theme_error(command, "invalid-data", message, data)
+        return EXIT_OK, result(True, "ok", "", _redact_theme_paths(data))
+
+    if command in ("show", "preview", "apply"):
+        path, source, theme, failure = _theme_load(command, args.theme, core)
+        if failure:
+            return EXIT_INVALID_DATA, failure
+        assert path is not None and source is not None and theme is not None
+
+        if command == "show":
+            data = {
+                "id": theme["id"],
+                "path": str(path),
+                "source_kind": "builtin" if core.is_builtin_theme_path(path) else "user",
+                "origin": _theme_origin(path, theme, core),
+                "source": source,
+                "resolved": theme,
+                "inherited_paths": core.theme_inherited_paths(source, theme),
+            }
+            return EXIT_OK, result(True, "ok", "", _redact_theme_paths(data))
+
+        if command == "preview":
+            try:
+                files, warnings = core.render_theme(theme, path)
+                changes = core.rendered_diff(files)
+            except (OSError, KeyError, TypeError, ValueError) as error:
+                return EXIT_INTERNAL, _theme_error(command, "internal", f"theme preview failed: {error}")
+            data = {
+                "theme_id": theme["id"],
+                "source": str(path),
+                "resolved": theme,
+                "inherited_paths": core.theme_inherited_paths(source, theme),
+                "state_directory": str(core.state_dir()),
+                "changes": changes,
+                "rendered_files": list(files),
+            }
+            return EXIT_OK, result(True, "ok", "", _redact_theme_paths({**data, "warnings": warnings}))
+
+        return _theme_exit(_public_apply(command, path, theme, core, runtime))
+
+    if command == "reset":
+        try:
+            record = runtime.current_generation()
+        except runtime.RuntimeFailure as error:
+            return EXIT_INVALID_DATA, _theme_error(command, "invalid-data", str(error))
+        if not record:
+            return EXIT_UNAVAILABLE, _theme_error(command, "unavailable", "no active theme generation")
+        manifest = record[1]
+        origin = manifest.get("origin")
+        warnings: list[str] = []
+        origin_id = origin.get("theme_id") if isinstance(origin, dict) else None
+        if not isinstance(origin_id, str) or not origin_id:
+            origin_id = core.DEFAULT_THEME_ID
+            warnings.append(f"active generation has no origin metadata; reset used built-in {origin_id}")
+        path, _source, theme, failure = _theme_load(command, origin_id, core)
+        if failure:
+            return EXIT_INVALID_DATA, failure
+        assert path is not None and theme is not None
+        action = _public_apply(command, path, theme, core, runtime, warnings)
+        return _theme_exit(action)
+
+    return EXIT_USAGE, _theme_error(command, "usage", f"unknown theme command: {command}")
+
+
+def _theme_exit(action: dict[str, Any]) -> tuple[int, dict[str, Any]]:
+    if action.get("ok") is True:
+        return EXIT_OK, action
+    return {
+        "permission-denied": EXIT_DENIED,
+        "conflict": EXIT_CONFLICT,
+        "invalid-data": EXIT_INVALID_DATA,
+        "unavailable": EXIT_UNAVAILABLE,
+        "internal": EXIT_INTERNAL,
+        "usage": EXIT_USAGE,
+    }.get(action.get("code"), EXIT_INTERNAL), action
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="bloxctl")
     common = argparse.ArgumentParser(add_help=False)
@@ -143,9 +338,18 @@ def build_parser() -> argparse.ArgumentParser:
     doctor = groups.add_parser("doctor", help="local install health report")
     doctor.add_argument("--json", action="store_true", dest="as_json")
 
-    for name in ("settings", "theme"):
-        reserved = groups.add_parser(name)
-        reserved.add_argument("--json", action="store_true", dest="as_json")
+    settings = groups.add_parser("settings", help="settings commands reserved for a later phase")
+    settings.add_argument("--json", action="store_true", dest="as_json")
+
+    theme = groups.add_parser("theme", help="list, inspect, preview, apply and reset themes")
+    theme_commands = theme.add_subparsers(dest="theme_command", required=True)
+    for name in ("list", "reset"):
+        child = theme_commands.add_parser(name)
+        child.add_argument("--json", action="store_true", dest="as_json")
+    for name in ("show", "preview", "apply"):
+        child = theme_commands.add_parser(name)
+        child.add_argument("theme")
+        child.add_argument("--json", action="store_true", dest="as_json")
 
     lifecycle = groups.add_parser("lifecycle", help="install, update, rollback and uninstall")
     commands = lifecycle.add_subparsers(dest="lifecycle_command", required=True)
@@ -182,8 +386,12 @@ def run(argv: list[str]) -> tuple[int, dict[str, Any], bool, bool]:
         code, action, printed = run_doctor(as_json)
         return code, action, as_json, printed
 
-    if args.group in ("settings", "theme"):
-        return EXIT_UNAVAILABLE, result(False, "unavailable", f"The {args.group} commands belong to a later phase."), as_json, False
+    if args.group == "settings":
+        return EXIT_UNAVAILABLE, result(False, "unavailable", "The settings commands belong to a later phase."), as_json, False
+
+    if args.group == "theme":
+        code, action = run_theme(args)
+        return code, action, as_json, False
 
     if args.group == "lifecycle":
         options = {

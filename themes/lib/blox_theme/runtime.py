@@ -16,7 +16,7 @@ from typing import Any, Callable, Iterable
 
 from . import RENDERER_VERSION
 from .browser_targets import BROWSER_TARGET_BY_ID, browser_target, detect_browser_target
-from .core import DEFAULT_THEME_ID, EDITOR_THEME_PACKAGE_NAME, EDITOR_THEME_PUBLISHER, EDITOR_THEME_RELATIVE_PATH, EDITOR_THEME_VERSION, ZED_THEME_FAMILY_NAME, canonical_json, editor_colours, load_theme, render_theme, repository_root, resolve_wallpaper_path, sha256_text, state_dir
+from .core import DEFAULT_THEME_ID, EDITOR_THEME_PACKAGE_NAME, EDITOR_THEME_PUBLISHER, EDITOR_THEME_RELATIVE_PATH, EDITOR_THEME_VERSION, ZED_THEME_FAMILY_NAME, canonical_json, editor_colours, is_builtin_theme_path, load_theme, render_theme, repository_root, resolve_wallpaper_path, sha256_text, state_dir
 from .editor import EditorSettingsFailure, apply_fragment, members, read_settings_values, restore_settings
 from .obsidian import ObsidianFailure, needs_reapply as obsidian_needs_reapply, preflight as obsidian_preflight, publish as publish_obsidian_theme, reset as reset_obsidian_theme
 
@@ -213,7 +213,8 @@ def validate_generation(path: Path) -> dict[str, Any]:
     except (OSError, json.JSONDecodeError) as error:
         raise RuntimeFailure(f"cannot read generation manifest: {manifest_path}") from error
     required = {"schema_version", "renderer_version", "generation_id", "created_at", "operation", "source", "source_sha256", "theme_id", "enabled_targets", "target_sources", "files", "derived"}
-    if not isinstance(manifest, dict) or set(manifest) != required:
+    allowed = required | {"origin"}
+    if not isinstance(manifest, dict) or not required.issubset(manifest) or not set(manifest).issubset(allowed):
         raise RuntimeFailure(f"generation manifest has an invalid structure: {manifest_path}")
     if manifest["schema_version"] != 1 or manifest["generation_id"] != path.name:
         raise RuntimeFailure(f"generation manifest identity mismatch: {manifest_path}")
@@ -227,6 +228,16 @@ def validate_generation(path: Path) -> dict[str, Any]:
         raise RuntimeFailure(f"generation metadata types are invalid: {manifest_path}")
     if not isinstance(manifest["source_sha256"], str) or not re.fullmatch(r"[0-9a-f]{64}", manifest["source_sha256"]):
         raise RuntimeFailure(f"generation source digest is invalid: {manifest_path}")
+    if "origin" in manifest:
+        origin = manifest["origin"]
+        if (
+            not isinstance(origin, dict)
+            or set(origin) != {"kind", "theme_id", "fallback"}
+            or origin.get("kind") != "builtin"
+            or not isinstance(origin.get("theme_id"), str)
+            or not isinstance(origin.get("fallback"), bool)
+        ):
+            raise RuntimeFailure(f"generation origin metadata is invalid: {manifest_path}")
     if not isinstance(manifest["files"], dict) or not isinstance(manifest["enabled_targets"], list) or not isinstance(manifest["target_sources"], dict) or not isinstance(manifest["derived"], dict):
         raise RuntimeFailure(f"generation manifest types are invalid: {manifest_path}")
     if len(set(manifest["enabled_targets"])) != len(manifest["enabled_targets"]) or not set(manifest["enabled_targets"]).issubset(TARGET_FILES):
@@ -318,6 +329,17 @@ def _target_sources(previous_manifest: dict[str, Any] | None, selected: Iterable
     for target in selected:
         sources[target] = source
     return sources
+
+
+def _origin_metadata(theme_path: Path, theme: dict[str, Any]) -> dict[str, Any]:
+    """Record the built-in used by whole-theme reset.
+
+    User themes have no parent field in the v1 source schema, so they use the
+    canonical built-in as the documented reset fallback.
+    """
+    if is_builtin_theme_path(theme_path):
+        return {"kind": "builtin", "theme_id": theme["id"], "fallback": False}
+    return {"kind": "builtin", "theme_id": DEFAULT_THEME_ID, "fallback": True}
 
 
 def _switch_generation(root: Path, generation: Path) -> None:
@@ -2105,6 +2127,7 @@ def apply_theme(theme_path: Path, theme: dict[str, Any], targets: Iterable[str],
                 "source": str(theme_path.resolve()),
                 "source_sha256": sha256_text(canonical_json(theme)),
                 "theme_id": theme["id"],
+                "origin": _origin_metadata(theme_path, theme),
                 "enabled_targets": active_targets,
                 "target_sources": sources,
                 "files": _manifest_files(candidate),
@@ -2292,6 +2315,8 @@ def reset_target(target: str, run_command: Callable[[list[str]], subprocess.Comp
                 "files": _manifest_files(candidate),
                 "derived": previous_manifest["derived"],
             }
+            if previous_manifest.get("origin") is not None:
+                manifest["origin"] = previous_manifest["origin"]
             _write_text(candidate / "manifest.json", canonical_json(manifest))
             _fsync_directory(candidate)
             os.replace(candidate, final)

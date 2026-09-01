@@ -187,7 +187,7 @@ class CursorCacheTests(unittest.TestCase):
         with mock.patch("blox_theme.cursor._checked_run", side_effect=CursorFailure("injected compiler failure")):
             with self.assertRaisesRegex(CursorFailure, "injected"):
                 build_cursor_cache(self.metadata)
-        caches = self.root / "state/blox-theme/cursors"
+        caches = self.root / "state/blox/theme/cursors"
         self.assertEqual([], list(caches.iterdir()))
 
     def test_missing_toolchain_is_actionable(self) -> None:
@@ -242,7 +242,7 @@ class CursorCliTests(unittest.TestCase):
             response = json.loads(completed.stdout)
             self.assertEqual(3, completed.returncode)
             self.assertTrue(any("setup cursor --yes" in error for error in response["errors"]))
-            self.assertFalse((root / "state/blox-theme").exists())
+            self.assertFalse((root / "state/blox/theme").exists())
 
     def test_cursor_setup_requires_confirmation(self) -> None:
         completed = subprocess.run(

@@ -308,6 +308,61 @@ class MigrationRestoreTests(unittest.TestCase):
             self.assertEqual(existing.read_text(encoding="utf-8"), "{}")
 
 
+class ThemeStateRootMigrationTests(unittest.TestCase):
+    @staticmethod
+    def _pre_release_state(roots):
+        return roots.state.parent / "blox-theme"
+
+    def _seed_state(self, roots):
+        legacy = self._pre_release_state(roots)
+        generation = legacy / "generations" / "20260901T120000Z-12345678"
+        generation.mkdir(parents=True)
+        (generation / "cursor" / "metadata.json").parent.mkdir()
+        (generation / "cursor" / "metadata.json").write_text('{"cache_key":"abc"}\n', encoding="utf-8")
+        (generation / "integration.json").write_text('{"version":1}\n', encoding="utf-8")
+        (legacy / "current").symlink_to("generations/20260901T120000Z-12345678")
+        (legacy / "active.json").symlink_to("current/manifest.json")
+        (generation / "manifest.json").write_text("{}\n", encoding="utf-8")
+        return legacy
+
+    def test_state_root_migration_preserves_tree_links_and_can_restore(self):
+        with Fixture() as roots:
+            legacy = self._seed_state(roots)
+            results = migrations.run_migrations(roots, from_version="0.1.0", to_version="0.1.1")
+            entry = next(item for item in results if item["migration"] == "theme-state-root")
+
+            self.assertEqual(entry["result"], "applied")
+            self.assertTrue(roots.theme_state.is_dir())
+            self.assertFalse(legacy.exists())
+            self.assertEqual("generations/20260901T120000Z-12345678", os.readlink(roots.theme_state / "current"))
+            self.assertEqual("current/manifest.json", os.readlink(roots.theme_state / "active.json"))
+            self.assertEqual('{"cache_key":"abc"}\n', (roots.theme_state / "current/cursor/metadata.json").read_text(encoding="utf-8"))
+            self.assertTrue(Path(entry["pre_image_tree"]).is_dir())
+
+            repeated = migrations.run_migrations(roots, from_version="0.1.1", to_version="0.1.2")
+            repeated_entry = next(item for item in repeated if item["migration"] == "theme-state-root")
+            self.assertEqual(repeated_entry["result"], "nothing-to-do")
+
+            migrations.restore_ledger_after(roots, 0)
+            self.assertTrue(legacy.is_dir())
+            self.assertFalse(legacy.is_symlink())
+            self.assertFalse(roots.theme_state.exists())
+            self.assertEqual("generations/20260901T120000Z-12345678", os.readlink(legacy / "current"))
+            self.assertEqual('{"cache_key":"abc"}\n', (legacy / "current/cursor/metadata.json").read_text(encoding="utf-8"))
+
+    def test_state_root_migration_rejects_links_outside_the_tree(self):
+        with Fixture() as roots:
+            legacy = self._pre_release_state(roots)
+            legacy.mkdir(parents=True)
+            outside = Path(os.environ["HOME"]).parent / "outside"
+            outside.mkdir()
+            (legacy / "current").symlink_to(outside)
+            with self.assertRaisesRegex(RuntimeError, "absolute link"):
+                migrations.migrate_theme_state_root(roots, roots.backups / "test")
+            self.assertTrue(legacy.is_dir())
+            self.assertFalse(roots.theme_state.exists())
+
+
 class InstallMigrationsTests(unittest.TestCase):
     def test_first_install_runs_migrations_in_the_transaction(self):
         with Fixture() as roots:
@@ -322,6 +377,28 @@ class InstallMigrationsTests(unittest.TestCase):
             self.assertTrue((roots.config / "env").is_file())
             ledger = json.loads(roots.generations.read_text(encoding="utf-8"))
             self.assertEqual(ledger[-1]["result"], "installed")
+
+    def test_failed_first_install_restores_the_pre_release_theme_state_root(self):
+        with Fixture() as roots:
+            legacy = roots.state.parent / "blox-theme"
+            legacy.mkdir(parents=True)
+            (legacy / "cursors/cache-marker").parent.mkdir(parents=True)
+            (legacy / "cursors/cache-marker").write_bytes(b"old state")
+            real_copy2 = shutil.copy2
+
+            def exploding(source, destination, **kwargs):
+                if "/share/blox/" in str(destination):
+                    raise OSError("injected package copy failure")
+                return real_copy2(source, destination, **kwargs)
+
+            with mock.patch.object(installer.shutil, "copy2", side_effect=exploding):
+                with self.assertRaises(OSError):
+                    installer.install(roots)
+            self.assertTrue(legacy.is_dir())
+            self.assertFalse(legacy.is_symlink())
+            self.assertEqual(b"old state", (legacy / "cursors/cache-marker").read_bytes())
+            self.assertFalse(roots.theme_state.exists())
+            self.assertEqual([], migrations.read_ledger(roots))
 
 
 class LegacyThemeMigrationTests(unittest.TestCase):
@@ -548,6 +625,7 @@ class ActiveThemeManifestMigrationTests(unittest.TestCase):
                 "code": {"source": "/home/someone/code/personal-checkout/themes/builtin/frappe.json"},
                 "wallpaper": {"source": str(legacy_root / "themes" / "default-many-widgets.json")},
             },
+            "metadata": {"path": str(legacy_root / "themes" / "default-many-widgets.json")},
         }
         manifest_path = generations / "manifest.json"
         original = json.dumps(document, indent=2) + "\n"
@@ -564,20 +642,27 @@ class ActiveThemeManifestMigrationTests(unittest.TestCase):
             (legacy_home / "themes" / "default-many-widgets.json").write_text('{"id": "x"}\n', encoding="utf-8")
             active_link, manifest_path, original = self._seed_active_manifest(legacy_home)
             generation_id = "20260820T122956Z-1a6d2fd2"
-            current_link = manifest_path.parents[2] / "current"
+            pre_release_current = manifest_path.parents[2] / "current"
 
             report = installer.install(roots)
             entry = next(e for e in report["migrations"] if e["migration"] == "active-theme-paths")
             self.assertEqual(entry["result"], "applied")
 
-            self.assertTrue(active_link.is_symlink() and current_link.is_symlink())
-            self.assertEqual(os.readlink(active_link), "current/manifest.json")
-            self.assertEqual(os.readlink(current_link), f"generations/{generation_id}")
-            self.assertEqual(active_link.resolve(), manifest_path)
-            migrated = json.loads(manifest_path.read_text(encoding="utf-8"))
+            canonical_state = Path(os.environ["XDG_STATE_HOME"]) / "blox" / "theme"
+            migrated_active = canonical_state / "active.json"
+            migrated_current = canonical_state / "current"
+            migrated_manifest_path = canonical_state / "generations" / generation_id / "manifest.json"
+            self.assertTrue(canonical_state.is_dir())
+            self.assertFalse((canonical_state.parent / "blox-theme").exists())
+            self.assertTrue(migrated_active.is_symlink() and migrated_current.is_symlink())
+            self.assertEqual(os.readlink(migrated_active), "current/manifest.json")
+            self.assertEqual(os.readlink(migrated_current), f"generations/{generation_id}")
+            self.assertEqual(migrated_active.resolve(), migrated_manifest_path.resolve())
+            migrated = json.loads(migrated_manifest_path.read_text(encoding="utf-8"))
             new_prefix = str(roots.data / "themes")
             self.assertTrue(migrated["source"].startswith(new_prefix))
             self.assertTrue(migrated["target_sources"]["quickshell"]["source"].startswith(new_prefix))
+            self.assertTrue(migrated["metadata"]["path"].startswith(str(legacy_home / "themes")))
             # The checkout reference is machine policy and stays untouched.
             self.assertEqual(
                 migrated["target_sources"]["code"]["source"],
@@ -590,10 +675,9 @@ class ActiveThemeManifestMigrationTests(unittest.TestCase):
             # Transactional undo of just this entry restores the original.
             ledger = migrations.read_ledger(roots)
             migrations.restore_ledger_after(roots, len(ledger) - 1)
-            self.assertEqual(manifest_path.read_text(encoding="utf-8"), original)
-            self.assertTrue(active_link.is_symlink() and current_link.is_symlink())
-            self.assertEqual(os.readlink(active_link), "current/manifest.json")
-            self.assertEqual(os.readlink(current_link), f"generations/{generation_id}")
+            self.assertEqual(migrated_manifest_path.read_text(encoding="utf-8"), original)
+            self.assertFalse(active_link.is_symlink())
+            self.assertFalse(pre_release_current.is_symlink())
 
 
 if __name__ == "__main__":

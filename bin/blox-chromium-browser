@@ -12,7 +12,7 @@ else
 	exit 127
 fi
 
-state_root="${XDG_STATE_HOME:-${HOME}/.local/state}/blox-theme"
+state_root="${XDG_STATE_HOME:-${HOME}/.local/state}/blox/theme"
 theme_dir="${state_root}/current/chromium"
 cursor_metadata="${state_root}/current/cursor/metadata.json"
 ozone_args=()

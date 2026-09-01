@@ -24,6 +24,7 @@ EXIT_RENDER = 5
 EXIT_APPLY = 6
 EXIT_RELOAD_WARNING = 7
 EXIT_LOCKED = 8
+THEME_SCHEMA_VERSION = 1
 
 THEME_TARGET_KEYS = (
     "quickshell", "widgets", "gtk", "helium", "chromium", "cursor", "wallpaper", "kitty",
@@ -236,9 +237,14 @@ def resolve_wallpaper_path(value: str, source_path: Path | None = None) -> Path:
     return (root / path).resolve()
 
 
-def state_dir() -> Path:
+def state_home() -> Path:
     root = os.environ.get("XDG_STATE_HOME")
-    return Path(root).expanduser() / "blox-theme" if root else Path.home() / ".local/state/blox-theme"
+    return Path(root).expanduser() if root else Path.home() / ".local/state"
+
+
+def state_dir() -> Path:
+    """Return the single canonical root for generated theme state."""
+    return state_home() / "blox" / "theme"
 
 
 def canonical_json(value: Any) -> str:
@@ -311,6 +317,13 @@ def apply_theme_defaults(theme: dict[str, Any]) -> dict[str, Any]:
     required_errors = source_required_errors(theme)
     if required_errors:
         raise ValueError("theme source is incomplete: " + "; ".join(required_errors))
+    version = theme.get("schema_version")
+    if type(version) is not int:
+        raise ValueError("theme schema_version must be an integer")
+    if version != THEME_SCHEMA_VERSION:
+        raise ValueError(
+            f"theme schema version {version} is unsupported; supported version is {THEME_SCHEMA_VERSION}"
+        )
     document = load_defaults_document()
     defaults = document["theme"]
     colours = defaults["colours"]

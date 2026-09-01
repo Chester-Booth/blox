@@ -61,7 +61,7 @@ def resolve_command(desktop_id: str) -> tuple[list[str], str | None]:
 def active_cursor_environment() -> dict[str, str]:
     """Pass the active cursor choice to applications launched from the menu."""
     state_root = Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local/state")).expanduser()
-    metadata_path = state_root / "blox-theme/current/cursor/metadata.json"
+    metadata_path = state_root / "blox/theme/current/cursor/metadata.json"
     try:
         metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):

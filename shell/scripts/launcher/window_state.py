@@ -14,9 +14,6 @@ TITLES = {"Blox Clipboard": "clipboard", "Blox Emoji Picker": "emoji"}
 PICKER_CLASS = "org.quickshell"
 IPC = Path(__file__).resolve().parents[1] / "ipc.sh"
 STATE = Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local/state")) / "blox" / "launcher-window-geometry.json"
-# Pre-migration location. Read once as a fallback so an upgrade keeps saved
-# window positions; new writes always go to the owned state root.
-LEGACY_STATE = STATE.parent.parent / "blox-launcher" / "window-geometry.json"
 
 
 def clients() -> list[dict]:
@@ -37,13 +34,12 @@ def cursor_position() -> tuple[int, int] | None:
 
 
 def load() -> dict:
-    for path in (STATE, LEGACY_STATE):
-        try:
-            value = json.loads(path.read_text())
-        except (OSError, json.JSONDecodeError):
-            continue
-        if isinstance(value, dict):
-            return value
+    try:
+        value = json.loads(STATE.read_text())
+    except (OSError, json.JSONDecodeError):
+        return {}
+    if isinstance(value, dict):
+        return value
     return {}
 
 

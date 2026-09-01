@@ -50,7 +50,7 @@ Validate script output contracts with:
 
 The calendar reads Google calendars through the existing gcalcli sign-in. On first use, only the primary writable calendar can be changed.
 
-To allow another writable calendar, create `~/.config/quickshell/blox/calendar.json`:
+To allow another writable calendar, create `~/.config/blox/calendar.json`:
 
 ```json
 {

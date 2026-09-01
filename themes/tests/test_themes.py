@@ -1373,8 +1373,8 @@ class CliContractTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             environment = os.environ.copy()
             environment["XDG_STATE_HOME"] = temporary
-            state = Path(temporary) / "blox-theme"
-            state.mkdir()
+            state = Path(temporary) / "blox/theme"
+            state.mkdir(parents=True)
             link = Path(temporary) / "state-link"
             link.symlink_to(state, target_is_directory=True)
             for output in (state, state / "candidate", link / "candidate"):
@@ -1387,7 +1387,7 @@ class CliContractTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             environment = os.environ.copy()
             environment["XDG_STATE_HOME"] = temporary
-            current = Path(temporary) / "blox-theme/current"
+            current = Path(temporary) / "blox/theme/current"
             files, _ = render_theme(load_theme("catppuccin-mocha")[1])
             for name, content in files.items():
                 path = current / name

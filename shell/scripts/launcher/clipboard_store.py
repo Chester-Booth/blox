@@ -270,8 +270,8 @@ class Store:
         return removed
 
     def clear(self) -> int:
-        rows = self.db.execute("SELECT payload_path FROM items").fetchall()
-        self.db.execute("DELETE FROM items")
+        rows = self.db.execute("SELECT payload_path FROM items WHERE pinned_at IS NULL").fetchall()
+        self.db.execute("DELETE FROM items WHERE pinned_at IS NULL")
         self.db.commit()
         for row in rows:
             (self.payloads / row["payload_path"]).unlink(missing_ok=True)

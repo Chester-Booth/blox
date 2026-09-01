@@ -143,7 +143,7 @@ FloatingWindow {
 
                     compact: true
                     destructive: true
-                    text: "       Clear all"
+                    text: "       Clear"
                     iconName: ""
                     enabled: !controller.actionBusy
                     onClicked: controller.clearAll()

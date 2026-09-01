@@ -95,12 +95,15 @@ class ClipboardStoreTests(unittest.TestCase):
             self.store.ingest("text/plain", b"orphan", "orphan")
         self.assertEqual([], list(self.store.payloads.iterdir()))
 
-    def test_clear_removes_rows_and_payloads(self):
+    def test_clear_removes_only_unpinned_rows_and_payloads(self):
+        pinned = self.store.ingest("text/plain", b"pinned", "pinned")
+        self.store.pin(pinned, True)
+        pinned_payload = self.store.payloads / self.store.item(pinned)["payload_path"]
         self.store.ingest("text/plain", b"one", "one")
         self.store.ingest("image/png", b"image", "image")
         self.assertEqual(2, self.store.clear())
-        self.assertEqual([], self.store.list()[0])
-        self.assertEqual([], list(self.store.payloads.iterdir()))
+        self.assertEqual([pinned], [row["id"] for row in self.store.list()[0]])
+        self.assertEqual([pinned_payload], list(self.store.payloads.iterdir()))
 
     def test_pages_use_an_exclusive_cursor(self):
         for value in range(6):

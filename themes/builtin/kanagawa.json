@@ -82,6 +82,10 @@
   },
   "shell": {
     "bar": {
+      "border": false,
+      "density_automatic": true,
+      "density_scale": 1.0,
+      "edge_inset": 0,
       "items": [
         {
           "enabled": true,
@@ -203,7 +207,10 @@
           "visibility": "normal"
         }
       ],
-      "position": "bottom"
+      "position": "bottom",
+      "radius_automatic": true,
+      "radius_scale": 1.25,
+      "separate_groups": false
     },
     "notifications": {
       "offset_x": 0,
@@ -222,10 +229,10 @@
     "cursor": true,
     "cursor_editor": true,
     "glow": true,
-    "grub": false,
+    "grub": true,
     "gtk": true,
-    "helium": false,
-    "chromium": false,
+    "helium": true,
+    "chromium": true,
     "hyprland": true,
     "hyprlock": true,
     "kitty": true,
@@ -233,10 +240,15 @@
     "obsidian": true,
     "powerlevel10k": true,
     "quickshell": true,
-    "sddm": false,
+    "sddm": true,
     "stylus": true,
+    "t3code": true,
     "wallpaper": true,
-    "widgets": true
+    "widgets": true,
+    "zed": true
+  },
+  "stylus": {
+    "style_set": "recommended"
   },
   "terminal": {
     "ansi_source": "override",

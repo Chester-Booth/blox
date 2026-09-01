@@ -16,7 +16,7 @@ from pathlib import Path
 THEMES = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(THEMES / "lib"))
 
-from blox_theme.core import apply_theme_defaults, defaults_schema_errors  # noqa: E402
+from blox_theme.core import THEME_TARGET_KEYS, apply_theme_defaults, defaults_schema_errors, source_required_errors  # noqa: E402
 
 SCHEMA = json.loads((THEMES / "schema" / "theme.schema.json").read_text(encoding="utf-8"))
 DEFAULTS_DOCUMENT = json.loads((THEMES / "defaults" / "v1.json").read_text(encoding="utf-8"))
@@ -25,18 +25,7 @@ CANONICAL_THEME = json.loads((THEMES / "builtin" / "catppuccin-frappe.json").rea
 # Provenance stamped by generators.py onto generated themes only; hand
 # written built-ins must not fake it.
 DERIVED_PREFIXES = ("generator.",)
-OPTIONAL_STATE_LEAVES = {
-    "shape.window_gap",
-    "shell.bar.separate_groups",
-    "shell.bar.border",
-    "shell.bar.edge_inset",
-    "shell.bar.radius_automatic",
-    "shell.bar.radius_scale",
-    "shell.bar.density_automatic",
-    "shell.bar.density_scale",
-    "targets.t3code",
-    "stylus.style_set",
-}
+OPTIONAL_STATE_LEAVES: set[str] = set()
 
 
 def _resolve(node: dict) -> dict:
@@ -102,9 +91,12 @@ class BuiltinTruthTests(unittest.TestCase):
             ],
         )
 
-    def test_optional_absence_has_one_named_meaning(self) -> None:
+    def test_builtins_explicitly_state_optional_settings(self) -> None:
         self.assertEqual(
             OPTIONAL_STATE_LEAVES,
+            set(),
+        )
+        self.assertEqual(
             {
                 "shape.window_gap",
                 "shell.bar.separate_groups",
@@ -114,13 +106,41 @@ class BuiltinTruthTests(unittest.TestCase):
                 "shell.bar.radius_scale",
                 "shell.bar.density_automatic",
                 "shell.bar.density_scale",
+                "hyprland.inactive_opacity",
+                "hyprland.border_size",
                 "targets.t3code",
+                "targets.zed",
+                "stylus.style_set",
+            } & set(ALL_LEAVES),
+            {
+                "shape.window_gap",
+                "shell.bar.separate_groups",
+                "shell.bar.border",
+                "shell.bar.edge_inset",
+                "shell.bar.radius_automatic",
+                "shell.bar.radius_scale",
+                "shell.bar.density_automatic",
+                "shell.bar.density_scale",
+                "hyprland.inactive_opacity",
+                "hyprland.border_size",
+                "targets.t3code",
+                "targets.zed",
                 "stylus.style_set",
             },
         )
+
+    def test_builtins_enable_every_target(self) -> None:
+        expected = set(THEME_TARGET_KEYS)
         for name, document in self.documents():
             with self.subTest(theme=name):
-                self.assertIsNone(document["shape"].get("window_gap"))
+                targets = document["targets"]
+                self.assertEqual(set(targets), expected)
+                self.assertTrue(all(targets.values()))
+
+    def test_defaults_keep_every_target_disabled_for_sparse_user_sources(self) -> None:
+        targets = DEFAULTS_DOCUMENT["theme"]["targets"]
+        self.assertEqual(set(targets), set(THEME_TARGET_KEYS))
+        self.assertTrue(all(value is False for value in targets.values()))
 
     def test_defaults_document_matches_its_own_schema(self) -> None:
         self.assertEqual(defaults_schema_errors(DEFAULTS_DOCUMENT), [])
@@ -154,16 +174,30 @@ class BuiltinTruthTests(unittest.TestCase):
         )
         self.assertEqual(defaults["fonts"], canonical["fonts"])
         self.assertEqual(defaults["shape"], canonical["shape"])
+        self.assertEqual(defaults["hyprland"], canonical["hyprland"])
         self.assertEqual(defaults["shell"]["bar"]["position"], canonical["shell"]["bar"]["position"])
         self.assertFalse(defaults["shell"]["bar"]["separate_groups"])
         self.assertFalse(defaults["shell"]["bar"]["border"])
         self.assertEqual(0, defaults["shell"]["bar"]["edge_inset"])
+        self.assertTrue(defaults["shell"]["bar"]["radius_automatic"])
+        self.assertEqual(1.25, defaults["shell"]["bar"]["radius_scale"])
+        self.assertTrue(defaults["shell"]["bar"]["density_automatic"])
+        self.assertEqual(1.0, defaults["shell"]["bar"]["density_scale"])
         self.assertEqual(defaults["shell"]["bar"]["reset_items"], canonical["shell"]["bar"]["items"])
         self.assertEqual(defaults["shell"]["osd"], canonical["shell"]["osd"])
         self.assertEqual(defaults["shell"]["notifications"], canonical["shell"]["notifications"])
         self.assertEqual(defaults["wallpaper"], canonical["wallpaper"])
         self.assertEqual(defaults["terminal"], canonical["terminal"])
         self.assertEqual(DEFAULTS_DOCUMENT["widgets"]["profile"], canonical["widgets"]["profile"])
+
+    def test_sparse_source_requires_colours_and_wallpaper(self) -> None:
+        sparse = {"schema_version": 1, "id": "sparse", "name": "Sparse"}
+        errors = source_required_errors(sparse)
+        self.assertIn("$: missing required property 'colours'", errors)
+        self.assertIn("$: missing required property 'wallpaper'", errors)
+
+        missing_colour = dict(sparse, colours={"background": "#000000"}, wallpaper={"path": "wallpaper.png", "fit": "cover"})
+        self.assertIn("colours: missing required property 'accent'", source_required_errors(missing_colour))
 
     def test_sparse_theme_uses_the_canonical_fallback_values(self) -> None:
         source = json.loads((THEMES.parent / "tests" / "qml" / "fixtures" / "sparse-theme.json").read_text(encoding="utf-8"))

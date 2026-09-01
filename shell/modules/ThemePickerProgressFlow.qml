@@ -174,7 +174,7 @@ ColumnLayout {
         Text {
             visible: controller.guideTarget === "obsidian"
             Layout.fillWidth: true
-            text: "1. Install and select the Minimal theme, then enable the Style Settings plugin.\n2. Open Style Settings in its own pane and choose Import.\n3. Select the generated style-settings.json file and confirm the import."
+            text: "Obsidian updates live when it is open. When it is closed, Blox saves the native theme package and selection for the next launch. Blox restores the previous theme when the target is disabled. If more than one vault is open, set BLOX_OBSIDIAN_VAULT to its ID or absolute path and apply again."
             color: Theme.foreground
             wrapMode: Text.Wrap
         }

@@ -67,25 +67,53 @@ class FakeIconTheme:
 
 
 class AppControllerTests(unittest.TestCase):
-    def test_electron_editors_avoid_the_transient_systemd_scope(self):
-        self.assertTrue(desktop_exec._launches_detached_editor("code", ["code"]))
-        self.assertTrue(desktop_exec._launches_detached_editor("code.desktop", ["/usr/bin/code"]))
-        self.assertTrue(desktop_exec._launches_detached_editor("code-url-handler.desktop", ["code"]))
-        self.assertTrue(desktop_exec._launches_detached_editor("cursor.desktop", ["/usr/share/cursor/cursor"]))
-        self.assertTrue(desktop_exec._launches_detached_editor("cursor-url-handler.desktop", ["cursor"]))
-        self.assertFalse(desktop_exec._launches_detached_editor("org.example.desktop", ["code"]))
-        self.assertFalse(desktop_exec._launches_detached_editor("code.desktop", ["kitty"]))
-
     @mock.patch.object(desktop_exec.subprocess, "run")
     @mock.patch.object(desktop_exec.subprocess, "Popen")
     @mock.patch.object(desktop_exec, "resolve_command", return_value=(["code"], None))
     @mock.patch.object(desktop_exec.sys, "argv", ["desktop_exec.py", "code.desktop"])
-    def test_code_launcher_detaches_without_systemd(self, _resolve, popen, run):
+    def test_desktop_launcher_detaches_without_a_transient_systemd_scope(self, _resolve, popen, run):
         popen.return_value.pid = 1234
         self.assertEqual(0, desktop_exec.main())
         run.assert_not_called()
         self.assertEqual(["code"], popen.call_args.args[0])
         self.assertTrue(popen.call_args.kwargs["start_new_session"])
+
+    @mock.patch.object(desktop_exec.subprocess, "Popen")
+    def test_launch_detached_preserves_the_working_directory_and_environment(self, popen):
+        popen.return_value.pid = 1234
+        environment = {"WAYLAND_DISPLAY": "wayland-1", "XCURSOR_THEME": "blox-generated"}
+        self.assertEqual(0, desktop_exec.launch_detached(["thunar"], "~/Documents", environment))
+        self.assertEqual(["thunar"], popen.call_args.args[0])
+        self.assertEqual(str(Path.home() / "Documents"), popen.call_args.kwargs["cwd"])
+        self.assertEqual(environment, popen.call_args.kwargs["env"])
+        self.assertTrue(popen.call_args.kwargs["start_new_session"])
+
+    @mock.patch.object(desktop_exec.subprocess, "run")
+    @mock.patch.object(desktop_exec.subprocess, "Popen")
+    def test_t3code_launcher_uses_a_transient_user_service(self, popen, run):
+        run.return_value.returncode = 0
+        environment = {
+            "WAYLAND_DISPLAY": "wayland-1",
+            "XCURSOR_THEME": "blox-generated",
+            "ELECTRON_RUN_AS_NODE": "1",
+        }
+
+        self.assertEqual(
+            0,
+            desktop_exec.launch_detached(
+                ["t3code-nightly"], "/tmp", environment, "t3code.desktop"
+            ),
+        )
+
+        popen.assert_not_called()
+        command = run.call_args.args[0]
+        self.assertEqual(command[:5], ["systemd-run", "--user", "--collect", "--no-block", "--quiet"])
+        self.assertTrue(any(argument.startswith("--unit=blox-desktop-t3code-") for argument in command))
+        self.assertIn("--working-directory=/tmp", command)
+        self.assertIn("--setenv=XCURSOR_THEME=blox-generated", command)
+        self.assertNotIn("--setenv=ELECTRON_RUN_AS_NODE=1", command)
+        self.assertEqual(command[-2:], ["--", "t3code-nightly"])
+        self.assertEqual(str(Path("/tmp")), run.call_args.kwargs["cwd"])
 
     def test_helium_launcher_loads_the_active_blox_theme(self):
         root = Path(tempfile.mkdtemp(prefix="blox-helium-launcher-"))
@@ -288,6 +316,11 @@ class AppControllerTests(unittest.TestCase):
             check=False,
         )
         self.assertEqual(0, probe.returncode, (probe.stderr or "") + (probe.stdout or ""))
+
+    def test_launcher_accepts_a_successful_apply_with_warnings(self):
+        source = LAUNCHER.read_text(encoding="utf-8")
+        self.assertIn("response.ok === true && response.data && response.data.theme_id", source)
+        self.assertNotIn("(exitCode === 0 || exitCode === 10) && response.data", source)
 
     def test_active_cursor_environment_uses_the_current_generation(self):
         state = Path(tempfile.mkdtemp(prefix="blox-desktop-cursor-"))

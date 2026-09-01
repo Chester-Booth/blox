@@ -1,5 +1,6 @@
 {
   "btop/theme.theme": "748df56f25d086020be0c3491ddaaf2c000d5b057c5ac818867299705fd4673c",
+  "chromium/manifest.json": "6300678c5b78d7550b887d75243f0b8de6ebdd1b8ceb2040a664933bf6f74af9",
   "code/package.json": "0d860b87ed2cde25923b89fa17c71c4997fc3791f736f4e3e2b414ff3f13c45c",
   "code/settings.json": "8c5da893c91490dd9f1d0f83bb6145c0573bf7f80ed13c41002a9dc179b7fb28",
   "code/themes/blox-generated-color-theme.json": "4cc11a5da551973b3ad7db7b8783dab8b3bb4f9dac090984e9df1aef152d6159",
@@ -13,16 +14,20 @@
   "gtk/gtk-4.0/gtk.css": "34aff4f12e5f1853ee429e74ccf9f246a518f02c6f0674f8c462306d42589dca",
   "gtk/gtk-4.0/settings.ini": "f4f56cd6d928071fe24f20d0e8ccb63295513a0856465ee010b2cfa3bda79a25",
   "gtk/metadata.json": "87da69a5e3fb4a824a63f1d3c8d7ac2f10f6eaa340ad399e7bf20ec5577b27e1",
+  "helium/manifest.json": "8c2b2a598cd4dc4ba23a91b170b153696ea11e8cb3cb8a70a3a485b8cf0aebec",
   "hypr/wallpaper.json": "343b44efae30b359349d8e3317b5d4e12f2163adcdda93c703a1bd321cfe4df6",
   "hyprland/hyprtoolkit.conf": "343e78ef46ab7af3971c32043ef43cf31e66f375c271831034a94ff8948a53ff",
   "hyprland/theme.lua": "de2b655a9ecd9cb9f24dab6566825fef208f14c11ee9690fa6e418e9b6d2d9f7",
   "hyprlock/theme.conf": "8f8d03cbd85fb3ed8962e4d8bbc3a38d8991a73cfe977946c5e6b24e18f0d5c0",
   "kitty/theme.conf": "4b91291faaad2ef045424285659c143b893b86fba7e1155956370d43711ab10e",
   "micro/blox-theme.micro": "d1320544bd17e4d3014f6167158bc48b9f6998fc0ced8e8c83c68205bc3e0582",
-  "obsidian/style-settings.json": "7992b5c7294d612e2aafae61eea991cfcc4b9fe919e488888eed102ecf81df4d",
+  "obsidian/manifest.json": "be45d9f7aa01dc903e8bcdf1b3d5db54973b66390b3d837e13cb2ef3bf5d34fa",
+  "obsidian/theme.css": "0b2eaa5603771c51c8b07a36c0c7a8009f7c427de04af93a371b8118b669cc35",
   "powerlevel10k/theme.zsh": "bf1c3cd6367387d3db722b9b7ae8d7d1fa8c40de13e2bc700d1fed953c3bc6b8",
   "quickshell/theme.json": "7ed052e505cb71b7687a00f5dc625b10ff45d07e8b0bef8bfd2a1e655854e4b3",
   "stylus/blox-system.user.css": "7c7622242c41ac04ef54213c0f5ea2130b9efe38165d7fe33f233756ae36f3c6",
   "stylus/manifest.json": "34f1605051718494f2cdc0c67cb4bd6404ca3ea6f79dca75f2578cdbdf0d844f",
-  "widgets/profile.json": "7c4f9c9afb574c705b0a26e852d73a17e3dfa8aa15300560f5d63c9dd3571dda"
+  "t3code/theme.json": "91af67fd1982131ca56bd56d239dc95a0a6d71776a2b1253ca54f9740ea2edd0",
+  "widgets/profile.json": "7c4f9c9afb574c705b0a26e852d73a17e3dfa8aa15300560f5d63c9dd3571dda",
+  "zed/themes/blox-generated.json": "3feb08cf69e73fb4e6415545718fdee1ef0f32edd05f6d3effe19d08210abeef"
 }

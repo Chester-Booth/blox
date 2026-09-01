@@ -803,7 +803,7 @@ Scope {
             root.applyingTheme = false;
             try {
                 const response = JSON.parse(output);
-                if ((exitCode === 0 || exitCode === 10) && response.data && response.data.theme_id) {
+                if (response.ok === true && response.data && response.data.theme_id) {
                     Theme.reload();
                     applyQuickshellReloadPending = Array.isArray(response.data.pending_reloads) && response.data.pending_reloads.indexOf("quickshell") >= 0;
                     root.applyProgressValue = 1;

@@ -3,11 +3,29 @@
   "id": "sparse",
   "name": "Sparse",
   "colours": {
-    "accent": "#010203"
+    "accent": "#010203",
+    "background": "#303446",
+    "surface": "#414559",
+    "surface_alt": "#51576d",
+    "foreground": "#c6d0f5",
+    "muted": "#a5adce",
+    "danger": "#e78284",
+    "success": "#a6d189",
+    "warning": "#e5c890",
+    "info": "#85c1dc",
+    "mauve": "#ca9ee6",
+    "teal": "#81c8be",
+    "selection_background": "#8caaee",
+    "selection_foreground": "#303446",
+    "border": "#737994"
   },
   "shell": {
     "bar": {
       "position": "top"
     }
+  },
+  "wallpaper": {
+    "path": "wallpapers/showcase/catppuccin-frappe.webp",
+    "fit": "cover"
   }
 }

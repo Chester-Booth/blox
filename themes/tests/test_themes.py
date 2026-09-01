@@ -170,8 +170,8 @@ class ThemeSchemaTests(unittest.TestCase):
             key: saved["shell"]["bar"][key]
             for key in ("radius_automatic", "radius_scale", "density_automatic", "density_scale")
         })
-        self.assertNotIn("radius_automatic", source["shell"]["bar"])
-        self.assertNotIn("density_automatic", source["shell"]["bar"])
+        self.assertTrue(source["shell"]["bar"]["radius_automatic"])
+        self.assertTrue(source["shell"]["bar"]["density_automatic"])
 
     def test_widget_schema_rejects_invalid_identifiers_and_unknown_fields(self) -> None:
         _, source = load_theme("catppuccin-mocha")
@@ -306,6 +306,25 @@ class RendererTests(unittest.TestCase):
         self.assertTrue(phase7.issubset(files))
         self.assertIn("code/settings.json", files)
 
+    def test_zed_renderer_emits_a_native_theme_family(self) -> None:
+        theme = copy.deepcopy(self.theme)
+        for key in theme["targets"]:
+            theme["targets"][key] = key == "zed"
+        files, _ = render_theme(theme)
+        self.assertEqual(["zed/themes/blox-generated.json"], list(files))
+        document = json.loads(files["zed/themes/blox-generated.json"])
+        self.assertEqual("https://zed.dev/schema/themes/v0.2.0.json", document["$schema"])
+        self.assertEqual("Blox generated", document["name"])
+        self.assertEqual("Blox", document["author"])
+        generated = document["themes"][0]
+        self.assertEqual(f"Blox: {theme['name']}", generated["name"])
+        self.assertEqual(theme["variant"], generated["appearance"])
+        style = generated["style"]
+        self.assertEqual(theme["colours"]["background"], style["editor.background"])
+        self.assertEqual(theme["colours"]["accent"], style["border.focused"])
+        self.assertEqual(theme["colours"]["info"], style["syntax"]["string"]["color"])
+        self.assertEqual(derive_ansi(theme)["color1"], style["terminal.ansi.red"])
+
     def test_shape_derivation_drives_quickshell_hyprland_and_gtk(self) -> None:
         cases = (
             (0, 0.75, None, 0, 0),
@@ -346,6 +365,24 @@ class RendererTests(unittest.TestCase):
         self.assertIn("rounding = 15,", files["hyprland/theme.lua"])
         self.assertIn("inactive_opacity = 0.62,", files["hyprland/theme.lua"])
 
+    def test_obsidian_renderer_maps_light_and_square_variants(self) -> None:
+        for variant, radius_scale, expected_scheme, expected_radius in (
+            ("dark", 1.25, "dark", "15px"),
+            ("light", 1.25, "light", "15px"),
+            ("dark", 0, "dark", "0px"),
+        ):
+            with self.subTest(variant=variant, radius=radius_scale):
+                theme = copy.deepcopy(self.theme)
+                theme["variant"] = variant
+                theme["shape"]["radius_scale"] = radius_scale
+                files, _ = render_theme(theme)
+                package = json.loads(files["obsidian/manifest.json"])
+                css = files["obsidian/theme.css"]
+                self.assertEqual("Blox generated", package["name"])
+                self.assertIn(f"color-scheme: {expected_scheme};", css)
+                self.assertIn(f"--radius-m: {expected_radius};", css)
+                self.assertIn(f"--background-primary: {theme['colours']['background']};", css)
+
     def test_code_target_renders_complete_extension(self) -> None:
         self.theme["targets"]["code"] = True
         files, _ = render_theme(self.theme)
@@ -366,9 +403,13 @@ class RendererTests(unittest.TestCase):
         self.assertGreater(len(code_theme["tokenColors"]), 100)
         self.assertNotIn("include", code_theme)
         self.assertTrue(code_theme["semanticHighlighting"])
-        obsidian = json.loads(files["obsidian/style-settings.json"])
-        self.assertEqual(self.theme["colours"]["background"], obsidian["minimal-style@@bg1@@dark"])
-        self.assertEqual(self.theme["colours"]["accent"], obsidian["minimal-style@@ax1@@dark"])
+        obsidian_manifest = json.loads(files["obsidian/manifest.json"])
+        self.assertEqual("Blox generated", obsidian_manifest["name"])
+        self.assertEqual("1.13.0", obsidian_manifest["minAppVersion"])
+        obsidian_css = files["obsidian/theme.css"]
+        self.assertIn(f"--background-primary: {self.theme['colours']['background']};", obsidian_css)
+        self.assertIn(f"--text-accent: {self.theme['colours']['accent']};", obsidian_css)
+        self.assertIn("--radius-m: 15px;", obsidian_css)
         shell = json.loads(files["quickshell/theme.json"])["shell"]
         expected_shell = self.theme.get("shell", {})
         self.assertEqual(expected_shell.get("bar", {}).get("position", "left"), shell["bar"]["position"])
@@ -652,6 +693,7 @@ class RendererTests(unittest.TestCase):
     def test_installed_gtk_mode_emits_no_generated_css(self) -> None:
         theme = copy.deepcopy(self.theme)
         theme["gtk"].update(mode="installed", base_theme="Adwaita")
+        theme["targets"]["helium"] = False
         files, _ = render_theme(theme)
         self.assertNotIn("gtk/gtk-3.0/gtk.css", files)
         self.assertNotIn("gtk/gtk-4.0/gtk.css", files)

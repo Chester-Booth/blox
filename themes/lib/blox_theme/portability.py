@@ -60,7 +60,10 @@ def migrate_theme(value: Any) -> tuple[dict[str, Any], list[str]]:
         version = next_version
     if version > THEME_SCHEMA_VERSION:
         raise PortabilityFailure(f"theme schema version {version} is newer than supported version {THEME_SCHEMA_VERSION}")
-    return apply_theme_defaults(theme), warnings
+    try:
+        return apply_theme_defaults(theme), warnings
+    except ValueError as error:
+        raise PortabilityFailure(str(error)) from error
 
 
 def dependency_notes(theme: dict[str, Any]) -> dict[str, Any]:

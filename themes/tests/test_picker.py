@@ -223,6 +223,31 @@ class ThemeLibraryMutationTests(unittest.TestCase):
             self.assertTrue(response["ok"])
             self.assertTrue(apply_theme.call_args.kwargs["authoritative_targets"])
 
+    def test_saved_apply_without_targets_owns_the_complete_target_selection(self) -> None:
+        path = self.user_library / "themes/editable-theme.json"
+        candidate = copy.deepcopy(self.source)
+        candidate.update(id="editable-theme", name="Editable Theme")
+        candidate["targets"] = {target: False for target in candidate["targets"]}
+        path.write_text(json.dumps(candidate), encoding="utf-8")
+        result = ({"generation_id": "test-generation", "theme_id": candidate["id"], "enabled_targets": []}, [])
+
+        with mock.patch("blox_theme.core.theme_path", return_value=path), mock.patch("blox_theme.cli.apply_theme", return_value=result) as apply_theme:
+            response, code = self.invoke("apply", "editable-theme", "--json")
+
+        self.assertEqual(0, code, response)
+        self.assertTrue(response["ok"])
+        self.assertTrue(apply_theme.call_args.kwargs["authoritative_targets"])
+        self.assertEqual(tuple(cli.TARGET_NAMES), apply_theme.call_args.args[2])
+
+        candidate["targets"]["quickshell"] = True
+        path.write_text(json.dumps(candidate), encoding="utf-8")
+        with mock.patch("blox_theme.core.theme_path", return_value=path), mock.patch("blox_theme.cli.apply_theme", return_value=result) as apply_theme:
+            response, code = self.invoke("apply", "editable-theme", "--targets", "quickshell", "--json")
+
+        self.assertEqual(0, code, response)
+        self.assertFalse(apply_theme.call_args.kwargs["authoritative_targets"])
+        self.assertEqual(("quickshell",), apply_theme.call_args.args[2])
+
     def test_mutations_reject_a_non_object_source(self) -> None:
         path = self.user_library / "themes/broken.json"
         path.write_text("[]", encoding="utf-8")
@@ -554,6 +579,8 @@ class PickerIntegrationSourceTests(unittest.TestCase):
         self.assertIn('readonly property var applicationTargetKeys:', controller)
         self.assertIn('"t3code"', controller)
         self.assertIn('if (key === "t3code")', controller)
+        self.assertIn('"zed"', controller)
+        self.assertIn('if (key === "zed")', controller)
         self.assertIn('text: "Core"', advanced)
         self.assertIn('text: "Applications"', advanced)
         self.assertIn('text: "Browsers"', advanced)
@@ -565,6 +592,7 @@ class PickerIntegrationSourceTests(unittest.TestCase):
         self.assertIn('"helium": ["helium/manifest.json"]', generation)
         self.assertIn('"chromium": ["chromium/manifest.json"]', generation)
         self.assertIn('"t3code": ["t3code/theme.json"]', generation)
+        self.assertIn('"zed": ["zed/themes/blox-generated.json"]', generation)
         self.assertIn('"stylus": ["stylus/blox-system.user.css", "stylus/manifest.json"]', generation)
         self.assertIn('["helium", "chromium"].indexOf(key) >= 0', controller)
 
@@ -630,7 +658,7 @@ class PickerIntegrationSourceTests(unittest.TestCase):
         self.assertIn("request.inputs.wallpaper !== host.newWallpaper.trim()", qml)
         self.assertIn('showModal("progress")', qml)
         self.assertIn('text: "Guide"', qml)
-        self.assertIn('if (key === "stylus" || key === "obsidian")', qml)
+        self.assertIn('if (key === "stylus")', qml)
         self.assertIn('return "manual"', qml)
         self.assertIn('if (["gtk", "helium", "chromium", "hyprlock", "btop", "micro", "glow", "code", "cursor_editor", "powerlevel10k"]', qml)
         self.assertNotIn('"helium", "cursor", "hyprlock"', qml)
@@ -659,8 +687,8 @@ class PickerIntegrationSourceTests(unittest.TestCase):
         self.assertIn('text: "Download all (.zip)"', qml)
         self.assertIn("controller.downloadGeneratedArchive(modelData.target)", advanced)
         self.assertIn("controller.downloadGeneratedFile(modelData.target, modelData.file)", advanced)
-        self.assertIn("Install and select the Minimal theme", qml)
-        self.assertIn("generated style-settings.json", qml)
+        self.assertIn("Obsidian updates live when it is open", qml)
+        self.assertNotIn("generated style-settings.json", qml)
         self.assertIn('text: "Simple"', qml)
         self.assertNotIn('text: "Target impact"', overview)
         self.assertNotIn('text: "Dependency and compatibility notes"', overview)

@@ -131,7 +131,7 @@
         "targets": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["quickshell", "widgets", "gtk", "helium", "chromium", "cursor", "wallpaper", "kitty", "hyprland", "hyprlock", "btop", "micro", "glow", "code", "cursor_editor", "t3code", "stylus", "powerlevel10k", "sddm", "grub"],
+          "required": ["quickshell", "widgets", "gtk", "helium", "chromium", "cursor", "wallpaper", "kitty", "hyprland", "hyprlock", "btop", "micro", "glow", "code", "cursor_editor", "t3code", "zed", "stylus", "powerlevel10k", "sddm", "grub"],
           "properties": {
             "quickshell": {"type": "boolean"},
             "widgets": {"type": "boolean"},
@@ -149,6 +149,7 @@
             "code": {"type": "boolean"},
             "cursor_editor": {"type": "boolean"},
             "t3code": {"type": "boolean"},
+            "zed": {"type": "boolean"},
             "stylus": {"type": "boolean"},
             "obsidian": {"type": "boolean"},
             "powerlevel10k": {"type": "boolean"},
@@ -202,7 +203,7 @@
     "bar": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["position", "separate_groups", "border", "edge_inset", "items", "reset_items"],
+      "required": ["position", "separate_groups", "border", "edge_inset", "radius_automatic", "radius_scale", "density_automatic", "density_scale", "items", "reset_items"],
       "properties": {
         "position": {"enum": ["left", "right", "top", "bottom"]},
         "separate_groups": {"type": "boolean"},

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 import tempfile
 import unittest
@@ -53,6 +54,16 @@ class EditorSettingsTests(unittest.TestCase):
         changed["workbench.experimental.modernUI"] = False
         apply_fragment(self.settings, changed)
         self.assertIn('"workbench.experimental.modernUI": false', self.settings.read_text(encoding="utf-8"))
+
+    def test_non_atomic_write_preserves_existing_file_inode(self) -> None:
+        self.settings.parent.mkdir(parents=True)
+        self.settings.write_text('{"theme":"One Dark"}\n', encoding="utf-8")
+        inode = os.stat(self.settings).st_ino
+
+        apply_fragment(self.settings, {"theme": "Blox: Catppuccin Mocha"}, atomic=False)
+
+        self.assertEqual(inode, os.stat(self.settings).st_ino)
+        self.assertEqual("Blox: Catppuccin Mocha", read_settings_values(self.settings, ("theme",))["theme"]["value"])
 
     def test_symlink_target_is_updated_without_replacing_the_link(self) -> None:
         target = self.root / "target.json"

@@ -18,20 +18,33 @@ REPOSITORY = THEMES.parent
 sys.path.insert(0, str(THEMES / "lib"))
 
 from blox_theme.core import editor_colours, load_theme, render_theme, repository_root, resolve_wallpaper_path
-from blox_theme.editor import read_settings_values
-from blox_theme.runtime import ApplicationLock, EDITOR_EXTENSION_DIR, EDITOR_LEGACY_EXTENSION_DIR, LockContended, RuntimeFailure, TARGET_FILES, TARGET_NAMES, T3CODE_THEME_ID, apply_theme, current_generation, cursor_icon_link, editor_settings_integration_path, hyprtoolkit_theme_link, kitty_theme_link, phase7_loader_specs, reconcile, reset_target, rollback, setup_gtk, t3code_integration_path, t3code_paths, validate_generation
+from blox_theme.editor import read_settings_values, restore_settings
+from blox_theme.obsidian import ObsidianVault, publish as publish_obsidian_theme, safe_paths, _select_theme
+from blox_theme.runtime import ApplicationLock, EDITOR_EXTENSION_DIR, EDITOR_LEGACY_EXTENSION_DIR, LockContended, RuntimeFailure, TARGET_FILES, TARGET_NAMES, T3CODE_THEME_ID, apply_theme, current_generation, cursor_icon_link, editor_settings_integration_path, hyprtoolkit_theme_link, kitty_theme_link, phase7_loader_specs, reconcile, reset_target, rollback, setup_gtk, t3code_integration_path, t3code_paths, validate_generation, zed_integration_path, zed_paths
 
 PHASE2_TARGETS = ("quickshell", "kitty", "wallpaper")
 
 
 class FakeCommands:
-    def __init__(self, returncode: int = 0) -> None:
+    def __init__(self, returncode: int = 0, fail_obsidian: bool = False) -> None:
         self.returncode = returncode
+        self.fail_obsidian = fail_obsidian
         self.commands: list[list[str]] = []
 
     def __call__(self, command: list[str]) -> subprocess.CompletedProcess[str]:
         self.commands.append(command)
-        return subprocess.CompletedProcess(command, self.returncode, "", "failed" if self.returncode else "")
+        command_returncode = self.returncode if self.fail_obsidian or not command or command[0] != "obsidian" else 0
+        if command_returncode == 0 and command and command[0] == "obsidian" and "theme:set" in command:
+            vault_id = next(part[6:] for part in command if part.startswith("vault="))
+            theme_name = next(part[5:] for part in command if part.startswith("name="))
+            config_home = Path(os.environ["XDG_CONFIG_HOME"])
+            registry = json.loads((config_home / "obsidian/obsidian.json").read_text(encoding="utf-8"))
+            vault = registry["vaults"][vault_id]
+            appearance = Path(vault["path"]) / ".obsidian/appearance.json"
+            current = json.loads(appearance.read_text(encoding="utf-8")) if appearance.exists() else {}
+            current["cssTheme"] = theme_name
+            appearance.write_text(json.dumps(current) + "\n", encoding="utf-8")
+        return subprocess.CompletedProcess(command, command_returncode, "", "failed" if command_returncode else "")
 
 
 def fake_cursor_builder(metadata: dict, root: Path) -> tuple[Path, bool]:
@@ -67,6 +80,19 @@ class RuntimeTests(unittest.TestCase):
         kitty_config = self.root / "config/kitty/kitty.conf"
         kitty_config.parent.mkdir(parents=True)
         kitty_config.write_text("globinclude blox-theme.conf\n", encoding="utf-8")
+        self.obsidian_vault = self.root / "obsidian-vault"
+        (self.obsidian_vault / ".obsidian").mkdir(parents=True)
+        (self.obsidian_vault / ".obsidian/appearance.json").write_text(
+            '{"cssTheme": "Minimal", "otherSetting": true}\n', encoding="utf-8"
+        )
+        obsidian_config = self.root / "config/obsidian/obsidian.json"
+        obsidian_config.parent.mkdir(parents=True)
+        obsidian_config.write_text(json.dumps({
+            "vaults": {
+                "test-vault": {"path": str(self.obsidian_vault), "open": True},
+            },
+            "cli": True,
+        }) + "\n", encoding="utf-8")
         self.canonical_path, self.canonical = load_theme("catppuccin-mocha")
         for target in TARGET_NAMES:
             self.canonical["targets"][target] = True
@@ -90,6 +116,7 @@ class RuntimeTests(unittest.TestCase):
         with mock.patch("blox_theme.runtime._kitty_sockets", return_value=[Path("/tmp/kitty-test")]):
             manifest, warnings = self.apply_canonical(runner)
         self.assertTrue(any("Stylus" in warning for warning in warnings))
+        self.assertTrue(any("Obsidian native theme selected" in warning for warning in warnings))
         self.assertTrue((self.state / "current").is_symlink())
         self.assertEqual("current/manifest.json", os.readlink(self.state / "active.json"))
         generation, checked = current_generation(self.state)
@@ -116,6 +143,153 @@ class RuntimeTests(unittest.TestCase):
         for executable in ("hyprctl", "kitty"):
             self.assertIn(executable, flattened)
         self.assertTrue(any("shell/scripts/ipc.sh" in part for part in flattened))
+
+    def test_obsidian_publishes_native_package_and_selects_the_open_vault(self) -> None:
+        runner = FakeCommands()
+        self.canonical["targets"] = {key: key == "obsidian" for key in self.canonical["targets"]}
+        manifest, warnings = apply_theme(
+            self.canonical_path,
+            self.canonical,
+            ("obsidian",),
+            run_command=runner,
+        )
+        package = self.obsidian_vault / ".obsidian/themes/Blox generated"
+        self.assertEqual("Blox generated", json.loads((package / "manifest.json").read_text())["name"])
+        self.assertEqual(package.name, json.loads((package / "manifest.json").read_text())["name"])
+        self.assertIn("--background-primary: #1e1e2e;", (package / "theme.css").read_text())
+        self.assertIn("--radius-m: 15px;", (package / "theme.css").read_text())
+        appearance = json.loads((self.obsidian_vault / ".obsidian/appearance.json").read_text())
+        self.assertEqual("Blox generated", appearance["cssTheme"])
+        self.assertIn(["obsidian", "vault=test-vault", "theme:set", "name=Blox generated"], runner.commands)
+        self.assertEqual(["obsidian"], manifest["enabled_targets"])
+        self.assertEqual([], [warning for warning in warnings if "not changed" in warning])
+
+    def test_obsidian_closed_apply_writes_native_selection_without_starting_obsidian(self) -> None:
+        self.canonical["targets"] = {key: key == "obsidian" for key in self.canonical["targets"]}
+        runner = FakeCommands()
+        apply_theme(self.canonical_path, self.canonical, ("obsidian",), run_command=runner)
+        runner.commands.clear()
+        with mock.patch("blox_theme.obsidian._obsidian_is_running", return_value=False):
+            publish_obsidian_theme(self.state, runner, real_cli=True)
+        appearance = json.loads((self.obsidian_vault / ".obsidian/appearance.json").read_text())
+        self.assertEqual("Blox generated", appearance["cssTheme"])
+        self.assertEqual([], runner.commands)
+
+    def test_obsidian_live_apply_refreshes_when_the_generated_name_is_already_selected(self) -> None:
+        self.canonical["targets"] = {key: key == "obsidian" for key in self.canonical["targets"]}
+        runner = FakeCommands()
+        apply_theme(self.canonical_path, self.canonical, ("obsidian",), run_command=runner)
+        paths = safe_paths(ObsidianVault("test-vault", self.obsidian_vault))
+        with mock.patch("blox_theme.obsidian._obsidian_is_running", return_value=True), mock.patch(
+            "blox_theme.obsidian._run_live_theme_set"
+        ) as live_set:
+            _select_theme(paths, "Blox generated", runner, real_cli=True)
+        self.assertEqual([mock.call(paths, ""), mock.call(paths, "Blox generated")], live_set.call_args_list)
+
+    def test_obsidian_recovers_an_interrupted_publish_before_reapplying(self) -> None:
+        self.canonical["targets"] = {key: key == "obsidian" for key in self.canonical["targets"]}
+        runner = FakeCommands()
+        apply_theme(self.canonical_path, self.canonical, ("obsidian",), run_command=runner)
+        integration_path = self.state / "integration/obsidian.json"
+        integration = json.loads(integration_path.read_text())
+        integration["last_manifest_sha256"] = "0" * 64
+        integration["last_stylesheet_sha256"] = "0" * 64
+        integration_path.write_text(json.dumps(integration) + "\n", encoding="utf-8")
+        (self.obsidian_vault / ".obsidian/appearance.json").write_text(
+            '{"cssTheme": "Minimal", "otherSetting": true}\n', encoding="utf-8"
+        )
+        manifest, _ = apply_theme(self.canonical_path, self.canonical, ("obsidian",), run_command=runner)
+        self.assertEqual(["obsidian"], manifest["enabled_targets"])
+        self.assertEqual("Blox generated", json.loads((self.obsidian_vault / ".obsidian/appearance.json").read_text())["cssTheme"])
+        repaired = json.loads(integration_path.read_text())
+        self.assertNotEqual("0" * 64, repaired["last_manifest_sha256"])
+        self.assertNotEqual("0" * 64, repaired["last_stylesheet_sha256"])
+
+    def test_obsidian_reset_restores_previous_theme_and_removes_owned_package(self) -> None:
+        self.canonical["targets"] = {key: key == "obsidian" for key in self.canonical["targets"]}
+        runner = FakeCommands()
+        apply_theme(self.canonical_path, self.canonical, ("obsidian",), run_command=runner)
+        manifest, warnings = reset_target("obsidian", run_command=runner)
+        appearance = json.loads((self.obsidian_vault / ".obsidian/appearance.json").read_text())
+        self.assertEqual("Minimal", appearance["cssTheme"])
+        self.assertFalse((self.obsidian_vault / ".obsidian/themes/Blox generated").exists())
+        self.assertNotIn("obsidian", manifest["enabled_targets"])
+        self.assertEqual([], warnings)
+
+    def test_obsidian_second_apply_replaces_only_the_owned_package(self) -> None:
+        self.canonical["targets"] = {key: key == "obsidian" for key in self.canonical["targets"]}
+        runner = FakeCommands()
+        apply_theme(self.canonical_path, self.canonical, ("obsidian",), run_command=runner)
+        changed = copy.deepcopy(self.canonical)
+        changed["colours"]["accent"] = "#a6e3a1"
+        apply_theme(self.canonical_path, changed, ("obsidian",), run_command=runner)
+        package_css = (self.obsidian_vault / ".obsidian/themes/Blox generated/theme.css").read_text()
+        self.assertIn("--text-accent: #a6e3a1;", package_css)
+        self.assertEqual("Blox generated", json.loads((self.obsidian_vault / ".obsidian/appearance.json").read_text())["cssTheme"])
+        self.assertEqual(2, sum(command[0] == "obsidian" for command in runner.commands))
+
+    def test_obsidian_apply_adopts_a_theme_selected_outside_blox_for_reset(self) -> None:
+        self.canonical["targets"] = {key: key == "obsidian" for key in self.canonical["targets"]}
+        runner = FakeCommands()
+        apply_theme(self.canonical_path, self.canonical, ("obsidian",), run_command=runner)
+        appearance_path = self.obsidian_vault / ".obsidian/appearance.json"
+        appearance = json.loads(appearance_path.read_text())
+        appearance["cssTheme"] = "Minimal"
+        appearance_path.write_text(json.dumps(appearance) + "\n", encoding="utf-8")
+        changed = copy.deepcopy(self.canonical)
+        changed["colours"]["accent"] = "#a6e3a1"
+        apply_theme(self.canonical_path, changed, ("obsidian",), run_command=runner)
+        integration = json.loads((self.state / "integration/obsidian.json").read_text())
+        self.assertEqual({"present": True, "value": "Minimal"}, integration["previous_css_theme"])
+        reset_target("obsidian", run_command=runner)
+        self.assertEqual("Minimal", json.loads(appearance_path.read_text())["cssTheme"])
+
+    def test_obsidian_migrates_the_old_slugged_package_directory(self) -> None:
+        self.canonical["targets"] = {key: key == "obsidian" for key in self.canonical["targets"]}
+        runner = FakeCommands()
+        apply_theme(self.canonical_path, self.canonical, ("obsidian",), run_command=runner)
+        new_package = self.obsidian_vault / ".obsidian/themes/Blox generated"
+        old_package = self.obsidian_vault / ".obsidian/themes/blox-generated"
+        os.replace(new_package, old_package)
+        integration_path = self.state / "integration/obsidian.json"
+        integration = json.loads(integration_path.read_text())
+        integration["package_path"] = str(old_package)
+        integration_path.write_text(json.dumps(integration) + "\n", encoding="utf-8")
+        changed = copy.deepcopy(self.canonical)
+        changed["colours"]["accent"] = "#a6e3a1"
+        apply_theme(self.canonical_path, changed, ("obsidian",), run_command=runner)
+        manifest_path = new_package / "manifest.json"
+        self.assertTrue(manifest_path.is_file())
+        self.assertFalse(old_package.exists())
+        self.assertEqual(new_package.name, json.loads(manifest_path.read_text())["name"])
+
+    def test_obsidian_refuses_multiple_open_vaults_before_generation_mutation(self) -> None:
+        registry_path = self.root / "config/obsidian/obsidian.json"
+        registry = json.loads(registry_path.read_text(encoding="utf-8"))
+        second = self.root / "second-vault"
+        (second / ".obsidian").mkdir(parents=True)
+        (second / ".obsidian/appearance.json").write_text('{"cssTheme":"Minimal"}\n', encoding="utf-8")
+        registry["vaults"]["second-vault"] = {"path": str(second), "open": True}
+        registry_path.write_text(json.dumps(registry) + "\n", encoding="utf-8")
+        self.canonical["targets"] = {key: key == "obsidian" for key in self.canonical["targets"]}
+        with self.assertRaisesRegex(RuntimeFailure, "multiple Obsidian vaults"):
+            apply_theme(self.canonical_path, self.canonical, ("obsidian",), run_command=FakeCommands())
+        self.assertFalse((self.state / "current").exists())
+
+    def test_obsidian_cli_failure_restores_vault_and_does_not_leave_generation_active(self) -> None:
+        self.canonical["targets"] = {key: key == "obsidian" for key in self.canonical["targets"]}
+        with self.assertRaisesRegex(RuntimeFailure, "Obsidian theme was not changed"):
+            apply_theme(
+                self.canonical_path,
+                self.canonical,
+                ("obsidian",),
+                run_command=FakeCommands(returncode=1, fail_obsidian=True),
+            )
+        appearance = json.loads((self.obsidian_vault / ".obsidian/appearance.json").read_text())
+        self.assertEqual("Minimal", appearance["cssTheme"])
+        self.assertFalse((self.obsidian_vault / ".obsidian/themes/Blox generated").exists())
+        self.assertFalse((self.state / "current").exists())
+        self.assertFalse((self.state / "integration/obsidian.json").exists())
 
     def test_helium_cache_does_not_break_generation_integrity(self) -> None:
         self.apply_canonical()
@@ -742,6 +916,128 @@ class RuntimeTests(unittest.TestCase):
         self.assertEqual("user-choice", json.loads(settings_path.read_text(encoding="utf-8"))["defaultTheme"])
         self.assertTrue(t3code_integration_path(self.state).is_file())
 
+    def test_zed_publishes_native_theme_and_preserves_jsonc_settings(self) -> None:
+        published, settings = zed_paths()
+        settings.parent.mkdir(parents=True)
+        original_settings = (
+            "{\n"
+            "  // keep the user's Zed settings\n"
+            '  "theme": {"mode": "system", "light": "One Light", "dark": "One Dark"},\n'
+            '  "theme_overrides": {"editor.background": "#010203"},\n'
+            '}\n'
+        )
+        settings.write_text(original_settings, encoding="utf-8")
+        previous = '{"name":"Blox generated","themes":[]}'
+        published.parent.mkdir(parents=True)
+        published.write_text(previous, encoding="utf-8")
+
+        manifest, warnings = apply_theme(self.canonical_path, self.canonical, ("zed",), run_command=FakeCommands())
+
+        self.assertEqual(["zed"], manifest["enabled_targets"])
+        self.assertEqual([], warnings)
+        generated = json.loads(published.read_text(encoding="utf-8"))
+        self.assertEqual("Blox generated", generated["name"])
+        self.assertEqual("Blox: Catppuccin Mocha", generated["themes"][0]["name"])
+        values = read_settings_values(settings, ("theme", "theme_overrides"))
+        self.assertEqual("system", values["theme"]["value"]["mode"])
+        self.assertEqual("One Light", values["theme"]["value"]["light"])
+        self.assertEqual("Blox: Catppuccin Mocha", values["theme"]["value"]["dark"])
+        self.assertEqual({"editor.background": "#010203"}, values["theme_overrides"]["value"])
+        self.assertIn("keep the user's Zed settings", settings.read_text(encoding="utf-8"))
+
+        reset_target("zed", run_command=FakeCommands())
+
+        self.assertEqual(previous, published.read_text(encoding="utf-8"))
+        restored_values = read_settings_values(settings, ("theme", "theme_overrides"))
+        self.assertEqual(
+            {"mode": "system", "light": "One Light", "dark": "One Dark"},
+            restored_values["theme"]["value"],
+        )
+        self.assertEqual({"editor.background": "#010203"}, restored_values["theme_overrides"]["value"])
+        self.assertIn("keep the user's Zed settings", settings.read_text(encoding="utf-8"))
+        self.assertFalse(zed_integration_path(self.state).exists())
+
+    def test_zed_reset_restores_the_setting_before_removing_owned_theme(self) -> None:
+        published, settings = zed_paths()
+        settings.parent.mkdir(parents=True)
+        settings.write_text('{"theme":"One Dark"}\n', encoding="utf-8")
+
+        apply_theme(self.canonical_path, self.canonical, ("zed",), run_command=FakeCommands())
+
+        events: list[str] = []
+        original_restore = restore_settings
+        original_unlink = Path.unlink
+
+        def record_restore(*args: Any, **kwargs: Any) -> None:
+            events.append("settings")
+            original_restore(*args, **kwargs)
+
+        def record_unlink(path: Path, *args: Any, **kwargs: Any) -> None:
+            if path == published:
+                events.append("published")
+            original_unlink(path, *args, **kwargs)
+
+        with mock.patch("blox_theme.runtime.restore_settings", side_effect=record_restore), mock.patch.object(Path, "unlink", autospec=True, side_effect=record_unlink):
+            reset_target("zed", run_command=FakeCommands())
+
+        self.assertLess(events.index("settings"), events.index("published"))
+
+    def test_zed_string_theme_setting_is_restored(self) -> None:
+        _, settings = zed_paths()
+        settings.parent.mkdir(parents=True)
+        settings.write_text('{"theme":"One Dark","keep":true}\n', encoding="utf-8")
+
+        apply_theme(self.canonical_path, self.canonical, ("zed",), run_command=FakeCommands())
+
+        values = read_settings_values(settings, ("theme",))
+        self.assertEqual("Blox: Catppuccin Mocha", values["theme"]["value"])
+        reset_target("zed", run_command=FakeCommands())
+        self.assertEqual('{"theme":"One Dark","keep":true}\n', settings.read_text(encoding="utf-8"))
+
+    def test_zed_second_apply_replaces_the_previous_generated_theme(self) -> None:
+        _, settings = zed_paths()
+        settings.parent.mkdir(parents=True)
+        settings.write_text(
+            '{"theme":{"mode":"system","light":"One Light","dark":"One Dark"}}\n',
+            encoding="utf-8",
+        )
+        first = copy.deepcopy(self.canonical)
+        second = copy.deepcopy(self.canonical)
+        second["name"] = "Second Zed Theme"
+        second["colours"]["background"] = "#101218"
+
+        apply_theme(self.canonical_path, first, ("zed",), run_command=FakeCommands())
+        apply_theme(self.canonical_path, second, ("zed",), run_command=FakeCommands())
+
+        published, _ = zed_paths()
+        generated = json.loads(published.read_text(encoding="utf-8"))
+        self.assertEqual("Blox: Second Zed Theme", generated["themes"][0]["name"])
+        values = read_settings_values(settings, ("theme",))
+        self.assertEqual("Blox: Second Zed Theme", values["theme"]["value"]["dark"])
+
+    def test_zed_missing_install_does_not_change_settings(self) -> None:
+        _, settings = zed_paths()
+        settings.parent.mkdir(parents=True)
+        original = '{"theme":"One Dark"}\n'
+        settings.write_text(original, encoding="utf-8")
+        with mock.patch("blox_theme.runtime.shutil.which", return_value=None):
+            _, warnings = apply_theme(self.canonical_path, self.canonical, ("zed",), run_command=FakeCommands())
+
+        self.assertTrue(any("Zed is not installed" in warning for warning in warnings))
+        self.assertEqual(original, settings.read_text(encoding="utf-8"))
+        self.assertFalse(zed_paths()[0].exists())
+
+    def test_zed_foreign_theme_file_is_not_replaced(self) -> None:
+        published, _ = zed_paths()
+        published.parent.mkdir(parents=True)
+        original = '{"name":"Foreign theme"}\n'
+        published.write_text(original, encoding="utf-8")
+
+        _, warnings = apply_theme(self.canonical_path, self.canonical, ("zed",), run_command=FakeCommands())
+
+        self.assertTrue(any("foreign Zed theme" in warning for warning in warnings))
+        self.assertEqual(original, published.read_text(encoding="utf-8"))
+
     def test_code_apply_tracks_prior_presence_and_reset_removes_only_blox_values(self) -> None:
         settings = self.root / "config/Code/User/settings.json"
         settings.parent.mkdir(parents=True)
@@ -814,10 +1110,16 @@ class RuntimeTests(unittest.TestCase):
                     kitty_theme_link().unlink()
                 for version in ("3", "4"):
                     shutil.rmtree(self.root / f"config/gtk-{version}.0", ignore_errors=True)
+                shutil.rmtree(self.obsidian_vault / ".obsidian/themes/Blox generated", ignore_errors=True)
+                shutil.rmtree(self.obsidian_vault / ".obsidian/themes/blox-generated", ignore_errors=True)
+                (self.obsidian_vault / ".obsidian/appearance.json").write_text(
+                    '{"cssTheme": "Minimal", "otherSetting": true}\n', encoding="utf-8"
+                )
+                (self.state / "integration/obsidian.json").unlink(missing_ok=True)
                 self.apply_canonical()
                 runner = FakeCommands()
                 manifest, warnings = reset_target(target, run_command=runner)
-                manual = {"helium", "chromium", "hyprland", "hyprlock", "btop", "micro", "glow", "code", "cursor_editor", "stylus", "obsidian", "powerlevel10k"}
+                manual = {"helium", "chromium", "hyprland", "hyprlock", "btop", "micro", "glow", "code", "cursor_editor", "stylus", "powerlevel10k"}
                 if target != "kitty":
                     self.assertEqual(target in manual, bool(warnings))
                 active = (self.state / "current").resolve()

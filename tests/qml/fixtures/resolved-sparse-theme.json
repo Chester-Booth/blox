@@ -212,6 +212,7 @@
     "cursor": false,
     "cursor_editor": false,
     "t3code": false,
+    "zed": false,
     "glow": false,
     "grub": false,
     "gtk": false,

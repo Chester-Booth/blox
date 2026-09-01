@@ -272,7 +272,7 @@ FloatingWindow {
             Text {
                 visible: controller.applyGuideTarget === "obsidian"
                 width: parent.width
-                text: "1. Install and select the Minimal theme, then enable Style Settings.\n2. Open Style Settings and choose Import.\n3. Import ~/.local/state/blox-theme/current/obsidian/style-settings.json."
+                text: "Obsidian updates live when it is open. When it is closed, Blox saves the native theme package and selection for the next launch. Blox restores the previous theme when the target is disabled. If more than one vault is open, set BLOX_OBSIDIAN_VAULT to its ID or absolute path and apply again."
                 color: Theme.foreground
                 wrapMode: Text.Wrap
                 font.family: Theme.bodyFontFamily

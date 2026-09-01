@@ -27,10 +27,10 @@ EXIT_LOCKED = 8
 
 THEME_TARGET_KEYS = (
     "quickshell", "widgets", "gtk", "helium", "chromium", "cursor", "wallpaper", "kitty",
-    "hyprland", "hyprlock", "btop", "micro", "glow", "code", "cursor_editor", "t3code",
+    "hyprland", "hyprlock", "btop", "micro", "glow", "code", "cursor_editor", "t3code", "zed",
     "stylus", "obsidian", "powerlevel10k", "sddm", "grub",
 )
-IMPLEMENTED_TARGETS = ("quickshell", "widgets", "kitty", "wallpaper", "gtk", "helium", "chromium", "cursor", "hyprland", "hyprlock", "btop", "micro", "glow", "code", "cursor_editor", "t3code", "stylus", "obsidian", "powerlevel10k")
+IMPLEMENTED_TARGETS = ("quickshell", "widgets", "kitty", "wallpaper", "gtk", "helium", "chromium", "cursor", "hyprland", "hyprlock", "btop", "micro", "glow", "code", "cursor_editor", "t3code", "zed", "stylus", "obsidian", "powerlevel10k")
 DEFERRED_TARGETS = {}
 TARGET_LIMITATIONS = {
     "hyprland": "Hyprtoolkit apps must be restarted after Apply",
@@ -40,8 +40,9 @@ TARGET_LIMITATIONS = {
     "code": "Code theme package and settings apply automatically; Modern UI follows roundness; use Reload Window for existing windows",
     "cursor_editor": "Cursor theme package and font family apply automatically; Modern UI is not managed by this version; use Reload Window for existing windows",
     "t3code": "Needs T3Code 0.0.37 nightly or newer with environment themes; this can update other T3Code clients connected to this machine",
+    "zed": "Zed watches the generated theme and settings; existing Zed windows update automatically",
     "stylus": "Open or reload the generated .user.css in a browser with Stylus, then choose Install style the first time or Reinstall style after an earlier import; remove older duplicate Blox Web Theme entries first; manifest.json lists included and excluded sites",
-    "obsidian": "Obsidian requires Minimal, Style Settings, and manual import of the generated settings JSON",
+    "obsidian": "Obsidian uses a generated native theme package and selects it in the one explicitly chosen vault; open Obsidian updates live and a closed vault reads the selection on its next launch",
     "powerlevel10k": "Powerlevel10k changes apply to new shells",
     "helium": "Helium must be restarted after Apply",
     "chromium": "Chromium must be restarted after Apply",
@@ -51,6 +52,16 @@ HYPRLAND_RADIUS_BASE = 12
 GTK_RADIUS_BASE = 12
 AUTOMATIC_GAP_BASE = 20
 MINIMUM_DENSITY_SCALE = 0.75
+ZED_THEME_SCHEMA = "https://zed.dev/schema/themes/v0.2.0.json"
+ZED_THEME_FAMILY_NAME = "Blox generated"
+ZED_THEME_AUTHOR = "Blox"
+# Obsidian matches a native theme by its manifest name and its directory
+# basename. Keep both human-readable so the generated theme is recognised.
+OBSIDIAN_THEME_DIRECTORY = "Blox generated"
+OBSIDIAN_THEME_NAME = "Blox generated"
+OBSIDIAN_THEME_VERSION = "1.0.0"
+OBSIDIAN_THEME_MIN_APP_VERSION = "1.13.0"
+OBSIDIAN_THEME_AUTHOR = "Blox"
 
 def resolved_bar_items(bar: dict[str, Any] | None) -> list[dict[str, Any]]:
     """Return a complete, ordered bar registry with optional theme overrides."""
@@ -250,6 +261,31 @@ def load_json(path: Path) -> Any:
         return json.load(handle)
 
 
+SOURCE_REQUIRED_TOP_LEVEL = ("schema_version", "id", "name", "colours", "wallpaper")
+SOURCE_REQUIRED_COLOURS = (
+    "background", "surface", "surface_alt", "foreground", "muted", "accent", "danger", "success",
+    "warning", "info", "mauve", "teal", "selection_background", "selection_foreground", "border",
+)
+SOURCE_REQUIRED_WALLPAPER = ("path", "fit")
+
+
+def source_required_errors(theme: Any) -> list[str]:
+    """Return errors for source values that cannot sensibly inherit defaults."""
+    if not isinstance(theme, dict):
+        return ["$: expected object"]
+
+    errors = [f"$: missing required property {key!r}" for key in SOURCE_REQUIRED_TOP_LEVEL if key not in theme]
+    for key, required in (("colours", SOURCE_REQUIRED_COLOURS), ("wallpaper", SOURCE_REQUIRED_WALLPAPER)):
+        value = theme.get(key)
+        if key not in theme:
+            continue
+        if not isinstance(value, dict):
+            errors.append(f"{key}: expected object")
+            continue
+        errors.extend(f"{key}: missing required property {child!r}" for child in required if child not in value)
+    return errors
+
+
 def load_theme(reference: str) -> tuple[Path, dict[str, Any]]:
     path = theme_path(reference)
     if not path.is_file():
@@ -264,8 +300,13 @@ def apply_theme_defaults(theme: dict[str, Any]) -> dict[str, Any]:
     """Resolve a sparse source against the versioned product defaults.
 
     The source stays sparse. This function only creates the complete view used
-    by validation, preview, and target generation.
+    by validation, preview, and target generation. Identity, colours and
+    wallpaper must exist in the source; every other omitted value may inherit
+    from the versioned canonical defaults.
     """
+    required_errors = source_required_errors(theme)
+    if required_errors:
+        raise ValueError("theme source is incomplete: " + "; ".join(required_errors))
     document = load_defaults_document()
     defaults = document["theme"]
     colours = defaults["colours"]
@@ -588,6 +629,10 @@ def dependency_checks(theme: dict[str, Any], targets: set[str] | None = None, so
         asset_findings.append(f"GTK base theme is not installed: {theme['gtk']['base_theme']}")
     if (enabled("gtk") or enabled("quickshell")) and not _named_asset_exists(theme["icons"]["theme"], icon_roots):
         asset_findings.append(f"icon theme is not installed: {theme['icons']['theme']}")
+    if enabled("zed") and not (shutil.which("zeditor") or shutil.which("zed")):
+        asset_findings.append("Zed is not installed; install the zeditor CLI before applying the Zed target")
+    if enabled("obsidian") and not shutil.which("obsidian"):
+        asset_findings.append("Obsidian is not installed; install the Obsidian desktop CLI before applying the Obsidian target")
     cursor = theme["cursor"]
     if enabled("cursor"):
         if cursor["mode"] == "installed" and not _named_asset_exists(cursor["base"], icon_roots):
@@ -1366,6 +1411,155 @@ def render_t3code(theme: dict[str, Any]) -> str:
     })
 
 
+def zed_theme_label(theme: dict[str, Any]) -> str:
+    return f"Blox: {theme['name']}"
+
+
+def render_zed(theme: dict[str, Any]) -> str:
+    """Render Zed's native theme-family format from the resolved theme."""
+    c = target_colours(theme, "zed")
+    ansi = derive_ansi(theme)
+    style = {
+        "accents": [c["accent"]],
+        "background": c["background"],
+        "background.appearance": "opaque",
+        "border": c["border"],
+        "border.disabled": c["surface_alt"],
+        "border.focused": c["accent"],
+        "border.selected": c["accent"],
+        "border.transparent": c["surface"],
+        "border.variant": c["surface_alt"],
+        "conflict": c["danger"],
+        "conflict.background": c["surface_alt"],
+        "conflict.border": c["danger"],
+        "created": c["success"],
+        "created.background": c["surface_alt"],
+        "created.border": c["success"],
+        "deleted": c["danger"],
+        "deleted.background": c["surface_alt"],
+        "deleted.border": c["danger"],
+        "drop_target.background": c["selection_background"],
+        "editor.active_line.background": c["surface"],
+        "editor.active_line_number": c["foreground"],
+        "editor.background": c["background"],
+        "editor.foreground": c["foreground"],
+        "editor.gutter.background": c["background"],
+        "editor.highlighted_line.background": c["surface"],
+        "editor.indent_guide": c["border"],
+        "editor.indent_guide_active": c["accent"],
+        "editor.invisible": c["muted"],
+        "editor.line_number": c["muted"],
+        "element.active": c["selection_background"],
+        "element.background": c["surface_alt"],
+        "element.disabled": c["surface"],
+        "element.hover": c["surface_alt"],
+        "element.selected": c["selection_background"],
+        "elevated_surface.background": c["surface_alt"],
+        "error": c["danger"],
+        "error.background": c["surface_alt"],
+        "error.border": c["danger"],
+        "ghost_element.active": c["selection_background"],
+        "ghost_element.background": c["surface"],
+        "ghost_element.disabled": c["surface"],
+        "ghost_element.hover": c["surface_alt"],
+        "ghost_element.selected": c["selection_background"],
+        "hidden": c["muted"],
+        "hidden.background": c["surface"],
+        "hidden.border": c["border"],
+        "hint": c["info"],
+        "hint.background": c["surface_alt"],
+        "hint.border": c["info"],
+        "icon": c["foreground"],
+        "icon.accent": c["accent"],
+        "icon.disabled": c["muted"],
+        "icon.muted": c["muted"],
+        "icon.placeholder": c["muted"],
+        "info": c["info"],
+        "info.background": c["surface_alt"],
+        "info.border": c["info"],
+        "link_text.hover": c["accent"],
+        "modified": c["warning"],
+        "modified.background": c["surface_alt"],
+        "modified.border": c["warning"],
+        "pane.focused_border": c["accent"],
+        "pane_group.border": c["border"],
+        "panel.background": c["surface"],
+        "panel.focused_border": c["accent"],
+        "scrollbar.thumb.background": c["border"],
+        "scrollbar.thumb.border": c["border"],
+        "scrollbar.thumb.hover_background": c["muted"],
+        "scrollbar.track.background": c["background"],
+        "scrollbar.track.border": c["background"],
+        "search.match_background": c["warning"],
+        "status_bar.background": c["surface"],
+        "success": c["success"],
+        "success.background": c["surface_alt"],
+        "success.border": c["success"],
+        "surface.background": c["surface"],
+        "tab.active_background": c["surface_alt"],
+        "tab.inactive_background": c["background"],
+        "tab_bar.background": c["background"],
+        "terminal.ansi.background": c["background"],
+        "terminal.background": c["background"],
+        "terminal.bright_foreground": c["foreground"],
+        "terminal.dim_foreground": c["muted"],
+        "terminal.foreground": c["foreground"],
+        "text": c["foreground"],
+        "text.accent": c["accent"],
+        "text.disabled": c["muted"],
+        "text.muted": c["muted"],
+        "text.placeholder": c["muted"],
+        "title_bar.background": c["background"],
+        "title_bar.inactive_background": c["background"],
+        "toolbar.background": c["surface"],
+        "unreachable": c["danger"],
+        "unreachable.background": c["surface_alt"],
+        "unreachable.border": c["danger"],
+        "warning": c["warning"],
+        "warning.background": c["surface_alt"],
+        "warning.border": c["warning"],
+    }
+    ansi_names = (
+        "black", "red", "green", "yellow", "blue", "magenta", "cyan", "white",
+        "bright_black", "bright_red", "bright_green", "bright_yellow",
+        "bright_blue", "bright_magenta", "bright_cyan", "bright_white",
+    )
+    style.update({f"terminal.ansi.{name}": ansi[f"color{index}"] for index, name in enumerate(ansi_names)})
+    style["syntax"] = {
+        "attribute": {"color": c["teal"]},
+        "boolean": {"color": c["mauve"]},
+        "comment": {"color": c["muted"], "font_style": "italic"},
+        "constant": {"color": c["warning"]},
+        "constructor": {"color": c["success"]},
+        "function": {"color": c["accent"]},
+        "keyword": {"color": c["danger"]},
+        "number": {"color": c["warning"]},
+        "operator": {"color": c["teal"]},
+        "property": {"color": c["teal"]},
+        "punctuation": {"color": c["muted"]},
+        "punctuation.bracket": {"color": c["foreground"]},
+        "punctuation.delimiter": {"color": c["muted"]},
+        "string": {"color": c["info"]},
+        "string.escape": {"color": c["warning"]},
+        "string.regex": {"color": c["teal"]},
+        "tag": {"color": c["success"]},
+        "text.literal": {"color": c["info"]},
+        "type": {"color": c["success"]},
+        "variable": {"color": c["foreground"]},
+        "variable.special": {"color": c["mauve"]},
+    }
+    return canonical_json({
+        "$schema": ZED_THEME_SCHEMA,
+        "name": ZED_THEME_FAMILY_NAME,
+        "author": ZED_THEME_AUTHOR,
+        "themes": [{
+            "name": zed_theme_label(theme),
+            "appearance": theme["variant"],
+            "style": style,
+        }],
+    })
+
+
 def render_code_extension(theme: dict[str, Any]) -> dict[str, str]:
     colour_theme = _editor_theme(theme)
     return {
@@ -1385,30 +1579,146 @@ def render_cursor_extension(theme: dict[str, Any]) -> dict[str, str]:
     }
 
 
-def render_obsidian(theme: dict[str, Any]) -> str:
-    c = theme["colours"]
-    # Keys follow Minimal's Style Settings export format. Keeping this as an
-    # import document avoids modifying an arbitrary vault behind the user's
-    # back and composes with Minimal instead of replacing it with a snippet.
-    settings = {
-        "minimal-style@@bg1@@dark": c["background"],
-        "minimal-style@@bg2@@dark": c["surface"],
-        "minimal-style@@bg3@@dark": c["surface_alt"],
-        "minimal-style@@ui1@@dark": c["border"],
-        "minimal-style@@ui2@@dark": c["muted"],
-        "minimal-style@@ui3@@dark": c["accent"],
-        "minimal-style@@tx1@@dark": c["foreground"],
-        "minimal-style@@tx2@@dark": c["muted"],
-        "minimal-style@@ax1@@dark": c["accent"],
-        "minimal-style@@ax2@@dark": c["info"],
-        "minimal-style@@red@@dark": c["danger"],
-        "minimal-style@@yellow@@dark": c["warning"],
-        "minimal-style@@green@@dark": c["success"],
-        "minimal-style@@cyan@@dark": c["teal"],
-        "minimal-style@@blue@@dark": c["info"],
-        "minimal-style@@purple@@dark": c["mauve"],
+def render_obsidian(theme: dict[str, Any]) -> dict[str, str]:
+    """Render a self-contained native Obsidian theme package.
+
+    Obsidian applies the same package to dark and light app classes. Blox
+    therefore emits the selected theme variant for both classes and lets the
+    source theme, rather than Obsidian's base theme, own the full palette.
+    """
+    c = target_colours(theme, "obsidian")
+    radius = int(derive_shape(theme)["gtk_radius"])
+    radius_s = 0 if radius == 0 else max(2, radius - 4)
+    radius_l = 0 if radius == 0 else radius + 4
+
+    def rgb(value: str) -> str:
+        return ", ".join(str(int(value[index:index + 2], 16)) for index in (1, 3, 5))
+
+    variables = {
+        "background-primary": c["background"],
+        "background-primary-alt": c["surface"],
+        "background-secondary": c["surface"],
+        "background-secondary-alt": c["surface_alt"],
+        "background-modifier-border": c["border"],
+        "background-modifier-border-hover": c["accent"],
+        "background-modifier-hover": c["surface_alt"],
+        "background-modifier-form-field": c["background"],
+        "background-modifier-active-hover": c["surface_alt"],
+        "divider-color": c["border"],
+        "text-normal": c["foreground"],
+        "text-muted": c["muted"],
+        "text-faint": c["muted"],
+        "text-accent": c["accent"],
+        "text-accent-hover": c["info"],
+        "text-on-accent": c["selection_foreground"],
+        "interactive-normal": c["surface"],
+        "interactive-hover": c["surface_alt"],
+        "interactive-accent": c["accent"],
+        "interactive-accent-hover": c["info"],
+        "code-background": c["surface"],
+        "blockquote-border": c["accent"],
+        "tag-background": c["surface"],
+        "tag-color": c["accent"],
+        "titlebar-background": c["background"],
+        "titlebar-background-focused": c["background"],
+        "ribbon-background": c["surface"],
+        "status-bar-background": c["surface"],
+        "nav-item-background-active": c["surface_alt"],
+        "nav-item-background-hover": c["surface"],
+        "nav-item-color": c["muted"],
+        "nav-item-color-active": c["foreground"],
+        "nav-item-color-hover": c["foreground"],
+        "tab-text-color-focused-active": c["foreground"],
+        "icon-color": c["muted"],
+        "icon-color-active": c["accent"],
+        "icon-color-hover": c["foreground"],
+        "scrollbar-thumb-bg": c["border"],
+        "scrollbar-active-thumb-bg": c["accent"],
+        "scrollbar-bg": c["background"],
+        "color-accent": c["accent"],
+        "color-red": c["danger"],
+        "color-orange": c["warning"],
+        "color-yellow": c["warning"],
+        "color-green": c["success"],
+        "color-cyan": c["teal"],
+        "color-blue": c["info"],
+        "color-purple": c["mauve"],
+        "font-interface": theme["fonts"]["ui"],
+        "font-text": theme["fonts"]["ui"],
+        "font-monospace": theme["fonts"]["mono"],
+        "radius-s": f"{radius_s}px",
+        "radius-m": f"{radius}px",
+        "radius-l": f"{radius_l}px",
+        "input-radius": f"{radius}px",
+        "button-radius": f"{radius}px",
+        "checkbox-radius": f"{radius_s}px",
+        "tab-radius": f"{radius}px",
+        "tab-radius-active": f"{radius}px",
+        "modal-radius": f"{radius_l}px",
+        "prompt-radius": f"{radius_l}px",
+        "callout-radius": f"{radius}px",
+        "code-radius": f"{radius}px",
+        "embed-border-radius": f"{radius}px",
+        "img-radius": f"{radius}px",
+        "color-accent-rgb": rgb(c["accent"]),
+        "color-red-rgb": rgb(c["danger"]),
+        "color-green-rgb": rgb(c["success"]),
+        "color-blue-rgb": rgb(c["info"]),
     }
-    return canonical_json(settings)
+    variable_text = "\n".join(f"  --{name}: {value};" for name, value in variables.items())
+    css = f"""/* Generated by themectl for {theme["name"]} ({theme["variant"]}). */
+.theme-dark, .theme-light {{
+{variable_text}
+  color-scheme: {"light" if theme["variant"] == "light" else "dark"};
+}}
+
+body, .app-container, .workspace, .workspace-tab-container {{
+  background: var(--background-primary);
+  color: var(--text-normal);
+  font-family: var(--font-text);
+}}
+
+.workspace-tab-header-container,
+.workspace-tab-header-inner,
+.nav-file-title,
+.nav-folder-title,
+.menu,
+.modal,
+.prompt,
+.callout,
+.markdown-rendered pre,
+.markdown-rendered table,
+.search-result-container,
+.suggestion-container {{
+  border-radius: var(--radius-m);
+}}
+
+.workspace-tab-header.is-active {{
+  background: var(--background-secondary);
+  border-radius: var(--tab-radius-active) var(--tab-radius-active) 0 0;
+}}
+
+.markdown-rendered a,
+.cm-s-obsidian .cm-link,
+.cm-s-obsidian .cm-hmd-internal-link {{
+  color: var(--text-accent);
+}}
+
+.markdown-rendered img {{
+  border-radius: var(--img-radius);
+}}
+"""
+    manifest = canonical_json({
+        "name": OBSIDIAN_THEME_NAME,
+        "version": OBSIDIAN_THEME_VERSION,
+        "minAppVersion": OBSIDIAN_THEME_MIN_APP_VERSION,
+        "author": OBSIDIAN_THEME_AUTHOR,
+        "authorUrl": "https://obsidian.md",
+    })
+    return {
+        "obsidian/manifest.json": manifest,
+        "obsidian/theme.css": css,
+    }
 
 
 def render_powerlevel10k(theme: dict[str, Any]) -> str:
@@ -1471,13 +1781,15 @@ def render_theme(theme: dict[str, Any], source_path: Path | None = None) -> tupl
         files.update(render_cursor_extension(theme))
     if targets.get("t3code", False):
         files["t3code/theme.json"] = render_t3code(theme)
+    if targets.get("zed", False):
+        files["zed/themes/blox-generated.json"] = render_zed(theme)
     if targets["stylus"]:
         from .stylus import render_stylus, render_stylus_manifest
 
         files["stylus/blox-system.user.css"] = render_stylus(theme)
         files["stylus/manifest.json"] = render_stylus_manifest(theme)
     if targets.get("obsidian", False):
-        files["obsidian/style-settings.json"] = render_obsidian(theme)
+        files.update(render_obsidian(theme))
     if targets["powerlevel10k"]:
         files["powerlevel10k/theme.zsh"] = render_powerlevel10k(theme)
     if targets["widgets"]:

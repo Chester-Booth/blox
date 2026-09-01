@@ -9,6 +9,7 @@ import re
 import shlex
 import subprocess
 import sys
+import uuid
 from pathlib import Path
 
 import gi
@@ -18,6 +19,8 @@ from gi.repository import GioUnix  # noqa: E402
 
 
 ARGUMENT_FIELD_CODES = re.compile(r"%[fFuUdDnNvm]")
+TRANSIENT_SERVICE_DESKTOP_IDS = {"t3code", "t3code-url-handler"}
+VALID_ENVIRONMENT_NAME = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 
 def resolve_command(desktop_id: str) -> tuple[list[str], str | None]:
@@ -89,11 +92,84 @@ def active_cursor_environment() -> dict[str, str]:
     return environment
 
 
-def _launches_detached_editor(desktop_id: str, command: list[str]) -> bool:
-    """Keep Electron editors out of the transient systemd scope used by the app menu."""
-    entry_name = Path(desktop_id.removesuffix(".desktop")).name.lower()
-    executable_name = Path(command[0]).name.lower() if command else ""
-    return entry_name in {"code", "code-url-handler", "cursor", "cursor-url-handler"} and executable_name in {"code", "code-insiders", "cursor"}
+def _desktop_id_key(desktop_id: str | None) -> str:
+    return (desktop_id or "").removesuffix(".desktop").casefold()
+
+
+def _systemd_environment_args(environment: dict[str, str]) -> list[str]:
+    """Pass the launch environment into a transient user service.
+
+    ``systemd-run`` does not inherit the caller's environment for a service.
+    Keep the session variables supplied by the user service and add the
+    cursor/theme values that the launcher calculated. Electron must not see
+    ``ELECTRON_RUN_AS_NODE`` from a development shell.
+    """
+    return [
+        f"--setenv={name}={value}"
+        for name, value in environment.items()
+        if name != "ELECTRON_RUN_AS_NODE" and VALID_ENVIRONMENT_NAME.fullmatch(name)
+    ]
+
+
+def _launch_in_transient_service(
+    command: list[str],
+    working_directory: str | None,
+    environment: dict[str, str],
+    desktop_id: str,
+) -> int:
+    """Start a long-lived GUI in a cgroup independent of Quickshell."""
+    unit = f"blox-desktop-{_desktop_id_key(desktop_id)}-{os.getpid()}-{uuid.uuid4().hex[:8]}.service"
+    systemd_command = [
+        "systemd-run",
+        "--user",
+        "--collect",
+        "--no-block",
+        "--quiet",
+        f"--unit={unit}",
+        *_systemd_environment_args(environment),
+    ]
+    if working_directory:
+        systemd_command.append(f"--working-directory={Path(working_directory).expanduser()}")
+    systemd_command.extend(("--", *command))
+    result = subprocess.run(
+        systemd_command,
+        cwd=str(Path(working_directory).expanduser()) if working_directory else None,
+        env=environment,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    return result.returncode
+
+
+def launch_detached(
+    command: list[str],
+    working_directory: str | None,
+    environment: dict[str, str],
+    desktop_id: str | None = None,
+) -> int:
+    """Start a desktop command with the lifetime it needs.
+
+    Some desktop commands are short-lived clients which hand off to a lasting
+    GUI process, such as Zed's ``zeditor`` CLI. T3 Code is different: its
+    Electron children must share a cgroup that Quickshell cannot kill when the
+    shell restarts. Launch T3 through a transient user service for that case;
+    use a detached process for the other desktop entries.
+    """
+    if _desktop_id_key(desktop_id) in TRANSIENT_SERVICE_DESKTOP_IDS:
+        return _launch_in_transient_service(command, working_directory, environment, desktop_id or "t3code")
+
+    process = subprocess.Popen(
+        command,
+        cwd=str(Path(working_directory).expanduser()) if working_directory else None,
+        env=environment,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        start_new_session=True,
+    )
+    return 0 if process.pid > 0 else 1
 
 
 def main() -> int:
@@ -105,27 +181,7 @@ def main() -> int:
         command, working_directory = resolve_command(sys.argv[1])
         launch_environment = os.environ.copy()
         launch_environment.update(active_cursor_environment())
-        if _launches_detached_editor(sys.argv[1], command):
-            process = subprocess.Popen(
-                command,
-                cwd=str(Path(working_directory).expanduser()) if working_directory else None,
-                env=launch_environment,
-                stdin=subprocess.DEVNULL,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                start_new_session=True,
-            )
-            return 0 if process.pid > 0 else 1
-        service_command = ["systemd-run", "--user", "--collect", "--quiet"]
-        inherited = {name: os.environ.get(name) for name in ("DISPLAY", "WAYLAND_DISPLAY", "XDG_CURRENT_DESKTOP", "XDG_SESSION_TYPE")}
-        inherited.update(active_cursor_environment())
-        for name, value in inherited.items():
-            if value:
-                service_command.append(f"--setenv={name}={value}")
-        if working_directory:
-            service_command.extend(("--working-directory", str(Path(working_directory).expanduser())))
-        service_command.extend(("--", *command))
-        return subprocess.run(service_command, check=False).returncode
+        return launch_detached(command, working_directory, launch_environment, sys.argv[1])
     except (OSError, ValueError) as error:
         print(error, file=sys.stderr)
         return 1

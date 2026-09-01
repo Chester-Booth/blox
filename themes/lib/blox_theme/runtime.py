@@ -7,6 +7,7 @@ import os
 import re
 import shutil
 import subprocess
+import time
 import uuid
 from contextlib import AbstractContextManager
 from datetime import datetime, timezone
@@ -15,8 +16,9 @@ from typing import Any, Callable, Iterable
 
 from . import RENDERER_VERSION
 from .browser_targets import BROWSER_TARGET_BY_ID, browser_target, detect_browser_target
-from .core import DEFAULT_THEME_ID, EDITOR_THEME_PACKAGE_NAME, EDITOR_THEME_PUBLISHER, EDITOR_THEME_RELATIVE_PATH, EDITOR_THEME_VERSION, canonical_json, editor_colours, load_theme, render_theme, repository_root, resolve_wallpaper_path, sha256_text, state_dir
-from .editor import EditorSettingsFailure, apply_fragment, read_settings_values, restore_settings
+from .core import DEFAULT_THEME_ID, EDITOR_THEME_PACKAGE_NAME, EDITOR_THEME_PUBLISHER, EDITOR_THEME_RELATIVE_PATH, EDITOR_THEME_VERSION, ZED_THEME_FAMILY_NAME, canonical_json, editor_colours, load_theme, render_theme, repository_root, resolve_wallpaper_path, sha256_text, state_dir
+from .editor import EditorSettingsFailure, apply_fragment, members, read_settings_values, restore_settings
+from .obsidian import ObsidianFailure, needs_reapply as obsidian_needs_reapply, preflight as obsidian_preflight, publish as publish_obsidian_theme, reset as reset_obsidian_theme
 
 
 TARGET_FILES = {
@@ -36,8 +38,9 @@ TARGET_FILES = {
     "code": ("code/settings.json", "code/package.json", "code/themes/blox-generated-color-theme.json"),
     "cursor_editor": ("cursor-editor/settings.json", "cursor-editor/package.json", "cursor-editor/themes/blox-generated-color-theme.json"),
     "t3code": ("t3code/theme.json",),
+    "zed": ("zed/themes/blox-generated.json",),
     "stylus": ("stylus/blox-system.user.css", "stylus/manifest.json"),
-    "obsidian": ("obsidian/style-settings.json",),
+    "obsidian": ("obsidian/manifest.json", "obsidian/theme.css"),
     "powerlevel10k": ("powerlevel10k/theme.zsh",),
 }
 TARGET_REQUIRED_FILES = {
@@ -48,6 +51,7 @@ TARGET_REQUIRED_FILES = {
 # carried forward. New generations never copy it.
 LEGACY_TARGET_FILES = {
     "obsidian/blox-theme.css": "obsidian",
+    "obsidian/style-settings.json": "obsidian",
     "gtk/helium/manifest.json": "gtk",
     "code/themes/blox-dark-2026.json": "code",
 }
@@ -65,6 +69,7 @@ EDITOR_MODERN_UI_SUPPORT = {"code": True, "cursor_editor": False}
 EDITOR_LEGACY_EXTENSION_DIR = "blox.blox-dark-2026-1.0.0"
 EDITOR_EXTENSION_DIR = f"{EDITOR_THEME_PUBLISHER}.{EDITOR_THEME_PACKAGE_NAME}-{EDITOR_THEME_VERSION}"
 T3CODE_THEME_ID = "blox-theme"
+ZED_THEME_WATCH_SETTLE_SECONDS = 0.2
 
 
 class RuntimeFailure(Exception):
@@ -341,6 +346,28 @@ def _prune_generations(root: Path, current: Path) -> None:
 
 def _command_text(command: list[str]) -> str:
     return " ".join(command)
+
+
+def _obsidian_failure_warning(warnings: Iterable[str]) -> str | None:
+    return next((warning for warning in warnings if warning.startswith("Obsidian theme was not changed:")), None)
+
+
+def _restore_generation_after_application_failure(
+    root: Path,
+    previous_path: Path | None,
+    previous_manifest: dict[str, Any] | None,
+    selected: Iterable[str],
+    failed_generation: Path | None = None,
+) -> None:
+    if previous_path is not None:
+        _switch_generation(root, previous_path)
+        sync_dynamic_loaders(root, previous_manifest["enabled_targets"] if previous_manifest else (), selected)
+    else:
+        cleanup_managed_loaders(root)
+        (root / "current").unlink(missing_ok=True)
+        (root / "active.json").unlink(missing_ok=True)
+    if failed_generation is not None:
+        shutil.rmtree(failed_generation, ignore_errors=True)
 
 
 def editor_settings_path(target: str) -> Path:
@@ -622,6 +649,239 @@ def _reset_t3code_theme(root: Path) -> list[str]:
     return warnings
 
 
+def zed_config_dir() -> Path:
+    config = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")).expanduser()
+    return config / "zed"
+
+
+def zed_paths() -> tuple[Path, Path]:
+    config = zed_config_dir()
+    return config / "themes/blox-generated.json", config / "settings.json"
+
+
+def zed_integration_path(root: Path) -> Path:
+    return root / "integration/zed.json"
+
+
+def _zed_safe_paths() -> tuple[Path, Path]:
+    published, settings = zed_paths()
+    config = zed_config_dir()
+    themes = published.parent
+    for path, label in ((config, "config directory"), (themes, "themes directory")):
+        if path.is_symlink():
+            raise RuntimeFailure(f"refusing to use symlinked Zed {label}: {path}")
+        if path.exists() and not path.is_dir():
+            raise RuntimeFailure(f"Zed {label} is not a directory: {path}")
+    for path, label in ((published, "theme"), (settings, "settings")):
+        if path.is_symlink():
+            raise RuntimeFailure(f"refusing to replace symlinked Zed {label}: {path}")
+        if path.exists() and not path.is_file():
+            raise RuntimeFailure(f"Zed {label} is not a regular file: {path}")
+    return published, settings
+
+
+def _empty_zed_integration(
+    published: Path,
+    settings: Path,
+    previous_theme: dict[str, Any],
+    settings_existed: bool,
+    previous_published_content: str | None,
+) -> dict[str, Any]:
+    return {
+        "schema_version": 1,
+        "published_path": str(published),
+        "settings_path": str(settings),
+        "previous_theme": previous_theme,
+        "previous_settings_existed": settings_existed,
+        "previous_published_content": previous_published_content,
+        "last_published_sha256": "",
+        "last_theme_value": None,
+    }
+
+
+def _load_zed_integration(root: Path) -> dict[str, Any] | None:
+    path = zed_integration_path(root)
+    if not path.is_file():
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        raise RuntimeFailure(f"Zed integration record is invalid: {path}") from error
+    expected = {
+        "schema_version", "published_path", "settings_path", "previous_theme",
+        "previous_settings_existed", "previous_published_content", "last_published_sha256",
+        "last_theme_value",
+    }
+    if not isinstance(data, dict) or set(data) != expected or data["schema_version"] != 1:
+        raise RuntimeFailure(f"Zed integration record is invalid: {path}")
+    if any(not isinstance(data[key], str) for key in ("published_path", "settings_path", "last_published_sha256")):
+        raise RuntimeFailure(f"Zed integration record is invalid: {path}")
+    if not isinstance(data["previous_theme"], dict) or not isinstance(data["previous_theme"].get("present"), bool):
+        raise RuntimeFailure(f"Zed integration record is invalid: {path}")
+    if data["previous_theme"]["present"] and "value" not in data["previous_theme"]:
+        raise RuntimeFailure(f"Zed integration record is invalid: {path}")
+    if not isinstance(data["previous_settings_existed"], bool):
+        raise RuntimeFailure(f"Zed integration record is invalid: {path}")
+    if data["previous_published_content"] is not None and not isinstance(data["previous_published_content"], str):
+        raise RuntimeFailure(f"Zed integration record is invalid: {path}")
+    if data["last_published_sha256"] and not re.fullmatch(r"[0-9a-f]{64}", data["last_published_sha256"]):
+        raise RuntimeFailure(f"Zed integration record is invalid: {path}")
+    if data["last_theme_value"] is not None and not isinstance(data["last_theme_value"], (str, dict)):
+        raise RuntimeFailure(f"Zed integration record is invalid: {path}")
+    return data
+
+
+def _save_zed_integration(root: Path, data: dict[str, Any]) -> None:
+    _atomic_write_text(zed_integration_path(root), canonical_json(data))
+
+
+def _zed_current_theme_setting(settings: Path) -> dict[str, Any]:
+    return read_settings_values(settings, ("theme",))["theme"]
+
+
+def _zed_next_theme_value(current: dict[str, Any], name: str, appearance: str) -> str | dict[str, Any]:
+    if not current["present"]:
+        return name
+    value = current["value"]
+    if isinstance(value, str):
+        return name
+    if isinstance(value, dict):
+        updated = dict(value)
+        updated[appearance] = name
+        return updated
+    raise RuntimeFailure("Zed settings theme must be a string or light/dark object")
+
+
+def _zed_generated_file(path: Path) -> bool:
+    try:
+        document = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return False
+    return isinstance(document, dict) and document.get("name") == ZED_THEME_FAMILY_NAME
+
+
+def _publish_zed_theme(root: Path) -> None:
+    source = root / "current/zed/themes/blox-generated.json"
+    if not source.is_file():
+        raise RuntimeFailure(f"generated Zed theme is missing: {source}")
+    try:
+        document = json.loads(source.read_text(encoding="utf-8"))
+        theme_name = document["themes"][0]["name"]
+    except (OSError, json.JSONDecodeError, KeyError, IndexError, TypeError) as error:
+        raise RuntimeFailure(f"generated Zed theme is invalid: {source}") from error
+    if not isinstance(theme_name, str):
+        raise RuntimeFailure(f"generated Zed theme has no selectable theme name: {source}")
+    if not (shutil.which("zeditor") or shutil.which("zed")):
+        raise RuntimeFailure("Zed is not installed; install the zeditor CLI before applying the Zed target")
+
+    published, settings = _zed_safe_paths()
+    current = _zed_current_theme_setting(settings)
+    integration = _load_zed_integration(root)
+    if integration is not None and (
+        integration["published_path"] != str(published) or integration["settings_path"] != str(settings)
+    ):
+        raise RuntimeFailure("Zed integration record points to a different config directory")
+    previous_published = published.read_text(encoding="utf-8") if published.is_file() else None
+    if integration is not None and previous_published is not None and integration["last_published_sha256"]:
+        if _file_sha256(published) != integration["last_published_sha256"]:
+            raise RuntimeFailure(f"refusing to replace Zed theme changed outside Blox: {published}")
+    if integration is None and previous_published is not None and not _zed_generated_file(published):
+        raise RuntimeFailure(f"refusing to replace foreign Zed theme: {published}")
+
+    created_integration = integration is None
+    if integration is None:
+        integration = _empty_zed_integration(
+            published,
+            settings,
+            current,
+            settings.is_file(),
+            previous_published,
+        )
+        _save_zed_integration(root, integration)
+
+    next_value = _zed_next_theme_value(current, theme_name, document["themes"][0]["appearance"])
+    settings_existed = settings.is_file()
+    try:
+        content = source.read_text(encoding="utf-8")
+        _atomic_write_text(published, content)
+        # The atomic rename protects readers from a partial JSON document,
+        # but some Linux file-watch events report only the temporary path.
+        # Touch the completed destination so Zed receives a second event for
+        # the path it actually loads.
+        os.utime(published, None)
+        # Zed polls the themes directory on a short debounce timer. Give it
+        # time to register a newly published theme before selecting its name
+        # in settings, otherwise the settings watcher can win the race and
+        # leave an existing window on the previous theme.
+        time.sleep(ZED_THEME_WATCH_SETTLE_SECONDS)
+        # Zed 1.17 watches the settings file inode, so preserve it for live
+        # theme changes in an existing Zed process.
+        apply_fragment(settings, {"theme": next_value}, atomic=False)
+        integration["last_published_sha256"] = sha256_text(content)
+        integration["last_theme_value"] = next_value
+        _save_zed_integration(root, integration)
+    except (OSError, EditorSettingsFailure, RuntimeFailure):
+        try:
+            if previous_published is None:
+                published.unlink(missing_ok=True)
+            else:
+                _atomic_write_text(published, previous_published)
+            if current["present"]:
+                restore_settings(settings, {"theme": current["value"]}, atomic=False)
+            else:
+                restore_settings(settings, {}, ("theme",), atomic=False)
+            if not settings_existed and settings.is_file():
+                parsed, _ = members(settings.read_text(encoding="utf-8"))
+                if not parsed:
+                    settings.unlink()
+        finally:
+            if created_integration:
+                zed_integration_path(root).unlink(missing_ok=True)
+        raise
+
+
+def _reset_zed_theme(root: Path) -> list[str]:
+    integration = _load_zed_integration(root)
+    if integration is None:
+        return ["Zed has no Blox ownership record; its local theme and settings were left untouched"]
+    published, settings = _zed_safe_paths()
+    if integration["published_path"] != str(published) or integration["settings_path"] != str(settings):
+        raise RuntimeFailure("Zed integration record points to a different config directory")
+    warnings: list[str] = []
+
+    # Zed watches the settings file and the user theme directory separately.
+    # Restore the selected theme while the generated theme still exists, then
+    # remove Blox's file. Removing the active theme first can leave an open
+    # Zed window using the old theme until it restarts.
+    current = _zed_current_theme_setting(settings)
+    setting_owned = integration["last_theme_value"] is not None and _setting_matches(current, integration["last_theme_value"])
+    if not setting_owned:
+        warnings.append("Zed theme setting changed outside Blox; left the current setting untouched")
+    else:
+        previous = integration["previous_theme"]
+        if previous["present"]:
+            restore_settings(settings, {"theme": previous["value"]}, atomic=False)
+        else:
+            restore_settings(settings, {}, ("theme",), atomic=False)
+        if not integration["previous_settings_existed"] and settings.is_file():
+            parsed, _ = members(settings.read_text(encoding="utf-8"))
+            if not parsed:
+                settings.unlink()
+
+    if published.is_file():
+        if not integration["last_published_sha256"] or _file_sha256(published) != integration["last_published_sha256"]:
+            warnings.append(f"Zed theme changed outside Blox; left untouched: {published}")
+        elif integration["previous_published_content"] is None:
+            published.unlink()
+        else:
+            _atomic_write_text(published, integration["previous_published_content"])
+    elif integration["previous_published_content"] is not None:
+        warnings.append(f"Zed theme is missing; left untouched: {published}")
+    if not warnings:
+        zed_integration_path(root).unlink(missing_ok=True)
+    return warnings
+
+
 def _setting_matches(value: dict[str, Any], expected: Any) -> bool:
     return value.get("present") is True and value.get("value") == expected
 
@@ -770,7 +1030,14 @@ def remove_editor_extension(target: str) -> None:
 
 def _run(command: list[str]) -> subprocess.CompletedProcess[str]:
     try:
-        return subprocess.run(command, check=False, capture_output=True, text=True)
+        environment = None
+        if command and Path(command[0]).name == "obsidian":
+            # The shell can export this for Electron-based tools. Obsidian's
+            # wrapper interprets it as a request to run as plain Node and then
+            # fails before it reaches the official CLI.
+            environment = os.environ.copy()
+            environment.pop("ELECTRON_RUN_AS_NODE", None)
+        return subprocess.run(command, check=False, capture_output=True, text=True, env=environment)
     except OSError as error:
         return subprocess.CompletedProcess(command, 127, "", str(error))
 
@@ -1671,10 +1938,25 @@ def run_reload_actions(root: Path, targets: Iterable[str], mode: str = "reload",
                     _publish_t3code_theme(root)
             except (OSError, RuntimeFailure) as error:
                 warnings.append(f"T3Code theme was not changed: {error}")
+        elif target == "zed":
+            try:
+                if mode == "reset":
+                    warnings.extend(_reset_zed_theme(root))
+                else:
+                    _publish_zed_theme(root)
+            except (OSError, EditorSettingsFailure, RuntimeFailure) as error:
+                warnings.append(f"Zed theme was not changed: {error}")
         elif target == "stylus":
             warnings.append("Stylus's generated UserCSS was removed; manually remove any previously imported copy" if mode == "reset" else f"Open or reload {root / 'current/stylus/blox-system.user.css'} in a browser with Stylus, then choose Install style the first time or Reinstall style after an earlier import; remove older duplicate Blox Web Theme entries first; manifest.json lists included and excluded sites")
         elif target == "obsidian":
-            warnings.append("Obsidian's generated Style Settings import was removed; existing vault settings were not changed" if mode == "reset" else f"Obsidian requires Minimal and Style Settings; manually import {root / 'current/obsidian/style-settings.json'}")
+            try:
+                if mode == "reset":
+                    warnings.extend(reset_obsidian_theme(root, run_command, real_cli=run_command is _run))
+                else:
+                    vault = publish_obsidian_theme(root, run_command, real_cli=run_command is _run)
+                    warnings.append(f"Obsidian native theme selected in {vault}")
+            except (OSError, EditorSettingsFailure, ObsidianFailure) as error:
+                warnings.append(f"Obsidian theme was not changed: {error}")
         elif target == "powerlevel10k":
             warnings.append("Powerlevel10k will use the base configuration in new shells" if mode == "reset" else "Powerlevel10k theme changes apply to new shells; source the generated fragment to update the current shell")
         if progress is not None:
@@ -1682,7 +1964,7 @@ def run_reload_actions(root: Path, targets: Iterable[str], mode: str = "reload",
             failed = next((warning for warning in target_warnings if any(token in warning.lower() for token in ("failed", "not changed", "unavailable", "could not"))), "")
             if failed:
                 progress(target, "failed", failed)
-            elif target in ("stylus", "obsidian"):
+            elif target == "stylus":
                 progress(target, "manual", "Apply manually")
             elif target == "cursor" and defer_quickshell_restart and mode != "reset":
                 progress(target, "restart", "Complete to reload Blox surfaces")
@@ -1718,6 +2000,11 @@ def apply_theme(theme_path: Path, theme: dict[str, Any], targets: Iterable[str],
     if not selected:
         raise RuntimeFailure("at least one target is required")
     _check_browser_targets(enabled)
+    if "obsidian" in enabled:
+        try:
+            obsidian_preflight(root)
+        except ObsidianFailure as error:
+            raise RuntimeFailure(str(error)) from error
     verify_tracked_loaders(enabled)
     with ApplicationLock(root):
         generations = root / "generations"
@@ -1799,6 +2086,8 @@ def apply_theme(theme_path: Path, theme: dict[str, Any], targets: Iterable[str],
                 )
             else:
                 changed_targets = tuple(target for target in selected if _target_changed(previous_path, previous_manifest, candidate, target))
+            if "obsidian" in enabled_selection and "obsidian" in selected and obsidian_needs_reapply(root) and "obsidian" not in changed_targets:
+                changed_targets = (*changed_targets, "obsidian")
             unchanged_targets = tuple(target for target in selected if target not in changed_targets)
             icon_theme_changed = "quickshell" in changed_targets and _quickshell_icon_theme_changed(previous_path, theme)
             changed_enabled_targets = tuple(target for target in changed_targets if target in enabled_selection)
@@ -1884,6 +2173,10 @@ def apply_theme(theme_path: Path, theme: dict[str, Any], targets: Iterable[str],
                 quickshell_restart_pending="cursor" in changed_enabled_targets or icon_theme_changed,
                 legacy_editor_theme=legacy_editor_theme,
             ))
+            obsidian_failure = _obsidian_failure_warning(reload_warnings)
+            if obsidian_failure is not None:
+                _restore_generation_after_application_failure(root, previous_path, previous_manifest, selected, final)
+                raise RuntimeFailure(obsidian_failure)
             report("stage", "applications", "done", "Application targets finished", progress_total)
             _prune_generations(root, final)
             return manifest, reload_warnings
@@ -1952,6 +2245,15 @@ def rollback(generation_id: str | None = None, run_command: Callable[[list[str]]
         except (FileNotFoundError, OSError, json.JSONDecodeError, ValueError, KeyError, TypeError):
             legacy_editor_theme = None
         warnings.extend(run_reload_actions(root, manifest["enabled_targets"], run_command=run_command, legacy_editor_theme=legacy_editor_theme))
+        obsidian_failure = _obsidian_failure_warning(warnings)
+        if obsidian_failure is not None:
+            _restore_generation_after_application_failure(
+                root,
+                current_path,
+                current_record[1],
+                TARGET_NAMES,
+            )
+            raise RuntimeFailure(obsidian_failure)
         return manifest, warnings
 
 
@@ -2008,6 +2310,10 @@ def reset_target(target: str, run_command: Callable[[list[str]], subprocess.Comp
                     shutil.rmtree(final, ignore_errors=True)
                 raise
             warnings = run_reload_actions(root, (target,), mode="reset", run_command=run_command)
+            obsidian_failure = _obsidian_failure_warning(warnings)
+            if target == "obsidian" and obsidian_failure is not None:
+                _restore_generation_after_application_failure(root, previous, previous_manifest, (target,), final)
+                raise RuntimeFailure(obsidian_failure)
             _prune_generations(root, final)
             return manifest, warnings
         except Exception:

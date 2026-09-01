@@ -43,8 +43,9 @@ QtObject {
             "code": ["code/settings.json", "code/package.json", "code/themes/blox-generated-color-theme.json"],
             "cursor_editor": ["cursor-editor/settings.json", "cursor-editor/package.json", "cursor-editor/themes/blox-generated-color-theme.json"],
             "t3code": ["t3code/theme.json"],
+            "zed": ["zed/themes/blox-generated.json"],
             "stylus": ["stylus/blox-system.user.css", "stylus/manifest.json"],
-            "obsidian": ["obsidian/style-settings.json"],
+            "obsidian": ["obsidian/manifest.json", "obsidian/theme.css"],
             "powerlevel10k": ["powerlevel10k/theme.zsh"]
         };
         const order = ["stylus"].concat(host.targetKeys.filter((target) => {

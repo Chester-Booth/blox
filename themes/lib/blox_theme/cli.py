@@ -532,7 +532,11 @@ def run(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
                 return envelope(command, errors=[f"theme source already exists: {candidate['id']}"]), EXIT_VALIDATION
         else:
             candidate["name"] = args.display_name
-        checked = validate_theme(candidate, check_dependencies=False)
+        try:
+            resolved_candidate = apply_theme_defaults(candidate)
+        except (DefaultsFailure, ValueError) as error:
+            return envelope(command, errors=[str(error)]), EXIT_VALIDATION
+        checked = validate_theme(resolved_candidate, check_dependencies=False)
         if checked.errors:
             return envelope(command, errors=checked.errors, warnings=checked.warnings), EXIT_VALIDATION
         try:
@@ -581,7 +585,10 @@ def run(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
         return envelope(command, data, warnings=checked.warnings), EXIT_OK
 
     if command in ("apply", "apply-inline"):
-        authoritative_targets = command == "apply-inline"
+        # A normal theme switch owns the complete target selection.  Keep
+        # --targets as an explicit partial-apply escape hatch for retries and
+        # targeted CLI work.
+        authoritative_targets = command == "apply-inline" or (command == "apply" and args.targets is None)
         try:
             selected = configured_targets(theme) if authoritative_targets else configured_targets(theme, args.targets)
         except RuntimeFailure as error:

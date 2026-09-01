@@ -117,10 +117,10 @@ Scope {
         return entry && entry.id === selectedId && entry.builtin === true;
     })
     readonly property bool themeControlsEnabled: !selectedThemeBuiltin
-    readonly property var targetKeys: ["quickshell", "widgets", "gtk", "helium", "chromium", "cursor", "wallpaper", "kitty", "hyprland", "hyprlock", "btop", "micro", "glow", "code", "cursor_editor", "t3code", "stylus", "obsidian", "powerlevel10k", "sddm", "grub"]
+    readonly property var targetKeys: ["quickshell", "widgets", "gtk", "helium", "chromium", "cursor", "wallpaper", "kitty", "hyprland", "hyprlock", "btop", "micro", "glow", "code", "cursor_editor", "t3code", "zed", "stylus", "obsidian", "powerlevel10k", "sddm", "grub"]
     readonly property var unavailableTargetKeys: ["sddm", "grub"]
     readonly property var coreTargetKeys: ["quickshell", "widgets", "wallpaper", "hyprland", "hyprlock", "cursor"]
-    readonly property var applicationTargetKeys: ["kitty", "gtk", "btop", "micro", "glow", "code", "cursor_editor", "t3code", "stylus", "obsidian", "powerlevel10k"]
+    readonly property var applicationTargetKeys: ["kitty", "gtk", "btop", "micro", "glow", "code", "cursor_editor", "t3code", "zed", "stylus", "obsidian", "powerlevel10k"]
     readonly property var stylusStyleSetValues: ["recommended", "unmaintained", "all"]
     readonly property var stylusStyleSetNames: ["Recommended", "Include unmaintained", "All eligible"]
     readonly property var browserTargetKeys: browserTargets.filter((entry) => {
@@ -278,6 +278,8 @@ Scope {
 
         if (key === "t3code")
             return "T3Code";
+        if (key === "zed")
+            return "Zed";
 
         const browser = browserTargetInfo(key);
         if (browser !== null && browser.label)
@@ -287,7 +289,7 @@ Scope {
     }
 
     function targetApplyMode(key) {
-        if (key === "stylus" || key === "obsidian")
+        if (key === "stylus")
             return "manual";
 
         if (["gtk", "helium", "chromium", "hyprlock", "btop", "micro", "glow", "code", "cursor_editor", "powerlevel10k"].indexOf(key) >= 0)

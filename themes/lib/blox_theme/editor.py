@@ -278,7 +278,17 @@ def remove_members(text: str, keys: list[str] | tuple[str, ...] | set[str]) -> s
     return text
 
 
-def _write_settings(destination: Path, updated: str) -> None:
+def _write_settings(destination: Path, updated: str, atomic: bool = True) -> None:
+    if not atomic and destination.exists():
+        # Zed 1.17 watches the settings file inode. Keep that inode when its
+        # settings change so an open window continues to receive file events.
+        with destination.open("r+", encoding="utf-8") as handle:
+            handle.seek(0)
+            handle.write(updated)
+            handle.truncate()
+            handle.flush()
+            os.fsync(handle.fileno())
+        return
     normalised: list[str] = []
     for line in updated.splitlines(keepends=True):
         if line.strip() == ",":
@@ -296,7 +306,7 @@ def _write_settings(destination: Path, updated: str) -> None:
     os.replace(temporary, destination)
 
 
-def apply_fragment(settings: Path, fragment: dict[str, Any]) -> None:
+def apply_fragment(settings: Path, fragment: dict[str, Any], atomic: bool = True) -> None:
     destination, original = _settings_text(settings)
     parsed, _ = members(original)
     updates = {key: value for key, value in fragment.items() if key != "workbench.colorCustomizations"}
@@ -310,13 +320,13 @@ def apply_fragment(settings: Path, fragment: dict[str, Any]) -> None:
         existing_workbench.update(fragment["workbench.colorCustomizations"])
         updates["workbench.colorCustomizations"] = existing_workbench
     updated = merge_members(original, updates)
-    _write_settings(destination, updated)
+    _write_settings(destination, updated, atomic=atomic)
 
 
-def restore_settings(settings: Path, values: dict[str, Any], remove: list[str] | tuple[str, ...] = ()) -> None:
+def restore_settings(settings: Path, values: dict[str, Any], remove: list[str] | tuple[str, ...] = (), atomic: bool = True) -> None:
     """Restore or remove selected top-level settings atomically."""
     destination, original = _settings_text(settings)
     updated = merge_members(original, values) if values else original
     if remove:
         updated = remove_members(updated, remove)
-    _write_settings(destination, updated)
+    _write_settings(destination, updated, atomic=atomic)

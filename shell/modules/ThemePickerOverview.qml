@@ -295,57 +295,18 @@ ColumnLayout {
 
     }
 
-    ColumnLayout {
-        Layout.fillWidth: true
-        spacing: Theme.scaledSpacing(12)
+    ThemePickerWallpaper {
+        controller: section.controller
+        enabled: controller.themeControlsEnabled
+    }
 
-        Label {
-            text: "Wallpaper"
-            color: Theme.foreground
-            font.family: Theme.bodyFontFamily
-            font.pixelSize: 17
-            font.bold: true
-        }
-
-        RowLayout {
-            Layout.fillWidth: true
-
-            BloxTextField {
-                Layout.fillWidth: true
-                placeholderText: "/path/to/wallpaper"
-                text: {
-                    controller.candidateRevision;
-                    return controller.candidate && controller.candidate.wallpaper ? controller.wallpaperDisplayPath(controller.candidate.wallpaper.path) : "";
-                }
-                onEditingFinished: {
-                    controller.setWallpaperDisplayPath(text);
-                }
-            }
-
-            BloxButton {
-                text: "Browse"
-                onClicked: controller.openWallpaperDialog("overview")
-            }
-
-            BloxComboBox {
-                model: ["cover", "contain", "tile"]
-                currentIndex: controller.candidate && controller.candidate.wallpaper ? model.indexOf(controller.candidate.wallpaper.fit) : 0
-                onActivated: (index, selectedText) => {
-                    const next = controller.cloneCandidate();
-                    next.wallpaper.fit = selectedText;
-                    controller.markCandidate(next, "wallpaper.fit");
-                }
-            }
-
-        }
-
-        Label {
-            text: "Semantic palette"
-            color: Theme.foreground
-            font.family: Theme.bodyFontFamily
-            font.pixelSize: 17
-            font.bold: true
-        }
+    Label {
+        text: "Semantic palette"
+        color: Theme.foreground
+        font.family: Theme.bodyFontFamily
+        font.pixelSize: 17
+        font.bold: true
+    }
 
         Flow {
             Layout.fillWidth: true
@@ -525,7 +486,5 @@ ColumnLayout {
             }
 
         }
-
-    }
 
 }

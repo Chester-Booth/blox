@@ -212,12 +212,16 @@ def resolve_wallpaper_path(value: str, source_path: Path | None = None) -> Path:
     Built-in themes use paths relative to the application data directory. A
     theme loaded from elsewhere instead uses its own
     directory, which keeps loose JSON exports usable before they are imported.
-    Absolute and home-relative references retain their existing meaning.
+    Package-owned built-in wallpaper references retain the package base even
+    when a user theme points at them. Absolute and home-relative references
+    retain their existing meaning.
     """
     path = Path(value).expanduser()
     if path.is_absolute():
         return path.resolve()
     root = themes_dir()
+    if path.parts[:2] == ("wallpapers", "builtin") and ".." not in path.parts:
+        return (root / path).resolve()
     if source_path is not None:
         source = source_path.expanduser().resolve()
         try:

@@ -67,6 +67,7 @@ from .runtime import (
 from .generators import BACKENDS, GeneratorFailure, generate_theme, save_theme_source
 from .portability import PortabilityFailure, export_bundle, import_theme
 from .trust import strip_widget_document
+from .wallpapers import WallpaperFailure, import_wallpaper, list_wallpapers, migrate_theme_wallpapers, remove_wallpaper
 
 
 def envelope(command: str, data: Any = None, errors: list[str] | None = None, warnings: list[str] | None = None) -> dict[str, Any]:
@@ -96,6 +97,11 @@ def parser() -> argparse.ArgumentParser:
 
     list_parser = subcommands.add_parser("list", help="list source themes")
     list_parser.add_argument("--json", action="store_true")
+    wallpapers_parser = subcommands.add_parser("wallpapers", help="list and manage wallpaper library images")
+    wallpapers_parser.add_argument("action", choices=("list", "import", "migrate", "remove"))
+    wallpapers_parser.add_argument("value", nargs="?")
+    wallpapers_parser.add_argument("--theme-id")
+    wallpapers_parser.add_argument("--json", action="store_true")
     targets_parser = subcommands.add_parser("targets", help="list installed browser targets")
     targets_parser.add_argument("--json", action="store_true")
     for name in ("show", "validate", "preview", "diff"):
@@ -237,6 +243,26 @@ def run(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
             return envelope(command, themes), EXIT_OK
         summary = "\n".join(f"{item['id']:<24} {item['variant'] or '-':<6} {item['name']}" for item in themes)
         return envelope(command, summary), EXIT_OK
+
+    if command == "wallpapers":
+        try:
+            if args.action == "list":
+                data = list_wallpapers()
+            elif args.action == "import":
+                if not args.value or not args.theme_id:
+                    return envelope(command, errors=["wallpaper import requires a file and --theme-id"]), EXIT_USAGE
+                data = import_wallpaper(args.value, args.theme_id)
+            elif args.action == "migrate":
+                data = migrate_theme_wallpapers()
+            else:
+                if not args.value:
+                    return envelope(command, errors=["wallpaper removal requires a wallpaper ID"]), EXIT_USAGE
+                data = remove_wallpaper(args.value)
+        except WallpaperFailure as error:
+            return envelope(command, errors=[str(error)]), EXIT_VALIDATION
+        except OSError as error:
+            return envelope(command, errors=[str(error)]), EXIT_APPLY
+        return envelope(command, data), EXIT_OK
 
     if command == "targets":
         targets = detect_browser_targets()

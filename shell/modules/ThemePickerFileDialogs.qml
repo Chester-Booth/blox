@@ -49,6 +49,8 @@ Item {
             const path = decodeURIComponent(String(selectedFile).replace(/^file:\/\//, ""));
             if (controller.wallpaperDialogTarget === "new")
                 controller.newWallpaper = path;
+            else if (controller.wallpaperDialogTarget === "library")
+                controller.importWallpaper(path);
             else
                 controller.setWallpaperPath(path);
             if (controller.wallpaperDialogTarget === "new")

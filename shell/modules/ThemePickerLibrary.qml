@@ -107,26 +107,25 @@ Rectangle {
             model: controller.filteredThemes()
             boundsBehavior: Flickable.StopAtBounds
 
-            WheelHandler {
-                acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-                onWheel: (event) => {
-                    const pixelDelta = event.pixelDelta.y || 0;
-                    const angleDelta = event.angleDelta.y || 0;
-                    const delta = pixelDelta !== 0 ? pixelDelta : angleDelta / 2;
-                    const maximumContentY = Math.max(themeList.originY, themeList.originY + themeList.contentHeight - themeList.height);
-                    themeList.contentY = Math.max(themeList.originY, Math.min(maximumContentY, themeList.contentY - delta * 4));
-                    event.accepted = true;
-                }
+            BloxWheelHandler {
+                flickable: themeList
             }
 
             ScrollBar.vertical: ScrollBar {
+                id: themeScrollbar
+
                 policy: themeList.contentHeight > themeList.height ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff
                 width: 8
+
+                background: Rectangle {
+                    radius: Theme.scaledRadius(3)
+                    color: Theme.withAlpha(Theme.foreground, 0.04)
+                }
 
                 contentItem: Rectangle {
                     implicitWidth: 6
                     radius: Theme.scaledRadius(3)
-                    color: Theme.withAlpha(Theme.muted, 0.68)
+                    color: themeScrollbar.hovered || themeScrollbar.pressed ? Theme.foreground : Theme.muted
                 }
 
             }

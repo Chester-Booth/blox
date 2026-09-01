@@ -209,20 +209,9 @@ FloatingWindow {
                             contentHeight: editorContent.implicitHeight
                             boundsBehavior: Flickable.StopAtBounds
 
-                            WheelHandler {
-                                acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-                                onWheel: (event) => {
-                                    if (!pickerController.claimEditorWheel(editorScroll)) {
-                                        event.accepted = false;
-                                        return;
-                                    }
-                                    const pixelDelta = event.pixelDelta.y || 0;
-                                    const angleDelta = event.angleDelta.y || 0;
-                                    const delta = pixelDelta !== 0 ? pixelDelta : angleDelta / 2;
-                                    const maximumContentY = Math.max(editorScroll.originY, editorScroll.originY + editorScroll.contentHeight - editorScroll.height);
-                                    editorScroll.contentY = Math.max(editorScroll.originY, Math.min(maximumContentY, editorScroll.contentY - delta * 4));
-                                    event.accepted = true;
-                                }
+                            BloxWheelHandler {
+                                flickable: editorScroll
+                                canHandleWheel: () => pickerController.claimEditorWheel(editorScroll)
                             }
 
                             ColumnLayout {
@@ -254,13 +243,13 @@ FloatingWindow {
 
                                 background: Rectangle {
                                     implicitWidth: 8
-                                    radius: 999
+                                    radius: Theme.scaledRadius(3)
                                     color: editorScrollbar.hovered || editorScrollbar.pressed ? Theme.withAlpha(Theme.foreground, 0.09) : Theme.withAlpha(Theme.foreground, 0.04)
                                 }
 
                                 contentItem: Rectangle {
                                     implicitWidth: 4
-                                    radius: 999
+                                    radius: Theme.scaledRadius(3)
                                     color: editorScrollbar.pressed ? Theme.blue : editorScrollbar.hovered ? Theme.foreground : Theme.muted
 
                                     Behavior on color {

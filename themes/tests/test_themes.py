@@ -242,6 +242,13 @@ class ThemeSchemaTests(unittest.TestCase):
         self.assertEqual(str(THEMES / "schema/theme.schema.json"), wallpaper["path"])
         self.assertEqual("schema/theme.schema.json", theme["wallpaper"]["path"])
 
+    def test_package_blank_wallpaper_reference_resolves_from_a_user_theme(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            user_source = Path(temporary) / "themes/user-theme.json"
+            resolved = resolve_wallpaper_path("wallpapers/builtin/blank-light.png", user_source)
+            self.assertEqual(THEMES / "wallpapers/builtin/blank-light.png", resolved)
+            self.assertTrue(resolved.is_file())
+
     def test_absolute_and_home_relative_wallpaper_references_are_rendered_unchanged(self) -> None:
         _, source = load_theme("catppuccin-mocha")
         for reference in ("/tmp/wallpaper.webp", "~/Pictures/wallpaper.webp"):

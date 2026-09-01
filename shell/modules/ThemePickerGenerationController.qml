@@ -251,7 +251,7 @@ QtObject {
         };
         blank.wallpaper = {
             "fit": "cover",
-            "path": light ? "~/Pictures/wallpapers/blank-light.png" : "~/Pictures/wallpapers/blank-dark.png"
+            "path": light ? "wallpapers/builtin/blank-light.png" : "wallpapers/builtin/blank-dark.png"
         };
         blank.targets.wallpaper = true;
         return blank;

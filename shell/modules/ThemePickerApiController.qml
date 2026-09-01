@@ -93,6 +93,13 @@ QtObject {
         }
         if (failed) {
             host.errorMessage = response && response.errors ? response.errors.join("\n") : "Theme action failed.";
+            if (completedAction === "wallpapers-remove") {
+                host.wallpaperRemovalError = host.errorMessage;
+                host.errorMessage = "";
+                host.modalKind = "wallpaper-remove";
+                Qt.callLater(host.focusModal);
+                return ;
+            }
             if (completedAction === "list" || completedAction === "list-refresh") {
                 host.statusMessage = "Could not load themes.";
                 if (completedAction === "list")
@@ -144,6 +151,7 @@ QtObject {
             host.sourceDigest = host.themeDigest(host.candidate.id);
             host.baselineJson = JSON.stringify(host.candidate);
             host.candidateRevision += 1;
+            host.refreshWallpapers();
             if (host.generateAfterLoad) {
                 host.generateAfterLoad = false;
                 host.generateTheme(host.candidate.wallpaper.path);
@@ -301,6 +309,20 @@ QtObject {
             const id = host.pendingSelection;
             host.pendingSelection = "";
             host.requestSelection(id, false);
+        } else if (completedAction === "wallpapers-import") {
+            const item = response.data || ({ });
+            if (item.reference || item.path)
+                host.setWallpaperPath(item.reference || item.path);
+            host.statusMessage = item.duplicate ? "Wallpaper already in the library; previewing it." : "Wallpaper imported and previewing.";
+            host.refreshWallpapers();
+        } else if (completedAction === "wallpapers-remove") {
+            host.statusMessage = "Wallpaper removed from the library.";
+            host.wallpaperRemovalId = "";
+            host.wallpaperRemovalName = "";
+            host.wallpaperRemovalReference = "";
+            host.wallpaperRemovalUsers = [];
+            host.wallpaperRemovalError = "";
+            host.refreshWallpapers();
         } else if (completedAction === "export") {
             host.statusMessage = "Theme exported to " + response.data.path;
         }

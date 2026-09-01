@@ -34,6 +34,16 @@ Scope {
     property var browserTargets: []
     property bool browserTargetsLoaded: false
     property string browserTargetOutput: ""
+    property var wallpapers: []
+    property bool wallpapersLoaded: false
+    property string wallpaperOutput: ""
+    property int wallpaperRevision: 0
+    property string wallpaperFilter: "All"
+    property string wallpaperRemovalId: ""
+    property string wallpaperRemovalName: ""
+    property string wallpaperRemovalReference: ""
+    property var wallpaperRemovalUsers: []
+    property string wallpaperRemovalError: ""
     property var iconThemes: []
     property bool iconThemesLoaded: false
     property string iconThemeOutput: ""
@@ -500,6 +510,9 @@ Scope {
         if (modalKind === "rename")
             return renameName.trim().length > 0;
 
+        if (modalKind === "wallpaper-remove")
+            return wallpaperRemovalId.length === 64 && wallpaperRemovalUsers.length === 0 && wallpaperRemovalError.length === 0;
+
         return true;
     }
 
@@ -603,8 +616,134 @@ Scope {
         browserTargetsLoaded = true;
     }
 
+    function refreshWallpapers() {
+        if (wallpapersProcess.running)
+            return ;
+
+        wallpapersLoaded = false;
+        wallpaperOutput = "";
+        wallpapersProcess.running = true;
+    }
+
+    function loadWallpapers() {
+        let response = null;
+        try {
+            response = JSON.parse(wallpaperOutput.trim());
+        } catch (error) {
+        }
+        wallpapers = response && response.ok === true && Array.isArray(response.data) ? response.data : [];
+        wallpapersLoaded = true;
+        wallpaperRevision += 1;
+    }
+
+    function wallpaperPathsEqual(left, right) {
+        const leftPath = wallpaperDisplayPath(left);
+        const rightPath = wallpaperDisplayPath(right);
+        return leftPath.length > 0 && leftPath === rightPath;
+    }
+
+    function wallpaperItems() {
+        wallpaperRevision;
+        const entries = Array.isArray(wallpapers) ? wallpapers.slice() : [];
+        const raw = candidate && candidate.wallpaper ? String(candidate.wallpaper.path || "").trim() : "";
+        if (!raw)
+            return entries;
+
+        const present = entries.some((entry) => {
+            return wallpaperPathsEqual(raw, entry.reference || "") || wallpaperPathsEqual(raw, entry.path || "");
+        });
+        if (!present && wallpapersLoaded) {
+            const displayPath = wallpaperDisplayPath(raw);
+            const pieces = raw.split(/[\\/]/);
+            const filename = pieces.length > 0 ? pieces[pieces.length - 1] : raw;
+            const packageWallpaper = raw.startsWith("wallpapers/showcase/") || raw.startsWith("wallpapers/builtin/");
+            entries.push({
+                "id": "current:" + raw,
+                "name": filename.replace(/\.[^.]+$/, "") || "Current wallpaper",
+                "kind": packageWallpaper ? "Built in" : "Imported",
+                "path": displayPath,
+                "reference": raw,
+                "removable": false,
+                "missing": true
+            });
+        }
+        return entries;
+    }
+
+    function filteredWallpapers() {
+        wallpaperRevision;
+        const entries = wallpaperItems();
+        if (wallpaperFilter === "All")
+            return entries;
+        return entries.filter((entry) => entry.kind === wallpaperFilter);
+    }
+
+    function wallpaperItemSelected(entry) {
+        if (!entry || !candidate || !candidate.wallpaper)
+            return false;
+        const raw = String(candidate.wallpaper.path || "");
+        return wallpaperPathsEqual(raw, entry.reference || "") || wallpaperPathsEqual(raw, entry.path || "");
+    }
+
+    function chooseWallpaper(entry) {
+        if (!entry || entry.missing || !themeControlsEnabled || busy)
+            return ;
+        setWallpaperPath(entry.reference || entry.path || "");
+        statusMessage = "Previewing " + entry.name + ".";
+    }
+
+    function importWallpaper(path) {
+        if (!candidate || !themeControlsEnabled || busy || !path)
+            return ;
+        runApi("wallpapers-import", ["wallpapers", "import", path, "--theme-id", candidate.id]);
+    }
+
+    function requestWallpaperRemoval(entry) {
+        if (!entry || !entry.removable || !themeControlsEnabled || busy)
+            return ;
+        wallpaperRemovalId = entry.id || "";
+        wallpaperRemovalName = entry.name || "wallpaper";
+        wallpaperRemovalReference = entry.reference || entry.path || "";
+        wallpaperRemovalUsers = themes.filter((theme) => {
+            const preview = theme && theme.preview ? theme.preview.wallpaper : "";
+            return preview && (wallpaperPathsEqual(preview, entry.reference || "") || wallpaperPathsEqual(preview, entry.path || ""));
+        }).map((theme) => theme.name || theme.id).filter((name, index, values) => name && values.indexOf(name) === index);
+        wallpaperRemovalError = "";
+        showModal("wallpaper-remove");
+    }
+
+    function wallpaperRemovalMessage() {
+        if (wallpaperRemovalUsers.length > 0)
+            return "Cannot remove this wallpaper. It is used by: " + wallpaperRemovalUsers.join(", ") + ". Choose another wallpaper in those themes first.";
+        if (wallpaperRemovalError.length > 0)
+            return wallpaperRemovalError;
+        return "Blox removes its copy and leaves the original file where you imported it from.";
+    }
+
+    function restoreWallpaperForRemoval() {
+        if (!wallpaperRemovalReference || !candidate || !candidate.wallpaper)
+            return ;
+        if (!wallpaperPathsEqual(candidate.wallpaper.path, wallpaperRemovalReference))
+            return ;
+        const activePath = wallpaperDisplayPath(Theme.activeWallpaperSource);
+        if (activePath)
+            setWallpaperPath(activePath);
+    }
+
     function refreshThemes(refreshOnly) {
         runApi(refreshOnly ? "list-refresh" : "list", ["list"]);
+    }
+
+    function restoreOpenStatus() {
+        if (candidate === null) {
+            statusMessage = "Loading themes…";
+            return ;
+        }
+        if (!candidateValid || validationPending) {
+            statusMessage = "Checking theme…";
+            return ;
+        }
+        statusMessage = dirty ? "Temporary Quickshell preview — unsaved" : selectedId === Theme.activeThemeId ? "Active theme" : "Temporary Quickshell preview";
     }
 
     function recoverPickerWorkspace(returnWorkspace) {
@@ -630,8 +769,9 @@ Scope {
         hyprlandPreview.recover();
         recoverPickerWorkspace("");
         revealTimer.restart();
-        statusMessage = "Loading themes…";
+        restoreOpenStatus();
         refreshBrowserTargets();
+        refreshWallpapers();
         refreshIconThemes();
         refreshThemes(false);
         return "open";
@@ -675,6 +815,11 @@ Scope {
         pendingPreviewContinuation = "";
         pendingSelection = "";
         pendingModalConfirmation = "";
+        wallpaperRemovalId = "";
+        wallpaperRemovalName = "";
+        wallpaperRemovalReference = "";
+        wallpaperRemovalUsers = [];
+        wallpaperRemovalError = "";
         generateAfterLoad = false;
         focusBeforeOverlay = null;
         hideTimer.restart();
@@ -1542,6 +1687,10 @@ Scope {
             generateTheme(newWallpaper, newThemeName, newThemeId);
         else if (kind === "new-blank")
             runApi("new-template", ["show", "catppuccin-mocha"]);
+        else if (kind === "wallpaper-remove") {
+            restoreWallpaperForRemoval();
+            runApi("wallpapers-remove", ["wallpapers", "remove", wallpaperRemovalId]);
+        }
         else if (kind === "export")
             host.dialogs.openExport();
         else if (kind === "generate-current")
@@ -1733,6 +1882,17 @@ Scope {
 
         stdout: StdioCollector {
             onStreamFinished: root.browserTargetOutput = this.text
+        }
+    }
+
+    Process {
+        id: wallpapersProcess
+
+        command: [root.apiPath, "wallpapers", "migrate", "--json"]
+        onExited: root.loadWallpapers()
+
+        stdout: StdioCollector {
+            onStreamFinished: root.wallpaperOutput = this.text
         }
     }
 

@@ -21,6 +21,7 @@ ThemePickerIconTheme 1.0 ThemePickerIconTheme.qml
 ThemePickerLibrary 1.0 ThemePickerLibrary.qml
 ThemePickerModal 1.0 ThemePickerModal.qml
 ThemePickerOverview 1.0 ThemePickerOverview.qml
+ThemePickerWallpaper 1.0 ThemePickerWallpaper.qml
 ThemePickerProgressFlow 1.0 ThemePickerProgressFlow.qml
 ThemeShapePreview 1.0 ThemeShapePreview.qml
 ThemePickerWidgetDialog 1.0 ThemePickerWidgetDialog.qml

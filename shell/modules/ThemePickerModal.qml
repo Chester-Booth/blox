@@ -75,7 +75,7 @@ FocusScope {
             Label {
                 visible: controller.modalKind !== "progress"
                 Layout.fillWidth: true
-                text: controller.modalKind === "new" ? "New theme" : controller.modalKind === "widget" ? (controller.widgetEditIndex >= 0 ? "Edit widget" : "New widget") : controller.modalKind === "progress" ? "Applying theme" : controller.modalKind === "guide" ? "Manual application guide" : controller.modalKind === "delete" ? "Delete theme permanently?" : controller.modalKind === "duplicate" ? "Duplicate theme" : controller.modalKind === "rename" ? "Rename display name" : controller.modalKind === "export" ? "Export theme" : "Discard unsaved changes?"
+                text: controller.modalKind === "new" ? "New theme" : controller.modalKind === "widget" ? (controller.widgetEditIndex >= 0 ? "Edit widget" : "New widget") : controller.modalKind === "progress" ? "Applying theme" : controller.modalKind === "guide" ? "Manual application guide" : controller.modalKind === "delete" ? "Delete theme permanently?" : controller.modalKind === "wallpaper-remove" ? "Remove wallpaper from library?" : controller.modalKind === "duplicate" ? "Duplicate theme" : controller.modalKind === "rename" ? "Rename display name" : controller.modalKind === "export" ? "Export theme" : "Discard unsaved changes?"
                 color: Theme.foreground
                 font.family: Theme.bodyFontFamily
                 font.pixelSize: 19
@@ -83,10 +83,10 @@ FocusScope {
             }
 
             Text {
-                visible: controller.modalKind === "new" || controller.modalKind === "navigate" || controller.modalKind === "generate-current" || controller.modalKind === "close" || controller.modalKind === "delete" || controller.modalKind === "export"
+                visible: controller.modalKind === "new" || controller.modalKind === "navigate" || controller.modalKind === "generate-current" || controller.modalKind === "close" || controller.modalKind === "delete" || controller.modalKind === "wallpaper-remove" || controller.modalKind === "export"
                 Layout.fillWidth: true
-                text: controller.modalKind === "new" ? controller.creationBusy ? "Creating the theme from the selected inputs…" : controller.newFlowPage === "blank" ? "Create a blank editable theme." : "Choose a wallpaper and the palette generator to use." : controller.modalKind === "progress" ? controller.applyProgressComplete ? "Application finished. Review any follow-up actions below." : "Generating and applying each enabled target…" : controller.modalKind === "delete" ? "This removes the editable source. The action cannot be undone." : controller.modalKind === "export" ? "Create a portable bundle. Fonts, GTK, icon and cursor themes remain dependency notes." : "The temporary Quickshell preview will be restored to the active theme."
-                color: Theme.muted
+                text: controller.modalKind === "new" ? controller.creationBusy ? "Creating the theme from the selected inputs…" : controller.newFlowPage === "blank" ? "Create a blank editable theme." : "Choose a wallpaper and the palette generator to use." : controller.modalKind === "progress" ? controller.applyProgressComplete ? "Application finished. Review any follow-up actions below." : "Generating and applying each enabled target…" : controller.modalKind === "delete" ? "This removes the editable source. The action cannot be undone." : controller.modalKind === "wallpaper-remove" ? controller.wallpaperRemovalMessage() : controller.modalKind === "export" ? "Create a portable bundle. Fonts, GTK, icon and cursor themes remain dependency notes." : "The temporary Quickshell preview will be restored to the active theme."
+                color: controller.modalKind === "wallpaper-remove" && (controller.wallpaperRemovalUsers.length > 0 || controller.wallpaperRemovalError.length > 0) ? Theme.red : Theme.muted
                 wrapMode: Text.Wrap
                 font.family: Theme.bodyFontFamily
             }
@@ -194,8 +194,8 @@ FocusScope {
 
                 BloxButton {
                     visible: controller.modalKind !== "new" && controller.modalKind !== "progress" && controller.modalKind !== "guide" && controller.modalKind !== "widget"
-                    text: controller.modalKind === "delete" ? "Delete" : controller.modalKind === "duplicate" ? "Duplicate" : controller.modalKind === "rename" ? "Rename" : controller.modalKind === "export" ? "Choose destination" : "Discard"
-                    destructive: controller.modalKind === "delete" || controller.modalKind === "close" || controller.modalKind === "navigate" || controller.modalKind === "generate-current"
+                    text: controller.modalKind === "delete" ? "Delete" : controller.modalKind === "wallpaper-remove" ? "Remove" : controller.modalKind === "duplicate" ? "Duplicate" : controller.modalKind === "rename" ? "Rename" : controller.modalKind === "export" ? "Choose destination" : "Discard"
+                    destructive: controller.modalKind === "delete" || controller.modalKind === "wallpaper-remove" || controller.modalKind === "close" || controller.modalKind === "navigate" || controller.modalKind === "generate-current"
                     enabled: controller.modalConfirmationEnabled()
                     onClicked: controller.confirmModal()
                 }

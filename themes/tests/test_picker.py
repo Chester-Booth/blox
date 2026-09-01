@@ -295,9 +295,11 @@ class ThemeLibraryMutationTests(unittest.TestCase):
 
 class PickerIntegrationSourceTests(unittest.TestCase):
     def test_selected_theme_wallpaper_uses_the_resolved_library_preview(self) -> None:
-        controller = qml_source("WidgetController")
+        widget_controller = qml_source("WidgetController")
+        picker_controller = qml_source("Controller")
         overview = qml_source("Overview")
-        resolver = controller.split("function localFileUrl(path)", 1)[1].split(
+        wallpaper = qml_source("Wallpaper")
+        resolver = widget_controller.split("function localFileUrl(path)", 1)[1].split(
             "function previewCommand", 1
         )[0]
 
@@ -306,8 +308,39 @@ class PickerIntegrationSourceTests(unittest.TestCase):
         self.assertIn("return localFileUrl(theme.preview.wallpaper);", resolver)
         self.assertIn("return Theme.wallpaperUrl(value);", resolver)
         self.assertIn('url.startsWith("file://") ? url.slice(7) : url', resolver)
-        self.assertIn("controller.wallpaperDisplayPath(controller.candidate.wallpaper.path)", overview)
-        self.assertIn("controller.setWallpaperDisplayPath(text);", overview)
+        self.assertIn("ThemePickerWallpaper", overview)
+        self.assertIn("controller.localFileUrl(modelData.path)", wallpaper)
+        self.assertIn('model: ["All", "Built in", "Imported"]', wallpaper)
+        self.assertIn('controller.openWallpaperDialog("library")', wallpaper)
+        self.assertIn('"missing": true', picker_controller)
+        self.assertIn("wallpapersLoaded", picker_controller)
+        self.assertIn("!modelData.missing", wallpaper)
+        self.assertIn("wallpaperRemovalUsers = themes.filter", picker_controller)
+        self.assertIn("function wallpaperRemovalMessage()", picker_controller)
+        self.assertIn("wallpaperRemovalUsers.length === 0", picker_controller)
+        modal = qml_source("Modal")
+        self.assertIn("controller.wallpaperRemovalUsers.length > 0", modal)
+        self.assertIn("enabled: controller.modalConfirmationEnabled()", modal)
+
+    def test_picker_uses_one_wheel_handler_and_theme_scaled_scrollbar_corners(self) -> None:
+        wheel = (REPOSITORY / "shell/shared/BloxWheelHandler.qml").read_text(encoding="utf-8")
+        shared = (REPOSITORY / "shell/shared/qmldir").read_text(encoding="utf-8")
+        picker = (PICKER_MODULES / "ThemePicker.qml").read_text(encoding="utf-8")
+        library = qml_source("Library")
+        wallpaper = qml_source("Wallpaper")
+
+        self.assertIn("BloxWheelHandler 1.0 BloxWheelHandler.qml", shared)
+        self.assertIn("MouseArea {", wheel)
+        self.assertIn("acceptedButtons: Qt.NoButton", wheel)
+        self.assertIn("anchors.fill: parent", wheel)
+        self.assertIn("property real speed: 4", wheel)
+        self.assertIn("flickable.contentX", wheel)
+        self.assertIn("flickable.contentY", wheel)
+        self.assertIn("canHandleWheel: () => controller.claimEditorWheel(wallpaperList)", wallpaper)
+        for source in (picker, library, wallpaper):
+            self.assertIn("BloxWheelHandler", source)
+            self.assertNotIn("delta * 4", source)
+            self.assertIn("Theme.scaledRadius(3)", source)
 
     def test_inline_builtin_preview_keeps_its_application_data_base(self) -> None:
         source, candidate = load_theme("catppuccin-mocha")
@@ -332,6 +365,8 @@ class PickerIntegrationSourceTests(unittest.TestCase):
 
         self.assertIn("refreshThemes(false);", open_picker)
         self.assertNotIn("if (themes.length === 0)", open_picker)
+        self.assertIn("restoreOpenStatus();", open_picker)
+        self.assertIn("function restoreOpenStatus()", controller)
 
     def test_quickshell_modules_are_registered_for_live_reload(self) -> None:
         modules = REPOSITORY / "shell/modules"
@@ -692,7 +727,7 @@ class PickerIntegrationSourceTests(unittest.TestCase):
         self.assertIn('text: "Simple"', qml)
         self.assertNotIn('text: "Target impact"', overview)
         self.assertNotIn('text: "Dependency and compatibility notes"', overview)
-        self.assertIn("editorScroll.contentY - delta * 4", qml)
+        self.assertIn("flickable: editorScroll", qml)
         self.assertIn('text: "Bar settings"', qml)
         self.assertIn('text: "Bar items"', qml)
         self.assertIn('visible: controller.editorMode === "overview"', overview)
@@ -827,11 +862,11 @@ class PickerIntegrationSourceTests(unittest.TestCase):
         self.assertIn('"ansi_source": "override"', blank)
         self.assertIn('"color0": light ? "#000000" : "#111318"', blank)
         self.assertIn('"color15": light ? "#ffffff" : "#f2f3f5"', blank)
-        self.assertIn('light ? "~/Pictures/wallpapers/blank-light.png" : "~/Pictures/wallpapers/blank-dark.png"', blank)
+        self.assertIn('light ? "wallpapers/builtin/blank-light.png" : "wallpapers/builtin/blank-dark.png"', blank)
         self.assertIn("blank.targets.wallpaper = true", blank)
         self.assertNotIn('blank.fonts[role] = ""', blank)
-        self.assertTrue((REPOSITORY / "wallpapers/wallpapers/blank-light.png").is_file())
-        self.assertTrue((REPOSITORY / "wallpapers/wallpapers/blank-dark.png").is_file())
+        self.assertTrue((REPOSITORY / "themes/wallpapers/builtin/blank-light.png").is_file())
+        self.assertTrue((REPOSITORY / "themes/wallpapers/builtin/blank-dark.png").is_file())
 
     def test_advanced_mode_can_edit_terminal_colours(self) -> None:
         controller = qml_source("Controller")

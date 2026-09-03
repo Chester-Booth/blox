@@ -11,7 +11,8 @@ camera_device="${CAMERA_DEVICE:-asus::camera}"
 camera_usb_id="${CAMERA_USB_ID:-3277:0010}"
 camera_authorized_override="${CAMERA_AUTHORIZED_FILE:-}"
 mic_led_device="${MIC_LED_DEVICE:-platform::micmute}"
-touchpad_device="${TOUCHPAD_DEVICE:-asue120b:00-04f3:31c0-touchpad}"
+touchpad_device="${TOUCHPAD_DEVICE:-}"
+touchpad_device_script="$script_root/status/touchpad-device.sh"
 touchpad_state_file="${XDG_RUNTIME_DIR:-$HOME/.cache}/quickshell-touchpad-enabled"
 caps_led="${CAPS_LOCK_LED:-}"
 upower_kbd_service="org.freedesktop.UPower"
@@ -243,10 +244,14 @@ touchpad_enabled() {
 
 set_touchpad() {
 	local enabled="$1"
+	local device="$touchpad_device"
 
 	[[ "$enabled" == "true" || "$enabled" == "false" ]] || return 1
-	[[ "$touchpad_device" =~ ^[a-zA-Z0-9_.:-]+$ ]] || return 1
-	hyprctl eval "hl.device({ name = \"$touchpad_device\", enabled = $enabled })" >/dev/null || return 1
+	if [[ -z "$device" ]]; then
+		device="$($touchpad_device_script 2>/dev/null | head -n1)" || return 1
+	fi
+	[[ "$device" =~ ^[a-zA-Z0-9_.:-]+$ ]] || return 1
+	hyprctl eval "hl.device({ name = \"$device\", enabled = $enabled })" >/dev/null || return 1
 	mkdir -p "$(dirname "$touchpad_state_file")"
 	printf '%s\n' "$enabled" >"$touchpad_state_file"
 }

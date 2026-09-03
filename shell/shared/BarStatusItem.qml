@@ -45,10 +45,10 @@ Item {
             return content.updateIcon();
 
         if (itemId === "fan")
-            return content.systemInfo.json.profile === "Performance" ? "󱑬" : content.systemInfo.json.profile === "Quiet" ? "󰠝" : "󱜝";
+            return content.vendorPerformance.json.profile === "performance" ? "󱑬" : content.vendorPerformance.json.profile === "quiet" ? "󰠝" : "󱜝";
 
         if (itemId === "gpu")
-            return content.systemInfo.json.gpuMode === "eco" ? "󰌪" : content.systemInfo.json.gpuMode === "gaming" ? "󰪫" : content.systemInfo.json.gpuMode === "high-refresh" ? "" : "󰢮";
+            return content.gpu.json.mode === "eco" ? "󰌪" : content.gpu.json.mode === "gaming" ? "󰪫" : content.gpu.json.mode === "high-refresh" ? "" : "󰢮";
 
         return "";
     }
@@ -77,10 +77,10 @@ Item {
             return content.updates.json.class === "zero" ? Theme.green : Theme.yellow;
 
         if (itemId === "fan")
-            return content.systemInfo.json.profile === "Performance" ? Theme.red : Theme.foreground;
+            return content.vendorPerformance.json.profile === "performance" ? Theme.red : Theme.foreground;
 
         if (itemId === "gpu")
-            return content.systemInfo.json.gpuMode === "eco" ? Theme.green : Theme.yellow;
+            return content.gpu.json.mode === "eco" ? Theme.green : Theme.yellow;
 
         return Theme.foreground;
     }
@@ -140,7 +140,7 @@ Item {
             onClicked: {
                 const status = root.context.contentController.touchpad.json;
                 if (status.capability && status.capability.canChange === true)
-                    root.context.contentController.run(root.context.contentController.scriptRoot + "/osd/control.sh touchpad-toggle");
+                    root.context.contentController.touchpad.toggle();
 
             }
         }

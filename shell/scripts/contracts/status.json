@@ -157,6 +157,72 @@
       "icon": "string",
       "class": "string",
       "enabled": "boolean",
+      "device": "string",
+      "devices": "array",
+      "touchpadCount": "number",
+      "details": "string",
+      "tooltip": "string",
+      "capability": "object"
+    },
+    "children": {
+      "capability": {
+        "required": {
+          "available": "boolean",
+          "ready": "boolean",
+          "canChange": "boolean",
+          "permission": "string",
+          "reason": ["string", "null"]
+        },
+        "enum": {
+          "permission": ["not-required", "unknown", "granted", "denied"]
+        }
+      }
+    }
+  },
+  "vendorPerformance": {
+    "command": ["status/vendor-performance.sh"],
+    "required": {
+      "vendor": "string",
+      "profile": "string",
+      "profileLabel": "string",
+      "profiles": "array",
+      "details": "string",
+      "tooltip": "string",
+      "capability": "object"
+    },
+    "items": {
+      "profiles": "string"
+    },
+    "children": {
+      "capability": {
+        "required": {
+          "available": "boolean",
+          "ready": "boolean",
+          "canChange": "boolean",
+          "permission": "string",
+          "reason": ["string", "null"]
+        },
+        "enum": {
+          "permission": ["not-required", "unknown", "granted", "denied"]
+        }
+      }
+    }
+  },
+  "gpu": {
+    "command": ["status/gpu.sh"],
+    "required": {
+      "devices": "array",
+      "deviceCount": "number",
+      "discreteCount": "number",
+      "backend": "string",
+      "mode": "string",
+      "label": "string",
+      "gpuOn": "boolean",
+      "gpuUtil": "string",
+      "gpuTemp": "string",
+      "vramUsed": "string",
+      "vramTotal": "string",
+      "controlReason": "string",
       "tooltip": "string",
       "capability": "object"
     },

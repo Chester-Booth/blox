@@ -20,6 +20,8 @@ Scope {
     property alias updates: barStatus.updates
     property alias battery: barStatus.battery
     property alias powerProfile: barStatus.powerProfile
+    property alias vendorPerformance: barStatus.vendorPerformance
+    property alias gpu: barStatus.gpu
     property alias audio: barStatus.audio
     property alias brightness: barStatus.brightness
     property alias network: barStatus.network
@@ -81,6 +83,14 @@ Scope {
     }
 
     function statusError(panel) {
+        if (panel === "system") {
+            const systemPollers = [systemInfo, vendorPerformance, gpu];
+            for (const candidate of systemPollers) {
+                if (candidate && !candidate.ok)
+                    return candidate.lastError;
+            }
+            return "";
+        }
         const pollers = {
             "audio": audio,
             "network": network,
@@ -129,6 +139,9 @@ Scope {
         updates: root.updates.json
         battery: root.battery.json
         powerProfile: root.powerProfile.json
+        vendorPerformance: root.vendorPerformance.json
+        gpu: root.gpu.json
+        touchpad: root.touchpad.json
         updatesLastUpdatedMs: root.updates.lastUpdatedMs
         bluetooth: root.bluetooth.json
         audio: root.audio.json

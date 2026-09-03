@@ -15,6 +15,8 @@ Scope {
     property alias updates: updates
     property alias battery: battery
     property alias powerProfile: powerProfile
+    property alias vendorPerformance: vendorPerformance
+    property alias gpu: gpu
     property alias audio: audio
     property alias brightness: brightness
     property alias network: network
@@ -42,6 +44,8 @@ Scope {
         bluetooth.refresh();
         network.refresh();
         touchpad.refresh();
+        vendorPerformance.refresh();
+        gpu.refresh();
         privacy.refresh();
         battery.refresh();
         powerProfile.refresh();
@@ -52,6 +56,8 @@ Scope {
         systemInfo.refresh();
         battery.refresh();
         powerProfile.refresh();
+        vendorPerformance.refresh();
+        gpu.refresh();
     }
 
     function updatePolling(refreshVisible) {
@@ -63,6 +69,8 @@ Scope {
         bluetooth.interval = controlsVisible ? 2000 : 30000;
         network.interval = controlsVisible ? 2000 : railInterval(30000, 15000, 120000, 60000);
         touchpad.interval = controlsVisible ? 2000 : 15000;
+        vendorPerformance.interval = performanceVisible ? 2000 : 60000;
+        gpu.interval = performanceVisible ? 2000 : 60000;
         privacy.interval = controlsVisible ? 5000 : 30000;
         caffeine.interval = openPanel === "caffeine" ? 1000 : caffeine.json.active ? 5000 : 30000;
         workspaces.interval = railInterval(300000, 120000, 600000, 300000);
@@ -157,11 +165,25 @@ Scope {
         interval: 30000
     }
 
-    ScriptPoller {
+    TouchpadStatus {
         id: touchpad
 
-        command: [root.scriptRoot + "/status/touchpad.sh"]
+        scriptRoot: root.scriptRoot
         interval: 15000
+    }
+
+    VendorPerformanceStatus {
+        id: vendorPerformance
+
+        scriptRoot: root.scriptRoot
+        interval: 60000
+    }
+
+    GpuStatus {
+        id: gpu
+
+        scriptRoot: root.scriptRoot
+        interval: 60000
     }
 
     FileView {

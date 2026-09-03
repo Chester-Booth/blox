@@ -68,6 +68,12 @@ Item {
             powerProfileStatus: root.contentController.powerProfile.json || ({
             })
             powerProfileProvider: root.contentController.powerProfile
+            vendorPerformanceStatus: root.contentController.vendorPerformance.json || ({
+            })
+            vendorPerformanceProvider: root.contentController.vendorPerformance
+            gpuStatus: root.contentController.gpu.json || ({
+            })
+            gpuProvider: root.contentController.gpu
             scriptRoot: root.surfaceController.scriptRoot
             actionBusy: root.contentController.actions.performanceBusy
             actionError: root.contentController.actions.performanceError

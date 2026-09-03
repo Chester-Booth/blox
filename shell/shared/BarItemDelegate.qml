@@ -29,13 +29,15 @@ Item {
             "privacy": contentController.privacy.json,
             "awake": contentController.caffeine.json,
             "updates": contentController.updates.json,
-            "touchpad": contentController.touchpad.json
+            "touchpad": contentController.touchpad.json,
+            "fan": contentController.vendorPerformance.json,
+            "gpu": contentController.gpu.json
         };
         const status = sources[root.itemId];
         return !!(status && status.capability && status.capability.available === false);
     }
     function suppressForRuntimeState() {
-        return itemId === "privacy" ? contentController.privacy.json.active !== true : itemId === "touchpad" ? contentController.touchpad.json.enabled !== false : itemId === "fan" ? contentController.systemInfo.json.profile === undefined || contentController.systemInfo.json.profile === "Quiet" : itemId === "gpu" ? contentController.systemInfo.json.gpuMode === undefined || contentController.systemInfo.json.gpuMode === "eco" : false;
+        return itemId === "privacy" ? contentController.privacy.json.active !== true : itemId === "touchpad" ? contentController.touchpad.json.enabled !== false : itemId === "fan" ? contentController.vendorPerformance.json.profile === undefined || contentController.vendorPerformance.json.profile === "quiet" : itemId === "gpu" ? contentController.gpu.json.mode === undefined || contentController.gpu.json.mode === "eco" : false;
     }
     readonly property bool runtimeSuppressed: itemVisibility === "always" ? false : (capabilitySuppressed || suppressForRuntimeState())
     readonly property bool contentVisible: contentLoader.item !== null && !runtimeSuppressed

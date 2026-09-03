@@ -12,12 +12,20 @@ Rectangle {
     property var powerProfileStatus: ({
     })
     property var powerProfileProvider: null
+    property var vendorPerformanceStatus: ({
+    })
+    property var vendorPerformanceProvider: null
+    property var gpuStatus: ({
+    })
+    property var gpuProvider: null
     property string scriptRoot: ""
     property bool actionBusy: false
     property string actionError: ""
     property string statusError: ""
     readonly property string visibleError: actionError.length > 0 ? actionError : statusError
     readonly property bool powerProfileReady: root.powerProfileStatus && root.powerProfileStatus.capability && root.powerProfileStatus.capability.ready === true
+    readonly property bool vendorPerformanceCanChange: root.vendorPerformanceStatus && root.vendorPerformanceStatus.capability && root.vendorPerformanceStatus.capability.canChange === true
+    readonly property bool gpuCanChange: root.gpuStatus && root.gpuStatus.capability && root.gpuStatus.capability.canChange === true
 
     signal action(string command)
 
@@ -39,7 +47,21 @@ Rectangle {
     }
 
     function fanProfileId() {
-        return String(status.profile || "balanced").toLowerCase();
+        const value = String(root.vendorPerformanceStatus.profile || status.profile || "balanced").toLowerCase();
+        return ["performance", "balanced", "quiet"].indexOf(value) >= 0 ? value : "balanced";
+    }
+
+    function fanProfileText() {
+        return root.vendorPerformanceStatus.profileLabel || root.vendorPerformanceStatus.profile || status.profile || "Unknown";
+    }
+
+    function gpuModeId() {
+        const value = String(root.gpuStatus.mode || status.gpuMode || "eco").toLowerCase();
+        return ["gaming", "performance", "high-refresh", "eco"].indexOf(value) >= 0 ? value : "eco";
+    }
+
+    function gpuModeText() {
+        return root.gpuStatus.label || status.gpuLabel || "Unknown";
     }
 
     function fanText(value) {
@@ -202,9 +224,9 @@ Rectangle {
 
             PillSelector {
                 Layout.fillWidth: true
-                enabled: !root.actionBusy
+                enabled: !root.actionBusy && root.vendorPerformanceCanChange
                 title: "Fan profile"
-                currentText: root.status.profile || "Unknown"
+                currentText: root.fanProfileText()
                 currentId: root.fanProfileId()
                 options: [{
                     "id": "performance",
@@ -220,6 +242,8 @@ Rectangle {
                     "label": "Quiet"
                 }]
                 onSelected: (id) => {
+                    if (root.vendorPerformanceProvider)
+                        return root.vendorPerformanceProvider.setProfile(id);
                     return root.action(root.fanCommand(id.charAt(0).toUpperCase() + id.slice(1)));
                 }
             }
@@ -255,10 +279,10 @@ Rectangle {
 
             PillSelector {
                 Layout.fillWidth: true
-                enabled: !root.actionBusy
+                enabled: !root.actionBusy && root.gpuCanChange
                 title: "GPU mode"
-                currentText: root.status.gpuLabel || "Unknown"
-                currentId: root.status.gpuMode || "eco"
+                currentText: root.gpuModeText()
+                currentId: root.gpuModeId()
                 options: [{
                     "id": "gaming",
                     "icon": "󰪫",
@@ -277,6 +301,8 @@ Rectangle {
                     "label": "Eco"
                 }]
                 onSelected: (id) => {
+                    if (root.gpuProvider)
+                        return root.gpuProvider.setMode(id);
                     return root.action(root.gpuCommand(id));
                 }
             }

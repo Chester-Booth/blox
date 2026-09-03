@@ -14,6 +14,12 @@ QtObject {
     })
     property var powerProfile: ({
     })
+    property var vendorPerformance: ({
+    })
+    property var gpu: ({
+    })
+    property var touchpad: ({
+    })
     property real updatesLastUpdatedMs: 0
     property var bluetooth: ({
     })
@@ -84,6 +90,9 @@ QtObject {
                 "updates": typedStatus(updates, ["repoCount", "aurCount", "totalCount"]),
                 "battery": typedStatus(battery, ["class", "capacity", "status", "timeLabel", "source", "onBattery", "batteryPresent"]),
                 "powerProfile": typedStatus(powerProfile, ["profile", "onBattery", "profileServiceAvailable", "degradationReason"]),
+                "vendorPerformance": typedStatus(vendorPerformance, ["vendor", "profile", "profileLabel", "profiles"]),
+                "gpu": typedStatus(gpu, ["devices", "deviceCount", "discreteCount", "backend", "mode", "label", "gpuOn", "gpuUtil", "gpuTemp", "vramUsed", "vramTotal", "controlReason"]),
+                "touchpad": typedStatus(touchpad, ["class", "device", "devices", "touchpadCount", "enabled"]),
                 "network": typedStatus(network, ["class", "ssid", "signal", "freq", "device", "wifiEnabled"]),
                 "bluetooth": typedStatus(bluetooth, ["class", "enabled"]),
                 "audio": typedStatus(audio, ["volume", "muted", "micMuted", "micCanChange"]),

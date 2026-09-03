@@ -1124,7 +1124,8 @@ class CliContractTests(unittest.TestCase):
         status = (REPOSITORY / "shell/services/BarStatus.qml").read_text(encoding="utf-8")
         touchpad = status_item.split("id: touchpadComponent", 1)[1]
         self.assertIn("root.context.contentController.touchpad.json.icon", touchpad)
-        self.assertIn('"/osd/control.sh touchpad-toggle"', touchpad)
+        self.assertIn("root.context.contentController.touchpad.toggle()", touchpad)
+        self.assertIn("status.capability.canChange === true", touchpad)
         self.assertIn("onHovered: root.context.surfaceController.trayEntered()", touchpad)
         self.assertIn("onExited: root.context.surfaceController.trayExited()", touchpad)
         self.assertIn('"/quickshell-touchpad-enabled"', status)
@@ -1222,10 +1223,10 @@ class CliContractTests(unittest.TestCase):
         for item_id in ("fan", "gpu"):
             with self.subTest(item_id=item_id):
                 self.assertIn(f'"{item_id}"', delegate)
-        self.assertIn('profile === "Performance" ? "󱑬"', status_item)
-        self.assertIn('content.systemInfo.json.profile === "Quiet"', status_item)
-        self.assertIn('gpuMode === "gaming" ? "󰪫"', status_item)
-        self.assertIn('content.systemInfo.json.gpuMode === "eco"', status_item)
+        self.assertIn('profile === "performance" ? "󱑬"', status_item)
+        self.assertIn('content.vendorPerformance.json.profile === "quiet"', status_item)
+        self.assertIn('mode === "gaming" ? "󰪫"', status_item)
+        self.assertIn('content.gpu.json.mode === "eco"', status_item)
         self.assertIn("visible: contentVisible", delegate)
         self.assertIn("readonly property bool runtimeSuppressed", delegate)
         self.assertIn("contentLoader.item !== null && !runtimeSuppressed", delegate)
@@ -1243,8 +1244,8 @@ class CliContractTests(unittest.TestCase):
         self.assertIn('itemVisibility === "always" ? false', delegate)
         self.assertIn('itemId === "privacy" ? contentController.privacy.json.active !== true', delegate)
         self.assertIn('itemId === "touchpad" ? contentController.touchpad.json.enabled !== false', delegate)
-        self.assertIn('profile === undefined || contentController.systemInfo.json.profile === "Quiet"', delegate)
-        self.assertIn('gpuMode === undefined || contentController.systemInfo.json.gpuMode === "eco"', delegate)
+        self.assertIn('contentController.vendorPerformance.json.profile === undefined || contentController.vendorPerformance.json.profile === "quiet"', delegate)
+        self.assertIn('contentController.gpu.json.mode === undefined || contentController.gpu.json.mode === "eco"', delegate)
         status_item = (REPOSITORY / "shell/shared/BarStatusItem.qml").read_text(encoding="utf-8")
         self.assertNotIn("visible:", status_item)
 

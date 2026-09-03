@@ -25,30 +25,6 @@
       }
     }
   },
-  "bluetooth": {
-    "command": ["status/bluetooth.sh"],
-    "required": {
-      "icon": "string",
-      "class": "string",
-      "details": "string",
-      "tooltip": "string",
-      "capability": "object"
-    },
-    "children": {
-      "capability": {
-        "required": {
-          "available": "boolean",
-          "ready": "boolean",
-          "canChange": "boolean",
-          "permission": "string",
-          "reason": ["string", "null"]
-        },
-        "enum": {
-          "permission": ["not-required", "unknown", "granted", "denied"]
-        }
-      }
-    }
-  },
   "brightness": {
     "command": ["status/brightness.sh"],
     "required": {
@@ -59,37 +35,6 @@
       "details": "string",
       "tooltip": "string",
       "capability": "object"
-    },
-    "children": {
-      "capability": {
-        "required": {
-          "available": "boolean",
-          "ready": "boolean",
-          "canChange": "boolean",
-          "permission": "string",
-          "reason": ["string", "null"]
-        },
-        "enum": {
-          "permission": ["not-required", "unknown", "granted", "denied"]
-        }
-      }
-    }
-  },
-  "network": {
-    "command": ["status/network.sh"],
-    "required": {
-      "icon": "string",
-      "class": "string",
-      "summary": "string",
-      "details": "string",
-      "tooltip": "string",
-      "capability": "object"
-    },
-    "optional": {
-      "ssid": "string",
-      "signal": "number",
-      "freq": "string",
-      "device": "string"
     },
     "children": {
       "capability": {

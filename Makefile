@@ -58,7 +58,7 @@ validate-status:
 	@$(QS)/scripts/validate-status.py --timeout 10
 
 validate-themes:
-	@PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s themes/tests -v
+	@BLOX_DATA_DIR="$(CURDIR)/themes" PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s themes/tests -v
 
 stylus-vendor:
 	@deno run -A themes/tools/vendor_catppuccin.ts

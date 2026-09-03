@@ -40,6 +40,8 @@ def exit_code(action: dict[str, Any]) -> int:
     return {
         "permission-denied": EXIT_DENIED,
         "conflict": EXIT_CONFLICT,
+        "busy": EXIT_CONFLICT,
+        "stale": EXIT_CONFLICT,
         "invalid-data": EXIT_INVALID_DATA,
         "unavailable": EXIT_UNAVAILABLE,
     }.get(action.get("code"), EXIT_INTERNAL)
@@ -79,6 +81,20 @@ def run_audio(args) -> tuple[int, dict[str, Any]]:
     operation = args.audio_command
     value = getattr(args, "value", "")
     action = call_owner("audio", [operation, value])
+    return exit_code(action), action
+
+
+def run_network(args) -> tuple[int, dict[str, Any]]:
+    operation = args.network_command
+    value = getattr(args, "value", "")
+    action = call_owner("network", [operation, value])
+    return exit_code(action), action
+
+
+def run_bluetooth(args) -> tuple[int, dict[str, Any]]:
+    operation = args.bluetooth_command
+    value = getattr(args, "value", "")
+    action = call_owner("bluetooth", [operation, value])
     return exit_code(action), action
 
 
@@ -354,6 +370,22 @@ def build_parser() -> argparse.ArgumentParser:
     audio_mic.add_argument("value", choices=("open", "muted"))
     audio_mic.add_argument("--json", action="store_true", dest="as_json")
 
+    network = groups.add_parser("network", help="NetworkManager actions through the running shell")
+    network_commands = network.add_subparsers(dest="network_command", required=True)
+    network_toggle = network_commands.add_parser("toggle-wifi")
+    network_toggle.add_argument("--json", action="store_true", dest="as_json")
+    network_wifi = network_commands.add_parser("set-wifi")
+    network_wifi.add_argument("value", choices=("on", "off"))
+    network_wifi.add_argument("--json", action="store_true", dest="as_json")
+
+    bluetooth = groups.add_parser("bluetooth", help="BlueZ actions through the running shell")
+    bluetooth_commands = bluetooth.add_subparsers(dest="bluetooth_command", required=True)
+    bluetooth_toggle = bluetooth_commands.add_parser("toggle-enabled")
+    bluetooth_toggle.add_argument("--json", action="store_true", dest="as_json")
+    bluetooth_enabled = bluetooth_commands.add_parser("set-enabled")
+    bluetooth_enabled.add_argument("value", choices=("on", "off"))
+    bluetooth_enabled.add_argument("--json", action="store_true", dest="as_json")
+
     doctor = groups.add_parser("doctor", help="local install health report")
     doctor.add_argument("--json", action="store_true", dest="as_json")
 
@@ -393,7 +425,7 @@ def run(argv: list[str]) -> tuple[int, dict[str, Any], bool, bool]:
     try:
         args = build_parser().parse_args(argv)
     except SystemExit as error:
-        return int(error.code), result(False, "usage", "Use: bloxctl {status|audio|doctor|settings|theme|lifecycle} --help."), "--json" in argv, False
+        return int(error.code), result(False, "usage", "Use: bloxctl {status|audio|network|bluetooth|doctor|settings|theme|lifecycle} --help."), "--json" in argv, False
 
     as_json = getattr(args, "as_json", False)
 
@@ -403,6 +435,14 @@ def run(argv: list[str]) -> tuple[int, dict[str, Any], bool, bool]:
 
     if args.group == "audio":
         code, action = run_audio(args)
+        return code, action, as_json, False
+
+    if args.group == "network":
+        code, action = run_network(args)
+        return code, action, as_json, False
+
+    if args.group == "bluetooth":
+        code, action = run_bluetooth(args)
         return code, action, as_json, False
 
     if args.group == "doctor":
@@ -426,7 +466,7 @@ def run(argv: list[str]) -> tuple[int, dict[str, Any], bool, bool]:
         action = run_lifecycle(args.lifecycle_command, options)
         return exit_code(action), action, as_json, False
 
-    return EXIT_USAGE, result(False, "usage", "Use: bloxctl {status|audio|doctor|settings|theme|lifecycle} --help."), as_json, False
+    return EXIT_USAGE, result(False, "usage", "Use: bloxctl {status|audio|network|bluetooth|doctor|settings|theme|lifecycle} --help."), as_json, False
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -31,7 +31,7 @@ ColumnLayout {
         }]
         onSelected: (id) => {
             if (id !== currentId)
-                root.controller.runCommand(root.controller.scriptRoot + "/control.sh wifi " + id, true);
+                root.controller.setNetworkEnabled(id === "on");
 
         }
     }
@@ -56,7 +56,7 @@ ColumnLayout {
         }]
         onSelected: (id) => {
             if (id !== currentId)
-                root.controller.runCommand(root.controller.scriptRoot + "/control.sh bluetooth " + id, true);
+                root.controller.setBluetoothEnabled(id === "on");
 
         }
     }

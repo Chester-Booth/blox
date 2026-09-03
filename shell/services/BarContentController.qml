@@ -61,6 +61,14 @@ Scope {
         return audio.action(operation, value);
     }
 
+    function networkAction(operation, value) {
+        return network.action(operation, value);
+    }
+
+    function bluetoothAction(operation, value) {
+        return bluetooth.action(operation, value);
+    }
+
     function previousTodo() {
         run(scriptRoot + "/todo/cycle.sh -1");
         todoRefreshDelay.restart();
@@ -134,6 +142,14 @@ Scope {
 
         function audio(operation: string, value: string) : string {
             return JSON.stringify(root.audioAction(operation, value));
+        }
+
+        function network(operation: string, value: string) : string {
+            return JSON.stringify(root.networkAction(operation, value));
+        }
+
+        function bluetooth(operation: string, value: string) : string {
+            return JSON.stringify(root.bluetoothAction(operation, value));
         }
 
         target: "blox"

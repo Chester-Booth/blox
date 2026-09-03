@@ -20,6 +20,8 @@ QtObject {
     property bool audioCanChange: false
     property bool networkCanChange: false
     property bool bluetoothCanChange: false
+    property var networkProvider: null
+    property var bluetoothProvider: null
     property bool brightnessCanChange: false
     property string wifiIcon: "󰤩"
     property string wifiText: "Wi-Fi"
@@ -80,6 +82,16 @@ QtObject {
         if (item.id === "mic-toggle" && root.setMicMuted(!root.micMuted))
             return ;
 
+        if (item.id === "network-toggle") {
+            root.setNetworkEnabled(!root.networkEnabled);
+            return ;
+        }
+
+        if (item.id === "bluetooth-toggle") {
+            root.setBluetoothEnabled(!root.bluetoothEnabled);
+            return ;
+        }
+
         actionRequested(item.command || "", keepOpen);
 
     }
@@ -118,6 +130,18 @@ QtObject {
 
     function runCommand(command, keepOpen) {
         actionRequested(command, keepOpen);
+    }
+
+    function setNetworkEnabled(value) {
+        if (!networkCanChange || !root.networkProvider)
+            return false;
+        return root.networkProvider.setWifiEnabled(value === true);
+    }
+
+    function setBluetoothEnabled(value) {
+        if (!bluetoothCanChange || !root.bluetoothProvider)
+            return false;
+        return root.bluetoothProvider.setBluetoothEnabled(value === true);
     }
 
     function toggleAudio() {

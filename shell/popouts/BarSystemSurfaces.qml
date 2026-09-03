@@ -108,10 +108,12 @@ Item {
             audioCanChange: !!(root.contentController.audio.json.capability && root.contentController.audio.json.capability.canChange === true)
             micCanChange: root.contentController.audio.json.micCanChange === undefined ? !!(root.contentController.audio.json.capability && root.contentController.audio.json.capability.canChange === true) : root.contentController.audio.json.micCanChange === true
             audioProvider: root.contentController.audio
-            networkEnabled: root.contentController.network.json.class !== "disabled"
+            networkEnabled: root.contentController.network.json.wifiEnabled === true
             networkCanChange: !!(root.contentController.network.json.capability && root.contentController.network.json.capability.canChange === true)
-            bluetoothEnabled: root.contentController.bluetooth.json.class !== "disabled"
+            bluetoothEnabled: root.contentController.bluetooth.json.enabled === true
             bluetoothCanChange: !!(root.contentController.bluetooth.json.capability && root.contentController.bluetooth.json.capability.canChange === true)
+            networkProvider: root.contentController.network
+            bluetoothProvider: root.contentController.bluetooth
             wifiIcon: root.contentController.network.json.icon || "󰤩"
             wifiText: root.contentController.network.json.ssid || root.contentController.network.json.class || "Wi-Fi"
             bluetoothIcon: root.contentController.bluetooth.json.icon || "󰂯"

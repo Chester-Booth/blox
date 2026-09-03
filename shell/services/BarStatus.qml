@@ -136,17 +136,15 @@ Scope {
         interval: 30000
     }
 
-    ScriptPoller {
+    NetworkStatus {
         id: network
 
-        command: [root.scriptRoot + "/status/network.sh"]
         interval: 30000
     }
 
-    ScriptPoller {
+    BluetoothStatus {
         id: bluetooth
 
-        command: [root.scriptRoot + "/status/bluetooth.sh"]
         interval: 30000
     }
 

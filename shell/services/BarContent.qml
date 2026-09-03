@@ -78,8 +78,8 @@ QtObject {
             "message": "",
             "data": {
                 "updates": typedStatus(updates, ["repoCount", "aurCount", "totalCount"]),
-                "network": typedStatus(network, ["class", "ssid", "signal", "freq", "device"]),
-                "bluetooth": typedStatus(bluetooth, ["class"]),
+                "network": typedStatus(network, ["class", "ssid", "signal", "freq", "device", "wifiEnabled"]),
+                "bluetooth": typedStatus(bluetooth, ["class", "enabled"]),
                 "audio": typedStatus(audio, ["volume", "muted", "micMuted", "micCanChange"]),
                 "brightness": typedStatus(brightness, ["percent", "blueLightMode", "blueLightActive"]),
                 "privacy": typedStatus(privacy, ["active", "microphoneCount", "videoCount"]),
@@ -151,7 +151,8 @@ QtObject {
         if (openPanel === "network") {
             const actions = [action("Open app", scriptRoot + "/network/toggle-applet.sh")];
             if (canChange(network))
-                actions.unshift(action(network.class === "disabled" ? "Enable" : "Disable", scriptRoot + "/control.sh wifi " + (network.class === "disabled" ? "on" : "off"), {
+                actions.unshift(action(network.wifiEnabled === true ? "Disable" : "Enable", "", {
+                    "id": "network-toggle",
                     "keepOpen": true
                 }));
             return actions;
@@ -160,7 +161,8 @@ QtObject {
         if (openPanel === "bluetooth") {
             const actions = [action("Open app", "blueman-manager")];
             if (canChange(bluetooth))
-                actions.unshift(action(bluetooth.class === "disabled" ? "Enable" : "Toggle", scriptRoot + "/control.sh bluetooth-toggle", {
+                actions.unshift(action(bluetooth.enabled === true ? "Disable" : "Enable", "", {
+                    "id": "bluetooth-toggle",
                     "keepOpen": true
                 }));
             return actions;

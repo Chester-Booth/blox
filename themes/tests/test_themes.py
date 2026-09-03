@@ -1210,8 +1210,10 @@ class CliContractTests(unittest.TestCase):
         self.assertIn("audio-set-silent", controller)
         self.assertIn("brightness-set-silent", controller)
         self.assertIn("setMicMuted(id === \"muted\")", audio)
-        self.assertIn('"/control.sh wifi " + id', connectivity)
-        self.assertIn('"/control.sh bluetooth " + id', connectivity)
+        self.assertIn("setNetworkEnabled(id === \"on\")", connectivity)
+        self.assertIn("setBluetoothEnabled(id === \"on\")", connectivity)
+        self.assertIn('"id": "network-toggle"', (REPOSITORY / "shell/services/BarContent.qml").read_text(encoding="utf-8"))
+        self.assertIn('"id": "bluetooth-toggle"', (REPOSITORY / "shell/services/BarContent.qml").read_text(encoding="utf-8"))
         self.assertIn('"/display/blue-light-mode.sh " + id', display)
 
     def test_fan_and_gpu_are_configurable_runtime_items(self) -> None:

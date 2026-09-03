@@ -32,10 +32,12 @@ Layout:
 - `shell.qml` - Quickshell entrypoint.
 - `modules/` - top-level shell surfaces, including the bar, desktop widgets and IPC-opened theme picker.
 - `shared/` - theme and reusable UI pieces.
-- `services/` - status polling, persisted UI state, action execution, notification,
+- `services/` - native provider state, status polling, persisted UI state, action execution, notification,
   workspace, and derived-content controllers.
 - `popouts/` - click-open panel surfaces.
-- `scripts/status/` - JSON status producers for the bar and popouts.
+- `scripts/status/` - JSON status producers for the bar and popouts that do not
+  have a native Quickshell owner. Network and Bluetooth use native providers in
+  `services/`.
 - `scripts/{calendar,display,gpu,network,power,theme,todo,update,workspaces}/` - action and domain backends.
 - `scripts/widgets/` - desktop-widget rendering, state and action helpers.
 - `scripts/contracts/status.json` - expected JSON contracts for status-producing scripts.

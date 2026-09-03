@@ -65,6 +65,34 @@ class BloxctlTests(unittest.TestCase):
         self.assertEqual(code, bloxctl.EXIT_UNAVAILABLE)
         self.assertEqual(output, action)
 
+    def test_network_action_uses_the_shell_network_owner(self):
+        action = {
+            "version": 1,
+            "ok": True,
+            "code": "ok",
+            "message": "",
+            "data": {"operation": "set-wifi", "value": "off"},
+        }
+        completed = subprocess.CompletedProcess(["ipc"], 0, json.dumps(action), "")
+        code, output, run = self.run_cli(["network", "set-wifi", "off", "--json"], completed)
+        self.assertEqual(code, 0)
+        self.assertEqual(output, action)
+        self.assertEqual(run.call_args.args[0][1:], ["blox", "network", "set-wifi", "off"])
+
+    def test_bluetooth_action_uses_the_shell_bluetooth_owner(self):
+        action = {
+            "version": 1,
+            "ok": True,
+            "code": "ok",
+            "message": "",
+            "data": {"operation": "toggle-enabled", "value": "on"},
+        }
+        completed = subprocess.CompletedProcess(["ipc"], 0, json.dumps(action), "")
+        code, output, run = self.run_cli(["bluetooth", "toggle-enabled", "--json"], completed)
+        self.assertEqual(code, 0)
+        self.assertEqual(output, action)
+        self.assertEqual(run.call_args.args[0][1:], ["blox", "bluetooth", "toggle-enabled", ""])
+
     def test_shell_unavailable_has_a_stable_exit_class(self):
         completed = subprocess.CompletedProcess(["ipc"], 1, "", "not running")
         code, output, _ = self.run_cli(["status", "--json"], completed)

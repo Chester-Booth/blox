@@ -70,7 +70,7 @@ class StatusContractTests(unittest.TestCase):
         self.assertIsInstance(capability["reason"], (str, type(None)))
 
     def test_every_producer_has_the_common_capability_contract(self):
-        self.assertEqual(len(self.contracts), 12)
+        self.assertEqual(len(self.contracts), 10)
         for name, spec in self.contracts.items():
             self.assertEqual(spec["required"]["capability"], "object", name)
             child = spec["children"]["capability"]
@@ -100,8 +100,17 @@ class StatusContractTests(unittest.TestCase):
                         self.assertIsNotNone(payload["capability"]["reason"])
 
     def test_structured_panel_fields_exist(self):
-        for name in ("network", "bluetooth", "brightness", "privacy"):
+        for name in ("brightness", "privacy"):
             self.assertEqual(self.contracts[name]["required"]["details"], "string")
+
+    def test_network_and_bluetooth_use_native_owners(self):
+        network = (QML_ROOT / "services/NetworkManagerProvider.qml").read_text(encoding="utf-8")
+        bluetooth = (QML_ROOT / "services/BluezProvider.qml").read_text(encoding="utf-8")
+        self.assertIn("import Quickshell.Networking", network)
+        self.assertIn("signalStrength) * 100", network)
+        self.assertNotIn("nmcli", network)
+        self.assertIn("import Quickshell.Bluetooth", bluetooth)
+        self.assertNotIn("bluetoothctl", bluetooth)
 
     def test_status_consumers_do_not_parse_presentation_fields(self):
         pattern = re.compile(r"(?:tooltip|label|details)\s*\.\s*(?:split|match|replace)|(?:split|match|replace)\s*\([^)]*\)\s*.*(?:tooltip|label|details)")

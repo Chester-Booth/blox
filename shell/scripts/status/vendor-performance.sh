@@ -12,6 +12,7 @@ unavailable() {
 	payload="$(jq -nc --arg reason "$reason" '{
         vendor:"asusctl",
         profile:"unavailable",
+        profileLabel:"",
         profiles:[],
         profileLabels:[],
         details:"Vendor performance provider unavailable",

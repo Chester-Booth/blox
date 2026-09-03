@@ -122,10 +122,10 @@ Scope {
         onJsonChanged: root.updatePolling(false)
     }
 
-    ScriptPoller {
+    AudioStatus {
         id: audio
 
-        command: [root.scriptRoot + "/status/audio.sh"]
+        scriptRoot: root.scriptRoot
         interval: 30000
     }
 

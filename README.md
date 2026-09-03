@@ -27,6 +27,9 @@ reports missing ones; it never installs packages.
 
 ```sh
 bloxctl status --json          # typed status through the running shell
+bloxctl audio set-volume 50 --json
+bloxctl audio toggle-mute --json
+bloxctl audio set-mic muted --json
 bloxctl doctor [--json]        # local install health, redacted by default
 bloxctl lifecycle update       # new generation plus recorded migrations
 bloxctl lifecycle rollback     # back to the previous generation

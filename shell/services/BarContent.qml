@@ -80,7 +80,7 @@ QtObject {
                 "updates": typedStatus(updates, ["repoCount", "aurCount", "totalCount"]),
                 "network": typedStatus(network, ["class", "ssid", "signal", "freq", "device"]),
                 "bluetooth": typedStatus(bluetooth, ["class"]),
-                "audio": typedStatus(audio, ["volume", "muted", "micMuted"]),
+                "audio": typedStatus(audio, ["volume", "muted", "micMuted", "micCanChange"]),
                 "brightness": typedStatus(brightness, ["percent", "blueLightMode", "blueLightActive"]),
                 "privacy": typedStatus(privacy, ["active", "microphoneCount", "videoCount"]),
                 "caffeine": typedStatus(caffeine, ["active", "mode", "remaining"])
@@ -140,8 +140,9 @@ QtObject {
     function systemPanelActions() {
         if (openPanel === "audio") {
             const actions = [action("Open app", "pavucontrol -t 3")];
-            if (canChange(audio))
+            if (canChange(audio) && audio.micCanChange !== false)
                 actions.unshift(action(audio.micMuted ? "Unmute mic" : "Mute mic", scriptRoot + "/control.sh mic-toggle", {
+                    "id": "mic-toggle",
                     "keepOpen": true
                 }));
             return actions;

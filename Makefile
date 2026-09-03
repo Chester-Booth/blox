@@ -34,7 +34,7 @@ test-launcher:
 	@QML_XHR_ALLOW_FILE_READ=1 QT_QPA_PLATFORM=offscreen /usr/lib/qt6/bin/qmltestrunner -import tests/qml/imports -input tests/qml
 
 test-status-contracts:
-	@PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests/test_status_contracts.py -v
+	@PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests/test_status_contracts.py tests/test_status_purity.py -v
 
 test-bloxctl:
 	@PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests/test_bloxctl.py -v

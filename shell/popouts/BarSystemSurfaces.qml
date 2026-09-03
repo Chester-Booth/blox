@@ -106,6 +106,8 @@ Item {
             audioMuted: !!root.contentController.audio.json.muted
             micMuted: !!root.contentController.audio.json.micMuted
             audioCanChange: !!(root.contentController.audio.json.capability && root.contentController.audio.json.capability.canChange === true)
+            micCanChange: root.contentController.audio.json.micCanChange === undefined ? !!(root.contentController.audio.json.capability && root.contentController.audio.json.capability.canChange === true) : root.contentController.audio.json.micCanChange === true
+            audioProvider: root.contentController.audio
             networkEnabled: root.contentController.network.json.class !== "disabled"
             networkCanChange: !!(root.contentController.network.json.capability && root.contentController.network.json.capability.canChange === true)
             bluetoothEnabled: root.contentController.bluetooth.json.class !== "disabled"

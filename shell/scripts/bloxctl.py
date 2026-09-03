@@ -45,10 +45,11 @@ def exit_code(action: dict[str, Any]) -> int:
     }.get(action.get("code"), EXIT_INTERNAL)
 
 
-def call_owner() -> dict[str, Any]:
+def call_owner(method: str = "status", arguments: list[str] | None = None) -> dict[str, Any]:
+    command = [str(IPC), "blox", method, *(arguments or [])]
     try:
         completed = subprocess.run(
-            [str(IPC), "blox", "status"],
+            command,
             cwd=SCRIPT_ROOT,
             check=False,
             capture_output=True,
@@ -72,6 +73,13 @@ def call_owner() -> dict[str, Any]:
     if set(action) != required or action["version"] != 1 or not isinstance(action["ok"], bool):
         return result(False, "invalid-data", "The Blox shell returned an invalid action result.")
     return action
+
+
+def run_audio(args) -> tuple[int, dict[str, Any]]:
+    operation = args.audio_command
+    value = getattr(args, "value", "")
+    action = call_owner("audio", [operation, value])
+    return exit_code(action), action
 
 
 def run_lifecycle(command: str, options: dict[str, Any]) -> dict[str, Any]:
@@ -335,6 +343,17 @@ def build_parser() -> argparse.ArgumentParser:
     status = groups.add_parser("status", help="typed status through the running shell")
     status.add_argument("--json", action="store_true", dest="as_json")
 
+    audio = groups.add_parser("audio", help="audio actions through the running shell")
+    audio_commands = audio.add_subparsers(dest="audio_command", required=True)
+    audio_toggle = audio_commands.add_parser("toggle-mute")
+    audio_toggle.add_argument("--json", action="store_true", dest="as_json")
+    audio_volume = audio_commands.add_parser("set-volume")
+    audio_volume.add_argument("value")
+    audio_volume.add_argument("--json", action="store_true", dest="as_json")
+    audio_mic = audio_commands.add_parser("set-mic")
+    audio_mic.add_argument("value", choices=("open", "muted"))
+    audio_mic.add_argument("--json", action="store_true", dest="as_json")
+
     doctor = groups.add_parser("doctor", help="local install health report")
     doctor.add_argument("--json", action="store_true", dest="as_json")
 
@@ -374,13 +393,17 @@ def run(argv: list[str]) -> tuple[int, dict[str, Any], bool, bool]:
     try:
         args = build_parser().parse_args(argv)
     except SystemExit as error:
-        return int(error.code), result(False, "usage", "Use: bloxctl {status|doctor|settings|theme|lifecycle} --help."), "--json" in argv, False
+        return int(error.code), result(False, "usage", "Use: bloxctl {status|audio|doctor|settings|theme|lifecycle} --help."), "--json" in argv, False
 
     as_json = getattr(args, "as_json", False)
 
     if args.group == "status":
         action = call_owner()
         return exit_code(action), action, as_json, False
+
+    if args.group == "audio":
+        code, action = run_audio(args)
+        return code, action, as_json, False
 
     if args.group == "doctor":
         code, action, printed = run_doctor(as_json)
@@ -403,7 +426,7 @@ def run(argv: list[str]) -> tuple[int, dict[str, Any], bool, bool]:
         action = run_lifecycle(args.lifecycle_command, options)
         return exit_code(action), action, as_json, False
 
-    return EXIT_USAGE, result(False, "usage", "Use: bloxctl status [--json]."), as_json, False
+    return EXIT_USAGE, result(False, "usage", "Use: bloxctl {status|audio|doctor|settings|theme|lifecycle} --help."), as_json, False
 
 
 def main(argv: list[str] | None = None) -> int:

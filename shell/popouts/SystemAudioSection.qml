@@ -27,7 +27,7 @@ ColumnLayout {
 
     PillSelector {
         Layout.fillWidth: true
-        enabled: root.controller.audioCanChange
+        enabled: root.controller.micCanChange
         title: "Microphone"
         currentText: visualId === "muted" ? "Muted" : "Open"
         currentId: root.controller.micMuted ? "muted" : "open"
@@ -44,7 +44,7 @@ ColumnLayout {
         }]
         onSelected: (id) => {
             if (id !== currentId)
-                root.controller.runCommand(root.controller.scriptRoot + "/control.sh mic " + id, true);
+                root.controller.setMicMuted(id === "muted");
 
         }
     }

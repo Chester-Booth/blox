@@ -13,6 +13,8 @@ QtObject {
     property string audioIcon: "󰕾"
     property bool audioMuted: false
     property bool micMuted: false
+    property bool micCanChange: audioCanChange
+    property var audioProvider: null
     property bool networkEnabled: true
     property bool bluetoothEnabled: true
     property bool audioCanChange: false
@@ -72,8 +74,13 @@ QtObject {
 
     function runLabel(text, keepOpen) {
         const item = actionByLabel(text);
-        if (item)
-            actionRequested(item.command || "", keepOpen);
+        if (!item)
+            return ;
+
+        if (item.id === "mic-toggle" && root.setMicMuted(!root.micMuted))
+            return ;
+
+        actionRequested(item.command || "", keepOpen);
 
     }
 
@@ -113,10 +120,34 @@ QtObject {
         actionRequested(command, keepOpen);
     }
 
+    function toggleAudio() {
+        if (!audioCanChange)
+            return ;
+
+        if (root.audioProvider && root.audioProvider.toggleMute())
+            return ;
+
+        runCommand(scriptRoot + "/control.sh audio-toggle", true);
+    }
+
+    function setMicMuted(value) {
+        if (!micCanChange)
+            return false;
+
+        if (root.audioProvider && root.audioProvider.setMicMuted(value))
+            return true;
+
+        runCommand(scriptRoot + "/control.sh mic " + (value ? "muted" : "open"), true);
+        return true;
+    }
+
     function applyAudio() {
         if (!audioCanChange)
             return ;
         audioApplyPending = false;
+        if (root.audioProvider && root.audioProvider.setVolume(visualAudioVolume))
+            return ;
+
         runCommand(scriptRoot + "/control.sh audio-set-silent " + visualAudioVolume, true);
     }
 

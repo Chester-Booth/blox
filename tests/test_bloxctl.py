@@ -38,6 +38,33 @@ class BloxctlTests(unittest.TestCase):
         self.assertEqual(output, action)
         self.assertEqual(run.call_args.args[0][1:], ["blox", "status"])
 
+    def test_audio_action_uses_the_shell_audio_owner(self):
+        action = {
+            "version": 1,
+            "ok": True,
+            "code": "ok",
+            "message": "",
+            "data": {"operation": "set-volume", "value": 73},
+        }
+        completed = subprocess.CompletedProcess(["ipc"], 0, json.dumps(action), "")
+        code, output, run = self.run_cli(["audio", "set-volume", "73", "--json"], completed)
+        self.assertEqual(code, 0)
+        self.assertEqual(output, action)
+        self.assertEqual(run.call_args.args[0][1:], ["blox", "audio", "set-volume", "73"])
+
+    def test_audio_action_preserves_the_owner_exit_class(self):
+        action = {
+            "version": 1,
+            "ok": False,
+            "code": "unavailable",
+            "message": "PipeWire is not ready",
+            "data": None,
+        }
+        completed = subprocess.CompletedProcess(["ipc"], 0, json.dumps(action), "")
+        code, output, _ = self.run_cli(["audio", "toggle-mute", "--json"], completed)
+        self.assertEqual(code, bloxctl.EXIT_UNAVAILABLE)
+        self.assertEqual(output, action)
+
     def test_shell_unavailable_has_a_stable_exit_class(self):
         completed = subprocess.CompletedProcess(["ipc"], 1, "", "not running")
         code, output, _ = self.run_cli(["status", "--json"], completed)

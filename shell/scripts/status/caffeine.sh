@@ -7,8 +7,6 @@ source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/common.sh"
 state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/quickshell"
 state_file="$state_dir/caffeine.json"
 
-mkdir -p "$state_dir"
-
 now() {
 	date +%s
 }
@@ -74,15 +72,6 @@ json_status() {
 		label="Off"
 		class="idle"
 		tooltip="Hypridle running"
-		rm -f "$state_file"
-		if [[ "$capability_available" == "true" ]] && ! pgrep -x hypridle >/dev/null 2>&1; then
-			hypridle >/dev/null 2>&1 &
-		fi
-	fi
-
-	if [[ "$active" == "true" && "$capability_available" == "true" ]] && pgrep -x hypridle >/dev/null 2>&1; then
-		pkill -x hypridle >/dev/null 2>&1 || true
-		reconciled=true
 	fi
 
 	if [[ "$capability_available" == "true" ]] && pgrep -x hypridle >/dev/null 2>&1; then
@@ -95,13 +84,16 @@ json_status() {
 		if [[ "$hypridle_running" == "true" ]]; then
 			class="warning"
 			tooltip+=$'\nWarning: Hypridle is still running'
-		elif [[ "$reconciled" == "true" ]]; then
-			tooltip+=$'\nHypridle was restarted and has been paused again'
 		else
 			tooltip+=$'\nHypridle paused'
 		fi
 	else
-		tooltip+=$'\nHypridle active'
+		if [[ "$hypridle_running" == "true" ]]; then
+			tooltip+=$'\nHypridle active'
+		else
+			class="warning"
+			tooltip+=$'\nWarning: Hypridle is not running'
+		fi
 	fi
 
 	payload="$(jq -nc \
@@ -124,6 +116,7 @@ set_awake() {
 	local mode="$2"
 	local deadline
 
+	mkdir -p "$state_dir"
 	pkill -x hypridle >/dev/null 2>&1 || true
 
 	if [[ "$duration" == "indefinite" ]]; then

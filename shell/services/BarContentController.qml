@@ -57,6 +57,10 @@ Scope {
         return barContent.statusSnapshot();
     }
 
+    function audioAction(operation, value) {
+        return audio.action(operation, value);
+    }
+
     function previousTodo() {
         run(scriptRoot + "/todo/cycle.sh -1");
         todoRefreshDelay.restart();
@@ -126,6 +130,10 @@ Scope {
     IpcHandler {
         function status() : string {
             return JSON.stringify(root.statusSnapshot());
+        }
+
+        function audio(operation: string, value: string) : string {
+            return JSON.stringify(root.audioAction(operation, value));
         }
 
         target: "blox"

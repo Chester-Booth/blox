@@ -70,7 +70,7 @@ class StatusContractTests(unittest.TestCase):
         self.assertIsInstance(capability["reason"], (str, type(None)))
 
     def test_every_producer_has_the_common_capability_contract(self):
-        self.assertEqual(len(self.contracts), 13)
+        self.assertEqual(len(self.contracts), 12)
         for name, spec in self.contracts.items():
             self.assertEqual(spec["required"]["capability"], "object", name)
             child = spec["children"]["capability"]

@@ -65,6 +65,9 @@ Item {
             })
             batteryStatus: root.contentController.battery.json || ({
             })
+            powerProfileStatus: root.contentController.powerProfile.json || ({
+            })
+            powerProfileProvider: root.contentController.powerProfile
             scriptRoot: root.surfaceController.scriptRoot
             actionBusy: root.contentController.actions.performanceBusy
             actionError: root.contentController.actions.performanceError
@@ -120,6 +123,7 @@ Item {
             brightnessIcon: root.contentController.brightness.json.icon || "󰃠"
             brightnessPercent: root.contentController.brightness.json.percent || 0
             brightnessCanChange: !!(root.contentController.brightness.json.capability && root.contentController.brightness.json.capability.canChange === true)
+            brightnessProvider: root.contentController.brightness
             blueLightMode: root.contentController.brightness.json.blueLightMode || "auto"
             blueLightActive: !!root.contentController.brightness.json.blueLightActive
             scriptRoot: root.surfaceController.scriptRoot

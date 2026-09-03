@@ -64,6 +64,19 @@ TestCase {
         }
     }
 
+    QtObject {
+        id: brightnessProvider
+
+        property int calls: 0
+        property int value: 0
+
+        function setBrightness(next) {
+            value = next;
+            calls += 1;
+            return true;
+        }
+    }
+
     Popouts.SystemPopoutController {
         id: controller
 
@@ -74,6 +87,8 @@ TestCase {
         networkProvider: networkProvider
         bluetoothCanChange: true
         bluetoothProvider: bluetoothProvider
+        brightnessCanChange: true
+        brightnessProvider: brightnessProvider
         actions: [{
             "id": "mic-toggle",
             "label": "Mute mic",
@@ -110,6 +125,9 @@ TestCase {
         bluetoothProvider.calls = 0;
         controller.networkEnabled = true;
         controller.bluetoothEnabled = true;
+        brightnessProvider.calls = 0;
+        brightnessProvider.value = 0;
+        controller.visualBrightnessPercent = 0;
     }
 
     function test_audio_actions_use_the_structured_provider() {
@@ -157,6 +175,14 @@ TestCase {
         verify(bluetoothProvider.enabled);
         compare(networkProvider.calls, 2);
         compare(bluetoothProvider.calls, 2);
+        verify(!actionReceived);
+    }
+
+    function test_brightness_action_uses_the_structured_provider() {
+        controller.visualBrightnessPercent = 71;
+        controller.applyBrightness();
+        compare(brightnessProvider.value, 71);
+        compare(brightnessProvider.calls, 1);
         verify(!actionReceived);
     }
 }

@@ -9,11 +9,15 @@ Rectangle {
     })
     property var batteryStatus: ({
     })
+    property var powerProfileStatus: ({
+    })
+    property var powerProfileProvider: null
     property string scriptRoot: ""
     property bool actionBusy: false
     property string actionError: ""
     property string statusError: ""
     readonly property string visibleError: actionError.length > 0 ? actionError : statusError
+    readonly property bool powerProfileReady: root.powerProfileStatus && root.powerProfileStatus.capability && root.powerProfileStatus.capability.ready === true
 
     signal action(string command)
 
@@ -54,7 +58,7 @@ Rectangle {
     }
 
     width: 268
-    height: (status.vramTotal ? 517 : 465) + (visibleError.length > 0 ? Math.max(26, errorText.implicitHeight) : 0)
+    height: (status.vramTotal ? 517 : 465) + (powerProfileReady ? 56 : 0) + (visibleError.length > 0 ? Math.max(26, errorText.implicitHeight) : 0)
     radius: Theme.scaledRadius(8)
     color: Theme.background
     border.color: Theme.surfaceAlt
@@ -217,6 +221,35 @@ Rectangle {
                 }]
                 onSelected: (id) => {
                     return root.action(root.fanCommand(id.charAt(0).toUpperCase() + id.slice(1)));
+                }
+            }
+
+            PillSelector {
+                Layout.fillWidth: true
+                visible: root.powerProfileReady
+                enabled: !root.actionBusy && root.powerProfileStatus && root.powerProfileStatus.capability && root.powerProfileStatus.capability.canChange === true
+                title: "Power profile"
+                currentId: root.powerProfileStatus.profile || "unavailable"
+                options: [{
+                    "id": "power-saver",
+                    "icon": "󰌪",
+                    "label": "Saver"
+                }, {
+                    "id": "balanced",
+                    "icon": "󱜝",
+                    "label": "Balanced"
+                }, {
+                    "id": "performance",
+                    "icon": "󱑬",
+                    "label": "Performance"
+                }, {
+                    "id": "unavailable",
+                    "icon": "󰅙",
+                    "label": "Unavailable"
+                }]
+                onSelected: (id) => {
+                    if (root.powerProfileProvider)
+                        root.powerProfileProvider.setProfile(id);
                 }
             }
 

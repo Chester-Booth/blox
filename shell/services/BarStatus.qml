@@ -14,6 +14,7 @@ Scope {
     property alias todo: todo
     property alias updates: updates
     property alias battery: battery
+    property alias powerProfile: powerProfile
     property alias audio: audio
     property alias brightness: brightness
     property alias network: network
@@ -43,12 +44,14 @@ Scope {
         touchpad.refresh();
         privacy.refresh();
         battery.refresh();
+        powerProfile.refresh();
         caffeine.refresh();
     }
 
     function refreshPerformance() {
         systemInfo.refresh();
         battery.refresh();
+        powerProfile.refresh();
     }
 
     function updatePolling(refreshVisible) {
@@ -65,6 +68,7 @@ Scope {
         workspaces.interval = railInterval(300000, 120000, 600000, 300000);
         systemInfo.interval = performanceVisible ? 1000 : 60000;
         battery.interval = performanceVisible ? 1000 : railInterval(30000, 15000, 60000, 30000);
+        powerProfile.interval = performanceVisible ? 1000 : 60000;
         if (shouldRefresh && controlsVisible)
             refreshControl();
 
@@ -114,12 +118,17 @@ Scope {
         timeout: 155000
     }
 
-    ScriptPoller {
+    PowerStatus {
         id: battery
 
-        command: [root.scriptRoot + "/status/battery.sh"]
         interval: 30000
         onJsonChanged: root.updatePolling(false)
+    }
+
+    PowerProfileStatus {
+        id: powerProfile
+
+        interval: 60000
     }
 
     AudioStatus {
@@ -129,10 +138,10 @@ Scope {
         interval: 30000
     }
 
-    ScriptPoller {
+    BrightnessStatus {
         id: brightness
 
-        command: [root.scriptRoot + "/status/brightness.sh"]
+        scriptRoot: root.scriptRoot
         interval: 30000
     }
 

@@ -19,6 +19,7 @@ Scope {
     property alias todo: barStatus.todo
     property alias updates: barStatus.updates
     property alias battery: barStatus.battery
+    property alias powerProfile: barStatus.powerProfile
     property alias audio: barStatus.audio
     property alias brightness: barStatus.brightness
     property alias network: barStatus.network
@@ -126,6 +127,8 @@ Scope {
         now: clock.date
         clockDateMode: root.clockDateMode
         updates: root.updates.json
+        battery: root.battery.json
+        powerProfile: root.powerProfile.json
         updatesLastUpdatedMs: root.updates.lastUpdatedMs
         bluetooth: root.bluetooth.json
         audio: root.audio.json

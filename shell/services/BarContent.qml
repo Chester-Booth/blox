@@ -10,6 +10,10 @@ QtObject {
     property bool clockDateMode: false
     property var updates: ({
     })
+    property var battery: ({
+    })
+    property var powerProfile: ({
+    })
     property real updatesLastUpdatedMs: 0
     property var bluetooth: ({
     })
@@ -78,10 +82,12 @@ QtObject {
             "message": "",
             "data": {
                 "updates": typedStatus(updates, ["repoCount", "aurCount", "totalCount"]),
+                "battery": typedStatus(battery, ["class", "capacity", "status", "timeLabel", "source", "onBattery", "batteryPresent"]),
+                "powerProfile": typedStatus(powerProfile, ["profile", "onBattery", "profileServiceAvailable", "degradationReason"]),
                 "network": typedStatus(network, ["class", "ssid", "signal", "freq", "device", "wifiEnabled"]),
                 "bluetooth": typedStatus(bluetooth, ["class", "enabled"]),
                 "audio": typedStatus(audio, ["volume", "muted", "micMuted", "micCanChange"]),
-                "brightness": typedStatus(brightness, ["percent", "blueLightMode", "blueLightActive"]),
+                "brightness": typedStatus(brightness, ["percent", "blueLightMode", "blueLightActive", "device", "backlightCount", "backlights", "ddcAvailable", "ddcDisplayCount", "ddcReason"]),
                 "privacy": typedStatus(privacy, ["active", "microphoneCount", "videoCount"]),
                 "caffeine": typedStatus(caffeine, ["active", "mode", "remaining"])
             }

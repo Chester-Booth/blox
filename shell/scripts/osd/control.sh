@@ -2,7 +2,10 @@
 set -u
 
 script_root="${QUICKSHELL_SCRIPT_ROOT:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)}"
-brightness_device="${BRIGHTNESS_DEVICE:-amdgpu_bl1}"
+brightness_device="${BRIGHTNESS_DEVICE:-}"
+if [[ -z "$brightness_device" ]]; then
+	brightness_device="$("$script_root/status/brightness-device.sh" 2>/dev/null || true)"
+fi
 keyboard_device="${KEYBOARD_BRIGHTNESS_DEVICE:-asus::kbd_backlight}"
 camera_device="${CAMERA_DEVICE:-asus::camera}"
 camera_usb_id="${CAMERA_USB_ID:-3277:0010}"

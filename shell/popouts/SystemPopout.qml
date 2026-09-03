@@ -24,6 +24,7 @@ Rectangle {
     property alias bluetoothCanChange: controller.bluetoothCanChange
     property alias networkProvider: controller.networkProvider
     property alias bluetoothProvider: controller.bluetoothProvider
+    property alias brightnessProvider: controller.brightnessProvider
     property alias brightnessCanChange: controller.brightnessCanChange
     property alias wifiIcon: controller.wifiIcon
     property alias wifiText: controller.wifiText

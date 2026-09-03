@@ -22,6 +22,7 @@ QtObject {
     property bool bluetoothCanChange: false
     property var networkProvider: null
     property var bluetoothProvider: null
+    property var brightnessProvider: null
     property bool brightnessCanChange: false
     property string wifiIcon: "󰤩"
     property string wifiText: "Wi-Fi"
@@ -201,6 +202,8 @@ QtObject {
         if (!brightnessCanChange)
             return ;
         brightnessApplyPending = false;
+        if (root.brightnessProvider && root.brightnessProvider.setBrightness(visualBrightnessPercent))
+            return ;
         runCommand(scriptRoot + "/control.sh brightness-set-silent " + visualBrightnessPercent, true);
     }
 

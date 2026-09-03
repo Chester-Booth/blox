@@ -26,7 +26,12 @@ mic)
 	exec "$script_dir/osd/control.sh" mic-show
 	;;
 brightness-set-silent)
-	exec brightnessctl -q -d "${BRIGHTNESS_DEVICE:-amdgpu_bl1}" set "${2:-0}%"
+	brightness_device="${BRIGHTNESS_DEVICE:-}"
+	if [[ -z "$brightness_device" ]]; then
+		brightness_device="$("$script_dir/status/brightness-device.sh" 2>/dev/null || true)"
+	fi
+	[[ -n "$brightness_device" ]] || exit 1
+	exec brightnessctl -q -d "$brightness_device" set "${2:-0}%"
 	;;
 wifi)
 	case "${2:-}" in

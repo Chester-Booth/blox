@@ -85,7 +85,7 @@
           {"id": "bt", "enabled": true, "region": "hidden", "order": 3},
           {"id": "updates", "enabled": true, "region": "hidden", "order": 4},
           {"id": "fan", "enabled": true, "region": "hidden", "order": 5, "visibility": "normal"},
-          {"id": "gpu", "enabled": true, "region": "hidden", "order": 6, "visibility": "normal"},
+          {"id": "gpu", "enabled": true, "region": "hidden", "order": 6, "visibility": "hybrid"},
           {"id": "application-tray", "enabled": true, "region": "hidden", "order": 7},
           {"id": "touchpad", "enabled": true, "region": "hidden", "order": 8, "visibility": "normal"}
         ],

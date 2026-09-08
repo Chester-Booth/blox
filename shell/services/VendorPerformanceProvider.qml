@@ -14,11 +14,12 @@ Scope {
     property bool refreshPending: false
     property string pendingRaw: ""
     property var pendingProfile: null
+    property var pendingFanCurve: null
     property string queryError: ""
     property string actionError: ""
     property bool timedOut: false
     readonly property bool providerReady: root.scriptRoot.length > 0
-    readonly property bool actionBusy: actionProcess.running || root.pendingProfile !== null
+    readonly property bool actionBusy: actionProcess.running || root.pendingProfile !== null || root.pendingFanCurve !== null
     readonly property int revision: state.revision
     readonly property real lastUpdatedMs: state.observedAtMs
     readonly property string lastError: root.actionError.length > 0 ? root.actionError : root.queryError
@@ -33,6 +34,16 @@ Scope {
         state.profile = String(payload.profile || "unavailable");
         state.profileLabel = String(payload.profileLabel || "");
         state.profiles = Array.isArray(payload.profiles) ? payload.profiles : [];
+        state.profileControlDomain = String(payload.profileControlDomain || "");
+        state.fanCurveAvailable = payload.fanCurveCapability && payload.fanCurveCapability.available === true;
+        state.fanCurveEnabled = payload.fanCurveEnabled === true;
+        state.fanCurveCapability = payload.fanCurveCapability || ({
+            "available": false,
+            "ready": true,
+            "canChange": false,
+            "permission": "not-required",
+            "reason": "fan-curves-unsupported"
+        });
         root.syncReady = true;
         state.markChanged();
     }
@@ -42,6 +53,9 @@ Scope {
         root.syncReady = true;
         state.backendAvailable = false;
         state.profiles = [];
+        state.profileControlDomain = "";
+        state.fanCurveAvailable = false;
+        state.fanCurveEnabled = false;
         state.profile = "unavailable";
         state.markChanged();
     }
@@ -66,6 +80,17 @@ Scope {
         root.actionError = "";
         root.pendingProfile = profile;
         actionProcess.command = [root.scriptRoot + "/control.sh", "fan-profile", profile];
+        actionProcess.running = true;
+        actionWatchdog.restart();
+        return true;
+    }
+
+    function setFanCurvesEnabled(value) {
+        if (!state.fanCurveAvailable || root.actionBusy)
+            return false;
+        root.actionError = "";
+        root.pendingFanCurve = value === true;
+        actionProcess.command = [root.scriptRoot + "/control.sh", "fan-curves", value === true ? "on" : "off"];
         actionProcess.running = true;
         actionWatchdog.restart();
         return true;
@@ -123,6 +148,7 @@ Scope {
             else if (exitCode !== 0 || exitStatus !== 0)
                 root.actionError = "action-failed";
             root.pendingProfile = null;
+            root.pendingFanCurve = null;
             state.markChanged();
             if (root.actionError.length === 0)
                 root.refresh();
@@ -186,13 +212,21 @@ Scope {
     }
 
     function syncAction() {
-        if (root.pendingProfile === null)
-            return ;
-        if (!state.canChange) {
-            root.pendingProfile = null;
-            root.actionError = "profile-removed";
-        } else if (state.profile === root.pendingProfile) {
-            root.pendingProfile = null;
+        if (root.pendingProfile !== null) {
+            if (!state.canChange) {
+                root.pendingProfile = null;
+                root.actionError = "profile-removed";
+            } else if (state.profile === root.pendingProfile) {
+                root.pendingProfile = null;
+            }
+        }
+        if (root.pendingFanCurve !== null) {
+            if (!state.fanCurveAvailable) {
+                root.pendingFanCurve = null;
+                root.actionError = "fan-curves-removed";
+            } else if (state.fanCurveEnabled === root.pendingFanCurve) {
+                root.pendingFanCurve = null;
+            }
         }
     }
 }

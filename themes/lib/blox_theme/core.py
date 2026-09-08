@@ -532,6 +532,13 @@ def _basic_schema_errors(instance: Any, schema: dict[str, Any], root: dict[str, 
     if "$ref" in schema:
         return _basic_schema_errors(instance, _resolve_ref(root, schema["$ref"]), root, path)
     errors: list[str] = []
+    for subschema in schema.get("allOf", []):
+        errors.extend(_basic_schema_errors(instance, subschema, root, path))
+    if "if" in schema:
+        condition_matches = not _basic_schema_errors(instance, schema["if"], root, path)
+        branch = schema.get("then" if condition_matches else "else")
+        if branch is not None:
+            errors.extend(_basic_schema_errors(instance, branch, root, path))
     if "const" in schema and instance != schema["const"]:
         errors.append(f"{path}: must equal {schema['const']!r}")
     if "enum" in schema and instance not in schema["enum"]:

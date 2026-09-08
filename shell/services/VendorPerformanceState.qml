@@ -12,6 +12,11 @@ Item {
     property string profile: "unavailable"
     property string profileLabel: ""
     property var profiles: []
+    property string profileControlDomain: ""
+    property bool fanCurveAvailable: false
+    property bool fanCurveEnabled: false
+    property var fanCurveCapability: ({
+    })
     property bool busy: false
     property string actionError: ""
     property int revision: 0
@@ -62,6 +67,9 @@ Item {
             "profile": root.profile,
             "profileLabel": root.profileLabel,
             "profiles": root.profiles,
+            "profileControlDomain": root.profileControlDomain,
+            "fanCurveEnabled": root.fanCurveEnabled,
+            "fanCurveCapability": root.fanCurveCapability,
             "details": details,
             "tooltip": details,
             "capability": capability
@@ -80,6 +88,10 @@ Item {
     onProfileChanged: root.markChanged()
     onProfileLabelChanged: root.markChanged()
     onProfilesChanged: root.markChanged()
+    onProfileControlDomainChanged: root.markChanged()
+    onFanCurveAvailableChanged: root.markChanged()
+    onFanCurveEnabledChanged: root.markChanged()
+    onFanCurveCapabilityChanged: root.markChanged()
     onBusyChanged: root.markChanged()
     onActionErrorChanged: root.markChanged()
     Component.onCompleted: root.markChanged()

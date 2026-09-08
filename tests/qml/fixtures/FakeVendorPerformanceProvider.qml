@@ -10,7 +10,10 @@ QtObject {
     property string lastError: ""
     property bool ok: true
     property string profile: "quiet"
+    property bool fanCurveAvailable: false
+    property bool fanCurveEnabled: false
     property int setCalls: 0
+    property int fanCurveSetCalls: 0
     readonly property var json: ({
         "schemaVersion": 1,
         "providerRevision": root.revision,
@@ -22,6 +25,15 @@ QtObject {
         "profile": root.profile,
         "profileLabel": root.profile.charAt(0).toUpperCase() + root.profile.slice(1),
         "profiles": ["quiet", "balanced", "performance"],
+        "profileControlDomain": "platform-profile",
+        "fanCurveEnabled": root.fanCurveEnabled,
+        "fanCurveCapability": {
+            "available": root.fanCurveAvailable,
+            "ready": true,
+            "canChange": root.fanCurveAvailable,
+            "permission": "not-required",
+            "reason": root.fanCurveAvailable ? null : "fan-curves-unsupported"
+        },
         "details": "Vendor profile: " + root.profile,
         "tooltip": "Vendor profile: " + root.profile,
         "capability": {
@@ -39,6 +51,16 @@ QtObject {
     function setProfile(value) {
         root.profile = String(value);
         root.setCalls += 1;
+        root.revision += 1;
+        root.lastUpdatedMs += 1;
+        return true;
+    }
+
+    function setFanCurvesEnabled(value) {
+        if (!root.fanCurveAvailable)
+            return false;
+        root.fanCurveEnabled = value === true;
+        root.fanCurveSetCalls += 1;
         root.revision += 1;
         root.lastUpdatedMs += 1;
         return true;

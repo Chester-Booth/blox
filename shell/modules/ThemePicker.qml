@@ -1,4 +1,5 @@
 import qs.modules
+import qs.services
 import qs.shared
 import QtQuick
 import QtQuick.Controls
@@ -37,6 +38,18 @@ FloatingWindow {
         editorScrollItem: editorScroll
         pickerRootItem: pickerRoot
         barDragProxyItem: barDragProxy
+    }
+
+    Loader {
+        id: gpuStatusLoader
+
+        active: root.visible
+        sourceComponent: Component {
+            GpuStatus {
+                scriptRoot: pickerController.scriptRoot
+                interval: 60000
+            }
+        }
     }
 
     ThemePickerFileDialogs {
@@ -226,6 +239,7 @@ FloatingWindow {
 
                                 ThemePickerAdvanced {
                                     controller: pickerController
+                                    gpuSupportedModes: gpuStatusLoader.item && gpuStatusLoader.item.json && Array.isArray(gpuStatusLoader.item.json.supportedModes) ? gpuStatusLoader.item.json.supportedModes : []
                                 }
 
                                 ThemePickerWidgets {

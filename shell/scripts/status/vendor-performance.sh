@@ -58,6 +58,19 @@ else
 	reason="profile-unavailable"
 fi
 
+fan_curve_available=false
+fan_curve_enabled=false
+fan_curve_reason="fan-curves-unsupported"
+if fan_curve_raw="$(asusctl fan-curve --get-enabled 2>&1)" &&
+	[[ -n "$fan_curve_raw" ]] &&
+	! grep -Eqi '(^|[[:space:]])error:|unknowninterface|not supported' <<<"$fan_curve_raw"; then
+	fan_curve_available=true
+	fan_curve_reason=""
+	if grep -Eqi 'enabled[^[:alpha:]]*true|:[[:space:]]*true' <<<"$fan_curve_raw"; then
+		fan_curve_enabled=true
+	fi
+fi
+
 payload="$(jq -nc \
 	--arg vendor "asusctl" \
 	--arg profile "$profile" \
@@ -66,6 +79,9 @@ payload="$(jq -nc \
 	--argjson available "$capability_available" \
 	--argjson ready "$capability_ready" \
 	--argjson canChange "$capability_can_change" \
+	--argjson fanCurveAvailable "$fan_curve_available" \
+	--argjson fanCurveEnabled "$fan_curve_enabled" \
+	--arg fanCurveReason "$fan_curve_reason" \
 	--arg reason "$reason" \
 	'{
         vendor:$vendor,
@@ -73,6 +89,15 @@ payload="$(jq -nc \
         profileLabel:$label,
         profiles:$profiles,
         profileLabels:$profiles,
+        profileControlDomain:"platform-profile",
+        fanCurveEnabled:$fanCurveEnabled,
+        fanCurveCapability:{
+            available:$fanCurveAvailable,
+            ready:true,
+            canChange:$fanCurveAvailable,
+            permission:"not-required",
+            reason:(if $fanCurveReason == "" then null else $fanCurveReason end)
+        },
         details:("Vendor profile: " + $label),
         tooltip:("Vendor profile: " + $label),
         errorCode:(if $reason == "" then null else $reason end)

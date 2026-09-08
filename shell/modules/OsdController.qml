@@ -73,28 +73,24 @@ Scope {
     }
 
     function showGpu(mode) {
-        const id = String(mode || "eco").toLowerCase();
+        const id = String(mode || "integrated").toLowerCase();
         label = "GPU mode";
         muted = false;
         noticeMode = false;
         segmented = true;
-        segments = 4;
-        if (id === "gaming") {
-            activeSegments = 4;
-            icon = "󰪫";
-            valueText = "GPU 144";
-        } else if (id === "performance") {
+        segments = 3;
+        if (id === "dedicated") {
             activeSegments = 3;
             icon = "󰢮";
-            valueText = "GPU 60";
-        } else if (id === "high-refresh") {
+            valueText = "Dedicated";
+        } else if (id === "hybrid") {
             activeSegments = 2;
-            icon = "";
-            valueText = "iGPU 144";
+            icon = "󰾅";
+            valueText = "Hybrid";
         } else {
             activeSegments = 1;
             icon = "󰌪";
-            valueText = "iGPU 60";
+            valueText = "Integrated";
         }
         value = Math.round(activeSegments * 100 / segments);
         showFor(4500);

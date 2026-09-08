@@ -18,24 +18,24 @@ Rectangle {
     property var gpuStatus: ({
     })
     property var gpuProvider: null
+    property var monitorStatus: ({
+    })
+    property var monitorProvider: null
     property string scriptRoot: ""
     property bool actionBusy: false
     property string actionError: ""
     property string statusError: ""
     readonly property string visibleError: actionError.length > 0 ? actionError : statusError
     readonly property bool powerProfileReady: root.powerProfileStatus && root.powerProfileStatus.capability && root.powerProfileStatus.capability.ready === true
+    readonly property bool powerProfileCanChange: root.powerProfileStatus && root.powerProfileStatus.capability && root.powerProfileStatus.capability.canChange === true
     readonly property bool vendorPerformanceCanChange: root.vendorPerformanceStatus && root.vendorPerformanceStatus.capability && root.vendorPerformanceStatus.capability.canChange === true
+    readonly property bool performanceProfileCanChange: root.powerProfileCanChange || root.vendorPerformanceCanChange
+    readonly property bool fanCurveCanChange: root.vendorPerformanceStatus && root.vendorPerformanceStatus.fanCurveCapability && root.vendorPerformanceStatus.fanCurveCapability.canChange === true
     readonly property bool gpuCanChange: root.gpuStatus && root.gpuStatus.capability && root.gpuStatus.capability.canChange === true
+    readonly property string gpuPendingAction: root.gpuStatus && root.gpuStatus.pendingAction ? String(root.gpuStatus.pendingAction) : ""
+    readonly property var refreshMonitors: root.monitorStatus && Array.isArray(root.monitorStatus.monitors) ? root.monitorStatus.monitors.filter(monitor => monitor.canChange === true) : []
 
     signal action(string command)
-
-    function fanCommand(profile) {
-        return scriptRoot + "/control.sh fan-profile " + profile.toLowerCase();
-    }
-
-    function gpuCommand(mode) {
-        return scriptRoot + "/gpu/set-mode.sh " + mode;
-    }
 
     function numberValue(value, fallback) {
         const parsed = Number(value);
@@ -46,22 +46,45 @@ Rectangle {
         return Math.max(min, Math.min(max, value));
     }
 
-    function fanProfileId() {
-        const value = String(root.vendorPerformanceStatus.profile || status.profile || "balanced").toLowerCase();
-        return ["performance", "balanced", "quiet"].indexOf(value) >= 0 ? value : "balanced";
+    function performanceProfileId() {
+        if (root.powerProfileCanChange)
+            return String(root.powerProfileStatus.profile || "balanced");
+        const value = String(root.vendorPerformanceStatus.profile || "balanced").toLowerCase();
+        return value === "quiet" ? "power-saver" : ["performance", "balanced"].indexOf(value) >= 0 ? value : "balanced";
     }
 
-    function fanProfileText() {
-        return root.vendorPerformanceStatus.profileLabel || root.vendorPerformanceStatus.profile || status.profile || "Unknown";
+    function performanceProfileOptions() {
+        const available = root.powerProfileCanChange ? root.powerProfileStatus.profiles || [] : (root.vendorPerformanceStatus.profiles || []).map(value => value === "quiet" ? "power-saver" : value);
+        return [{
+            "id": "performance",
+            "icon": "󱓞",
+            "label": "Performance"
+        }, {
+            "id": "balanced",
+            "icon": "󰗑",
+            "label": "Balanced"
+        }, {
+            "id": "power-saver",
+            "icon": "󰌪",
+            "label": "Saver"
+        }].filter(option => available.indexOf(option.id) >= 0);
+    }
+
+    function setPerformanceProfile(id) {
+        if (root.powerProfileCanChange && root.powerProfileProvider)
+            return root.powerProfileProvider.setProfile(id);
+        if (root.vendorPerformanceCanChange && root.vendorPerformanceProvider)
+            return root.vendorPerformanceProvider.setProfile(id === "power-saver" ? "quiet" : id);
+        return false;
     }
 
     function gpuModeId() {
-        const value = String(root.gpuStatus.mode || status.gpuMode || "eco").toLowerCase();
-        return ["gaming", "performance", "high-refresh", "eco"].indexOf(value) >= 0 ? value : "eco";
+        const value = String(root.gpuStatus.mode || "custom").toLowerCase();
+        return ["dedicated", "hybrid", "integrated"].indexOf(value) >= 0 ? value : "custom";
     }
 
     function gpuModeText() {
-        return root.gpuStatus.label || status.gpuLabel || "Unknown";
+        return root.gpuStatus.label || "Unknown";
     }
 
     function fanText(value) {
@@ -80,7 +103,7 @@ Rectangle {
     }
 
     width: 268
-    height: (status.vramTotal ? 517 : 465) + (powerProfileReady ? 56 : 0) + (visibleError.length > 0 ? Math.max(26, errorText.implicitHeight) : 0)
+    height: (status.vramTotal ? 517 : 465) + (root.performanceProfileCanChange ? 0 : -56) + (root.fanCurveCanChange ? 56 : 0) + (root.gpuCanChange ? 0 : -56) + root.refreshMonitors.length * 56 + (root.gpuPendingAction.length > 0 ? 22 : 0) + (visibleError.length > 0 ? Math.max(26, errorText.implicitHeight) : 0)
     radius: Theme.scaledRadius(8)
     color: Theme.background
     border.color: Theme.surfaceAlt
@@ -222,89 +245,83 @@ Rectangle {
             Layout.fillWidth: true
             spacing: Theme.scaledSpacing(6)
 
+            Repeater {
+                model: root.refreshMonitors
+
+                PillSelector {
+                    required property var modelData
+                    Layout.fillWidth: true
+                    enabled: !root.actionBusy && !root.monitorStatus.busy
+                    title: root.refreshMonitors.length === 1 ? "Refresh rate" : modelData.name + " refresh"
+                    currentId: modelData.refreshId
+                    currentText: Number(modelData.refreshRate).toFixed(Number(modelData.refreshRate) % 1 === 0 ? 0 : 2) + " Hz"
+                    options: modelData.rates
+                    onSelected: (id) => {
+                        if (root.monitorProvider)
+                            return root.monitorProvider.setRefresh(modelData.name, id);
+                        return false;
+                    }
+                }
+            }
+
             PillSelector {
                 Layout.fillWidth: true
-                enabled: !root.actionBusy && root.vendorPerformanceCanChange
-                title: "Fan profile"
-                currentText: root.fanProfileText()
-                currentId: root.fanProfileId()
+                visible: root.performanceProfileCanChange
+                enabled: !root.actionBusy && root.performanceProfileCanChange
+                title: "Performance profile"
+                currentId: root.performanceProfileId()
+                options: root.performanceProfileOptions()
+                onSelected: (id) => root.setPerformanceProfile(id)
+            }
+
+            PillSelector {
+                Layout.fillWidth: true
+                visible: root.fanCurveCanChange
+                enabled: !root.actionBusy && root.fanCurveCanChange
+                title: "Fan curves"
+                currentId: root.vendorPerformanceStatus.fanCurveEnabled === true ? "custom" : "automatic"
                 options: [{
-                    "id": "performance",
-                    "icon": "󱑬",
-                    "label": "Perf"
-                }, {
-                    "id": "balanced",
-                    "icon": "󱜝",
-                    "label": "Bal"
-                }, {
-                    "id": "quiet",
+                    "id": "automatic",
                     "icon": "󰠝",
-                    "label": "Quiet"
+                    "label": "Automatic"
+                }, {
+                    "id": "custom",
+                    "icon": "󱑬",
+                    "label": "Custom"
                 }]
                 onSelected: (id) => {
                     if (root.vendorPerformanceProvider)
-                        return root.vendorPerformanceProvider.setProfile(id);
-                    return root.action(root.fanCommand(id.charAt(0).toUpperCase() + id.slice(1)));
+                        return root.vendorPerformanceProvider.setFanCurvesEnabled(id === "custom");
+                    return false;
                 }
             }
 
             PillSelector {
                 Layout.fillWidth: true
-                visible: root.powerProfileReady
-                enabled: !root.actionBusy && root.powerProfileStatus && root.powerProfileStatus.capability && root.powerProfileStatus.capability.canChange === true
-                title: "Power profile"
-                currentId: root.powerProfileStatus.profile || "unavailable"
-                options: [{
-                    "id": "power-saver",
-                    "icon": "󰌪",
-                    "label": "Saver"
-                }, {
-                    "id": "balanced",
-                    "icon": "󱜝",
-                    "label": "Balanced"
-                }, {
-                    "id": "performance",
-                    "icon": "󱑬",
-                    "label": "Performance"
-                }, {
-                    "id": "unavailable",
-                    "icon": "󰅙",
-                    "label": "Unavailable"
-                }]
-                onSelected: (id) => {
-                    if (root.powerProfileProvider)
-                        root.powerProfileProvider.setProfile(id);
-                }
-            }
-
-            PillSelector {
-                Layout.fillWidth: true
+                visible: root.gpuCanChange
                 enabled: !root.actionBusy && root.gpuCanChange
                 title: "GPU mode"
                 currentText: root.gpuModeText()
                 currentId: root.gpuModeId()
-                options: [{
-                    "id": "gaming",
-                    "icon": "󰪫",
-                    "label": "144"
-                }, {
-                    "id": "performance",
-                    "icon": "󰢮",
-                    "label": "60"
-                }, {
-                    "id": "high-refresh",
-                    "icon": "",
-                    "label": "144"
-                }, {
-                    "id": "eco",
-                    "icon": "󰌪",
-                    "label": "Eco"
-                }]
+                options: [{"id": "dedicated", "icon": "󰢮", "label": "Dedicated"},
+                    {"id": "hybrid", "icon": "󰾅", "label": "Hybrid"},
+                    {"id": "integrated", "icon": "󰌪", "label": "Integrated"}
+                ].filter(option => root.gpuStatus.supportedModes.indexOf(option.id) >= 0)
                 onSelected: (id) => {
                     if (root.gpuProvider)
-                        return root.gpuProvider.setMode(id);
-                    return root.action(root.gpuCommand(id));
+                        return root.gpuProvider.requestMode(id);
+                    return false;
                 }
+            }
+
+            Text {
+                Layout.fillWidth: true
+                visible: root.gpuPendingAction.length > 0
+                text: root.gpuPendingAction === "reboot" ? "Restart to finish the GPU switch" : "Log out to finish the GPU switch"
+                color: Theme.yellow
+                font.family: Theme.bodyFontFamily
+                font.pixelSize: 11
+                wrapMode: Text.Wrap
             }
 
         }

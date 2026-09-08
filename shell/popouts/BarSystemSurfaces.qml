@@ -43,6 +43,11 @@ Item {
 
     }
 
+    GpuModeConfirmationWindow {
+        provider: root.contentController.gpu
+        targetScreen: root.geometry.panelWindow ? root.geometry.panelWindow.screen : null
+    }
+
     HoverPopupWindow {
         anchorWindow: root.geometry.panelWindow
         anchorX: root.geometry.popupX(performancePopout.width, root.geometry.openPanelX)
@@ -74,6 +79,8 @@ Item {
             gpuStatus: root.contentController.gpu.json || ({
             })
             gpuProvider: root.contentController.gpu
+            monitorStatus: root.contentController.monitors.json || ({})
+            monitorProvider: root.contentController.monitors
             scriptRoot: root.surfaceController.scriptRoot
             actionBusy: root.contentController.actions.performanceBusy
             actionError: root.contentController.actions.performanceError

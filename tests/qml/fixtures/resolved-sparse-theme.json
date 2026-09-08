@@ -170,7 +170,7 @@
           "id": "gpu",
           "order": 6,
           "region": "hidden",
-          "visibility": "normal"
+          "visibility": "hybrid"
         },
         {
           "enabled": true,

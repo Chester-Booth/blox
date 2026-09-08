@@ -14,13 +14,14 @@ ColumnLayout {
     property string visualId: currentId
     property bool selectionPending: false
     property string currentText: labelFor(visualId)
+    readonly property var safeOptions: root.options || []
     readonly property int selectedIndex: indexFor(visualId)
 
     signal selected(string id)
 
     function indexFor(id) {
-        for (let i = 0; i < options.length; i++) {
-            if ((options[i].id || "") === id)
+        for (let i = 0; i < safeOptions.length; i++) {
+            if ((safeOptions[i].id || "") === id)
                 return i;
 
         }
@@ -29,7 +30,7 @@ ColumnLayout {
 
     function labelFor(id) {
         const index = indexFor(id);
-        return index >= 0 && options.length > index ? options[index].label || "" : "";
+        return index >= 0 && safeOptions.length > index ? safeOptions[index].label || "" : "";
     }
 
     spacing: showHeader ? Theme.scaledSpacing(4) : 0
@@ -93,9 +94,9 @@ ColumnLayout {
         clip: true
 
         Rectangle {
-            x: 3 + Math.max(0, root.selectedIndex) * ((parent.width - 6) / Math.max(1, root.options.length))
+            x: 3 + Math.max(0, root.selectedIndex) * ((parent.width - 6) / Math.max(1, root.safeOptions.length))
             y: 3
-            width: (parent.width - 6) / Math.max(1, root.options.length)
+            width: (parent.width - 6) / Math.max(1, root.safeOptions.length)
             height: parent.height - 6
             radius: Theme.scaledRadius(13)
             color: Theme.withAlpha(Theme.surfaceAlt, 0.4)
@@ -117,7 +118,7 @@ ColumnLayout {
             spacing: Theme.scaledSpacing(0)
 
             Repeater {
-                model: root.options
+                model: root.safeOptions
 
                 Rectangle {
                     Layout.fillWidth: true

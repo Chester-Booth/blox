@@ -20,6 +20,9 @@ Scope {
         "profile": "unavailable",
         "profileLabel": "",
         "profiles": [],
+        "profileControlDomain": "",
+        "fanCurveEnabled": false,
+        "fanCurveCapability": {"available": false, "ready": false, "canChange": false, "permission": "unknown", "reason": "provider-loading"},
         "details": "Waiting for vendor performance provider",
         "tooltip": "Vendor performance loading",
         "schemaVersion": 1,
@@ -41,6 +44,9 @@ Scope {
         "profile": "unavailable",
         "profileLabel": "",
         "profiles": [],
+        "profileControlDomain": "",
+        "fanCurveEnabled": false,
+        "fanCurveCapability": {"available": false, "ready": false, "canChange": false, "permission": "unknown", "reason": "provider-unavailable"},
         "details": "Vendor performance provider unavailable",
         "tooltip": "Vendor performance unavailable",
         "schemaVersion": 1,
@@ -76,6 +82,10 @@ Scope {
 
     function setProfile(value) {
         return root.providerReady && providerLoader.item.setProfile(value);
+    }
+
+    function setFanCurvesEnabled(value) {
+        return root.providerReady && providerLoader.item.setFanCurvesEnabled(value);
     }
 
     Loader {

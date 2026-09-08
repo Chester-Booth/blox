@@ -93,6 +93,42 @@ class BloxctlTests(unittest.TestCase):
         self.assertEqual(output, action)
         self.assertEqual(run.call_args.args[0][1:], ["blox", "bluetooth", "toggle-enabled", ""])
 
+    def test_gpu_action_uses_the_shell_gpu_owner(self):
+        action = {"version": 1, "ok": True, "code": "ok", "message": "", "data": {"mode": "hybrid", "pending": True}}
+        completed = subprocess.CompletedProcess(["ipc"], 0, json.dumps(action), "")
+        code, output, run = self.run_cli(["gpu", "set-mode", "hybrid", "--json"], completed)
+        self.assertEqual(code, 0)
+        self.assertEqual(output, action)
+        self.assertEqual(run.call_args.args[0][1:], ["blox", "gpu", "set-mode", "hybrid"])
+
+    def test_display_action_uses_the_shell_monitor_owner(self):
+        action = {"version": 1, "ok": True, "code": "ok", "message": "", "data": {"monitor": "eDP-1", "refreshId": "144", "pending": True}}
+        completed = subprocess.CompletedProcess(["ipc"], 0, json.dumps(action), "")
+        code, output, run = self.run_cli(["display", "set-refresh", "eDP-1", "144", "--json"], completed)
+        self.assertEqual(code, 0)
+        self.assertEqual(output, action)
+        self.assertEqual(run.call_args.args[0][1:], ["blox", "monitor", "set-refresh", "eDP-1", "144"])
+
+    def test_gpu_failure_keeps_busy_exit_class_and_details(self):
+        action = {"version": 1, "ok": False, "code": "busy", "message": "controller busy", "data": {"failedStep": "apply"}}
+        completed = subprocess.CompletedProcess(["ipc"], 0, json.dumps(action), "")
+        code, output, _ = self.run_cli(["gpu", "set-mode", "integrated", "--json"], completed)
+        self.assertEqual(code, bloxctl.EXIT_CONFLICT)
+        self.assertEqual(output["data"]["failedStep"], "apply")
+
+    def test_incompatible_gpu_controller_uses_unavailable_exit_class(self):
+        action = {
+            "version": 1,
+            "ok": False,
+            "code": "unavailable",
+            "message": "GPU mode control is unavailable: controller-incompatible",
+            "data": None,
+        }
+        completed = subprocess.CompletedProcess(["ipc"], 0, json.dumps(action), "")
+        code, output, _ = self.run_cli(["gpu", "set-mode", "integrated", "--json"], completed)
+        self.assertEqual(code, bloxctl.EXIT_UNAVAILABLE)
+        self.assertEqual(output, action)
+
     def test_shell_unavailable_has_a_stable_exit_class(self):
         completed = subprocess.CompletedProcess(["ipc"], 1, "", "not running")
         code, output, _ = self.run_cli(["status", "--json"], completed)

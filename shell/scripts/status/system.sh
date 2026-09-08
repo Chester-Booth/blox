@@ -85,33 +85,24 @@ else
 	swap_percent=0
 fi
 
-refresh="$(hyprctl monitors -j 2>/dev/null | jq -r '((map(select(.name == "eDP-1"))[0].refreshRate // map(select(.focused))[0].refreshRate // .[0].refreshRate // 60) + 0.5) | floor' 2>/dev/null)"
-[ -n "$refresh" ] || refresh="60"
-if [ -n "$(lspci -s 01:00.0 2>/dev/null)" ]; then
-	gpu_on=true
-	if [ "$refresh" = "144" ]; then
-		gpu_mode="gaming"
-		gpu_label="Gaming: GPU + 144Hz"
-	else
-		gpu_mode="performance"
-		gpu_label="Performance: GPU + 60Hz"
-	fi
-else
-	gpu_on=false
-	if [ "$refresh" = "144" ]; then
-		gpu_mode="high-refresh"
-		gpu_label="High refresh: iGPU + 144Hz"
-	else
-		gpu_mode="eco"
-		gpu_label="Eco: iGPU + 60Hz"
-	fi
-fi
-
 gpu_util=""
 gpu_temp=""
 vram_used=""
 vram_total=""
-gpu_stats="$(timeout 1 nvidia-smi --query-gpu=utilization.gpu,temperature.gpu,memory.used,memory.total --format=csv,noheader,nounits 2>/dev/null || true)"
+nvidia_active=false
+for vendor_file in /sys/bus/pci/devices/*/vendor; do
+	[[ "$(cat "$vendor_file" 2>/dev/null || true)" == "0x10de" ]] || continue
+	device_dir="${vendor_file%/vendor}"
+	[[ "$(cat "$device_dir/class" 2>/dev/null || true)" == 0x03* ]] || continue
+	if [[ "$(cat "$device_dir/power/runtime_status" 2>/dev/null || true)" == "active" ]]; then
+		nvidia_active=true
+		break
+	fi
+done
+gpu_stats=""
+if [[ "$nvidia_active" == "true" ]]; then
+	gpu_stats="$(timeout 1 nvidia-smi --query-gpu=utilization.gpu,temperature.gpu,memory.used,memory.total --format=csv,noheader,nounits 2>/dev/null || true)"
+fi
 if [ -n "$gpu_stats" ]; then
 	IFS=',' read -r gpu_util gpu_temp vram_used vram_total <<<"$gpu_stats"
 	gpu_util="${gpu_util//[[:space:]]/}"
@@ -133,9 +124,6 @@ payload="$(jq -nc \
 	--arg ramTotal "$ram_total" \
 	--arg swapUsed "$swap_used" \
 	--arg swapTotal "$swap_total_gb" \
-	--arg gpuMode "$gpu_mode" \
-	--arg gpuLabel "$gpu_label" \
-	--arg refresh "$refresh" \
 	--arg gpuUtil "$gpu_util" \
 	--arg gpuTemp "$gpu_temp" \
 	--arg vramUsed "$vram_used" \
@@ -143,7 +131,6 @@ payload="$(jq -nc \
 	--argjson cpuUtil "$cpu_util" \
 	--argjson ramPercent "$ram_percent" \
 	--argjson swapPercent "$swap_percent" \
-	--argjson gpuOn "$gpu_on" \
 	'{
 	      profile:$profile,
 	      fanRpm:$fanRpm,
@@ -160,10 +147,6 @@ payload="$(jq -nc \
       swapUsed:$swapUsed,
       swapTotal:$swapTotal,
       swapPercent:$swapPercent,
-      gpuMode:$gpuMode,
-      gpuLabel:$gpuLabel,
-      gpuOn:$gpuOn,
-      refresh:$refresh,
       gpuUtil:$gpuUtil,
       gpuTemp:$gpuTemp,
       vramUsed:$vramUsed,

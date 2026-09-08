@@ -131,6 +131,10 @@ hibernate)
 	lock_before_sleep || exit 1
 	exec systemctl hibernate
 	;;
+logout)
+	save_kitty_tabs_before_power_action
+	exec hyprctl dispatch 'hl.dsp.exit()'
+	;;
 *)
 	notify "Unknown power action: ${action:-empty}"
 	exit 2

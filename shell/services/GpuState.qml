@@ -1,7 +1,6 @@
 import QtQuick
 
-// Pure graphics projection. Detection is useful even when the available
-// vendor power action is not safe or not present.
+// Pure graphics projection. The controller stays separate from DRM discovery.
 Item {
     id: root
 
@@ -11,7 +10,10 @@ Item {
     property var devices: []
     property int deviceCount: 0
     property int discreteCount: 0
+    property int integratedCount: 0
     property string backend: ""
+    property string controller: ""
+    property string controllerMode: ""
     property string mode: "unavailable"
     property string label: "GPU unavailable"
     property bool gpuOn: false
@@ -22,12 +24,16 @@ Item {
     property string controlReason: "no-supported-controller"
     property string permission: "not-required"
     property bool controlAvailable: false
+    property var supportedModes: []
+    property var pendingMode: null
+    property var pendingAction: null
     property bool busy: false
     property string actionError: ""
     property int revision: 0
     property real observedAtMs: 0
     readonly property bool ready: root.providerReady && root.syncReady && root.backendAvailable
-    readonly property bool canChange: root.ready && root.controlAvailable
+    readonly property bool switchable: root.integratedCount > 0 && root.discreteCount > 0
+    readonly property bool canChange: root.ready && root.switchable && root.controlAvailable && root.supportedModes.length > 0
     readonly property var json: root.buildStatus()
 
     function capability() {
@@ -42,7 +48,9 @@ Item {
         } else if (!root.backendAvailable) {
             reason = "backend-unavailable";
             capabilityPermission = "unknown";
-        } else if (!root.controlAvailable) {
+        } else if (!root.switchable) {
+            reason = root.deviceCount > 0 ? "no-switchable-gpu" : "no-gpu";
+        } else if (!root.controlAvailable || root.supportedModes.length === 0) {
             reason = root.controlReason || "no-supported-controller";
         }
         return {
@@ -73,7 +81,10 @@ Item {
             "devices": root.devices,
             "deviceCount": root.deviceCount,
             "discreteCount": root.discreteCount,
+            "integratedCount": root.integratedCount,
             "backend": root.backend,
+            "controller": root.controller,
+            "controllerMode": root.controllerMode,
             "mode": root.mode,
             "label": root.label,
             "gpuOn": root.gpuOn,
@@ -82,6 +93,9 @@ Item {
             "vramUsed": root.vramUsed,
             "vramTotal": root.vramTotal,
             "controlReason": root.controlReason,
+            "supportedModes": root.supportedModes,
+            "pendingMode": root.pendingMode,
+            "pendingAction": root.pendingAction,
             "tooltip": details,
             "capability": capability
         };
@@ -98,7 +112,10 @@ Item {
     onDevicesChanged: root.markChanged()
     onDeviceCountChanged: root.markChanged()
     onDiscreteCountChanged: root.markChanged()
+    onIntegratedCountChanged: root.markChanged()
     onBackendChanged: root.markChanged()
+    onControllerChanged: root.markChanged()
+    onControllerModeChanged: root.markChanged()
     onModeChanged: root.markChanged()
     onLabelChanged: root.markChanged()
     onGpuOnChanged: root.markChanged()
@@ -109,6 +126,9 @@ Item {
     onControlReasonChanged: root.markChanged()
     onPermissionChanged: root.markChanged()
     onControlAvailableChanged: root.markChanged()
+    onSupportedModesChanged: root.markChanged()
+    onPendingModeChanged: root.markChanged()
+    onPendingActionChanged: root.markChanged()
     onBusyChanged: root.markChanged()
     onActionErrorChanged: root.markChanged()
     Component.onCompleted: root.markChanged()

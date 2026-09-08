@@ -8,6 +8,12 @@ ColumnLayout {
     id: section
 
     required property ThemePickerController controller
+    property var gpuSupportedModes: []
+    readonly property var availableGpuModes: ["dedicated", "hybrid", "integrated"].filter(mode => section.gpuSupportedModes.indexOf(mode) >= 0)
+
+    function gpuVisibilityLabel(value) {
+        return value === "always" ? "always visible" : "hide in " + value.charAt(0).toUpperCase() + value.slice(1);
+    }
 
     visible: controller.editorMode === "advanced"
     Layout.fillWidth: true
@@ -617,13 +623,15 @@ ColumnLayout {
                                 }
 
                                 BloxComboBox {
-                                    readonly property var visibilityValues: ["always", "normal"]
+                                    readonly property bool gpuItem: barItemRow.modelData.id === "gpu"
+                                    readonly property var visibilityValues: gpuItem ? ["always"].concat(section.availableGpuModes) : ["always", "normal"]
+                                    readonly property string selectedVisibility: barItemRow.modelData.visibility || "normal"
 
-                                    visible: ["privacy", "touchpad", "fan", "gpu"].indexOf(barItemRow.modelData.id) >= 0
-                                    Layout.preferredWidth: visible ? 172 : 0
+                                    visible: ["privacy", "touchpad", "fan"].indexOf(barItemRow.modelData.id) >= 0 || (gpuItem && section.availableGpuModes.length > 0)
+                                    Layout.preferredWidth: visible ? (gpuItem ? 190 : 172) : 0
                                     Layout.preferredHeight: 32
-                                    model: ["always visible", "hidden when normal"]
-                                    currentIndex: Math.max(0, visibilityValues.indexOf(barItemRow.modelData.visibility || "normal"))
+                                    model: gpuItem ? visibilityValues.map(value => section.gpuVisibilityLabel(value)) : ["always visible", "hidden when normal"]
+                                    currentIndex: Math.max(0, visibilityValues.indexOf(selectedVisibility))
                                     onActivated: (index) => {
                                         return controller.setBarItemVisibility(barItemRow.barItemId, visibilityValues[index]);
                                     }

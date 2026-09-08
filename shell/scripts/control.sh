@@ -67,8 +67,25 @@ fan-profile)
 		;;
 	esac
 	;;
+fan-curves)
+	case "${2:-}" in
+	on | off)
+		profile="$(asusctl profile get | sed -n 's/^Active profile:[[:space:]]*//p' | head -n1)"
+		[[ -n "$profile" ]] || exit 1
+		if [[ "$2" == "on" ]]; then
+			asusctl fan-curve --mod-profile "$profile" --enable-fan-curves true
+		else
+			asusctl fan-curve --mod-profile "$profile" --enable-fan-curves false
+		fi
+		;;
+	*)
+		echo "usage: $0 fan-curves on|off" >&2
+		exit 2
+		;;
+	esac
+	;;
 *)
-	echo "usage: $0 audio-toggle|audio-set-silent|mic-toggle|mic|brightness-set-silent|wifi|bluetooth-toggle|bluetooth|fan-profile" >&2
+	echo "usage: $0 audio-toggle|audio-set-silent|mic-toggle|mic|brightness-set-silent|wifi|bluetooth-toggle|bluetooth|fan-profile|fan-curves" >&2
 	exit 2
 	;;
 esac

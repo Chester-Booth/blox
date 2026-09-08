@@ -22,6 +22,7 @@ Scope {
     property alias powerProfile: barStatus.powerProfile
     property alias vendorPerformance: barStatus.vendorPerformance
     property alias gpu: barStatus.gpu
+    property alias monitors: barStatus.monitors
     property alias audio: barStatus.audio
     property alias brightness: barStatus.brightness
     property alias network: barStatus.network
@@ -70,6 +71,14 @@ Scope {
 
     function bluetoothAction(operation, value) {
         return bluetooth.action(operation, value);
+    }
+
+    function gpuAction(operation, value) {
+        return gpu.action(operation, value);
+    }
+
+    function monitorAction(operation, monitor, rate) {
+        return monitors.action(operation, monitor, rate);
     }
 
     function previousTodo() {
@@ -141,6 +150,7 @@ Scope {
         powerProfile: root.powerProfile.json
         vendorPerformance: root.vendorPerformance.json
         gpu: root.gpu.json
+        monitors: root.monitors.json
         touchpad: root.touchpad.json
         updatesLastUpdatedMs: root.updates.lastUpdatedMs
         bluetooth: root.bluetooth.json
@@ -166,6 +176,14 @@ Scope {
 
         function bluetooth(operation: string, value: string) : string {
             return JSON.stringify(root.bluetoothAction(operation, value));
+        }
+
+        function gpu(operation: string, value: string) : string {
+            return JSON.stringify(root.gpuAction(operation, value));
+        }
+
+        function monitor(operation: string, monitor: string, rate: string) : string {
+            return JSON.stringify(root.monitorAction(operation, monitor, rate));
         }
 
         target: "blox"

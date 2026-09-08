@@ -96,10 +96,6 @@
       "swapUsed": "string",
       "swapTotal": "string",
       "swapPercent": "number",
-      "gpuMode": "string",
-      "gpuLabel": "string",
-      "gpuOn": "boolean",
-      "refresh": "string",
       "gpuUtil": "string",
       "gpuTemp": "string",
       "vramUsed": "string",
@@ -107,7 +103,7 @@
       "capability": "object"
     },
     "enum": {
-      "gpuMode": ["eco", "high-refresh", "performance", "gaming"]
+    "profile": ["Performance", "Balanced", "Quiet", "Unknown"]
     },
     "children": {
       "capability": {
@@ -213,8 +209,11 @@
     "required": {
       "devices": "array",
       "deviceCount": "number",
+      "integratedCount": "number",
       "discreteCount": "number",
       "backend": "string",
+      "controller": "string",
+      "controllerMode": "string",
       "mode": "string",
       "label": "string",
       "gpuOn": "boolean",
@@ -223,6 +222,9 @@
       "vramUsed": "string",
       "vramTotal": "string",
       "controlReason": "string",
+      "supportedModes": "array",
+      "pendingMode": ["string", "null"],
+      "pendingAction": ["string", "null"],
       "tooltip": "string",
       "capability": "object"
     },
@@ -253,6 +255,7 @@
       "deadline": "number",
       "remaining": "number",
       "hypridleRunning": "boolean",
+      "inhibitActive": "boolean",
       "reconciled": "boolean",
       "capability": "object"
     },

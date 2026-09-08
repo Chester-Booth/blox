@@ -9,8 +9,13 @@ QtObject {
     property real lastUpdatedMs: 1000
     property string lastError: ""
     property bool ok: true
-    property string mode: "eco"
+    property string mode: "hybrid"
+    property var pendingMode: null
+    property var pendingAction: null
     property int setCalls: 0
+    property bool confirmationRequired: false
+    property string requestedMode: ""
+    property var activeClients: []
     readonly property var json: ({
         "schemaVersion": 1,
         "providerRevision": root.revision,
@@ -18,10 +23,13 @@ QtObject {
         "stale": false,
         "busy": false,
         "errorCode": null,
-        "devices": [{"id": "card0", "vendor": "amd", "driver": "amdgpu", "kind": "integrated", "bootVga": true}],
-        "deviceCount": 1,
-        "discreteCount": 0,
+        "devices": [{"id": "card0", "vendor": "amd", "driver": "amdgpu", "kind": "integrated", "bootVga": true}, {"id": "card1", "vendor": "nvidia", "driver": "nvidia", "kind": "discrete", "bootVga": false}],
+        "deviceCount": 2,
+        "integratedCount": 1,
+        "discreteCount": 1,
         "backend": "drm",
+        "controller": "supergfxctl",
+        "controllerMode": "Hybrid",
         "mode": root.mode,
         "label": "AMD graphics",
         "gpuOn": false,
@@ -29,7 +37,10 @@ QtObject {
         "gpuTemp": "42",
         "vramUsed": "",
         "vramTotal": "",
-        "controlReason": null,
+        "controlReason": "",
+        "supportedModes": ["dedicated", "hybrid", "integrated"],
+        "pendingMode": root.pendingMode,
+        "pendingAction": root.pendingAction,
         "tooltip": "AMD graphics",
         "capability": {
             "available": true,
@@ -43,11 +54,41 @@ QtObject {
     function refresh() {
     }
 
-    function setMode(value) {
-        root.mode = String(value);
+    function setMode(value, logoutAfterAcceptance) {
+        const requested = String(value);
+        if (requested === "integrated" || logoutAfterAcceptance === true) {
+            root.pendingMode = requested;
+            root.pendingAction = "logout";
+        } else {
+            root.mode = requested;
+            root.pendingMode = null;
+            root.pendingAction = null;
+        }
         root.setCalls += 1;
         root.revision += 1;
         root.lastUpdatedMs += 1;
         return true;
+    }
+
+    function requestMode(value) {
+        const requested = String(value);
+        root.requestedMode = requested;
+        root.activeClients = requested === "integrated" ? [{"pid": 42, "name": "gpu-app"}] : [];
+        root.confirmationRequired = true;
+        return true;
+    }
+
+    function cancelModeRequest() {
+        root.requestedMode = "";
+        root.activeClients = [];
+        root.confirmationRequired = false;
+    }
+
+    function confirmModeRequest() {
+        const requested = root.requestedMode;
+        if (!root.confirmationRequired || requested.length === 0)
+            return false;
+        root.cancelModeRequest();
+        return root.setMode(requested, true);
     }
 }

@@ -33,13 +33,13 @@ Item {
             "fan": contentController.vendorPerformance.json,
             "gpu": contentController.gpu.json
         };
-        const status = sources[root.itemId];
-        return !!(status && status.capability && status.capability.available === false);
+        const status = root.itemId === "fan" ? contentController.vendorPerformance.json.fanCurveCapability : sources[root.itemId] && sources[root.itemId].capability;
+        return !!(status && status.available === false);
     }
     function suppressForRuntimeState() {
-        return itemId === "privacy" ? contentController.privacy.json.active !== true : itemId === "touchpad" ? contentController.touchpad.json.enabled !== false : itemId === "fan" ? contentController.vendorPerformance.json.profile === undefined || contentController.vendorPerformance.json.profile === "quiet" : itemId === "gpu" ? contentController.gpu.json.mode === undefined || contentController.gpu.json.mode === "eco" : false;
+        return itemId === "privacy" ? contentController.privacy.json.active !== true : itemId === "touchpad" ? contentController.touchpad.json.enabled !== false : itemId === "fan" ? contentController.vendorPerformance.json.fanCurveEnabled !== true : itemId === "gpu" ? contentController.gpu.json.mode === undefined || contentController.gpu.json.mode === itemVisibility : false;
     }
-    readonly property bool runtimeSuppressed: itemVisibility === "always" ? false : (capabilitySuppressed || suppressForRuntimeState())
+    readonly property bool runtimeSuppressed: capabilitySuppressed || (itemVisibility === "always" ? false : suppressForRuntimeState())
     readonly property bool contentVisible: contentLoader.item !== null && !runtimeSuppressed
 
     function mappedCentre(item, centre) {

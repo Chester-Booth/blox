@@ -17,6 +17,7 @@ Scope {
     property alias powerProfile: powerProfile
     property alias vendorPerformance: vendorPerformance
     property alias gpu: gpu
+    property alias monitors: monitors
     property alias audio: audio
     property alias brightness: brightness
     property alias network: network
@@ -46,6 +47,7 @@ Scope {
         touchpad.refresh();
         vendorPerformance.refresh();
         gpu.refresh();
+        monitors.refresh();
         privacy.refresh();
         battery.refresh();
         powerProfile.refresh();
@@ -58,6 +60,7 @@ Scope {
         powerProfile.refresh();
         vendorPerformance.refresh();
         gpu.refresh();
+        monitors.refresh();
     }
 
     function updatePolling(refreshVisible) {
@@ -70,7 +73,10 @@ Scope {
         network.interval = controlsVisible ? 2000 : railInterval(30000, 15000, 120000, 60000);
         touchpad.interval = controlsVisible ? 2000 : 15000;
         vendorPerformance.interval = performanceVisible ? 2000 : 60000;
-        gpu.interval = performanceVisible ? 2000 : 60000;
+        // Mode changes are rare and local actions refresh at once. Avoid four
+        // supergfxctl D-Bus calls every two seconds while this popout is open.
+        gpu.interval = performanceVisible ? 15000 : 60000;
+        monitors.interval = performanceVisible ? 2000 : 60000;
         privacy.interval = controlsVisible ? 5000 : 30000;
         caffeine.interval = openPanel === "caffeine" ? 1000 : caffeine.json.active ? 5000 : 30000;
         workspaces.interval = railInterval(300000, 120000, 600000, 300000);
@@ -181,6 +187,13 @@ Scope {
 
     GpuStatus {
         id: gpu
+
+        scriptRoot: root.scriptRoot
+        interval: 60000
+    }
+
+    MonitorStatus {
+        id: monitors
 
         scriptRoot: root.scriptRoot
         interval: 60000

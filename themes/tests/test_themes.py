@@ -491,8 +491,9 @@ class RendererTests(unittest.TestCase):
         self.assertTrue(items["power"]["enabled"])
         self.assertEqual("toggle", items["battery"]["display"])
         self.assertEqual("hidden", items["touchpad"]["region"])
-        for item_id in ("privacy", "touchpad", "fan", "gpu"):
+        for item_id in ("privacy", "touchpad", "fan"):
             self.assertEqual("normal", items[item_id]["visibility"])
+        self.assertEqual("hybrid", items["gpu"]["visibility"])
 
     def test_bar_item_schema_rejects_unknown_items_and_regions(self) -> None:
         base_shell = {
@@ -508,6 +509,23 @@ class RendererTests(unittest.TestCase):
             candidate["shell"] = copy.deepcopy(base_shell)
             candidate["shell"]["bar"]["items"] = [item]
             self.assertTrue(schema_errors(candidate))
+
+    def test_gpu_bar_visibility_accepts_each_named_mode(self) -> None:
+        for visibility in ("always", "dedicated", "hybrid", "integrated"):
+            candidate = copy.deepcopy(self.theme)
+            candidate["shell"]["bar"]["items"] = [{"id": "gpu", "enabled": True, "region": "hidden", "order": 0, "visibility": visibility}]
+            with self.subTest(visibility=visibility):
+                self.assertEqual([], schema_errors(candidate))
+
+        for visibility in ("normal", "unsupported"):
+            candidate = copy.deepcopy(self.theme)
+            candidate["shell"]["bar"]["items"] = [{"id": "gpu", "enabled": True, "region": "hidden", "order": 0, "visibility": visibility}]
+            with self.subTest(invalid_visibility=visibility):
+                self.assertTrue(schema_errors(candidate))
+
+        candidate = copy.deepcopy(self.theme)
+        candidate["shell"]["bar"]["items"] = [{"id": "fan", "enabled": True, "region": "hidden", "order": 0, "visibility": "hybrid"}]
+        self.assertTrue(schema_errors(candidate))
 
     def test_battery_display_mode_is_validated_and_rendered(self) -> None:
         self.theme["shell"] = {
@@ -1223,14 +1241,28 @@ class CliContractTests(unittest.TestCase):
         for item_id in ("fan", "gpu"):
             with self.subTest(item_id=item_id):
                 self.assertIn(f'"{item_id}"', delegate)
-        self.assertIn('profile === "performance" ? "󱑬"', status_item)
-        self.assertIn('content.vendorPerformance.json.profile === "quiet"', status_item)
-        self.assertIn('mode === "gaming" ? "󰪫"', status_item)
-        self.assertIn('content.gpu.json.mode === "eco"', status_item)
+        self.assertIn('fanCurveEnabled === true ? "󱑬"', status_item)
+        self.assertIn('mode === "integrated" ? "󰌪"', status_item)
+        self.assertIn('content.gpu.json.mode === "hybrid"', status_item)
         self.assertIn("visible: contentVisible", delegate)
         self.assertIn("readonly property bool runtimeSuppressed", delegate)
         self.assertIn("contentLoader.item !== null && !runtimeSuppressed", delegate)
         self.assertNotIn("contentLoader.item !== null && contentLoader.item.visible", delegate)
+
+    def test_power_profiles_use_the_selected_nerd_font_icons(self) -> None:
+        popout = (REPOSITORY / "shell/popouts/PerformancePopout.qml").read_text(encoding="utf-8")
+        power_profiles = popout.split("function performanceProfileOptions()", 1)[1].split("function setPerformanceProfile", 1)[0]
+        self.assertIn('"icon": "󰗑"', power_profiles)
+        self.assertIn('"icon": "󱓞"', power_profiles)
+        self.assertLess(power_profiles.index('"id": "performance"'), power_profiles.index('"id": "power-saver"'))
+
+    def test_performance_profile_has_one_owner_and_real_fan_curve_gate(self) -> None:
+        popout = (REPOSITORY / "shell/popouts/PerformancePopout.qml").read_text(encoding="utf-8")
+        self.assertEqual(1, popout.count('title: "Performance profile"'))
+        self.assertNotIn('title: "Fan profile"', popout)
+        self.assertIn('visible: root.fanCurveCanChange', popout)
+        self.assertIn('root.powerProfileCanChange && root.powerProfileProvider', popout)
+        self.assertIn('root.vendorPerformanceCanChange && root.vendorPerformanceProvider', popout)
 
     def test_numeric_battery_hover_opens_the_system_popout(self) -> None:
         battery = (REPOSITORY / "shell/shared/BarBatteryItem.qml").read_text(encoding="utf-8")
@@ -1244,8 +1276,10 @@ class CliContractTests(unittest.TestCase):
         self.assertIn('itemVisibility === "always" ? false', delegate)
         self.assertIn('itemId === "privacy" ? contentController.privacy.json.active !== true', delegate)
         self.assertIn('itemId === "touchpad" ? contentController.touchpad.json.enabled !== false', delegate)
-        self.assertIn('contentController.vendorPerformance.json.profile === undefined || contentController.vendorPerformance.json.profile === "quiet"', delegate)
-        self.assertIn('contentController.gpu.json.mode === undefined || contentController.gpu.json.mode === "eco"', delegate)
+        self.assertIn('contentController.vendorPerformance.json.fanCurveEnabled !== true', delegate)
+        self.assertIn('contentController.vendorPerformance.json.fanCurveCapability', delegate)
+        self.assertIn('contentController.gpu.json.mode === undefined || contentController.gpu.json.mode === itemVisibility', delegate)
+        self.assertNotIn('contentController.gpu.json.mode === "eco"', delegate)
         status_item = (REPOSITORY / "shell/shared/BarStatusItem.qml").read_text(encoding="utf-8")
         self.assertNotIn("visible:", status_item)
 

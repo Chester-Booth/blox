@@ -16,6 +16,8 @@ TestCase {
         profile: "quiet"
         profileLabel: "Quiet"
         profiles: ["quiet", "balanced", "performance"]
+        profileControlDomain: "platform-profile"
+        fanCurveCapability: ({"available": false, "ready": true, "canChange": false, "permission": "not-required", "reason": "fan-curves-unsupported"})
     }
 
     function init() {
@@ -26,6 +28,10 @@ TestCase {
         state.profile = "quiet";
         state.profileLabel = "Quiet";
         state.profiles = ["quiet", "balanced", "performance"];
+        state.profileControlDomain = "platform-profile";
+        state.fanCurveAvailable = false;
+        state.fanCurveEnabled = false;
+        state.fanCurveCapability = {"available": false, "ready": true, "canChange": false, "permission": "not-required", "reason": "fan-curves-unsupported"};
         state.busy = false;
         state.actionError = "";
     }
@@ -34,6 +40,8 @@ TestCase {
         compare(state.json.vendor, "asusctl");
         compare(state.json.profile, "quiet");
         verify(state.json.capability.canChange);
+        compare(state.json.profileControlDomain, "platform-profile");
+        verify(!state.json.fanCurveCapability.available);
     }
 
     function test_missing_vendor_backend_is_unavailable() {
@@ -50,5 +58,14 @@ TestCase {
         verify(state.json.capability.ready);
         verify(!state.json.capability.canChange);
         compare(state.json.capability.reason, "profile-unavailable");
+    }
+
+    function test_independent_fan_curve_capability_is_separate() {
+        state.fanCurveAvailable = true;
+        state.fanCurveEnabled = true;
+        state.fanCurveCapability = {"available": true, "ready": true, "canChange": true, "permission": "not-required", "reason": null};
+        verify(state.json.capability.canChange);
+        verify(state.json.fanCurveCapability.canChange);
+        verify(state.json.fanCurveEnabled);
     }
 }

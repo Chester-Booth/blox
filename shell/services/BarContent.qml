@@ -18,6 +18,8 @@ QtObject {
     })
     property var gpu: ({
     })
+    property var monitors: ({
+    })
     property var touchpad: ({
     })
     property real updatesLastUpdatedMs: 0
@@ -91,14 +93,15 @@ QtObject {
                 "battery": typedStatus(battery, ["class", "capacity", "status", "timeLabel", "source", "onBattery", "batteryPresent"]),
                 "powerProfile": typedStatus(powerProfile, ["profile", "onBattery", "profileServiceAvailable", "degradationReason"]),
                 "vendorPerformance": typedStatus(vendorPerformance, ["vendor", "profile", "profileLabel", "profiles"]),
-                "gpu": typedStatus(gpu, ["devices", "deviceCount", "discreteCount", "backend", "mode", "label", "gpuOn", "gpuUtil", "gpuTemp", "vramUsed", "vramTotal", "controlReason"]),
+                "gpu": typedStatus(gpu, ["devices", "deviceCount", "integratedCount", "discreteCount", "backend", "controller", "controllerMode", "mode", "supportedModes", "pendingMode", "pendingAction", "gpuOn", "gpuUtil", "gpuTemp", "vramUsed", "vramTotal", "controlReason"]),
+                "monitors": typedStatus(monitors, ["monitors", "monitorCount"]),
                 "touchpad": typedStatus(touchpad, ["class", "device", "devices", "touchpadCount", "enabled"]),
                 "network": typedStatus(network, ["class", "ssid", "signal", "freq", "device", "wifiEnabled"]),
                 "bluetooth": typedStatus(bluetooth, ["class", "enabled"]),
                 "audio": typedStatus(audio, ["volume", "muted", "micMuted", "micCanChange"]),
                 "brightness": typedStatus(brightness, ["percent", "blueLightMode", "blueLightActive", "device", "backlightCount", "backlights", "ddcAvailable", "ddcDisplayCount", "ddcReason"]),
                 "privacy": typedStatus(privacy, ["active", "microphoneCount", "videoCount"]),
-                "caffeine": typedStatus(caffeine, ["active", "mode", "remaining"])
+                "caffeine": typedStatus(caffeine, ["active", "mode", "remaining", "hypridleRunning", "inhibitActive"])
             }
         };
     }
@@ -234,8 +237,11 @@ QtObject {
         if (openPanel === "updates")
             return elapsedText(updatesLastUpdatedMs);
 
-        if (openPanel === "caffeine")
-            return caffeine.active ? (caffeine.hypridleRunning ? "Awake warning" : "Hypridle paused") : "Hypridle active";
+        if (openPanel === "caffeine") {
+            if (caffeine.active)
+                return caffeine.inhibitActive ? "Awake active" : "Awake warning";
+            return caffeine.hypridleRunning ? "Hypridle active" : "Awake warning";
+        }
 
         return "";
     }

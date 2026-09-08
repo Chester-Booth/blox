@@ -45,10 +45,10 @@ Item {
             return content.updateIcon();
 
         if (itemId === "fan")
-            return content.vendorPerformance.json.profile === "performance" ? "󱑬" : content.vendorPerformance.json.profile === "quiet" ? "󰠝" : "󱜝";
+            return content.vendorPerformance.json.fanCurveEnabled === true ? "󱑬" : "󰠝";
 
         if (itemId === "gpu")
-            return content.gpu.json.mode === "eco" ? "󰌪" : content.gpu.json.mode === "gaming" ? "󰪫" : content.gpu.json.mode === "high-refresh" ? "" : "󰢮";
+            return content.gpu.json.mode === "integrated" ? "󰌪" : content.gpu.json.mode === "hybrid" ? "󰾅" : "󰢮";
 
         return "";
     }
@@ -77,10 +77,10 @@ Item {
             return content.updates.json.class === "zero" ? Theme.green : Theme.yellow;
 
         if (itemId === "fan")
-            return content.vendorPerformance.json.profile === "performance" ? Theme.red : Theme.foreground;
+            return content.vendorPerformance.json.fanCurveEnabled === true ? Theme.yellow : Theme.foreground;
 
         if (itemId === "gpu")
-            return content.gpu.json.mode === "eco" ? Theme.green : Theme.yellow;
+            return content.gpu.json.mode === "integrated" ? Theme.green : Theme.yellow;
 
         return Theme.foreground;
     }

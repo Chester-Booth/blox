@@ -229,8 +229,13 @@
         "display": {"enum": ["toggle", "numeric", "icon"]},
         "orientation": {"enum": ["inward", "outward", "horizontal"]},
         "titleLength": {"enum": ["truncate", "full"]},
-        "visibility": {"enum": ["always", "normal"]}
-      }
+        "visibility": {"enum": ["always", "normal", "dedicated", "hybrid", "integrated"]}
+      },
+      "allOf": [{
+        "if": {"properties": {"id": {"const": "gpu"}}, "required": ["id"]},
+        "then": {"properties": {"visibility": {"enum": ["always", "dedicated", "hybrid", "integrated"]}}},
+        "else": {"properties": {"visibility": {"enum": ["always", "normal"]}}}
+      }]
     },
     "widgetProfile": {
       "type": "object",

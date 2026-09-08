@@ -30,8 +30,10 @@ TestCase {
         tryCompare(status, "providerReady", true);
         compare(status.json.profile, "quiet");
         verify(status.json.capability.canChange);
+        verify(!status.json.fanCurveCapability.canChange);
         verify(status.setProfile("performance"));
         compare(status.json.profile, "performance");
         compare(status.json.providerRevision, 2);
     }
+
 }

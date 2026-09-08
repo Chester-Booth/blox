@@ -39,6 +39,7 @@ def exit_code(action: dict[str, Any]) -> int:
         return EXIT_OK
     return {
         "permission-denied": EXIT_DENIED,
+        "denied": EXIT_DENIED,
         "conflict": EXIT_CONFLICT,
         "busy": EXIT_CONFLICT,
         "stale": EXIT_CONFLICT,
@@ -95,6 +96,16 @@ def run_bluetooth(args) -> tuple[int, dict[str, Any]]:
     operation = args.bluetooth_command
     value = getattr(args, "value", "")
     action = call_owner("bluetooth", [operation, value])
+    return exit_code(action), action
+
+
+def run_gpu(args) -> tuple[int, dict[str, Any]]:
+    action = call_owner("gpu", [args.gpu_command, args.mode])
+    return exit_code(action), action
+
+
+def run_display(args) -> tuple[int, dict[str, Any]]:
+    action = call_owner("monitor", [args.display_command, args.monitor, args.rate])
     return exit_code(action), action
 
 
@@ -386,6 +397,19 @@ def build_parser() -> argparse.ArgumentParser:
     bluetooth_enabled.add_argument("value", choices=("on", "off"))
     bluetooth_enabled.add_argument("--json", action="store_true", dest="as_json")
 
+    gpu = groups.add_parser("gpu", help="GPU mode actions through the running shell")
+    gpu_commands = gpu.add_subparsers(dest="gpu_command", required=True)
+    gpu_mode = gpu_commands.add_parser("set-mode")
+    gpu_mode.add_argument("mode", choices=("dedicated", "hybrid", "integrated"))
+    gpu_mode.add_argument("--json", action="store_true", dest="as_json")
+
+    display = groups.add_parser("display", help="monitor actions through the running shell")
+    display_commands = display.add_subparsers(dest="display_command", required=True)
+    display_refresh = display_commands.add_parser("set-refresh")
+    display_refresh.add_argument("monitor")
+    display_refresh.add_argument("rate")
+    display_refresh.add_argument("--json", action="store_true", dest="as_json")
+
     doctor = groups.add_parser("doctor", help="local install health report")
     doctor.add_argument("--json", action="store_true", dest="as_json")
 
@@ -425,7 +449,7 @@ def run(argv: list[str]) -> tuple[int, dict[str, Any], bool, bool]:
     try:
         args = build_parser().parse_args(argv)
     except SystemExit as error:
-        return int(error.code), result(False, "usage", "Use: bloxctl {status|audio|network|bluetooth|doctor|settings|theme|lifecycle} --help."), "--json" in argv, False
+        return int(error.code), result(False, "usage", "Use: bloxctl {status|audio|network|bluetooth|gpu|display|doctor|settings|theme|lifecycle} --help."), "--json" in argv, False
 
     as_json = getattr(args, "as_json", False)
 
@@ -443,6 +467,14 @@ def run(argv: list[str]) -> tuple[int, dict[str, Any], bool, bool]:
 
     if args.group == "bluetooth":
         code, action = run_bluetooth(args)
+        return code, action, as_json, False
+
+    if args.group == "gpu":
+        code, action = run_gpu(args)
+        return code, action, as_json, False
+
+    if args.group == "display":
+        code, action = run_display(args)
         return code, action, as_json, False
 
     if args.group == "doctor":
@@ -466,7 +498,7 @@ def run(argv: list[str]) -> tuple[int, dict[str, Any], bool, bool]:
         action = run_lifecycle(args.lifecycle_command, options)
         return exit_code(action), action, as_json, False
 
-    return EXIT_USAGE, result(False, "usage", "Use: bloxctl {status|audio|network|bluetooth|doctor|settings|theme|lifecycle} --help."), as_json, False
+    return EXIT_USAGE, result(False, "usage", "Use: bloxctl {status|audio|network|bluetooth|gpu|display|doctor|settings|theme|lifecycle} --help."), as_json, False
 
 
 def main(argv: list[str] | None = None) -> int:

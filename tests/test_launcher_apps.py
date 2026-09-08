@@ -94,6 +94,7 @@ class AppControllerTests(unittest.TestCase):
         run.return_value.returncode = 0
         environment = {
             "WAYLAND_DISPLAY": "wayland-1",
+            "XDG_SESSION_TYPE": "wayland",
             "XCURSOR_THEME": "blox-generated",
             "ELECTRON_RUN_AS_NODE": "1",
         }
@@ -110,6 +111,7 @@ class AppControllerTests(unittest.TestCase):
         self.assertEqual(command[:5], ["systemd-run", "--user", "--collect", "--no-block", "--quiet"])
         self.assertTrue(any(argument.startswith("--unit=blox-desktop-t3code-") for argument in command))
         self.assertIn("--working-directory=/tmp", command)
+        self.assertIn("--setenv=XDG_SESSION_TYPE=wayland", command)
         self.assertIn("--setenv=XCURSOR_THEME=blox-generated", command)
         self.assertNotIn("--setenv=ELECTRON_RUN_AS_NODE=1", command)
         self.assertEqual(command[-2:], ["--", "t3code-nightly"])

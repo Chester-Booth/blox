@@ -21,6 +21,12 @@ from gi.repository import GioUnix  # noqa: E402
 ARGUMENT_FIELD_CODES = re.compile(r"%[fFuUdDnNvm]")
 TRANSIENT_SERVICE_DESKTOP_IDS = {"t3code", "t3code-url-handler"}
 VALID_ENVIRONMENT_NAME = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+SESSION_ENVIRONMENT_NAMES = (
+    "DISPLAY",
+    "WAYLAND_DISPLAY",
+    "XDG_CURRENT_DESKTOP",
+    "XDG_SESSION_TYPE",
+)
 
 
 def resolve_command(desktop_id: str) -> tuple[list[str], str | None]:
@@ -100,13 +106,24 @@ def _systemd_environment_args(environment: dict[str, str]) -> list[str]:
     """Pass the launch environment into a transient user service.
 
     ``systemd-run`` does not inherit the caller's environment for a service.
-    Keep the session variables supplied by the user service and add the
-    cursor/theme values that the launcher calculated. Electron must not see
+    Pass the compositor session variables explicitly, including
+    ``XDG_SESSION_TYPE``. The value comes from the session; this launcher does
+    not choose an application backend. Electron must not see
     ``ELECTRON_RUN_AS_NODE`` from a development shell.
     """
+    ordered_environment = {
+        name: environment[name]
+        for name in SESSION_ENVIRONMENT_NAMES
+        if name in environment
+    }
+    ordered_environment.update(
+        (name, value)
+        for name, value in environment.items()
+        if name not in ordered_environment
+    )
     return [
         f"--setenv={name}={value}"
-        for name, value in environment.items()
+        for name, value in ordered_environment.items()
         if name != "ELECTRON_RUN_AS_NODE" and VALID_ENVIRONMENT_NAME.fullmatch(name)
     ]
 

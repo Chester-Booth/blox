@@ -30,6 +30,8 @@ bloxctl status --json          # typed status through the running shell
 bloxctl audio set-volume 50 --json
 bloxctl audio toggle-mute --json
 bloxctl audio set-mic muted --json
+bloxctl display set-refresh eDP-1 144 --json
+bloxctl gpu set-mode hybrid --json
 bloxctl doctor [--json]        # local install health, redacted by default
 bloxctl lifecycle update       # new generation plus recorded migrations
 bloxctl lifecycle rollback     # back to the previous generation
@@ -38,6 +40,25 @@ bloxctl lifecycle uninstall    # remove owned paths, keep user data
 
 `settings` and `theme` groups are reserved for later releases and return a
 typed unavailable result today.
+
+Refresh choices come from each active Hyprland monitor at its current
+resolution. GPU mode needs both integrated and discrete graphics plus
+`supergfxctl`. Blox has a guarded adapter for the last upstream release,
+5.2.7, but treats the archived project as an optional controller rather than a
+package dependency. It never installs or starts a switcher and rejects GPU
+control while a competing one is active. `switcheroo-control` may select the
+discrete GPU for one application; it does not own system GPU modes. Read-only
+current-boot discovery keeps a powered-off display device in the hardware
+inventory after it disappears from DRM and PCI. Blox confirms every popout GPU
+switch that will log out. Before Integrated mode, it also checks which
+current-user processes hold discrete GPU device nodes and lists them in the
+confirmation. The GPU tray item can hide in any controller-supported mode and
+defaults to Hide in Hybrid.
+
+The performance popout prefers `power-profiles-daemon` as the single owner of
+the shared platform profile, then falls back to a vendor profile provider when
+the generic service is unavailable. A separate fan-curves control appears only
+when the vendor backend proves that independent curves can be read and changed.
 
 ## Paths
 

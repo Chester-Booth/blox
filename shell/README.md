@@ -38,7 +38,9 @@ Layout:
 - `scripts/status/` - JSON status producers for the bar and popouts that do not
   have a native Quickshell owner. Network and Bluetooth use native providers in
   `services/`.
-- `scripts/{calendar,display,gpu,network,power,theme,todo,update,workspaces}/` - action and domain backends.
+- `scripts/graphicsctl.py` - typed Hyprland refresh, current-boot GPU inventory, non-waking dGPU client preflight and a guarded optional adapter for the archived `supergfxctl` 5.2.7 release.
+- `status/vendor-performance.sh` distinguishes the shared ASUS platform profile from optional independent fan curves. The popout prefers the generic power-profile owner and uses the vendor profile only as a fallback.
+- `scripts/{calendar,display,network,power,theme,todo,update,workspaces}/` - action and domain backends.
 - `scripts/widgets/` - desktop-widget rendering, state and action helpers.
 - `scripts/contracts/status.json` - expected JSON contracts for status-producing scripts.
 

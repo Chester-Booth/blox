@@ -125,6 +125,10 @@ Rectangle {
         }
         onTextEdited: {
             root.query = text;
+            if (root.filteredFamilies().length === 0) {
+                popup.close();
+                return;
+            }
             if (!popup.visible)
                 popup.open();
 
@@ -222,6 +226,12 @@ Rectangle {
         padding: Theme.scaledSpacing(4)
         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
         onOpened: Qt.callLater(root.resetHighlight)
+        onClosed: {
+            if (!root.suppressEditingFinished) {
+                editor.text = root.value;
+                root.query = "";
+            }
+        }
 
         contentItem: ListView {
             id: fontList

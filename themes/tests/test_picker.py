@@ -322,25 +322,31 @@ class PickerIntegrationSourceTests(unittest.TestCase):
         self.assertIn("controller.wallpaperRemovalUsers.length > 0", modal)
         self.assertIn("enabled: controller.modalConfirmationEnabled()", modal)
 
-    def test_picker_uses_one_wheel_handler_and_theme_scaled_scrollbar_corners(self) -> None:
+    def test_picker_uses_one_wheel_handler_and_shared_theme_scrollbar(self) -> None:
         wheel = (REPOSITORY / "shell/shared/BloxWheelHandler.qml").read_text(encoding="utf-8")
         shared = (REPOSITORY / "shell/shared/qmldir").read_text(encoding="utf-8")
+        scrollbar = (REPOSITORY / "shell/shared/BloxScrollBar.qml").read_text(encoding="utf-8")
         picker = (PICKER_MODULES / "ThemePicker.qml").read_text(encoding="utf-8")
         library = qml_source("Library")
         wallpaper = qml_source("Wallpaper")
 
         self.assertIn("BloxWheelHandler 1.0 BloxWheelHandler.qml", shared)
+        self.assertIn("BloxScrollBar 1.0 BloxScrollBar.qml", shared)
         self.assertIn("MouseArea {", wheel)
         self.assertIn("acceptedButtons: Qt.NoButton", wheel)
         self.assertIn("anchors.fill: parent", wheel)
         self.assertIn("property real speed: 4", wheel)
         self.assertIn("flickable.contentX", wheel)
         self.assertIn("flickable.contentY", wheel)
+        self.assertIn("Theme.scaledRadius(3)", scrollbar)
+        self.assertIn("Theme.withAlpha(Theme.foreground", scrollbar)
+        self.assertIn("ScrollBar.vertical: BloxScrollBar", picker)
+        self.assertIn("ScrollBar.vertical: BloxScrollBar", library)
+        self.assertIn("ScrollBar.horizontal: BloxScrollBar", wallpaper)
         self.assertIn("canHandleWheel: () => controller.claimEditorWheel(wallpaperList)", wallpaper)
         for source in (picker, library, wallpaper):
             self.assertIn("BloxWheelHandler", source)
             self.assertNotIn("delta * 4", source)
-            self.assertIn("Theme.scaledRadius(3)", source)
 
     def test_inline_builtin_preview_keeps_its_application_data_base(self) -> None:
         source, candidate = load_theme("catppuccin-mocha")
@@ -1006,7 +1012,7 @@ class PickerIntegrationSourceTests(unittest.TestCase):
         self.assertIn("function rememberOverlayFocus()", qml)
         self.assertIn("function restoreOverlayFocus()", qml)
         self.assertIn("function modalConfirmationEnabled()", qml)
-        self.assertGreaterEqual(qml.count("ScrollBar.vertical: ScrollBar"), 2)
+        self.assertGreaterEqual(qml.count("ScrollBar.vertical: BloxScrollBar"), 2)
         self.assertIn("policy: ScrollBar.AlwaysOn", qml)
         self.assertIn("contentWidth: width", qml)
         semantic = overview.split("id: semanticSwatch", 1)[1].split("text: \"Terminal palette\"", 1)[0]

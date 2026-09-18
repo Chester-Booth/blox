@@ -184,7 +184,7 @@ Rectangle {
             verticalAlignment: Text.AlignTop
         }
 
-        ScrollBar.vertical: ScrollBar {
+        ScrollBar.vertical: BloxScrollBar {
             id: verticalScrollbar
 
             parent: root
@@ -207,20 +207,9 @@ Rectangle {
 
             }
 
-            background: Rectangle {
-                radius: 999
-                color: Theme.withAlpha(Theme.foreground, 0.04)
-            }
-
-            contentItem: Rectangle {
-                implicitWidth: 4
-                radius: 999
-                color: verticalScrollbar.hovered || verticalScrollbar.pressed ? Theme.foreground : Theme.surfaceAlt
-            }
-
         }
 
-        ScrollBar.horizontal: ScrollBar {
+        ScrollBar.horizontal: BloxScrollBar {
             id: horizontalScrollbar
 
             parent: root
@@ -241,17 +230,6 @@ Rectangle {
                     easing.type: Easing.OutCubic
                 }
 
-            }
-
-            background: Rectangle {
-                radius: 999
-                color: Theme.withAlpha(Theme.foreground, 0.04)
-            }
-
-            contentItem: Rectangle {
-                implicitHeight: 4
-                radius: 999
-                color: horizontalScrollbar.hovered || horizontalScrollbar.pressed ? Theme.foreground : Theme.surfaceAlt
             }
 
         }

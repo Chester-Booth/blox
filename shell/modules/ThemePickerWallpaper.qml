@@ -111,22 +111,11 @@ ColumnLayout {
                     canHandleWheel: () => controller.claimEditorWheel(wallpaperList)
                 }
 
-                ScrollBar.horizontal: ScrollBar {
+                ScrollBar.horizontal: BloxScrollBar {
                     id: wallpaperScrollbar
 
                     policy: wallpaperList.contentWidth > wallpaperList.width ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff
                     height: wallpaperList.scrollbarHeight
-
-                    background: Rectangle {
-                        radius: Theme.scaledRadius(3)
-                        color: Theme.withAlpha(Theme.foreground, 0.04)
-                    }
-
-                    contentItem: Rectangle {
-                        implicitHeight: 5
-                        radius: Theme.scaledRadius(3)
-                        color: wallpaperScrollbar.hovered || wallpaperScrollbar.pressed ? Theme.foreground : Theme.muted
-                    }
                 }
 
                 delegate: Rectangle {

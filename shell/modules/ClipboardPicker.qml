@@ -216,22 +216,11 @@ FloatingWindow {
                     verticalAlignment: Text.AlignVCenter
                 }
 
-                ScrollBar.vertical: ScrollBar {
+                ScrollBar.vertical: BloxScrollBar {
                     id: clipboardScrollbar
 
                     width: 8
                     policy: clipboardList.contentHeight > clipboardList.height ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff
-
-                    background: Rectangle {
-                        radius: 999
-                        color: Theme.withAlpha(Theme.foreground, 0.04)
-                    }
-
-                    contentItem: Rectangle {
-                        implicitWidth: 4
-                        radius: 999
-                        color: clipboardScrollbar.hovered ? Theme.foreground : Theme.surfaceAlt
-                    }
 
                 }
 

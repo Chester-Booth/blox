@@ -240,33 +240,11 @@ Rectangle {
 
             }
 
-            ScrollBar.vertical: ScrollBar {
+            ScrollBar.vertical: BloxScrollBar {
                 id: notificationScrollbar
 
                 width: 8
                 policy: notificationList.needsScrollbar ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff
-                interactive: true
-
-                background: Rectangle {
-                    implicitWidth: 8
-                    radius: 999
-                    color: notificationScrollbar.hovered || notificationScrollbar.pressed ? Theme.withAlpha(Theme.foreground, 0.09) : Theme.withAlpha(Theme.foreground, 0.04)
-                }
-
-                contentItem: Rectangle {
-                    implicitWidth: 4
-                    radius: 999
-                    color: notificationScrollbar.pressed ? Theme.blue : notificationScrollbar.hovered ? Theme.foreground : Theme.surfaceAlt
-
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: 110
-                            easing.type: Easing.OutCubic
-                        }
-
-                    }
-
-                }
 
             }
 

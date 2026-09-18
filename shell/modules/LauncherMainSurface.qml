@@ -152,22 +152,11 @@ PanelWindow {
                 }
             }
 
-            ScrollBar.vertical: ScrollBar {
+            ScrollBar.vertical: BloxScrollBar {
                 id: resultScrollbar
 
                 width: 8
                 policy: resultList.contentHeight > resultList.height ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff
-
-                background: Rectangle {
-                    radius: 999
-                    color: Theme.withAlpha(Theme.foreground, 0.04)
-                }
-
-                contentItem: Rectangle {
-                    implicitWidth: 4
-                    radius: 999
-                    color: resultScrollbar.hovered ? Theme.foreground : Theme.surfaceAlt
-                }
 
             }
 

@@ -583,22 +583,11 @@ FloatingWindow {
                                 boundsBehavior: Flickable.StopAtBounds
                                 model: controller.nerdFontSources
 
-                                ScrollBar.vertical: ScrollBar {
+                                ScrollBar.vertical: BloxScrollBar {
                                     id: nerdFontSourceScrollbar
 
                                     width: 8
                                     policy: nerdFontSourceList.contentHeight > nerdFontSourceList.height ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff
-
-                                    background: Rectangle {
-                                        radius: 999
-                                        color: Theme.withAlpha(Theme.foreground, 0.08)
-                                    }
-
-                                    contentItem: Rectangle {
-                                        implicitWidth: 5
-                                        radius: 999
-                                        color: nerdFontSourceScrollbar.hovered ? Theme.foreground : Theme.muted
-                                    }
 
                                 }
 
@@ -748,22 +737,11 @@ FloatingWindow {
                         }
                     }
 
-                    ScrollBar.vertical: ScrollBar {
+                    ScrollBar.vertical: BloxScrollBar {
                         id: emojiScrollbar
 
                         width: 8
                         policy: emojiGrid.contentHeight > emojiGrid.height ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff
-
-                        background: Rectangle {
-                            radius: 999
-                            color: Theme.withAlpha(Theme.foreground, 0.04)
-                        }
-
-                        contentItem: Rectangle {
-                            implicitWidth: 4
-                            radius: 999
-                            color: emojiScrollbar.hovered ? Theme.foreground : Theme.surfaceAlt
-                        }
 
                     }
 

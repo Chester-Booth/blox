@@ -111,22 +111,11 @@ Rectangle {
                 flickable: themeList
             }
 
-            ScrollBar.vertical: ScrollBar {
+            ScrollBar.vertical: BloxScrollBar {
                 id: themeScrollbar
 
                 policy: themeList.contentHeight > themeList.height ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff
                 width: 8
-
-                background: Rectangle {
-                    radius: Theme.scaledRadius(3)
-                    color: Theme.withAlpha(Theme.foreground, 0.04)
-                }
-
-                contentItem: Rectangle {
-                    implicitWidth: 6
-                    radius: Theme.scaledRadius(3)
-                    color: themeScrollbar.hovered || themeScrollbar.pressed ? Theme.foreground : Theme.muted
-                }
 
             }
 

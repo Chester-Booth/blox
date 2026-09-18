@@ -285,8 +285,14 @@ Item {
             Layout.fillHeight: true
             clip: true
             contentWidth: availableWidth
-            ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
-            ScrollBar.vertical.policy: contentHeight > availableHeight ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
+
+            ScrollBar.horizontal: BloxScrollBar {
+                policy: ScrollBar.AlwaysOff
+            }
+
+            ScrollBar.vertical: BloxScrollBar {
+                policy: targetScroll.contentHeight > targetScroll.availableHeight ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
+            }
 
             GridLayout {
                 width: targetScroll.availableWidth

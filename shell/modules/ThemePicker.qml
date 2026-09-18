@@ -248,33 +248,11 @@ FloatingWindow {
 
                             }
 
-                            ScrollBar.vertical: ScrollBar {
+                            ScrollBar.vertical: BloxScrollBar {
                                 id: editorScrollbar
 
                                 policy: ScrollBar.AlwaysOn
                                 width: 8
-                                interactive: true
-
-                                background: Rectangle {
-                                    implicitWidth: 8
-                                    radius: Theme.scaledRadius(3)
-                                    color: editorScrollbar.hovered || editorScrollbar.pressed ? Theme.withAlpha(Theme.foreground, 0.09) : Theme.withAlpha(Theme.foreground, 0.04)
-                                }
-
-                                contentItem: Rectangle {
-                                    implicitWidth: 4
-                                    radius: Theme.scaledRadius(3)
-                                    color: editorScrollbar.pressed ? Theme.blue : editorScrollbar.hovered ? Theme.foreground : Theme.muted
-
-                                    Behavior on color {
-                                        ColorAnimation {
-                                            duration: 110
-                                            easing.type: Easing.OutCubic
-                                        }
-
-                                    }
-
-                                }
 
                             }
 

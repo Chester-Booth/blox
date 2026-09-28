@@ -131,7 +131,7 @@ Item {
             networkProvider: root.contentController.network
             bluetoothProvider: root.contentController.bluetooth
             wifiIcon: root.contentController.network.json.icon || "󰤩"
-            wifiText: root.contentController.network.json.ssid || root.contentController.network.json.class || "Wi-Fi"
+            wifiText: root.contentController.network.json.ssid || root.contentController.network.json.summary || root.contentController.network.json.class || "Wi-Fi"
             bluetoothIcon: root.contentController.bluetooth.json.icon || "󰂯"
             brightnessIcon: root.contentController.brightness.json.icon || "󰃠"
             brightnessPercent: root.contentController.brightness.json.percent || 0

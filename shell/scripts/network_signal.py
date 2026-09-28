@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Print the active NetworkManager Wi-Fi access point's signal strength."""
+"""Print the active NetworkManager Wi-Fi access point's SSID and signal."""
 
 import json
 import subprocess
@@ -26,7 +26,7 @@ def busctl(*arguments: str):
     return json.loads(result.stdout)["data"]
 
 
-def signal_for_device(interface: str) -> int | None:
+def status_for_device(interface: str) -> dict[str, int | str] | None:
     device_paths = busctl("call", SERVICE, ROOT, MANAGER, "GetDevices")[0]
     for device_path in device_paths:
         properties = busctl("call", SERVICE, device_path, PROPERTIES, "GetAll", "s", DEVICE)[0]
@@ -40,9 +40,18 @@ def signal_for_device(interface: str) -> int | None:
             return None
 
         strength = busctl("get-property", SERVICE, access_point, ACCESS_POINT, "Strength")
-        if isinstance(strength, int) and 0 <= strength <= 100:
-            return strength
-        return None
+        ssid_bytes = busctl("get-property", SERVICE, access_point, ACCESS_POINT, "Ssid")
+        if not isinstance(strength, int) or not 0 <= strength <= 100:
+            return None
+        valid_ssid = isinstance(ssid_bytes, list) and all(
+            isinstance(byte, int) and 0 <= byte <= 255 for byte in ssid_bytes
+        )
+        if not valid_ssid:
+            return None
+        return {
+            "signal": strength,
+            "ssid": bytes(ssid_bytes).decode("utf-8", errors="replace"),
+        }
     return None
 
 
@@ -50,12 +59,12 @@ def main() -> int:
     if len(sys.argv) != 2 or not sys.argv[1]:
         return 2
     try:
-        signal = signal_for_device(sys.argv[1])
+        status = status_for_device(sys.argv[1])
     except (OSError, subprocess.SubprocessError, ValueError, KeyError, IndexError, TypeError):
         return 1
-    if signal is None:
+    if status is None:
         return 1
-    print(signal)
+    print(json.dumps(status, separators=(",", ":")))
     return 0
 
 

@@ -81,7 +81,7 @@ Scope {
         backendAvailable: root.networkingService && root.networkingService.backend === NetworkBackendType.NetworkManager
         wifiEnabled: root.networkingService ? root.networkingService.wifiEnabled === true : false
         wifiHardwareEnabled: root.networkingService ? root.networkingService.wifiHardwareEnabled === true : false
-        wifiConnected: root.wifiNetwork !== null
+        wifiConnected: root.wifiDevice ? root.wifiDevice.connected === true : false
         wifiSsid: root.wifiNetwork ? String(root.wifiNetwork.name || "") : ""
         wifiSignal: root.wifiNetwork && root.wifiNetwork.signalStrength !== undefined ? Math.max(0, Math.min(100, Math.round(Number(root.wifiNetwork.signalStrength) * 100))) : 0
         wifiDevice: root.wifiDevice ? String(root.wifiDevice.name || "") : ""

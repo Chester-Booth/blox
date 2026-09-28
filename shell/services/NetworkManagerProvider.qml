@@ -1,9 +1,10 @@
 import QtQuick
 import Quickshell
+import Quickshell.Io
 import Quickshell.Networking
 
-// Native NetworkManager adapter. It exposes a small primitive state surface
-// and owns Wi-Fi power actions without parsing command output.
+// Native NetworkManager adapter. nmcli fills the signal gap when Quickshell
+// does not expose an active Wi-Fi network.
 Scope {
     id: root
 
@@ -11,6 +12,8 @@ Scope {
     property int interval: 30000
     property bool syncReady: false
     property var pendingWifiEnabled: null
+    property int measuredWifiSignal: 0
+    property string pendingWifiSignal: ""
     property string actionError: ""
     readonly property bool providerReady: root.networkingService !== null
     readonly property var deviceValues: root.networkingService && root.networkingService.devices && root.networkingService.devices.values ? root.networkingService.devices.values : []
@@ -23,6 +26,8 @@ Scope {
     readonly property string lastError: root.actionError
     readonly property var json: state.json
 
+    onWifiDeviceChanged: root.refreshWifiSignal()
+
     function findDevice(type) {
         const devices = root.deviceValues;
         for (let i = 0; i < devices.length; i++) {
@@ -30,6 +35,25 @@ Scope {
                 return devices[i];
         }
         return null;
+    }
+
+    function parseWifiSignal(output) {
+        const lines = String(output || "").trim().split(/\r?\n/);
+        for (let i = 0; i < lines.length; i++) {
+            const fields = lines[i].split(":");
+            if (fields[0] !== "*")
+                continue;
+            const signal = Number(fields[1]);
+            return Number.isFinite(signal) ? Math.max(0, Math.min(100, Math.round(signal))) : -1;
+        }
+        return -1;
+    }
+
+    function refreshWifiSignal() {
+        if (!root.wifiDevice || root.wifiDevice.connected !== true || root.wifiNetwork || wifiSignalProbe.running)
+            return;
+        root.pendingWifiSignal = "";
+        wifiSignalProbe.running = true;
     }
 
     function findConnectedNetwork(device) {
@@ -83,7 +107,7 @@ Scope {
         wifiHardwareEnabled: root.networkingService ? root.networkingService.wifiHardwareEnabled === true : false
         wifiConnected: root.wifiDevice ? root.wifiDevice.connected === true : false
         wifiSsid: root.wifiNetwork ? String(root.wifiNetwork.name || "") : ""
-        wifiSignal: root.wifiNetwork && root.wifiNetwork.signalStrength !== undefined ? Math.max(0, Math.min(100, Math.round(Number(root.wifiNetwork.signalStrength) * 100))) : 0
+        wifiSignal: root.wifiNetwork && root.wifiNetwork.signalStrength !== undefined ? Math.max(0, Math.min(100, Math.round(Number(root.wifiNetwork.signalStrength) * 100))) : root.measuredWifiSignal
         wifiDevice: root.wifiDevice ? String(root.wifiDevice.name || "") : ""
         wiredConnected: root.wiredDevice && root.wiredDevice.network ? root.wiredDevice.network.connected === true : false
         wiredName: root.wiredDevice && root.wiredDevice.network ? String(root.wiredDevice.network.name || "") : ""
@@ -115,6 +139,32 @@ Scope {
     }
 
     Timer {
+        interval: Math.max(15000, root.interval)
+        running: root.providerReady && root.interval > 0
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: root.refreshWifiSignal()
+    }
+
+    Process {
+        id: wifiSignalProbe
+
+        command: ["nmcli", "-t", "-f", "IN-USE,SIGNAL", "device", "wifi", "list", "--rescan", "no"]
+        onExited: (exitCode, exitStatus) => {
+            if (exitCode !== 0 || exitStatus !== 0)
+                return;
+            const signal = root.parseWifiSignal(root.pendingWifiSignal);
+            if (signal < 0)
+                return;
+            root.measuredWifiSignal = signal;
+            root.refresh();
+        }
+        stdout: StdioCollector {
+            onStreamFinished: root.pendingWifiSignal = this.text;
+        }
+    }
+
+    Timer {
         id: actionTimeout
 
         interval: 5000
@@ -143,8 +193,11 @@ Scope {
         target: root.wifiDevice
         ignoreUnknownSignals: true
 
+        function onConnectedChanged() {
+            root.refresh();
+            root.refreshWifiSignal();
+        }
         function onNetworksChanged() { root.refresh(); }
-        function onConnectedChanged() { root.refresh(); }
         function onStateChanged() { root.refresh(); }
     }
 

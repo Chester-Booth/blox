@@ -3,8 +3,8 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Networking
 
-// Native NetworkManager adapter. nmcli fills the signal gap when Quickshell
-// does not expose an active Wi-Fi network.
+// Native NetworkManager adapter. Read the active access point's signal when
+// Quickshell reports the device as connected without a connected network.
 Scope {
     id: root
 
@@ -38,19 +38,20 @@ Scope {
     }
 
     function parseWifiSignal(output) {
-        const lines = String(output || "").trim().split(/\r?\n/);
-        for (let i = 0; i < lines.length; i++) {
-            const fields = lines[i].split(":");
-            if (fields[0] !== "*")
-                continue;
-            const signal = Number(fields[1]);
-            return Number.isFinite(signal) ? Math.max(0, Math.min(100, Math.round(signal))) : -1;
-        }
-        return -1;
+        const signal = Number(String(output || "").trim());
+        return Number.isInteger(signal) ? Math.max(0, Math.min(100, signal)) : -1;
     }
 
     function refreshWifiSignal() {
-        if (!root.wifiDevice || root.wifiDevice.connected !== true || root.wifiNetwork || wifiSignalProbe.running)
+        if (!root.wifiDevice || root.wifiDevice.connected !== true) {
+            root.measuredWifiSignal = 0;
+            return;
+        }
+        if (root.wifiNetwork) {
+            root.measuredWifiSignal = 0;
+            return;
+        }
+        if (wifiSignalProbe.running)
             return;
         root.pendingWifiSignal = "";
         wifiSignalProbe.running = true;
@@ -149,7 +150,7 @@ Scope {
     Process {
         id: wifiSignalProbe
 
-        command: ["nmcli", "-t", "-f", "IN-USE,SIGNAL", "device", "wifi", "list", "--rescan", "no"]
+        command: ["python3", Quickshell.shellDir + "/scripts/network_signal.py", root.wifiDevice ? root.wifiDevice.name : ""]
         onExited: (exitCode, exitStatus) => {
             if (exitCode !== 0 || exitStatus !== 0)
                 return;

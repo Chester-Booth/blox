@@ -217,14 +217,17 @@ Scope {
                 }
 
                 ScrollView {
+                    id: detailsDescriptionScroll
+
                     Layout.fillWidth: true
                     Layout.fillHeight: true
+                    contentWidth: availableWidth
                     clip: true
 
                     Text {
                         id: detailsDescription
 
-                        width: parent.width
+                        width: detailsDescriptionScroll.availableWidth
                         text: root.controller.activeEvent ? root.controller.activeEvent.description : ""
                         color: Theme.muted
                         font.family: Theme.bodyFontFamily

@@ -19,7 +19,7 @@ from gi.repository import GioUnix  # noqa: E402
 
 
 ARGUMENT_FIELD_CODES = re.compile(r"%[fFuUdDnNvm]")
-TRANSIENT_SERVICE_DESKTOP_IDS = {"t3code", "t3code-url-handler"}
+TRANSIENT_SERVICE_DESKTOP_IDS = {"t3code", "t3code-url-handler", "obsidian"}
 VALID_ENVIRONMENT_NAME = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 SESSION_ENVIRONMENT_NAMES = (
     "DISPLAY",
@@ -169,10 +169,10 @@ def launch_detached(
     """Start a desktop command with the lifetime it needs.
 
     Some desktop commands are short-lived clients which hand off to a lasting
-    GUI process, such as Zed's ``zeditor`` CLI. T3 Code is different: its
-    Electron children must share a cgroup that Quickshell cannot kill when the
-    shell restarts. Launch T3 through a transient user service for that case;
-    use a detached process for the other desktop entries.
+    GUI process, such as Zed's ``zeditor`` CLI. T3 Code and Obsidian need their
+    Electron processes kept outside Quickshell's cgroup so shell restarts do
+    not kill them. Launch those apps through transient user services; use a
+    detached process for the other desktop entries.
     """
     if _desktop_id_key(desktop_id) in TRANSIENT_SERVICE_DESKTOP_IDS:
         return _launch_in_transient_service(command, working_directory, environment, desktop_id or "t3code")

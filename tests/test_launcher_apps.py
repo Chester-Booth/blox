@@ -117,6 +117,30 @@ class AppControllerTests(unittest.TestCase):
         self.assertEqual(command[-2:], ["--", "t3code-nightly"])
         self.assertEqual(str(Path("/tmp")), run.call_args.kwargs["cwd"])
 
+    @mock.patch.object(desktop_exec.subprocess, "run")
+    @mock.patch.object(desktop_exec.subprocess, "Popen")
+    def test_obsidian_launcher_uses_a_transient_user_service(self, popen, run):
+        run.return_value.returncode = 0
+        environment = {"WAYLAND_DISPLAY": "wayland-1", "XDG_SESSION_TYPE": "wayland"}
+
+        self.assertEqual(
+            0,
+            desktop_exec.launch_detached(
+                ["/usr/bin/obsidian"], None, environment, "obsidian.desktop"
+            ),
+        )
+
+        popen.assert_not_called()
+        command = run.call_args.args[0]
+        self.assertEqual(
+            command[:5], ["systemd-run", "--user", "--collect", "--no-block", "--quiet"]
+        )
+        self.assertTrue(
+            any(argument.startswith("--unit=blox-desktop-obsidian-") for argument in command)
+        )
+        self.assertIn("--setenv=WAYLAND_DISPLAY=wayland-1", command)
+        self.assertEqual(command[-2:], ["--", "/usr/bin/obsidian"])
+
     def test_helium_launcher_loads_the_active_blox_theme(self):
         root = Path(tempfile.mkdtemp(prefix="blox-helium-launcher-"))
         self.addCleanup(shutil.rmtree, root, ignore_errors=True)

@@ -14,6 +14,8 @@ from unittest import mock
 MODULE = Path(__file__).parents[1] / "shell/scripts/launcher/appctl.py"
 DESKTOP_EXEC_MODULE = Path(__file__).parents[1] / "shell/scripts/launcher/desktop_exec.py"
 ICON_LOOKUP_MODULE = Path(__file__).parents[1] / "shell/scripts/launcher/icon_lookup.py"
+ASSIGN_WORKSPACE_MODULE = Path(__file__).parents[1] / "shell/scripts/launcher/assign_workspace.py"
+COMMAND_EXEC_MODULE = Path(__file__).parents[1] / "shell/scripts/launcher/command_exec.py"
 DESKTOP_EXEC_PROBE = """
 import shlex
 import subprocess
@@ -40,6 +42,13 @@ DESKTOP_EXEC_SPEC.loader.exec_module(desktop_exec)
 ICON_LOOKUP_SPEC = importlib.util.spec_from_file_location("icon_lookup", ICON_LOOKUP_MODULE)
 icon_lookup = importlib.util.module_from_spec(ICON_LOOKUP_SPEC)
 ICON_LOOKUP_SPEC.loader.exec_module(icon_lookup)
+ASSIGN_WORKSPACE_SPEC = importlib.util.spec_from_file_location("assign_workspace", ASSIGN_WORKSPACE_MODULE)
+assign_workspace = importlib.util.module_from_spec(ASSIGN_WORKSPACE_SPEC)
+ASSIGN_WORKSPACE_SPEC.loader.exec_module(assign_workspace)
+sys.path.insert(0, str(DESKTOP_EXEC_MODULE.parent))
+COMMAND_EXEC_SPEC = importlib.util.spec_from_file_location("command_exec", COMMAND_EXEC_MODULE)
+command_exec = importlib.util.module_from_spec(COMMAND_EXEC_SPEC)
+COMMAND_EXEC_SPEC.loader.exec_module(command_exec)
 
 
 class FakeIconFile:
@@ -90,6 +99,54 @@ class AppControllerTests(unittest.TestCase):
 
     @mock.patch.object(desktop_exec.subprocess, "run")
     @mock.patch.object(desktop_exec.subprocess, "Popen")
+    def test_workspace_launch_uses_a_silent_hyprland_exec_rule(self, popen, run):
+        run.return_value.returncode = 0
+        environment = {
+            "WAYLAND_DISPLAY": "wayland-1",
+            "XCURSOR_THEME": "blox-generated",
+            "XCURSOR_SIZE": "24",
+        }
+
+        self.assertEqual(
+            0,
+            desktop_exec.launch_detached(
+                ["example-app", "two words"],
+                "/tmp/work files",
+                environment,
+                "example-app.desktop",
+                3,
+                "request-1",
+            ),
+        )
+
+        popen.assert_not_called()
+        command = run.call_args.args[0]
+        self.assertEqual(command[:2], ["hyprctl", "dispatch"])
+        self.assertIn('workspace = "3 silent"', command[2])
+        self.assertIn("BLOX_LAUNCH_ID=request-1", command[2])
+        self.assertIn("BLOX_LAUNCH_WORKSPACE=3", command[2])
+        self.assertIn("XCURSOR_THEME=blox-generated", command[2])
+        self.assertIn("cd -- '/tmp/work files'", command[2])
+        self.assertIn("'two words'", command[2])
+
+    @mock.patch.object(desktop_exec.subprocess, "run")
+    @mock.patch.object(desktop_exec.subprocess, "Popen")
+    def test_workspace_rule_failure_falls_back_to_detached_process(self, popen, run):
+        run.return_value.returncode = 1
+        popen.return_value.pid = 1234
+
+        self.assertEqual(
+            0,
+            desktop_exec.launch_detached(
+                ["example-app"], None, {}, "example-app.desktop", 3, "request-2"
+            ),
+        )
+
+        self.assertEqual("request-2", popen.call_args.kwargs["env"]["BLOX_LAUNCH_ID"])
+        self.assertEqual("3", popen.call_args.kwargs["env"]["BLOX_LAUNCH_WORKSPACE"])
+
+    @mock.patch.object(desktop_exec.subprocess, "run")
+    @mock.patch.object(desktop_exec.subprocess, "Popen")
     def test_t3code_launcher_uses_a_transient_user_service(self, popen, run):
         run.return_value.returncode = 0
         environment = {
@@ -102,7 +159,7 @@ class AppControllerTests(unittest.TestCase):
         self.assertEqual(
             0,
             desktop_exec.launch_detached(
-                ["t3code-nightly"], "/tmp", environment, "t3code.desktop"
+                ["t3code-nightly"], "/tmp", environment, "t3code.desktop", 3, "request-t3"
             ),
         )
 
@@ -113,6 +170,8 @@ class AppControllerTests(unittest.TestCase):
         self.assertIn("--working-directory=/tmp", command)
         self.assertIn("--setenv=XDG_SESSION_TYPE=wayland", command)
         self.assertIn("--setenv=XCURSOR_THEME=blox-generated", command)
+        self.assertIn("--setenv=BLOX_LAUNCH_ID=request-t3", command)
+        self.assertIn("--setenv=BLOX_LAUNCH_WORKSPACE=3", command)
         self.assertNotIn("--setenv=ELECTRON_RUN_AS_NODE=1", command)
         self.assertEqual(command[-2:], ["--", "t3code-nightly"])
         self.assertEqual(str(Path("/tmp")), run.call_args.kwargs["cwd"])
@@ -311,10 +370,14 @@ class AppControllerTests(unittest.TestCase):
 
     def test_launcher_resolves_the_current_desktop_exec_when_activated(self):
         source = LAUNCHER.read_text(encoding="utf-8")
-        self.assertIn('scripts/launcher/desktop_exec.py", desktopId];', source)
+        self.assertIn('scripts/launcher/desktop_exec.py",', source)
+        self.assertIn('String(request.workspaceId),', source)
         self.assertIn("desktopLauncher.running = true;", source)
-        self.assertIn("root.executeCurrentDesktopEntry(root.pendingEntry);", source)
-        self.assertNotIn("root.pendingEntry.execute();", source)
+        self.assertIn("Hyprland.focusedWorkspace ? Number(Hyprland.focusedWorkspace.id) : 0", source)
+        self.assertIn('scripts/launcher/command_exec.py",', source)
+        self.assertIn('scripts/launcher/assign_workspace.py",', source)
+        self.assertIn("root.executeCurrentDesktopEntry(request);", source)
+        self.assertNotIn("root.pendingEntry", source)
 
         # Stage the shipped desktop entry into an isolated XDG data home so
         # the test does not depend on machine state. The child process loads
@@ -368,6 +431,83 @@ class AppControllerTests(unittest.TestCase):
                 },
                 desktop_exec.active_cursor_environment(),
             )
+
+    def test_terminal_command_uses_the_workspace_aware_launcher(self):
+        argv = ["command_exec.py", "3", "request-terminal", "/tmp/project", "top", "-b"]
+        with mock.patch.object(command_exec.sys, "argv", argv), mock.patch.object(
+            command_exec, "active_cursor_environment", return_value={}
+        ), mock.patch.object(command_exec, "launch_detached", return_value=0) as launch:
+            self.assertEqual(0, command_exec.main())
+
+        command, working_directory = launch.call_args.args[:2]
+        self.assertEqual(
+            ["kitty", "--directory", "/tmp/project", "--", "top", "-b"], command
+        )
+        self.assertEqual("/tmp/project", working_directory)
+        self.assertEqual(3, launch.call_args.kwargs["workspace_id"])
+        self.assertEqual("request-terminal", launch.call_args.kwargs["launch_id"])
+
+    def test_open_window_moves_only_when_launch_id_matches(self):
+        root = Path(tempfile.mkdtemp(prefix="blox-launch-environment-"))
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        process = root / "4242"
+        process.mkdir()
+        (process / "environ").write_bytes(
+            b"BLOX_LAUNCH_ID=request-3\0BLOX_LAUNCH_WORKSPACE=3\0"
+        )
+        commands = []
+
+        def run(command, **_kwargs):
+            commands.append(command)
+            if command[1:3] == ["clients", "-j"]:
+                return subprocess.CompletedProcess(
+                    command,
+                    0,
+                    json.dumps([{"address": "0xabc", "pid": 4242, "workspace": {"id": 1}}]),
+                    "",
+                )
+            return subprocess.CompletedProcess(command, 0, "", "")
+
+        moved = assign_workspace.assign_workspace(
+            "0xabc",
+            [{"launchId": "request-3", "workspaceId": 3}],
+            proc_root=root,
+            run=run,
+        )
+
+        self.assertTrue(moved)
+        self.assertEqual("dispatch", commands[1][1])
+        self.assertIn('workspace = 3, window = "address:0xabc", follow = false', commands[1][2])
+        self.assertIn("blox_launch_workspace_assigned>>request-3", commands[2][2])
+
+    def test_open_window_with_an_untracked_launch_is_left_alone(self):
+        root = Path(tempfile.mkdtemp(prefix="blox-launch-environment-"))
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        process = root / "4242"
+        process.mkdir()
+        (process / "environ").write_bytes(
+            b"BLOX_LAUNCH_ID=other\0BLOX_LAUNCH_WORKSPACE=3\0"
+        )
+        commands = []
+
+        def run(command, **_kwargs):
+            commands.append(command)
+            return subprocess.CompletedProcess(
+                command,
+                0,
+                json.dumps([{"address": "0xabc", "pid": 4242, "workspace": {"id": 1}}]),
+                "",
+            )
+
+        moved = assign_workspace.assign_workspace(
+            "0xabc",
+            [{"launchId": "request-3", "workspaceId": 3}],
+            proc_root=root,
+            run=run,
+        )
+
+        self.assertFalse(moved)
+        self.assertEqual(1, len(commands))
 
     def test_normalise_ignores_case_and_desktop_suffix(self):
         self.assertEqual("org.example.app", appctl.normalise("Org.Example.App.desktop"))

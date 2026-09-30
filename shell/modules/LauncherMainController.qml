@@ -4,6 +4,7 @@ import "../shared/LauncherLogic.js" as LauncherLogic
 import QtQml.WorkerScript
 import QtQuick
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Io
 
 Scope {
@@ -23,7 +24,10 @@ Scope {
     property bool dmenuInsensitive: false
     property int dmenuLimit: 0
     property bool dmenuBottom: false
-    property var pendingEntry: null
+    property var launchQueue: []
+    property var activeLaunch: null
+    property var workspaceTransfers: []
+    property int launchSerial: 0
     property var themes: []
     property bool themesLoading: false
     property string themesError: ""
@@ -419,17 +423,130 @@ Scope {
         iconResolver.running = true;
     }
 
-    function executeCurrentDesktopEntry(entry) {
-        const desktopId = String(entry.id || "").replace(/\.desktop$/, "");
-        if (desktopId.length) {
-            // DesktopEntries can retain an old Exec value after its source
-            // file changes. Resolve the desktop file again at activation time,
-            // so launcher clicks always use its current Exec.
-            desktopLauncher.command = [Quickshell.shellDir + "/scripts/launcher/desktop_exec.py", desktopId];
-            desktopLauncher.running = true;
-        } else {
-            entry.execute();
+    function newLaunchId() {
+        launchSerial++;
+        return Date.now().toString(16) + "-" + launchSerial.toString(16) + "-" + Math.floor(Math.random() * 4294967296).toString(16);
+    }
+
+    function createLaunchRequest(entry, kind) {
+        const workspaceValue = Hyprland.focusedWorkspace ? Number(Hyprland.focusedWorkspace.id) : 0;
+        const workspaceId = Number.isInteger(workspaceValue) && workspaceValue > 0 && workspaceValue <= 2147483647 ? workspaceValue : 0;
+        const request = {
+            "entry": entry,
+            "kind": kind,
+            "desktopId": String(entry.id || "").replace(/\.desktop$/, ""),
+            "startupClass": String(entry.startupClass || ""),
+            "workspaceId": workspaceId,
+            "launchId": newLaunchId()
+        };
+        return request;
+    }
+
+    function enqueueLaunch(entry, kind) {
+        launchQueue = launchQueue.concat([createLaunchRequest(entry, kind)]);
+        processLaunchQueue();
+    }
+
+    function processLaunchQueue() {
+        if (activeLaunch || focusApp.running || desktopLauncher.running || terminalCommand.running || !launchQueue.length)
+            return ;
+
+        const request = launchQueue[0];
+        launchQueue = launchQueue.slice(1);
+        activeLaunch = request;
+        if (request.workspaceId > 0) {
+            workspaceTransfers = workspaceTransfers.concat([{
+                "launchId": request.launchId,
+                "workspaceId": request.workspaceId,
+                "expiresAt": Date.now() + 300000
+            }]);
         }
+        if (request.kind === "terminal") {
+            const command = [
+                "python3",
+                Quickshell.shellDir + "/scripts/launcher/command_exec.py",
+                String(request.workspaceId),
+                request.launchId,
+                String(request.entry.workingDirectory || "")
+            ].concat(request.entry.command || []);
+            terminalCommand.launchContext = request;
+            terminalCommand.command = command;
+            terminalCommand.running = true;
+            return ;
+        }
+
+        focusApp.launchContext = request;
+        focusApp.command = [
+            Quickshell.shellDir + "/scripts/launcher/appctl.py",
+            request.desktopId,
+            request.startupClass
+        ];
+        focusApp.running = true;
+    }
+
+    function executeCurrentDesktopEntry(request) {
+        if (!request) {
+            finishActiveLaunch(false);
+            return ;
+        }
+        if (!request.desktopId.length) {
+            if (request.entry && request.entry.execute)
+                request.entry.execute();
+            finishActiveLaunch(false);
+            return ;
+        }
+
+        // Resolve the desktop entry again so activation uses its current Exec value.
+        desktopLauncher.launchContext = request;
+        desktopLauncher.command = [
+            Quickshell.shellDir + "/scripts/launcher/desktop_exec.py",
+            request.desktopId,
+            String(request.workspaceId),
+            request.launchId
+        ];
+        desktopLauncher.running = true;
+    }
+
+    function removeWorkspaceTransfer(launchId) {
+        workspaceTransfers = workspaceTransfers.filter((item) => item.launchId !== launchId);
+    }
+
+    function finishActiveLaunch(keepWorkspaceTransfer) {
+        if (activeLaunch && !keepWorkspaceTransfer)
+            removeWorkspaceTransfer(activeLaunch.launchId);
+        activeLaunch = null;
+        processLaunchQueue();
+    }
+
+    function expireWorkspaceTransfers() {
+        const now = Date.now();
+        workspaceTransfers = workspaceTransfers.filter((item) => item.expiresAt > now);
+    }
+
+    function handleHyprlandEvent(event) {
+        if (!event)
+            return ;
+
+        if (event.name === "custom" && String(event.data || "").startsWith("blox_launch_workspace_assigned>>")) {
+            removeWorkspaceTransfer(String(event.data).slice("blox_launch_workspace_assigned>>".length));
+            return ;
+        }
+        if (event.name !== "openwindow" || !workspaceTransfers.length)
+            return ;
+
+        const address = String(event.data || "").split(",")[0].trim();
+        if (!/^0x[0-9a-fA-F]+$/.test(address))
+            return ;
+
+        const contexts = workspaceTransfers.map((item) => {
+            return {"launchId": item.launchId, "workspaceId": item.workspaceId};
+        });
+        Quickshell.execDetached([
+            "python3",
+            Quickshell.shellDir + "/scripts/launcher/assign_workspace.py",
+            address,
+            JSON.stringify(contexts)
+        ]);
     }
 
     function refresh() {
@@ -577,18 +694,10 @@ Scope {
         }
         if (result.kind === "command") {
             recordUse(result.entry);
-            const command = ["kitty", "--detach"];
-            if (result.entry.workingDirectory)
-                command.push("--directory", result.entry.workingDirectory);
-
-            for (const part of result.entry.command) command.push(part)
-            terminalCommand.command = command;
-            terminalCommand.running = true;
+            enqueueLaunch(result.entry, "terminal");
         } else if (result.kind === "app") {
             recordUse(result.entry);
-            pendingEntry = result.entry;
-            focusApp.command = [Quickshell.shellDir + "/scripts/launcher/appctl.py", result.entry.id || "", result.entry.startupClass || ""];
-            focusApp.running = true;
+            enqueueLaunch(result.entry, "application");
         } else {
             dmenuSelected(result.title);
         }
@@ -726,20 +835,55 @@ Scope {
     Process {
         id: focusApp
 
-        onExited: (exitCode) => {
-            if (exitCode === 3 && root.pendingEntry)
-                root.executeCurrentDesktopEntry(root.pendingEntry);
+        property var launchContext: null
 
-            root.pendingEntry = null;
+        onExited: (exitCode) => {
+            const request = launchContext;
+            launchContext = null;
+            if (exitCode === 3 && request)
+                root.executeCurrentDesktopEntry(request);
+            else
+                root.finishActiveLaunch(false);
         }
     }
 
     Process {
         id: terminalCommand
+
+        property var launchContext: null
+
+        onExited: (exitCode) => {
+            const request = launchContext;
+            launchContext = null;
+            root.finishActiveLaunch(exitCode === 0 && !!request);
+        }
     }
 
     Process {
         id: desktopLauncher
+
+        property var launchContext: null
+
+        onExited: (exitCode) => {
+            const request = launchContext;
+            launchContext = null;
+            root.finishActiveLaunch(exitCode === 0 && !!request);
+        }
+    }
+
+    Connections {
+        function onRawEvent(event) {
+            root.handleHyprlandEvent(event);
+        }
+
+        target: Hyprland
+    }
+
+    Timer {
+        interval: 10000
+        repeat: true
+        running: true
+        onTriggered: root.expireWorkspaceTransfers()
     }
 
     Process {

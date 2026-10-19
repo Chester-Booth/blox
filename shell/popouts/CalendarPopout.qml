@@ -11,7 +11,7 @@ Rectangle {
     property real transitionOpacity: 1
     property date pendingNavigationDate: controller.selectedDate
     property string pendingNavigationKind: "day"
-    readonly property real monthViewHeight: 352
+    readonly property real monthViewHeight: Math.max(352, content.implicitHeight + 2 * content.anchors.margins)
     readonly property real dayViewHeight: 620
     readonly property real maximumViewHeight: Math.max(monthViewHeight, dayViewHeight)
 
@@ -73,6 +73,8 @@ Rectangle {
     }
 
     ColumnLayout {
+        id: content
+
         anchors.fill: parent
         anchors.margins: Theme.scaledSpacing(12)
         spacing: Theme.scaledSpacing(8)
@@ -184,11 +186,14 @@ Rectangle {
         Item {
             id: viewArea
 
+            implicitHeight: monthView.implicitHeight
             Layout.fillWidth: true
             Layout.fillHeight: true
             clip: true
 
             CalendarMonthView {
+                id: monthView
+
                 anchors.fill: parent
                 visible: root.viewIndex === 0
                 enabled: visible

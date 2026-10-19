@@ -9,6 +9,7 @@ Item {
     required property date selectedDate
     required property var events
     required property var calendars
+    implicitHeight: content.implicitHeight
 
     signal selected(date day)
 
@@ -57,6 +58,8 @@ Item {
     }
 
     ColumnLayout {
+        id: content
+
         anchors.fill: parent
         spacing: Theme.scaledSpacing(6)
 

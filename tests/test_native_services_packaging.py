@@ -15,13 +15,19 @@ def native_source(version="0.1.0", plugin=b"fixture plugin v1"):
     cpp = source / "shell/native/services/service_owner.cpp"
     cpp.parent.mkdir(parents=True)
     cpp.write_text("// native fixture\n")
-    for name in (*native.IMAGE_SOURCES, *native.EMOJI_SOURCES, *native.KEYBOARD_SOURCES, "image_cache_resolver.cpp"):
+    for name in (*native.IMAGE_SOURCES, *native.EMOJI_SOURCES, *native.KEYBOARD_SOURCES, *native.PRIVACY_SOURCES, "image_cache_resolver.cpp"):
         (cpp.parent / name).write_text("// native fixture\n")
+    bloxd_dir = source / "shell/native/bloxd/src"
+    bloxd_dir.mkdir(parents=True)
+    for name in native.BLOXD_SOURCES:
+        (bloxd_dir / name).write_text("// rust fixture\n")
     module = source / "shell/native/qml/Blox/Services"
     module.mkdir(parents=True)
     (module / native.PLUGIN).write_bytes(plugin)
     (module / native.HELPER).write_bytes(plugin + b" helper")
     (module / native.HELPER).chmod(0o755)
+    (module / native.DAEMON).write_bytes(plugin + b" bloxd")
+    (module / native.DAEMON).chmod(0o755)
     (module / "qmldir").write_text(native.QMLDIR)
     (module / ".build.json").write_text(json.dumps({
         "format": 1,
@@ -29,10 +35,13 @@ def native_source(version="0.1.0", plugin=b"fixture plugin v1"):
         "imageCacheSourceSha256": native.image_source_sha256(source),
         "emojiIndexSourceSha256": native.emoji_source_sha256(source),
         "keyboardBacklightSourceSha256": native.keyboard_source_sha256(source),
+        "privacyMonitorSourceSha256": native.privacy_source_sha256(source),
+        "bloxdSourceSha256": native.bloxd_source_sha256(source),
         "resolverSha256": installer.sha256(cpp.parent / "image_cache_resolver.cpp"),
         "buildScriptSha256": installer.sha256(source / "packaging/build_native_services.py"),
         "sha256": installer.sha256(module / native.PLUGIN),
         "imageCacheSha256": installer.sha256(module / native.HELPER),
+        "bloxdSha256": installer.sha256(module / native.DAEMON),
     }))
     return source
 

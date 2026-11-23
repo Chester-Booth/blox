@@ -2,7 +2,12 @@
 set -u
 
 # shellcheck source=common.sh
-source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/common.sh"
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+bloxd_bin="$script_dir/../../native/qml/Blox/Services/bloxd"
+if [[ -z "${BLOX_NO_BLOXD:-}" && -x "$bloxd_bin" ]]; then
+	exec "$bloxd_bin" status system
+fi
+source "$script_dir/common.sh"
 
 # Profile controls use the power-profile and vendor owners. Keep this legacy
 # field's fallback without starting another vendor query for system metrics.

@@ -15,6 +15,7 @@
 #include "image_cache.h"
 #include "emoji_index.h"
 #include "keyboard_backlight.h"
+#include "privacy_monitor.h"
 
 // One connection and subscription set serve every availability guard in the shell.
 class ServiceOwnerBus : public QObject {
@@ -343,6 +344,7 @@ public:
         BloxImages::registerResolver(uri);
         BloxEmoji::registerIndex(uri);
         BloxKeyboard::registerWatcher(uri);
+        BloxPrivacy::registerMonitor(uri);
     }
 };
 

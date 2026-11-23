@@ -51,7 +51,7 @@ test-launcher: native-services native-widgets
 
 .PHONY: test-native-services
 test-native-services: native-services
-	@PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.test_native_service_owner tests.test_native_image_cache tests.test_native_services_packaging tests.test_keyboard_backlight_watcher -v
+	@PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.test_native_service_owner tests.test_native_image_cache tests.test_native_services_packaging tests.test_keyboard_backlight_watcher tests.test_bloxd -v
 
 test-status-contracts:
 	@PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests/test_status_contracts.py tests/test_status_purity.py -v

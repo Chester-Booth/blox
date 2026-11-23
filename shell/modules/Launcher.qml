@@ -80,9 +80,10 @@ Scope {
     Process {
         id: windowState
 
-        readonly property string scripts: Quickshell.shellDir + "/scripts/launcher"
+        readonly property string bloxd: Quickshell.shellDir + "/native/qml/Blox/Services/bloxd"
 
-        command: ["python3", scripts + "/parent_guard.py", "python3", scripts + "/window_state.py"]
+        command: [bloxd, "window-state"]
+        environment: ({BLOX_IPC_SCRIPT: Quickshell.shellDir + "/scripts/ipc.sh"})
         running: true
         onExited: windowStateRestart.restart()
     }

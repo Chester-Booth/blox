@@ -21,6 +21,10 @@ fi
 mode="${mode:-auto}"
 
 if [[ "$mode" == "status" ]]; then
+    bloxd_bin="$script_dir/../../native/qml/Blox/Services/bloxd"
+    if [[ -z "${BLOX_NO_BLOXD:-}" && -x "$bloxd_bin" ]]; then
+        exec "$bloxd_bin" status night-light
+    fi
     saved_mode="auto"
     [[ ! -r "$state_file" ]] || read -r saved_mode <"$state_file"
     case "$saved_mode" in on|off|auto) ;; *) saved_mode=auto ;; esac

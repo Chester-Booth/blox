@@ -42,8 +42,12 @@ Singleton {
     readonly property bool dirty: selectedThemeId.length > 0
     readonly property bool canRetryApply: journalReleased && !recoveryAvailable && !busy
         && ["failure-before-write", "failure-cursor", "failure-activate-restored", "failure-target-rolledback"].indexOf(applyState) >= 0
-    readonly property int reviewTargetCount: windowOwner && windowOwner.draftEnabledTargetCount !== undefined ? windowOwner.draftEnabledTargetCount : settingsProvider && settingsProvider.settings
-        ? Object.keys(settingsProvider.settings.targets).filter(key => settingsProvider.settings.targets[key].enabled).length : 0
+    readonly property int reviewTargetCount: {
+        if (windowOwner && typeof windowOwner.draftEnabledTargetCount === "number")
+            return windowOwner.draftEnabledTargetCount;
+        const targets = settingsProvider && settingsProvider.settings ? settingsProvider.settings.targets : null;
+        return targets ? Object.keys(targets).filter(key => targets[key] && targets[key].enabled).length : 0;
+    }
     readonly property string failureSummary: failureMessage
     readonly property var generation: compositionProvider ? compositionProvider.provenance.generation : null
     readonly property string generatedFilesTitle: generation ? "Generated files are from " + generation.themeId : "No generated files"
@@ -219,7 +223,8 @@ Singleton {
     }
 
     Connections {
-        target: root.settingsProvider
+        target: root.settingsProvider || null
+        enabled: !!root.settingsProvider
         function onBusyChanged() { Qt.callLater(root.resumeColdApply); }
         function onRecoveringChanged() { Qt.callLater(root.resumeColdApply); }
     }

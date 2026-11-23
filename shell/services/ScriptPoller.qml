@@ -109,11 +109,16 @@ Scope {
     }
 
     Timer {
-        interval: root.interval
-        running: root.command.length > 0
+        interval: Math.max(1000, root.interval)
+        running: root.command.length > 0 && root.interval > 0
         repeat: true
         triggeredOnStart: true
         onTriggered: root.refresh()
+    }
+
+    Component.onCompleted: {
+        if (root.command.length > 0 && root.interval <= 0)
+            root.refresh();
     }
 
 }

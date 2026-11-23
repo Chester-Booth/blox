@@ -7,7 +7,7 @@ Scope {
     id: root
 
     property bool busy: false
-    readonly property string scripts: Quickshell.shellDir + "/scripts/launcher"
+    readonly property string bloxd: Quickshell.shellDir + "/native/qml/Blox/Services/bloxd"
 
     signal request(var options, string prompt, string query, var settings)
     signal updated(var options)
@@ -27,7 +27,7 @@ Scope {
     Process {
         id: bridge
 
-        command: ["python3", root.scripts + "/parent_guard.py", "python3", root.scripts + "/dmenu_server.py"]
+        command: [root.bloxd, "dmenu"]
         stdinEnabled: true
         running: true
         onExited: {

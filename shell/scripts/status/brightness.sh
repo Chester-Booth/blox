@@ -7,6 +7,13 @@ source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/common.sh"
 requested_device="${1:-}"
 state_file="${XDG_CACHE_HOME:-$HOME/.cache}/quickshell/blue-light-mode"
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+bloxd_bin="$script_dir/../native/qml/Blox/Services/bloxd"
+if [[ -z "${BLOX_NO_BLOXD:-}" && -x "$bloxd_bin" ]]; then
+	if [[ "${BLOX_PROBE_DDC:-0}" == "1" ]]; then
+		exec "$bloxd_bin" status brightness "$requested_device" --probe-ddc
+	fi
+	exec "$bloxd_bin" status brightness "$requested_device"
+fi
 
 mapfile -t backlights < <("$script_dir/status/brightness-device.sh" --list 2>/dev/null || true)
 device="$requested_device"

@@ -78,7 +78,7 @@ Scope {
             root.refresh();
         }
     }
-    Timer { interval: 30000; repeat: true; running: true; onTriggered: root.refresh() }
+    Timer { interval: 300000; repeat: true; running: root.mode === "auto" && root.scriptRoot.length > 0; onTriggered: root.refresh() }
     onScriptRootChanged: refresh()
     Component.onCompleted: refresh()
 }

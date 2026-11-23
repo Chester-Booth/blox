@@ -1,3 +1,4 @@
+import Blox.Services 1.0
 import qs.shared
 import QtQuick
 import Quickshell
@@ -12,8 +13,8 @@ Scope {
     property bool barVisible: true
     property string openPanel: ""
     property bool performanceVisible: false
-    property alias workspaces: workspaces
-    property alias system: systemInfo
+    property alias workspaces: bloxDaemon.workspaces
+    property alias system: bloxDaemon.system
     property alias todo: todo
     property alias updates: updates
     property alias battery: battery
@@ -27,11 +28,10 @@ Scope {
     property alias bluetooth: bluetooth
     property alias touchpad: touchpad
     property alias privacy: privacy
-    property alias caffeine: caffeine
+    property alias caffeine: bloxDaemon.caffeine
 
     function pluggedIn() {
-        const value = battery.json || {
-        };
+        const value = battery.json || ({});
         return value.class === "charging" || value.class === "plugged";
     }
 
@@ -58,7 +58,7 @@ Scope {
     }
 
     function refreshPerformance() {
-        systemInfo.refresh();
+        system.refresh();
         battery.refresh();
         powerProfile.refresh();
         vendorPerformance.refresh();
@@ -70,22 +70,24 @@ Scope {
         const shouldRefresh = refreshVisible === undefined ? true : refreshVisible;
         const controlPanels = ["audio", "network", "bluetooth", "brightness", "notifications", "privacy"];
         const controlsVisible = controlPanels.indexOf(openPanel) >= 0;
+        // Native D-Bus / PipeWire providers do not fork subprocesses.
         audio.interval = controlsVisible ? 2000 : railInterval(30000, 15000, 120000, 60000);
-        brightness.interval = controlsVisible ? 2000 : 30000;
-        bluetooth.interval = controlsVisible ? 2000 : 30000;
         network.interval = controlsVisible ? 2000 : railInterval(30000, 15000, 120000, 60000);
-        touchpad.interval = controlsVisible ? 2000 : 15000;
-        vendorPerformance.interval = performanceVisible ? 2000 : 60000;
-        // Mode changes are rare and local actions refresh at once. Avoid four
-        // supergfxctl D-Bus calls every two seconds while this popout is open.
-        gpu.interval = performanceVisible ? 15000 : 60000;
-        monitors.interval = performanceVisible ? 2000 : 60000;
-        privacy.interval = controlsVisible ? 5000 : 30000;
-        caffeine.interval = openPanel === "caffeine" ? 1000 : caffeine.json.active ? 5000 : 30000;
-        workspaces.interval = railInterval(300000, 120000, 600000, 300000);
-        systemInfo.interval = performanceVisible ? 1000 : 60000;
+        bluetooth.interval = controlsVisible ? 2000 : 30000;
         battery.interval = performanceVisible ? 1000 : railInterval(30000, 15000, 60000, 30000);
-        powerProfile.interval = performanceVisible ? 1000 : 60000;
+        powerProfile.interval = performanceVisible ? 2000 : 0;
+
+        // Script-backed providers stay quiet when closed (0 = startup + event/action only).
+        brightness.interval = controlsVisible ? 2000 : 0;
+        touchpad.interval = controlsVisible ? 2000 : 0;
+        vendorPerformance.interval = performanceVisible ? 15000 : 0;
+        gpu.interval = performanceVisible ? 15000 : 0;
+        monitors.interval = performanceVisible ? 15000 : 0;
+        todo.interval = openPanel === "todo" ? 60000 : 0;
+
+        // Rust daemon handles system telemetry in-process with zero forks.
+        bloxDaemon.setSystemInterval(performanceVisible ? 1000 : 0);
+
         if (shouldRefresh && controlsVisible)
             refreshControl();
 
@@ -106,22 +108,23 @@ Scope {
     onPerformanceVisibleChanged: updatePolling()
     Component.onCompleted: updatePolling()
 
-    ScriptPoller {
-        id: workspaces
-        command: [root.scriptRoot + "/workspaces/status.py"]
-        interval: 300000
+    BloxDaemon {
+        id: bloxDaemon
+        onMonitorEvent: monitors.refresh()
     }
 
-    ScriptPoller {
-        id: systemInfo
-        command: [root.scriptRoot + "/status/system.sh"]
-        interval: 60000
+    Timer {
+        id: caffeineCountdownTimer
+        interval: root.openPanel === "caffeine" ? 1000 : 5000
+        repeat: true
+        running: root.openPanel === "caffeine" || (bloxDaemon.caffeine.json && bloxDaemon.caffeine.json.active === true && bloxDaemon.caffeine.json.mode !== "indefinite")
+        onTriggered: bloxDaemon.caffeine.refresh()
     }
 
     ScriptPoller {
         id: todo
         command: [root.scriptRoot + "/todo/status.sh"]
-        interval: 60000
+        interval: 0
     }
 
     ScriptPoller {
@@ -143,7 +146,7 @@ Scope {
         batteryStatus: battery.json
         policy: root.settingsController && root.settingsController.settings ? root.settingsController.settings.power : null
 
-        interval: 60000
+        interval: 0
     }
 
     AudioStatus {
@@ -157,7 +160,7 @@ Scope {
         id: brightness
 
         scriptRoot: root.scriptRoot
-        interval: 30000
+        interval: 0
     }
 
     NetworkStatus {
@@ -176,28 +179,28 @@ Scope {
         id: touchpad
 
         scriptRoot: root.scriptRoot
-        interval: 15000
+        interval: 0
     }
 
     VendorPerformanceStatus {
         id: vendorPerformance
 
         scriptRoot: root.scriptRoot
-        interval: 60000
+        interval: 0
     }
 
     GpuStatus {
         id: gpu
 
         scriptRoot: root.scriptRoot
-        interval: 60000
+        interval: 0
     }
 
     MonitorStatus {
         id: monitors
 
         scriptRoot: root.scriptRoot
-        interval: 60000
+        interval: 0
     }
 
     FileView {
@@ -210,16 +213,7 @@ Scope {
         onFileChanged: touchpad.refresh()
     }
 
-    ScriptPoller {
+    NativePrivacyMonitor {
         id: privacy
-        command: [root.scriptRoot + "/status/privacy.py"]
-        interval: 30000
     }
-
-    ScriptPoller {
-        id: caffeine
-        command: [root.scriptRoot + "/status/caffeine.sh"]
-        interval: 30000
-    }
-
 }

@@ -155,8 +155,10 @@ Scope {
         active: true
         source: root.providerSource
         onLoaded: {
-            item.scriptRoot = root.scriptRoot;
             item.interval = root.interval;
+            item.scriptRoot = root.scriptRoot;
+            if (root.interval <= 0)
+                item.refresh();
             root.syncJson();
         }
         onStatusChanged: root.syncJson()

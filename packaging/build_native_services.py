@@ -21,6 +21,7 @@ PRIVACY_SOURCES = ("privacy_monitor.h", "privacy_monitor.cpp")
 BLOXD_SOURCES = (
     "main.rs",
     "json.rs",
+    "sha256.rs",
     "hypr.rs",
     "dmenu.rs",
     "window_state.rs",
@@ -28,6 +29,8 @@ BLOXD_SOURCES = (
     "hardware.rs",
     "workspaces.rs",
     "daemon.rs",
+    "themes.rs",
+    "clipboard.rs",
 )
 HELPER = "blox-image-cache"
 DAEMON = "bloxd"
@@ -203,7 +206,7 @@ def build(import_root: Path) -> dict[str, object]:
             helper_options = ["-std=c++17", "-O2", "-fPIC", f'-DBLOX_IMAGE_CACHE_BUILD_ID="{image_identity}"', *qt_cflags]
             run([*compiler, *helper_options, "-pie", str(core), str(SOURCE.parent / "image_cache_main.cpp"),
                  "-o", str(staging / HELPER), *qt_libs])
-            run([rustc, "--edition=2021", "-O", "-D", "warnings", str(bloxd_main), "-o", str(staging / DAEMON)])
+            run([rustc, "--edition=2021", "-O", "-D", "warnings", str(bloxd_main), "-l", "sqlite3", "-o", str(staging / DAEMON)])
             (staging / "qmldir").write_text(QMLDIR)
             (staging / ".build.json").write_text(json.dumps({
                 "format": 1, "key": key,

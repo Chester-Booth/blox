@@ -1,9 +1,12 @@
+mod clipboard;
 mod daemon;
 mod dmenu;
 mod hardware;
 mod hypr;
 mod json;
+mod sha256;
 mod system;
+mod themes;
 mod window_state;
 mod workspaces;
 
@@ -36,7 +39,7 @@ pub fn arm_parent_death_signal() {
 fn run() -> io::Result<()> {
     let args: Vec<String> = env::args().skip(1).collect();
     let Some(cmd) = args.first().map(String::as_str) else {
-        eprintln!("usage: bloxd <dmenu|window-state|bar-daemon|status> [args...]");
+        eprintln!("usage: bloxd <dmenu|window-state|bar-daemon|clipboard-watch|clipboard-ingest|status|theme> [args...]");
         process::exit(2);
     };
 
@@ -58,6 +61,39 @@ fn run() -> io::Result<()> {
                 arm_parent_death_signal();
             }
             daemon::run()
+        }
+        "clipboard-watch" => {
+            if !args.iter().any(|a| a == "--no-parent-guard") {
+                arm_parent_death_signal();
+            }
+            clipboard::cmd_watch(&args[1..]).map_err(|e| io::Error::new(io::ErrorKind::Other, e))
+        }
+        "clipboard-ingest" => {
+            clipboard::cmd_ingest(&args[1..]).map_err(|e| io::Error::new(io::ErrorKind::Other, e))
+        }
+        "theme" => {
+            let sub = args.get(1).map(String::as_str).unwrap_or("");
+            match sub {
+                "list" => {
+                    let out = themes::cmd_list().map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
+                    println!("{out}");
+                    Ok(())
+                }
+                "show" => {
+                    let Some(reference) = args.get(2).filter(|s| !s.starts_with("--")) else {
+                        eprintln!("usage: bloxd theme show <theme> [--json]");
+                        process::exit(2);
+                    };
+                    let out = themes::cmd_show(reference)
+                        .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
+                    println!("{out}");
+                    Ok(())
+                }
+                _ => {
+                    eprintln!("usage: bloxd theme <list|show> [args...]");
+                    process::exit(2);
+                }
+            }
         }
         "status" => {
             let sub = args.get(1).map(String::as_str).unwrap_or("");

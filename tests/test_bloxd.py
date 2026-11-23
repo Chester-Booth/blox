@@ -146,6 +146,106 @@ class BloxdTests(unittest.TestCase):
             proc.stderr.close()
             proc.wait(timeout=3)
 
+    def test_theme_list_and_show_match_python_themectl(self):
+        with tempfile.TemporaryDirectory(dir="/tmp", prefix="bloxd-themes-") as tmp:
+            user_dir = Path(tmp) / "user"
+            user_themes = user_dir / "themes"
+            user_themes.mkdir(parents=True)
+            sample = json.loads((REPO_ROOT / "themes/builtin/catppuccin-mocha.json").read_text(encoding="utf-8"))
+            sample["id"] = "rust-parity-custom"
+            sample["name"] = "Rust Parity Custom"
+            (user_themes / "rust-parity-custom.json").write_text(json.dumps(sample), encoding="utf-8")
+
+            env = {
+                **os.environ,
+                "BLOX_DATA_DIR": str(REPO_ROOT / "themes"),
+                "BLOX_USER_DATA_DIR": str(user_dir),
+            }
+            py_list = json.loads(
+                subprocess.run([str(REPO_ROOT / "themes/bin/themectl"), "list", "--json"],
+                               env=env, capture_output=True, text=True, check=True).stdout
+            )
+            rs_list = json.loads(
+                subprocess.run([str(BLOXD), "theme", "list", "--json"],
+                               env=env, capture_output=True, text=True, check=True).stdout
+            )
+            self.assertEqual(py_list, rs_list)
+
+            for theme_id in ("catppuccin-mocha", "rust-parity-custom"):
+                with self.subTest(theme_id=theme_id):
+                    py_show = json.loads(
+                        subprocess.run([str(REPO_ROOT / "themes/bin/themectl"), "show", theme_id, "--json"],
+                                       env=env, capture_output=True, text=True, check=True).stdout
+                    )
+                    rs_show = json.loads(
+                        subprocess.run([str(BLOXD), "theme", "show", theme_id, "--json"],
+                                       env=env, capture_output=True, text=True, check=True).stdout
+                    )
+                    self.assertEqual(py_show, rs_show)
+
+    def test_clipboard_ingest_is_compatible_with_python_store(self):
+        import importlib.util
+        from io import BytesIO
+        from PIL import Image
+
+        spec = importlib.util.spec_from_file_location(
+            "clipboard_store", REPO_ROOT / "shell/scripts/launcher/clipboard_store.py"
+        )
+        clipboard_store = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(clipboard_store)
+
+        with tempfile.TemporaryDirectory(dir="/tmp", prefix="bloxd-clip-") as tmp:
+            root = Path(tmp) / "store"
+            env = {**os.environ, "XDG_RUNTIME_DIR": tmp}
+
+            # 1. Plain text + dedup
+            r1 = subprocess.run([str(BLOXD), "clipboard-ingest", "--root", str(root), "--mime", "text/plain;charset=utf-8"],
+                                input=b"hello rust clipboard", env=env, capture_output=True, check=True)
+            j1 = json.loads(r1.stdout)
+            self.assertTrue(j1["ok"])
+            r2 = subprocess.run([str(BLOXD), "clipboard-ingest", "--root", str(root), "--mime", "text/plain;charset=utf-8"],
+                                input=b"hello rust clipboard", env=env, capture_output=True, check=True)
+            self.assertEqual(j1["id"], json.loads(r2.stdout)["id"])
+
+            # 2. File URI canonicalisation & deduplication across text/plain vs text/uri-list
+            sample_file = Path(tmp) / "note.txt"
+            sample_file.write_text("hi")
+            f1 = subprocess.run([str(BLOXD), "clipboard-ingest", "--root", str(root), "--mime", "text/plain;charset=utf-8"],
+                                input=sample_file.as_uri().encode(), env=env, capture_output=True, check=True)
+            f2 = subprocess.run([str(BLOXD), "clipboard-ingest", "--root", str(root), "--mime", "text/uri-list"],
+                                input=(sample_file.as_uri() + "\n").encode(), env=env, capture_output=True, check=True)
+            self.assertEqual(json.loads(f1.stdout)["id"], json.loads(f2.stdout)["id"])
+
+            # 3. Valid PNG accepted, corrupt/huge PNG rejected, sensitive skipped
+            buf = BytesIO()
+            Image.new("RGB", (8, 6), (10, 20, 30)).save(buf, format="PNG")
+            img_ok = subprocess.run([str(BLOXD), "clipboard-ingest", "--root", str(root), "--mime", "image/png"],
+                                    input=buf.getvalue(), env=env, capture_output=True, check=True)
+            self.assertIsNotNone(json.loads(img_ok.stdout)["id"])
+
+            big = BytesIO()
+            Image.new("1", (5000, 4000)).save(big, format="PNG")
+            img_bad = subprocess.run([str(BLOXD), "clipboard-ingest", "--root", str(root), "--mime", "image/png"],
+                                     input=big.getvalue(), env=env, capture_output=True, check=True)
+            self.assertEqual("unsupported-image", json.loads(img_bad.stdout)["skipped"])
+
+            sens = subprocess.run([str(BLOXD), "clipboard-ingest", "--root", str(root), "--mime", "text/plain", "--sensitive"],
+                                  input=b"secret", env=env, capture_output=True, check=True)
+            self.assertEqual("sensitive", json.loads(sens.stdout)["skipped"])
+
+            # 4. Python Store reads back everything Rust wrote (including FTS search & file metadata)
+            store = clipboard_store.Store(root)
+            try:
+                rows, _ = store.list(limit=20)
+                self.assertEqual(3, len(rows))
+                search_rows, _ = store.list(query="rust")
+                self.assertEqual(1, len(search_rows))
+                self.assertEqual(2, search_rows[0]["use_count"])
+                uri_rows = [r for r in rows if r["mime"] == "text/uri-list"]
+                self.assertEqual(str(sample_file), uri_rows[0]["file_path"])
+            finally:
+                store.db.close()
+
 
 if __name__ == "__main__":
     unittest.main()

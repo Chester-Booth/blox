@@ -83,6 +83,7 @@ Scope {
         readonly property string bloxd: Quickshell.shellDir + "/native/qml/Blox/Services/bloxd"
 
         command: [bloxd, "window-state"]
+        stdinEnabled: true
         environment: ({BLOX_IPC_SCRIPT: Quickshell.shellDir + "/scripts/ipc.sh"})
         running: true
         onExited: windowStateRestart.restart()

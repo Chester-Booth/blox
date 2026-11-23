@@ -41,7 +41,5 @@ pub fn query_json(command: &str) -> Option<Json> {
 pub fn connect_events() -> io::Result<UnixStream> {
     let path = socket_path(".socket2.sock")
         .ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "Hyprland event socket unavailable"))?;
-    let stream = UnixStream::connect(path)?;
-    stream.set_nonblocking(true)?;
-    Ok(stream)
+    UnixStream::connect(path)
 }

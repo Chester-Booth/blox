@@ -8,36 +8,95 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use crate::hypr;
 use crate::json::{self, Json};
 
-#[repr(C)]
-struct Tm {
-    tm_sec: i32,
-    tm_min: i32,
-    tm_hour: i32,
-    tm_mday: i32,
-    tm_mon: i32,
-    tm_year: i32,
-    tm_wday: i32,
-    tm_yday: i32,
-    tm_isdst: i32,
-    tm_gmtoff: isize,
-    tm_zone: *const i8,
-}
+fn tzif_utc_offset_seconds(bytes: &[u8], epoch: i64) -> Option<i64> {
+    if bytes.len() < 44 || &bytes[0..4] != b"TZif" {
+        return None;
+    }
+    let version = bytes[4];
+    let be_u32 = |off: usize| -> Option<usize> {
+        let s = bytes.get(off..off + 4)?;
+        Some(u32::from_be_bytes([s[0], s[1], s[2], s[3]]) as usize)
+    };
+    let v1_isut = be_u32(20)?;
+    let v1_isstd = be_u32(24)?;
+    let v1_leap = be_u32(28)?;
+    let v1_time = be_u32(32)?;
+    let v1_type = be_u32(36)?;
+    let v1_char = be_u32(40)?;
 
-unsafe extern "C" {
-    fn time(t: *mut i64) -> i64;
-    fn localtime_r(timep: *const i64, result: *mut Tm) -> *mut Tm;
-}
+    // Prefer TZif v2/v3 64-bit block when present; fall back to v1 32-bit block.
+    let (hdr_off, is_64) = if version == b'2' || version == b'3' {
+        let v1_data = v1_time * 4 + v1_time + v1_type * 6 + v1_char + v1_leap * 8 + v1_isstd + v1_isut;
+        let off = 44 + v1_data;
+        if bytes.get(off..off + 4) == Some(b"TZif") {
+            (off, true)
+        } else {
+            (0, false)
+        }
+    } else {
+        (0, false)
+    };
 
-fn local_minutes_since_midnight() -> i32 {
-    let mut now: i64 = 0;
-    unsafe {
-        time(&mut now);
-        let mut out = std::mem::zeroed::<Tm>();
-        if !localtime_r(&now, &mut out).is_null() {
-            return out.tm_hour * 60 + out.tm_min;
+    let time_cnt = be_u32(hdr_off + 32)?;
+    let type_cnt = be_u32(hdr_off + 36)?;
+    if type_cnt == 0 {
+        return None;
+    }
+    let trans_off = hdr_off + 44;
+    let time_size = if is_64 { 8 } else { 4 };
+    let idx_off = trans_off + time_cnt * time_size;
+    let ttinfo_off = idx_off + time_cnt;
+
+    let mut chosen_type: usize = 0;
+    for i in 0..time_cnt {
+        let t_off = trans_off + i * time_size;
+        let t = if is_64 {
+            let s = bytes.get(t_off..t_off + 8)?;
+            i64::from_be_bytes([s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7]])
+        } else {
+            let s = bytes.get(t_off..t_off + 4)?;
+            i32::from_be_bytes([s[0], s[1], s[2], s[3]]) as i64
+        };
+        if t <= epoch {
+            chosen_type = *bytes.get(idx_off + i)? as usize;
+        } else {
+            break;
         }
     }
-    0
+    let info_off = ttinfo_off + chosen_type.min(type_cnt - 1) * 6;
+    let s = bytes.get(info_off..info_off + 4)?;
+    Some(i32::from_be_bytes([s[0], s[1], s[2], s[3]]) as i64)
+}
+
+fn local_tz_path() -> PathBuf {
+    if let Ok(tz) = env::var("TZ") {
+        let trimmed = tz.trim_start_matches(':');
+        if !trimmed.is_empty() {
+            let candidate = if trimmed.starts_with('/') {
+                PathBuf::from(trimmed)
+            } else {
+                PathBuf::from("/usr/share/zoneinfo").join(trimmed)
+            };
+            if candidate.is_file() {
+                return candidate;
+            }
+        }
+    }
+    PathBuf::from("/etc/localtime")
+}
+
+/// Compute local minutes since midnight using pure-safe TZif parsing (zero unsafe).
+fn local_minutes_since_midnight() -> i32 {
+    let epoch = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_secs() as i64)
+        .unwrap_or(0);
+    let offset = fs::read(local_tz_path())
+        .ok()
+        .and_then(|bytes| tzif_utc_offset_seconds(&bytes, epoch))
+        .unwrap_or(0);
+    let local_secs = (epoch + offset).rem_euclid(86_400);
+    (local_secs / 60) as i32
 }
 
 pub fn command_exists(name: &str) -> bool {

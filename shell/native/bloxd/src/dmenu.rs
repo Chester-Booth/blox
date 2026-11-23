@@ -1,29 +1,25 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 use std::env;
 use std::fs;
-use std::io::{self, Read, Write};
-use std::os::fd::AsRawFd;
+use std::io::{self, BufRead, BufReader, Read, Write};
+use std::net::Shutdown;
 use std::os::unix::fs::PermissionsExt;
 use std::os::unix::net::{UnixListener, UnixStream};
 use std::path::PathBuf;
+use std::sync::mpsc;
+use std::thread;
 
 use crate::json::{self, Json};
 
 const MAX_REQUEST: usize = 1024 * 1024;
 const MAX_ITEMS: usize = 10_000;
-const POLLIN: i16 = 0x0001;
-const POLLERR: i16 = 0x0008;
-const POLLHUP: i16 = 0x0010;
 
-#[repr(C)]
-struct PollFd {
-    fd: i32,
-    events: i16,
-    revents: i16,
-}
-
-unsafe extern "C" {
-    fn poll(fds: *mut PollFd, count: usize, timeout: i32) -> i32;
+enum Event {
+    StdinLine(Vec<u8>),
+    StdinClosed,
+    Accepted(UnixStream),
+    ClientLine(u64, Vec<u8>),
+    ClientClosed(u64),
 }
 
 fn valid_options(value: &Json) -> Option<Vec<String>> {
@@ -81,15 +77,10 @@ fn parse_response(value: &[u8]) -> Option<Json> {
     ])))
 }
 
-struct Client {
-    stream: UnixStream,
-    buffer: Vec<u8>,
-}
-
-fn send(client: &mut Client, value: Json) {
+fn send_json(stream: &mut UnixStream, value: Json) {
     let mut encoded = json::encode(&value).into_bytes();
     encoded.push(b'\n');
-    let _ = client.stream.write_all(&encoded);
+    let _ = stream.write_all(&encoded);
 }
 
 fn error_response(error: &str) -> Json {
@@ -100,29 +91,64 @@ fn error_response(error: &str) -> Json {
     ])
 }
 
-fn remove_client(clients: &mut Vec<Client>, active: &mut Option<usize>, index: usize, announce: bool) {
-    let was_active = *active == Some(index);
-    clients.remove(index);
-    if let Some(current) = *active {
-        if current == index {
-            *active = None;
-        } else if current > index {
-            *active = Some(current - 1);
-        }
-    }
-    if was_active && announce {
-        println!("{{\"event\":\"abandoned\"}}");
-        let _ = io::stdout().flush();
-    }
-}
-
 fn runtime_path() -> Option<(PathBuf, PathBuf)> {
     let root = PathBuf::from(env::var_os("XDG_RUNTIME_DIR")?);
     let directory = root.join("blox-launcher");
     Some((directory.clone(), directory.join("dmenu.sock")))
 }
 
-/// Serve the launcher dmenu Unix socket bridge over stdin/stdout JSONL.
+fn spawn_client_reader(id: u64, mut stream: UnixStream, tx: mpsc::Sender<Event>) {
+    let _ = thread::Builder::new()
+        .name("dmenu-client".to_string())
+        .stack_size(128 * 1024)
+        .spawn(move || {
+            let mut buffer = Vec::new();
+            let mut chunk = vec![0_u8; 65536];
+            loop {
+                match stream.read(&mut chunk) {
+                    Ok(0) | Err(_) => {
+                        let _ = tx.send(Event::ClientClosed(id));
+                        return;
+                    }
+                    Ok(size) => {
+                        buffer.extend_from_slice(&chunk[..size]);
+                        if buffer.len() > MAX_REQUEST {
+                            let _ = tx.send(Event::ClientClosed(id));
+                            return;
+                        }
+                        while let Some(end) = buffer.iter().position(|b| *b == b'\n') {
+                            let line: Vec<u8> = buffer.drain(..=end).collect();
+                            let payload = line[..line.len() - 1].to_vec();
+                            if tx.send(Event::ClientLine(id, payload)).is_err() {
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+}
+
+fn close_client(
+    clients: &mut HashMap<u64, UnixStream>,
+    active: &mut Option<u64>,
+    id: u64,
+    announce: bool,
+) {
+    let was_active = *active == Some(id);
+    if let Some(stream) = clients.remove(&id) {
+        let _ = stream.shutdown(Shutdown::Both);
+    }
+    if was_active {
+        *active = None;
+        if announce {
+            println!("{{\"event\":\"abandoned\"}}");
+            let _ = io::stdout().flush();
+        }
+    }
+}
+
+/// Serve the launcher dmenu Unix socket bridge over stdin/stdout JSONL (zero unsafe).
 pub fn run() -> io::Result<()> {
     let (runtime, socket_path) = runtime_path()
         .ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "XDG_RUNTIME_DIR is not set"))?;
@@ -131,132 +157,116 @@ pub fn run() -> io::Result<()> {
     let _ = fs::remove_file(&socket_path);
     let listener = UnixListener::bind(&socket_path)?;
     fs::set_permissions(&socket_path, fs::Permissions::from_mode(0o600))?;
-    listener.set_nonblocking(true)?;
 
-    let mut stdin = io::stdin();
-    let mut stdin_buffer = Vec::new();
-    let mut clients: Vec<Client> = Vec::new();
-    let mut active: Option<usize> = None;
+    let (tx, rx) = mpsc::channel::<Event>();
 
-    'server: loop {
-        let mut pollfds = vec![
-            PollFd { fd: listener.as_raw_fd(), events: POLLIN, revents: 0 },
-            PollFd { fd: 0, events: POLLIN, revents: 0 },
-        ];
-        pollfds.extend(clients.iter().map(|c| PollFd {
-            fd: c.stream.as_raw_fd(),
-            events: POLLIN,
-            revents: 0,
-        }));
-        let result = unsafe { poll(pollfds.as_mut_ptr(), pollfds.len(), -1) };
-        if result < 0 {
-            let err = io::Error::last_os_error();
-            if err.kind() == io::ErrorKind::Interrupted {
-                continue;
-            }
-            return Err(err);
-        }
-
-        if pollfds[1].revents & (POLLIN | POLLHUP) != 0 {
-            let mut chunk = [0_u8; 8192];
-            let size = stdin.read(&mut chunk)?;
-            if size == 0 {
-                break 'server;
-            }
-            stdin_buffer.extend_from_slice(&chunk[..size]);
-            while let Some(end) = stdin_buffer.iter().position(|b| *b == b'\n') {
-                let line: Vec<u8> = stdin_buffer.drain(..=end).collect();
-                if let Some(index) = active {
-                    if let Some(value) = parse_response(&line[..line.len() - 1]) {
-                        send(&mut clients[index], value);
-                    } else {
-                        send(&mut clients[index], error_response("invalid response"));
+    let tx_stdin = tx.clone();
+    thread::Builder::new()
+        .name("dmenu-stdin".to_string())
+        .stack_size(128 * 1024)
+        .spawn(move || {
+            let stdin = io::stdin();
+            let mut reader = BufReader::new(stdin.lock());
+            let mut line = Vec::new();
+            loop {
+                line.clear();
+                match reader.read_until(b'\n', &mut line) {
+                    Ok(0) | Err(_) => {
+                        let _ = tx_stdin.send(Event::StdinClosed);
+                        return;
                     }
-                    remove_client(&mut clients, &mut active, index, false);
+                    Ok(_) => {
+                        if line.last() == Some(&b'\n') {
+                            line.pop();
+                        }
+                        if tx_stdin.send(Event::StdinLine(line.clone())).is_err() {
+                            return;
+                        }
+                    }
                 }
             }
-        }
+        })?;
 
-        if pollfds[0].revents & (POLLIN | POLLERR) != 0 {
-            loop {
-                match listener.accept() {
-                    Ok((stream, _)) => {
-                        stream.set_nonblocking(true)?;
-                        if active.is_some() {
-                            let mut client = Client { stream, buffer: Vec::new() };
-                            send(&mut client, error_response("busy"));
+    let tx_accept = tx.clone();
+    let listener_clone = listener.try_clone()?;
+    thread::Builder::new()
+        .name("dmenu-accept".to_string())
+        .stack_size(128 * 1024)
+        .spawn(move || {
+            for incoming in listener_clone.incoming() {
+                match incoming {
+                    Ok(stream) => {
+                        if tx_accept.send(Event::Accepted(stream)).is_err() {
+                            return;
+                        }
+                    }
+                    Err(_) => return,
+                }
+            }
+        })?;
+
+    let mut next_id: u64 = 1;
+    let mut clients: HashMap<u64, UnixStream> = HashMap::new();
+    let mut active: Option<u64> = None;
+
+    while let Ok(event) = rx.recv() {
+        match event {
+            Event::StdinClosed => break,
+            Event::StdinLine(line) => {
+                if let Some(id) = active {
+                    if let Some(stream) = clients.get_mut(&id) {
+                        if let Some(value) = parse_response(&line) {
+                            send_json(stream, value);
                         } else {
-                            clients.push(Client { stream, buffer: Vec::new() });
+                            send_json(stream, error_response("invalid response"));
                         }
                     }
-                    Err(error) if error.kind() == io::ErrorKind::WouldBlock => break,
-                    Err(error) => return Err(error),
+                    close_client(&mut clients, &mut active, id, false);
                 }
             }
-        }
-
-        let ready: Vec<usize> = pollfds
-            .iter()
-            .enumerate()
-            .skip(2)
-            .filter(|(_, entry)| entry.revents & (POLLIN | POLLERR | POLLHUP) != 0)
-            .map(|(index, _)| index - 2)
-            .collect();
-        for index in ready.into_iter().rev() {
-            if index >= clients.len() {
-                continue;
-            }
-            let mut closed = false;
-            let mut chunk = [0_u8; 65536];
-            loop {
-                match clients[index].stream.read(&mut chunk) {
-                    Ok(0) => {
-                        closed = true;
-                        break;
-                    }
-                    Ok(size) => {
-                        clients[index].buffer.extend_from_slice(&chunk[..size]);
-                        if clients[index].buffer.len() > MAX_REQUEST {
-                            closed = true;
-                            break;
-                        }
-                    }
-                    Err(error) if error.kind() == io::ErrorKind::WouldBlock => break,
-                    Err(_) => {
-                        closed = true;
-                        break;
-                    }
+            Event::Accepted(mut stream) => {
+                if active.is_some() {
+                    send_json(&mut stream, error_response("busy"));
+                    let _ = stream.shutdown(Shutdown::Both);
+                } else if let Ok(reader_stream) = stream.try_clone() {
+                    let id = next_id;
+                    next_id += 1;
+                    clients.insert(id, stream);
+                    spawn_client_reader(id, reader_stream, tx.clone());
                 }
             }
-            if closed {
-                let announce = active == Some(index);
-                remove_client(&mut clients, &mut active, index, announce);
-                continue;
+            Event::ClientClosed(id) => {
+                let announce = active == Some(id);
+                close_client(&mut clients, &mut active, id, announce);
             }
-            while let Some(end) = clients[index].buffer.iter().position(|b| *b == b'\n') {
-                let line: Vec<u8> = clients[index].buffer.drain(..=end).collect();
-                let payload = &line[..line.len() - 1];
-                if active == Some(index) {
-                    if let Some(value) = parse_update(payload) {
+            Event::ClientLine(id, payload) => {
+                if !clients.contains_key(&id) {
+                    continue;
+                }
+                if active == Some(id) {
+                    if let Some(value) = parse_update(&payload) {
                         println!("{}", json::encode(&value));
                         let _ = io::stdout().flush();
                     } else {
-                        send(&mut clients[index], error_response("invalid update"));
-                        remove_client(&mut clients, &mut active, index, true);
-                        break;
+                        if let Some(stream) = clients.get_mut(&id) {
+                            send_json(stream, error_response("invalid update"));
+                        }
+                        close_client(&mut clients, &mut active, id, true);
                     }
                 } else if active.is_some() {
-                    send(&mut clients[index], error_response("busy"));
-                    remove_client(&mut clients, &mut active, index, false);
-                    break;
-                } else if let Some(value) = parse_request(payload) {
-                    active = Some(index);
+                    if let Some(stream) = clients.get_mut(&id) {
+                        send_json(stream, error_response("busy"));
+                    }
+                    close_client(&mut clients, &mut active, id, false);
+                } else if let Some(value) = parse_request(&payload) {
+                    active = Some(id);
                     println!("{}", json::encode(&value));
                     let _ = io::stdout().flush();
                 } else {
-                    send(&mut clients[index], error_response("invalid request"));
-                    remove_client(&mut clients, &mut active, index, false);
-                    break;
+                    if let Some(stream) = clients.get_mut(&id) {
+                        send_json(stream, error_response("invalid request"));
+                    }
+                    close_client(&mut clients, &mut active, id, false);
                 }
             }
         }

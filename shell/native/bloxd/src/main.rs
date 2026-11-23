@@ -1,3 +1,5 @@
+#![deny(unsafe_code)]
+
 mod clipboard;
 mod daemon;
 mod dmenu;
@@ -11,29 +13,25 @@ mod window_state;
 mod workspaces;
 
 use std::env;
-use std::io;
+use std::io::{self, Read};
 use std::process;
+use std::thread;
 
-const PR_SET_PDEATHSIG: i32 = 1;
-const SIGTERM: i32 = 15;
-
-unsafe extern "C" {
-    fn prctl(option: i32, arg2: usize, arg3: usize, arg4: usize, arg5: usize) -> i32;
-    fn getppid() -> i32;
-}
-
-/// Arm Linux PR_SET_PDEATHSIG so long-lived daemons exit when Quickshell exits.
-pub fn arm_parent_death_signal() {
-    let expected = unsafe { getppid() };
-    if expected <= 1 {
-        process::exit(0);
-    }
-    unsafe {
-        prctl(PR_SET_PDEATHSIG, SIGTERM as usize, 0, 0, 0);
-    }
-    if unsafe { getppid() } != expected {
-        process::exit(0);
-    }
+/// Exit cleanly when the parent (Quickshell) closes stdin or terminates.
+pub fn spawn_stdin_eof_guard() {
+    let _ = thread::Builder::new()
+        .name("stdin-guard".to_string())
+        .stack_size(128 * 1024)
+        .spawn(|| {
+            let mut stdin = io::stdin();
+            let mut buf = [0_u8; 64];
+            loop {
+                match stdin.read(&mut buf) {
+                    Ok(0) | Err(_) => process::exit(0),
+                    Ok(_) => {}
+                }
+            }
+        });
 }
 
 fn run() -> io::Result<()> {
@@ -42,30 +40,19 @@ fn run() -> io::Result<()> {
         eprintln!("usage: bloxd <dmenu|window-state|bar-daemon|clipboard-watch|clipboard-ingest|status|theme> [args...]");
         process::exit(2);
     };
+    let parent_guard = !args.iter().any(|a| a == "--no-parent-guard");
 
     match cmd {
-        "dmenu" => {
-            if !args.iter().any(|a| a == "--no-parent-guard") {
-                arm_parent_death_signal();
-            }
-            dmenu::run()
-        }
+        "dmenu" => dmenu::run(),
         "window-state" => {
-            if !args.iter().any(|a| a == "--no-parent-guard") {
-                arm_parent_death_signal();
+            if parent_guard {
+                spawn_stdin_eof_guard();
             }
             window_state::run()
         }
-        "bar-daemon" => {
-            if !args.iter().any(|a| a == "--no-parent-guard") {
-                arm_parent_death_signal();
-            }
-            daemon::run()
-        }
+        "bar-daemon" => daemon::run(),
         "clipboard-watch" => {
-            if !args.iter().any(|a| a == "--no-parent-guard") {
-                arm_parent_death_signal();
-            }
+            spawn_stdin_eof_guard();
             clipboard::cmd_watch(&args[1..]).map_err(|e| io::Error::new(io::ErrorKind::Other, e))
         }
         "clipboard-ingest" => {

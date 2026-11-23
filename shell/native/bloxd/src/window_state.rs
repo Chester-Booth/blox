@@ -2,7 +2,6 @@ use std::collections::{BTreeMap, HashMap, HashSet};
 use std::env;
 use std::fs;
 use std::io::{self, Read};
-use std::os::fd::AsRawFd;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 use std::time::{Duration, Instant};
@@ -11,20 +10,6 @@ use crate::hypr;
 use crate::json::{self, Json};
 
 const PICKER_CLASS: &str = "org.quickshell";
-const POLLIN: i16 = 0x0001;
-const POLLERR: i16 = 0x0008;
-const POLLHUP: i16 = 0x0010;
-
-#[repr(C)]
-struct PollFd {
-    fd: i32,
-    events: i16,
-    revents: i16,
-}
-
-unsafe extern "C" {
-    fn poll(fds: *mut PollFd, count: usize, timeout: i32) -> i32;
-}
 
 fn picker_kind(title: &str) -> Option<&'static str> {
     match title {
@@ -165,7 +150,7 @@ fn run_ipc(args: &[&str]) {
 }
 
 /// Event-driven Hyprland picker position persistence and outside-click close.
-/// Sleeps indefinitely on poll() when no picker window is open (zero idle CPU).
+/// Blocks indefinitely on the Hyprland socket when idle (zero idle CPU, zero unsafe).
 pub fn run() -> io::Result<()> {
     let mut stream = hypr::connect_events()?;
     let path = state_path();
@@ -178,84 +163,80 @@ pub fn run() -> io::Result<()> {
     let mut chunk = [0_u8; 65536];
 
     loop {
-        // Sleep indefinitely when idle; only wake every 50ms while a picker is actively open.
-        let timeout_ms = if tracked.is_empty() { -1 } else { 50 };
-        let mut pfd = PollFd { fd: stream.as_raw_fd(), events: POLLIN, revents: 0 };
-        let res = unsafe { poll(&mut pfd, 1, timeout_ms) };
-        if res < 0 {
-            let err = io::Error::last_os_error();
-            if err.kind() == io::ErrorKind::Interrupted {
-                continue;
-            }
-            return Err(err);
+        // Block indefinitely when idle; wake every 50ms only while a picker is actively open.
+        let timeout = if tracked.is_empty() {
+            None
+        } else {
+            Some(Duration::from_millis(50))
+        };
+        stream.set_read_timeout(timeout)?;
+
+        match stream.read(&mut chunk) {
+            Ok(0) => return Ok(()),
+            Ok(n) => buffer.extend_from_slice(&chunk[..n]),
+            Err(e)
+                if e.kind() == io::ErrorKind::WouldBlock
+                    || e.kind() == io::ErrorKind::TimedOut
+                    || e.kind() == io::ErrorKind::Interrupted => {}
+            Err(e) => return Err(e),
         }
 
-        if pfd.revents & (POLLIN | POLLERR | POLLHUP) != 0 {
-            loop {
-                match stream.read(&mut chunk) {
-                    Ok(0) => return Ok(()),
-                    Ok(n) => buffer.extend_from_slice(&chunk[..n]),
-                    Err(e) if e.kind() == io::ErrorKind::WouldBlock => break,
-                    Err(e) => return Err(e),
+        while let Some(nl) = buffer.iter().position(|b| *b == b'\n') {
+            let raw: Vec<u8> = buffer.drain(..=nl).collect();
+            let line = String::from_utf8_lossy(&raw[..raw.len() - 1]);
+            let Some((event, data)) = line.split_once(">>") else { continue };
+            match event {
+                "openwindow" => {
+                    let mut parts = data.splitn(4, ',');
+                    let addr = norm_addr(parts.next().unwrap_or(""));
+                    let _ws = parts.next();
+                    let class = parts.next().unwrap_or("");
+                    let title = parts.next().unwrap_or("");
+                    if class == PICKER_CLASS {
+                        if let Some(kind) = picker_kind(title) {
+                            tracked.insert(addr.clone(), kind);
+                            restore_until.insert(addr.clone(), Instant::now() + Duration::from_millis(650));
+                            if restore(&addr, kind, &state) {
+                                run_ipc(&["launcher", "positioned", kind]);
+                                ready.insert(addr);
+                            }
+                        }
+                    }
                 }
-            }
-            while let Some(nl) = buffer.iter().position(|b| *b == b'\n') {
-                let raw: Vec<u8> = buffer.drain(..=nl).collect();
-                let line = String::from_utf8_lossy(&raw[..raw.len() - 1]);
-                let Some((event, data)) = line.split_once(">>") else { continue };
-                match event {
-                    "openwindow" => {
-                        let mut parts = data.splitn(4, ',');
-                        let addr = norm_addr(parts.next().unwrap_or(""));
-                        let _ws = parts.next();
-                        let class = parts.next().unwrap_or("");
-                        let title = parts.next().unwrap_or("");
-                        if class == PICKER_CLASS {
-                            if let Some(kind) = picker_kind(title) {
-                                tracked.insert(addr.clone(), kind);
-                                restore_until.insert(addr.clone(), Instant::now() + Duration::from_millis(650));
-                                if restore(&addr, kind, &state) {
-                                    run_ipc(&["launcher", "positioned", kind]);
-                                    ready.insert(addr);
-                                }
-                            }
+                "closewindow" => {
+                    let addr = norm_addr(data);
+                    if let Some(kind) = tracked.remove(&addr) {
+                        let pos = last_geometry.remove(&addr).or_else(|| {
+                            clients_map().get(&addr).and_then(|c| pair_i64(c.get("at")))
+                        });
+                        if let Some((x, y)) = pos {
+                            state.insert(
+                                kind.to_string(),
+                                Json::obj([("x", Json::Int(x)), ("y", Json::Int(y))]),
+                            );
+                            save_state(&path, &state);
                         }
+                        restore_until.remove(&addr);
+                        ready.remove(&addr);
                     }
-                    "closewindow" => {
-                        let addr = norm_addr(data);
-                        if let Some(kind) = tracked.remove(&addr) {
-                            let pos = last_geometry.remove(&addr).or_else(|| {
-                                clients_map().get(&addr).and_then(|c| pair_i64(c.get("at")))
-                            });
-                            if let Some((x, y)) = pos {
-                                state.insert(
-                                    kind.to_string(),
-                                    Json::obj([("x", Json::Int(x)), ("y", Json::Int(y))]),
-                                );
-                                save_state(&path, &state);
-                            }
-                            restore_until.remove(&addr);
-                            ready.remove(&addr);
-                        }
-                    }
-                    "custom" if data == "blox-picker-click" && !tracked.is_empty() => {
-                        let live = clients_map();
-                        let inside = cursor_pos()
-                            .map(|(cx, cy)| {
-                                tracked.keys().any(|addr| {
-                                    live.get(addr)
-                                        .and_then(|c| Some((pair_i64(c.get("at"))?, pair_i64(c.get("size"))?)))
-                                        .map(|((x, y), (w, h))| cx >= x && cx < x + w && cy >= y && cy < y + h)
-                                        .unwrap_or(false)
-                                })
+                }
+                "custom" if data == "blox-picker-click" && !tracked.is_empty() => {
+                    let live = clients_map();
+                    let inside = cursor_pos()
+                        .map(|(cx, cy)| {
+                            tracked.keys().any(|addr| {
+                                live.get(addr)
+                                    .and_then(|c| Some((pair_i64(c.get("at"))?, pair_i64(c.get("size"))?)))
+                                    .map(|((x, y), (w, h))| cx >= x && cx < x + w && cy >= y && cy < y + h)
+                                    .unwrap_or(false)
                             })
-                            .unwrap_or(false);
-                        if !inside {
-                            run_ipc(&["launcher", "close"]);
-                        }
+                        })
+                        .unwrap_or(false);
+                    if !inside {
+                        run_ipc(&["launcher", "close"]);
                     }
-                    _ => {}
                 }
+                _ => {}
             }
         }
 

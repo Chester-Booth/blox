@@ -1,14 +1,14 @@
 use std::collections::HashMap;
 use std::env;
-use std::ffi::{CStr, CString, c_char, c_int, c_void};
-use std::fs::{self, File, OpenOptions};
+use std::fs::{self, DirBuilder, File, OpenOptions};
 use std::io::{self, Read, Write};
-use std::os::fd::{AsRawFd, FromRawFd, RawFd};
-use std::os::unix::fs::PermissionsExt;
+use std::os::fd::{AsRawFd, RawFd};
+use std::os::unix::fs::{DirBuilderExt, MetadataExt, OpenOptionsExt, PermissionsExt};
 use std::os::unix::net::UnixStream;
 use std::path::{Path, PathBuf};
-use std::ptr;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::sync::mpsc;
+use std::thread;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use crate::json::{self, Json};
 use crate::sha256;
@@ -18,257 +18,294 @@ const MAX_PAYLOAD: usize = 32 * 1024 * 1024;
 const MAX_UNPINNED_BYTES: i64 = 500 * 1024 * 1024;
 const MAX_IMAGE_PIXELS: u64 = 16_000_000;
 
-const LOCK_EX: c_int = 2;
-const O_CLOEXEC: c_int = 0x80000;
-const POLLIN: i16 = 0x0001;
-const POLLERR: i16 = 0x0008;
-const POLLHUP: i16 = 0x0010;
-const SOL_SOCKET: c_int = 1;
-const SCM_RIGHTS: c_int = 1;
-const SQLITE_OK: c_int = 0;
-const SQLITE_ROW: c_int = 100;
-const SQLITE_DONE: c_int = 101;
-const SQLITE_OPEN_READWRITE: c_int = 0x00000002;
-const SQLITE_OPEN_CREATE: c_int = 0x00000004;
+/// Narrow FFI isolation for the two boundaries unavailable in Rust stdlib:
+/// 1. `libsqlite3` C API (zero-crate SQLite access).
+/// 2. `sendmsg(SCM_RIGHTS)` required by Wayland `data_control_offer.receive`.
+#[allow(unsafe_code)]
+mod ffi {
+    use std::ffi::{CStr, CString, c_char, c_int, c_void};
+    use std::io;
+    use std::os::fd::RawFd;
+    use std::path::Path;
+    use std::ptr;
 
-#[repr(C)]
-struct PollFd {
-    fd: c_int,
-    events: i16,
-    revents: i16,
-}
+    pub const SQLITE_OK: c_int = 0;
+    pub const SQLITE_ROW: c_int = 100;
+    pub const SQLITE_DONE: c_int = 101;
+    const SQLITE_OPEN_READWRITE: c_int = 0x00000002;
+    const SQLITE_OPEN_CREATE: c_int = 0x00000004;
+    const SQLITE_TRANSIENT: isize = -1;
+    const SOL_SOCKET: c_int = 1;
+    const SCM_RIGHTS: c_int = 1;
 
-#[repr(C)]
-struct IoVec {
-    iov_base: *mut c_void,
-    iov_len: usize,
-}
+    #[repr(C)]
+    struct IoVec {
+        iov_base: *mut c_void,
+        iov_len: usize,
+    }
 
-#[repr(C)]
-struct MsgHdr {
-    msg_name: *mut c_void,
-    msg_namelen: u32,
-    msg_iov: *mut IoVec,
-    msg_iovlen: usize,
-    msg_control: *mut c_void,
-    msg_controllen: usize,
-    msg_flags: c_int,
-}
+    #[repr(C)]
+    struct MsgHdr {
+        msg_name: *mut c_void,
+        msg_namelen: u32,
+        msg_iov: *mut IoVec,
+        msg_iovlen: usize,
+        msg_control: *mut c_void,
+        msg_controllen: usize,
+        msg_flags: c_int,
+    }
 
-#[repr(C)]
-struct CMsgHdr {
-    cmsg_len: usize,
-    cmsg_level: c_int,
-    cmsg_type: c_int,
-}
+    #[repr(C)]
+    struct CMsgHdr {
+        cmsg_len: usize,
+        cmsg_level: c_int,
+        cmsg_type: c_int,
+    }
 
-#[repr(C)]
-struct Sqlite3 {
-    _private: [u8; 0],
-}
+    #[repr(C)]
+    struct Sqlite3 {
+        _private: [u8; 0],
+    }
 
-#[repr(C)]
-struct Sqlite3Stmt {
-    _private: [u8; 0],
-}
+    #[repr(C)]
+    struct Sqlite3Stmt {
+        _private: [u8; 0],
+    }
 
-unsafe extern "C" {
-    fn flock(fd: c_int, operation: c_int) -> c_int;
-    fn getuid() -> u32;
-    fn pipe2(fds: *mut c_int, flags: c_int) -> c_int;
-    fn close(fd: c_int) -> c_int;
-    fn poll(fds: *mut PollFd, count: usize, timeout: c_int) -> c_int;
-    fn sendmsg(sockfd: c_int, msg: *const MsgHdr, flags: c_int) -> isize;
-    fn umask(mask: u32) -> u32;
-}
+    unsafe extern "C" {
+        fn sendmsg(sockfd: c_int, msg: *const MsgHdr, flags: c_int) -> isize;
+    }
 
-#[link(name = "sqlite3")]
-unsafe extern "C" {
-    fn sqlite3_open_v2(
-        filename: *const c_char,
-        pp_db: *mut *mut Sqlite3,
-        flags: c_int,
-        z_vfs: *const c_char,
-    ) -> c_int;
-    fn sqlite3_close(db: *mut Sqlite3) -> c_int;
-    fn sqlite3_errmsg(db: *mut Sqlite3) -> *const c_char;
-    fn sqlite3_exec(
-        db: *mut Sqlite3,
-        sql: *const c_char,
-        callback: *const c_void,
-        arg: *mut c_void,
-        errmsg: *mut *mut c_char,
-    ) -> c_int;
-    fn sqlite3_free(ptr: *mut c_void);
-    fn sqlite3_prepare_v2(
-        db: *mut Sqlite3,
-        z_sql: *const c_char,
-        n_byte: c_int,
-        pp_stmt: *mut *mut Sqlite3Stmt,
-        pz_tail: *mut *const c_char,
-    ) -> c_int;
-    fn sqlite3_bind_text(
-        stmt: *mut Sqlite3Stmt,
-        idx: c_int,
-        val: *const c_char,
-        n: c_int,
-        destructor: isize,
-    ) -> c_int;
-    fn sqlite3_bind_int64(stmt: *mut Sqlite3Stmt, idx: c_int, val: i64) -> c_int;
-    fn sqlite3_step(stmt: *mut Sqlite3Stmt) -> c_int;
-    fn sqlite3_column_int64(stmt: *mut Sqlite3Stmt, col: c_int) -> i64;
-    fn sqlite3_column_text(stmt: *mut Sqlite3Stmt, col: c_int) -> *const u8;
-    fn sqlite3_column_bytes(stmt: *mut Sqlite3Stmt, col: c_int) -> c_int;
-    fn sqlite3_last_insert_rowid(db: *mut Sqlite3) -> i64;
-    fn sqlite3_finalize(stmt: *mut Sqlite3Stmt) -> c_int;
-}
+    #[link(name = "sqlite3")]
+    unsafe extern "C" {
+        fn sqlite3_open_v2(
+            filename: *const c_char,
+            pp_db: *mut *mut Sqlite3,
+            flags: c_int,
+            z_vfs: *const c_char,
+        ) -> c_int;
+        fn sqlite3_close(db: *mut Sqlite3) -> c_int;
+        fn sqlite3_errmsg(db: *mut Sqlite3) -> *const c_char;
+        fn sqlite3_exec(
+            db: *mut Sqlite3,
+            sql: *const c_char,
+            callback: *const c_void,
+            arg: *mut c_void,
+            errmsg: *mut *mut c_char,
+        ) -> c_int;
+        fn sqlite3_free(ptr: *mut c_void);
+        fn sqlite3_prepare_v2(
+            db: *mut Sqlite3,
+            z_sql: *const c_char,
+            n_byte: c_int,
+            pp_stmt: *mut *mut Sqlite3Stmt,
+            pz_tail: *mut *const c_char,
+        ) -> c_int;
+        fn sqlite3_bind_text(
+            stmt: *mut Sqlite3Stmt,
+            idx: c_int,
+            val: *const c_char,
+            n: c_int,
+            destructor: isize,
+        ) -> c_int;
+        fn sqlite3_bind_int64(stmt: *mut Sqlite3Stmt, idx: c_int, val: i64) -> c_int;
+        fn sqlite3_step(stmt: *mut Sqlite3Stmt) -> c_int;
+        fn sqlite3_column_int64(stmt: *mut Sqlite3Stmt, col: c_int) -> i64;
+        fn sqlite3_column_text(stmt: *mut Sqlite3Stmt, col: c_int) -> *const u8;
+        fn sqlite3_column_bytes(stmt: *mut Sqlite3Stmt, col: c_int) -> c_int;
+        fn sqlite3_last_insert_rowid(db: *mut Sqlite3) -> i64;
+        fn sqlite3_finalize(stmt: *mut Sqlite3Stmt) -> c_int;
+    }
 
-const SQLITE_TRANSIENT: isize = -1;
+    pub struct Db {
+        raw: *mut Sqlite3,
+    }
 
-struct Db {
-    raw: *mut Sqlite3,
-}
-
-impl Drop for Db {
-    fn drop(&mut self) {
-        if !self.raw.is_null() {
-            unsafe {
-                sqlite3_close(self.raw);
+    impl Drop for Db {
+        fn drop(&mut self) {
+            if !self.raw.is_null() {
+                unsafe {
+                    sqlite3_close(self.raw);
+                }
             }
         }
     }
-}
 
-struct Stmt {
-    raw: *mut Sqlite3Stmt,
-}
+    pub struct Stmt {
+        raw: *mut Sqlite3Stmt,
+    }
 
-impl Drop for Stmt {
-    fn drop(&mut self) {
-        if !self.raw.is_null() {
-            unsafe {
-                sqlite3_finalize(self.raw);
+    impl Drop for Stmt {
+        fn drop(&mut self) {
+            if !self.raw.is_null() {
+                unsafe {
+                    sqlite3_finalize(self.raw);
+                }
             }
         }
     }
-}
 
-impl Db {
-    fn open(path: &Path) -> Result<Self, String> {
-        let c_path = CString::new(path.to_string_lossy().as_bytes())
-            .map_err(|_| "invalid sqlite path".to_string())?;
-        let mut raw: *mut Sqlite3 = ptr::null_mut();
-        let rc = unsafe {
-            sqlite3_open_v2(
-                c_path.as_ptr(),
-                &mut raw,
-                SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE,
-                ptr::null(),
-            )
-        };
-        if rc != SQLITE_OK || raw.is_null() {
-            let msg = if raw.is_null() {
-                format!("sqlite open failed ({rc})")
-            } else {
-                let s = unsafe { CStr::from_ptr(sqlite3_errmsg(raw)) }
-                    .to_string_lossy()
-                    .into_owned();
-                unsafe { sqlite3_close(raw) };
-                s
+    impl Db {
+        pub fn open(path: &Path) -> Result<Self, String> {
+            let c_path = CString::new(path.to_string_lossy().as_bytes())
+                .map_err(|_| "invalid sqlite path".to_string())?;
+            let mut raw: *mut Sqlite3 = ptr::null_mut();
+            let rc = unsafe {
+                sqlite3_open_v2(
+                    c_path.as_ptr(),
+                    &mut raw,
+                    SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE,
+                    ptr::null(),
+                )
             };
-            return Err(msg);
+            if rc != SQLITE_OK || raw.is_null() {
+                let msg = if raw.is_null() {
+                    format!("sqlite open failed ({rc})")
+                } else {
+                    let s = unsafe { CStr::from_ptr(sqlite3_errmsg(raw)) }
+                        .to_string_lossy()
+                        .into_owned();
+                    unsafe { sqlite3_close(raw) };
+                    s
+                };
+                return Err(msg);
+            }
+            Ok(Self { raw })
         }
-        Ok(Self { raw })
-    }
 
-    fn errmsg(&self) -> String {
-        unsafe { CStr::from_ptr(sqlite3_errmsg(self.raw)) }
-            .to_string_lossy()
-            .into_owned()
-    }
+        pub fn errmsg(&self) -> String {
+            unsafe { CStr::from_ptr(sqlite3_errmsg(self.raw)) }
+                .to_string_lossy()
+                .into_owned()
+        }
 
-    fn exec(&self, sql: &str) -> Result<(), String> {
-        let c_sql = CString::new(sql).map_err(|_| "sql contains NUL".to_string())?;
-        let mut err: *mut c_char = ptr::null_mut();
-        let rc = unsafe { sqlite3_exec(self.raw, c_sql.as_ptr(), ptr::null(), ptr::null_mut(), &mut err) };
-        if rc != SQLITE_OK {
-            let msg = if !err.is_null() {
-                let s = unsafe { CStr::from_ptr(err) }.to_string_lossy().into_owned();
-                unsafe { sqlite3_free(err as *mut c_void) };
-                s
-            } else {
-                self.errmsg()
+        pub fn exec(&self, sql: &str) -> Result<(), String> {
+            let c_sql = CString::new(sql).map_err(|_| "sql contains NUL".to_string())?;
+            let mut err: *mut c_char = ptr::null_mut();
+            let rc = unsafe {
+                sqlite3_exec(self.raw, c_sql.as_ptr(), ptr::null(), ptr::null_mut(), &mut err)
             };
-            return Err(msg);
+            if rc != SQLITE_OK {
+                let msg = if !err.is_null() {
+                    let s = unsafe { CStr::from_ptr(err) }.to_string_lossy().into_owned();
+                    unsafe { sqlite3_free(err as *mut c_void) };
+                    s
+                } else {
+                    self.errmsg()
+                };
+                return Err(msg);
+            }
+            Ok(())
+        }
+
+        pub fn prepare(&self, sql: &str) -> Result<Stmt, String> {
+            let mut raw: *mut Sqlite3Stmt = ptr::null_mut();
+            let rc = unsafe {
+                sqlite3_prepare_v2(
+                    self.raw,
+                    sql.as_ptr() as *const c_char,
+                    sql.len() as c_int,
+                    &mut raw,
+                    ptr::null_mut(),
+                )
+            };
+            if rc != SQLITE_OK || raw.is_null() {
+                return Err(self.errmsg());
+            }
+            Ok(Stmt { raw })
+        }
+
+        pub fn last_insert_rowid(&self) -> i64 {
+            unsafe { sqlite3_last_insert_rowid(self.raw) }
+        }
+    }
+
+    impl Stmt {
+        pub fn bind_text(&self, idx: c_int, val: &str) -> Result<(), String> {
+            let rc = unsafe {
+                sqlite3_bind_text(
+                    self.raw,
+                    idx,
+                    val.as_ptr() as *const c_char,
+                    val.len() as c_int,
+                    SQLITE_TRANSIENT,
+                )
+            };
+            if rc != SQLITE_OK {
+                return Err(format!("sqlite bind_text failed ({rc})"));
+            }
+            Ok(())
+        }
+
+        pub fn bind_i64(&self, idx: c_int, val: i64) -> Result<(), String> {
+            let rc = unsafe { sqlite3_bind_int64(self.raw, idx, val) };
+            if rc != SQLITE_OK {
+                return Err(format!("sqlite bind_int64 failed ({rc})"));
+            }
+            Ok(())
+        }
+
+        pub fn step(&self) -> c_int {
+            unsafe { sqlite3_step(self.raw) }
+        }
+
+        pub fn col_i64(&self, col: c_int) -> i64 {
+            unsafe { sqlite3_column_int64(self.raw, col) }
+        }
+
+        pub fn col_str(&self, col: c_int) -> String {
+            let ptr = unsafe { sqlite3_column_text(self.raw, col) };
+            let len = unsafe { sqlite3_column_bytes(self.raw, col) };
+            if ptr.is_null() || len <= 0 {
+                return String::new();
+            }
+            let slice = unsafe { std::slice::from_raw_parts(ptr, len as usize) };
+            String::from_utf8_lossy(slice).into_owned()
+        }
+    }
+
+    pub fn send_with_fd(sock_fd: RawFd, data: &[u8], attach_fd: RawFd) -> io::Result<()> {
+        let mut iov = IoVec {
+            iov_base: data.as_ptr() as *mut c_void,
+            iov_len: data.len(),
+        };
+        const ALIGN: usize = std::mem::size_of::<usize>();
+        const fn cmsg_align(len: usize) -> usize {
+            (len + ALIGN - 1) & !(ALIGN - 1)
+        }
+        const HDR_LEN: usize = cmsg_align(std::mem::size_of::<CMsgHdr>());
+        const DATA_LEN: usize = std::mem::size_of::<c_int>();
+        const SPACE: usize = HDR_LEN + cmsg_align(DATA_LEN);
+
+        let mut ctrl = [0_u64; SPACE.div_ceil(8)];
+        let ctrl_ptr = ctrl.as_mut_ptr() as *mut u8;
+        let cmsg = CMsgHdr {
+            cmsg_len: HDR_LEN + DATA_LEN,
+            cmsg_level: SOL_SOCKET,
+            cmsg_type: SCM_RIGHTS,
+        };
+        let msg = MsgHdr {
+            msg_name: ptr::null_mut(),
+            msg_namelen: 0,
+            msg_iov: &mut iov,
+            msg_iovlen: 1,
+            msg_control: ctrl_ptr as *mut c_void,
+            msg_controllen: SPACE,
+            msg_flags: 0,
+        };
+        let sent = unsafe {
+            ptr::write_unaligned(ctrl_ptr as *mut CMsgHdr, cmsg);
+            ptr::write_unaligned(ctrl_ptr.add(HDR_LEN) as *mut c_int, attach_fd);
+            sendmsg(sock_fd, &msg, 0)
+        };
+        if sent < 0 {
+            return Err(io::Error::last_os_error());
         }
         Ok(())
-    }
-
-    fn prepare(&self, sql: &str) -> Result<Stmt, String> {
-        let mut raw: *mut Sqlite3Stmt = ptr::null_mut();
-        let rc = unsafe {
-            sqlite3_prepare_v2(
-                self.raw,
-                sql.as_ptr() as *const c_char,
-                sql.len() as c_int,
-                &mut raw,
-                ptr::null_mut(),
-            )
-        };
-        if rc != SQLITE_OK || raw.is_null() {
-            return Err(self.errmsg());
-        }
-        Ok(Stmt { raw })
-    }
-
-    fn last_insert_rowid(&self) -> i64 {
-        unsafe { sqlite3_last_insert_rowid(self.raw) }
     }
 }
 
-impl Stmt {
-    fn bind_text(&self, idx: c_int, val: &str) -> Result<(), String> {
-        let rc = unsafe {
-            sqlite3_bind_text(
-                self.raw,
-                idx,
-                val.as_ptr() as *const c_char,
-                val.len() as c_int,
-                SQLITE_TRANSIENT,
-            )
-        };
-        if rc != SQLITE_OK {
-            return Err(format!("sqlite bind_text failed ({rc})"));
-        }
-        Ok(())
-    }
-
-    fn bind_i64(&self, idx: c_int, val: i64) -> Result<(), String> {
-        let rc = unsafe { sqlite3_bind_int64(self.raw, idx, val) };
-        if rc != SQLITE_OK {
-            return Err(format!("sqlite bind_int64 failed ({rc})"));
-        }
-        Ok(())
-    }
-
-    fn step(&self) -> c_int {
-        unsafe { sqlite3_step(self.raw) }
-    }
-
-    fn col_i64(&self, col: c_int) -> i64 {
-        unsafe { sqlite3_column_int64(self.raw, col) }
-    }
-
-    fn col_str(&self, col: c_int) -> String {
-        let ptr = unsafe { sqlite3_column_text(self.raw, col) };
-        let len = unsafe { sqlite3_column_bytes(self.raw, col) };
-        if ptr.is_null() || len <= 0 {
-            return String::new();
-        }
-        let slice = unsafe { std::slice::from_raw_parts(ptr, len as usize) };
-        String::from_utf8_lossy(slice).into_owned()
-    }
-}
+use ffi::{Db, SQLITE_DONE, SQLITE_ROW};
 
 fn default_clipboard_root() -> PathBuf {
     let base = match env::var("XDG_DATA_HOME") {
@@ -281,7 +318,10 @@ fn default_clipboard_root() -> PathBuf {
 fn runtime_dir() -> PathBuf {
     match env::var("XDG_RUNTIME_DIR") {
         Ok(val) if !val.is_empty() => PathBuf::from(val),
-        _ => PathBuf::from(format!("/run/user/{}", unsafe { getuid() })),
+        _ => {
+            let uid = fs::metadata("/proc/self").map(|m| m.uid()).unwrap_or(1000);
+            PathBuf::from(format!("/run/user/{uid}"))
+        }
     }
 }
 
@@ -293,29 +333,36 @@ fn chmod_0700(path: &Path) {
     let _ = fs::set_permissions(path, fs::Permissions::from_mode(0o700));
 }
 
+fn mkdir_private(path: &Path) -> Result<(), String> {
+    DirBuilder::new()
+        .recursive(true)
+        .mode(0o700)
+        .create(path)
+        .map_err(|e| format!("create private dir {}: {e}", path.display()))?;
+    chmod_0700(path);
+    Ok(())
+}
+
 fn acquire_store_lock() -> Result<File, String> {
     let rt = runtime_dir();
-    fs::create_dir_all(&rt).map_err(|e| format!("create runtime dir: {e}"))?;
-    chmod_0700(&rt);
+    mkdir_private(&rt)?;
     let lock_path = rt.join("blox-launcher-clipboard.lock");
     let file = OpenOptions::new()
         .create(true)
         .read(true)
         .append(true)
+        .mode(0o600)
         .open(&lock_path)
         .map_err(|e| format!("open clipboard lock: {e}"))?;
     chmod_0600(&lock_path);
-    if unsafe { flock(file.as_raw_fd(), LOCK_EX) } != 0 {
-        return Err(format!("flock failed: {}", io::Error::last_os_error()));
-    }
+    file.lock().map_err(|e| format!("flock failed: {e}"))?;
     Ok(file)
 }
 
 fn open_store(root: &Path) -> Result<(Db, PathBuf), String> {
     let payloads = root.join("payloads");
-    fs::create_dir_all(&payloads).map_err(|e| format!("create clipboard dirs: {e}"))?;
-    chmod_0700(root);
-    chmod_0700(&payloads);
+    mkdir_private(root)?;
+    mkdir_private(&payloads)?;
     let db_path = root.join("history.sqlite3");
     let db = Db::open(&db_path)?;
     db.exec("PRAGMA busy_timeout=5000")?;
@@ -583,7 +630,6 @@ fn trim_unpinned(db: &Db) -> Result<Vec<String>, String> {
     Ok(removed)
 }
 
-#[derive(Debug)]
 enum IngestOutcome {
     Stored(i64),
     Skipped(&'static str),
@@ -632,6 +678,7 @@ fn ingest_payload(root: &Path, raw_mime: &str, raw_data: &[u8], sensitive: bool)
             let mut f = OpenOptions::new()
                 .create_new(true)
                 .write(true)
+                .mode(0o600)
                 .open(&temp_path)
                 .map_err(|e| format!("open temp payload: {e}"))?;
             f.write_all(data).map_err(|e| format!("write payload: {e}"))?;
@@ -697,7 +744,6 @@ fn ingest_payload(root: &Path, raw_mime: &str, raw_data: &[u8], sensitive: bool)
 
 /// CLI entrypoint matching `clipboardctl.py ingest --mime <mime> [--root <dir>] [--sensitive]`.
 pub fn cmd_ingest(args: &[String]) -> Result<(), String> {
-    unsafe { umask(0o077) };
     let mut root = default_clipboard_root();
     let mut mime: Option<String> = None;
     let mut sensitive = env::var("CLIPBOARD_STATE")
@@ -815,46 +861,6 @@ fn read_wl_str(buf: &[u8], off: usize) -> Option<(String, usize)> {
     Some((s, start + padded))
 }
 
-fn send_with_fd(sock_fd: RawFd, data: &[u8], attach_fd: RawFd) -> io::Result<()> {
-    let mut iov = IoVec {
-        iov_base: data.as_ptr() as *mut c_void,
-        iov_len: data.len(),
-    };
-    const ALIGN: usize = std::mem::size_of::<usize>();
-    const fn cmsg_align(len: usize) -> usize {
-        (len + ALIGN - 1) & !(ALIGN - 1)
-    }
-    const HDR_LEN: usize = cmsg_align(std::mem::size_of::<CMsgHdr>());
-    const DATA_LEN: usize = std::mem::size_of::<c_int>();
-    const SPACE: usize = HDR_LEN + cmsg_align(DATA_LEN);
-
-    let mut ctrl = [0_u64; SPACE.div_ceil(8)];
-    let ctrl_ptr = ctrl.as_mut_ptr() as *mut u8;
-    let cmsg = CMsgHdr {
-        cmsg_len: HDR_LEN + DATA_LEN,
-        cmsg_level: SOL_SOCKET,
-        cmsg_type: SCM_RIGHTS,
-    };
-    let msg = MsgHdr {
-        msg_name: ptr::null_mut(),
-        msg_namelen: 0,
-        msg_iov: &mut iov,
-        msg_iovlen: 1,
-        msg_control: ctrl_ptr as *mut c_void,
-        msg_controllen: SPACE,
-        msg_flags: 0,
-    };
-    let sent = unsafe {
-        ptr::write_unaligned(ctrl_ptr as *mut CMsgHdr, cmsg);
-        ptr::write_unaligned(ctrl_ptr.add(HDR_LEN) as *mut c_int, attach_fd);
-        sendmsg(sock_fd, &msg, 0)
-    };
-    if sent < 0 {
-        return Err(io::Error::last_os_error());
-    }
-    Ok(())
-}
-
 fn connect_wayland() -> io::Result<UnixStream> {
     let display = env::var("WAYLAND_DISPLAY").unwrap_or_else(|_| "wayland-0".to_string());
     let path = if display.starts_with('/') {
@@ -896,59 +902,31 @@ fn choose_mime(mimes: &[String]) -> Option<(&str, &str)> {
 }
 
 fn receive_offer_data(sock_fd: RawFd, offer_id: u32, request_mime: &str) -> Option<Vec<u8>> {
-    let mut fds = [-1 as c_int; 2];
-    if unsafe { pipe2(fds.as_mut_ptr(), O_CLOEXEC) } != 0 {
-        return None;
-    }
-    let (read_fd, write_fd) = (fds[0], fds[1]);
-
+    let (mut reader, writer) = io::pipe().ok()?;
     let mut payload = Vec::with_capacity(request_mime.len() + 8);
     push_wl_str(&mut payload, request_mime);
     let msg = build_wl_msg(offer_id, 0, &payload);
-    let send_ok = send_with_fd(sock_fd, &msg, write_fd).is_ok();
-    unsafe { close(write_fd) };
+    let send_ok = ffi::send_with_fd(sock_fd, &msg, writer.as_raw_fd()).is_ok();
+    drop(writer);
     if !send_ok {
-        unsafe { close(read_fd) };
         return None;
     }
 
-    let mut reader = unsafe { File::from_raw_fd(read_fd) };
-    let mut out = Vec::new();
-    let mut chunk = [0_u8; 32768];
-    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(3);
-    loop {
-        let rem = deadline
-            .saturating_duration_since(std::time::Instant::now())
-            .as_millis() as c_int;
-        if rem <= 0 {
-            break;
-        }
-        let mut pfd = PollFd {
-            fd: reader.as_raw_fd(),
-            events: POLLIN,
-            revents: 0,
-        };
-        let rc = unsafe { poll(&mut pfd, 1, rem) };
-        if rc <= 0 {
-            if rc < 0 && io::Error::last_os_error().kind() == io::ErrorKind::Interrupted {
-                continue;
-            }
-            break;
-        }
-        match reader.read(&mut chunk) {
-            Ok(0) => break,
-            Ok(n) => {
-                let take = n.min((MAX_PAYLOAD + 1).saturating_sub(out.len()));
-                out.extend_from_slice(&chunk[..take]);
-                if out.len() > MAX_PAYLOAD {
-                    return None;
-                }
-            }
-            Err(e) if e.kind() == io::ErrorKind::Interrupted => continue,
-            Err(_) => return None,
-        }
-    }
-    Some(out)
+    let (tx, rx) = mpsc::channel();
+    let _ = thread::Builder::new()
+        .name("clip-read".to_string())
+        .stack_size(128 * 1024)
+        .spawn(move || {
+            let mut out = Vec::new();
+            let ok = reader
+                .by_ref()
+                .take((MAX_PAYLOAD + 1) as u64)
+                .read_to_end(&mut out)
+                .is_ok()
+                && out.len() <= MAX_PAYLOAD;
+            let _ = tx.send(ok.then_some(out));
+        });
+    rx.recv_timeout(Duration::from_secs(3)).ok().flatten()
 }
 
 fn destroy_offer(stream: &mut UnixStream, offer_id: u32) {
@@ -958,7 +936,6 @@ fn destroy_offer(stream: &mut UnixStream, offer_id: u32) {
 
 /// Persistent single-process Wayland clipboard watcher replacing 3x wl-paste + Python ingest forks.
 pub fn cmd_watch(args: &[String]) -> Result<(), String> {
-    unsafe { umask(0o077) };
     let mut root = default_clipboard_root();
     let mut i = 0;
     while i < args.len() {
@@ -1074,99 +1051,72 @@ pub fn cmd_watch(args: &[String]) -> Result<(), String> {
 
     let mut offers: HashMap<u32, Vec<String>> = HashMap::new();
     let mut initial_selection_skipped = false;
-    let stdin_fd = io::stdin().as_raw_fd();
     let wl_fd = stream.as_raw_fd();
 
     loop {
-        let mut pollfds = [
-            PollFd { fd: wl_fd, events: POLLIN, revents: 0 },
-            PollFd { fd: stdin_fd, events: POLLIN, revents: 0 },
-        ];
-        let rc = unsafe { poll(pollfds.as_mut_ptr(), pollfds.len(), -1) };
-        if rc < 0 {
-            let err = io::Error::last_os_error();
-            if err.kind() == io::ErrorKind::Interrupted {
-                continue;
+        let n = match stream.read(&mut tmp) {
+            Ok(0) => return Err("wayland display disconnected".to_string()),
+            Ok(n) => n,
+            Err(e) if e.kind() == io::ErrorKind::Interrupted => continue,
+            Err(e) => return Err(format!("wayland read: {e}")),
+        };
+        wl_buf.extend_from_slice(&tmp[..n]);
+        while wl_buf.len() >= 8 {
+            let obj = read_u32(&wl_buf, 0).unwrap();
+            let word = read_u32(&wl_buf, 4).unwrap();
+            let size = (word >> 16) as usize;
+            let opcode = (word & 0xffff) as u16;
+            if size < 8 || wl_buf.len() < size {
+                break;
             }
-            return Err(format!("poll: {err}"));
-        }
 
-        if pollfds[1].revents & (POLLHUP | POLLERR) != 0 {
-            return Ok(());
-        }
-        if pollfds[1].revents & POLLIN != 0 {
-            let mut drain = [0_u8; 64];
-            match io::stdin().read(&mut drain) {
-                Ok(0) => return Ok(()),
-                _ => {}
-            }
-        }
-
-        if pollfds[0].revents & (POLLIN | POLLHUP | POLLERR) != 0 {
-            let n = stream.read(&mut tmp).map_err(|e| format!("wayland read: {e}"))?;
-            if n == 0 {
-                return Err("wayland display disconnected".to_string());
-            }
-            wl_buf.extend_from_slice(&tmp[..n]);
-            while wl_buf.len() >= 8 {
-                let obj = read_u32(&wl_buf, 0).unwrap();
-                let word = read_u32(&wl_buf, 4).unwrap();
-                let size = (word >> 16) as usize;
-                let opcode = (word & 0xffff) as u16;
-                if size < 8 || wl_buf.len() < size {
-                    break;
-                }
-
-                if obj == WL_DISPLAY_ID && opcode == 0 {
-                    return Err("wayland display protocol error".to_string());
-                } else if obj == DATA_DEV_ID {
-                    match opcode {
-                        0 => {
-                            if let Some(offer_id) = read_u32(&wl_buf, 8) {
-                                offers.insert(offer_id, Vec::new());
-                            }
+            if obj == WL_DISPLAY_ID && opcode == 0 {
+                return Err("wayland display protocol error".to_string());
+            } else if obj == DATA_DEV_ID {
+                match opcode {
+                    0 => {
+                        if let Some(offer_id) = read_u32(&wl_buf, 8) {
+                            offers.insert(offer_id, Vec::new());
                         }
-                        1 => {
-                            let offer_id = read_u32(&wl_buf, 8).unwrap_or(0);
-                            if offer_id != 0 {
-                                let mimes = offers.remove(&offer_id).unwrap_or_default();
-                                // Skip the initial selection snapshot emitted on bind only if empty,
-                                // or ingest every change (deduped by digest in SQLite).
-                                if initial_selection_skipped {
-                                    if let Some((req_mime, store_mime)) = choose_mime(&mimes) {
-                                        if let Some(data) = receive_offer_data(wl_fd, offer_id, req_mime) {
-                                            let _ = ingest_payload(&root, store_mime, &data, false);
-                                        }
+                    }
+                    1 => {
+                        let offer_id = read_u32(&wl_buf, 8).unwrap_or(0);
+                        if offer_id != 0 {
+                            let mimes = offers.remove(&offer_id).unwrap_or_default();
+                            if initial_selection_skipped {
+                                if let Some((req_mime, store_mime)) = choose_mime(&mimes) {
+                                    if let Some(data) = receive_offer_data(wl_fd, offer_id, req_mime) {
+                                        let _ = ingest_payload(&root, store_mime, &data, false);
                                     }
-                                } else {
-                                    initial_selection_skipped = true;
                                 }
-                                destroy_offer(&mut stream, offer_id);
                             } else {
                                 initial_selection_skipped = true;
                             }
+                            destroy_offer(&mut stream, offer_id);
+                        } else {
+                            initial_selection_skipped = true;
                         }
-                        2 => return Ok(()),
-                        3 => {
-                            // Ignore primary selection, but destroy its offer so server IDs never leak.
-                            let offer_id = read_u32(&wl_buf, 8).unwrap_or(0);
-                            if offer_id != 0 {
-                                offers.remove(&offer_id);
-                                destroy_offer(&mut stream, offer_id);
-                            }
-                        }
-                        _ => {}
                     }
-                } else if opcode == 0 && offers.contains_key(&obj) {
-                    if let Some((mime, _)) = read_wl_str(&wl_buf, 8) {
-                        if let Some(list) = offers.get_mut(&obj) {
-                            list.push(mime);
+                    2 => return Ok(()),
+                    3 => {
+                        // Ignore primary selection, but destroy its offer so server IDs never leak.
+                        let offer_id = read_u32(&wl_buf, 8).unwrap_or(0);
+                        if offer_id != 0 {
+                            offers.remove(&offer_id);
+                            destroy_offer(&mut stream, offer_id);
                         }
+                    }
+                    _ => {}
+                }
+            } else if opcode == 0 && offers.contains_key(&obj) {
+                if let Some((mime, _)) = read_wl_str(&wl_buf, 8) {
+                    if let Some(list) = offers.get_mut(&obj) {
+                        list.push(mime);
                     }
                 }
-
-                wl_buf.drain(..size);
             }
+
+            wl_buf.drain(..size);
         }
     }
 }

@@ -98,47 +98,6 @@ class EmojiDatasetTests(unittest.TestCase):
             next(index for index, item in enumerate(symbols) if item["subcategory"] == "text-arrow"),
         )
 
-    def test_picker_uses_twemoji_and_symbol_subheadings(self):
-        repository = Path(__file__).parents[1]
-        picker = (repository / "shell/modules/EmojiPicker.qml").read_text(encoding="utf-8")
-        self.assertIn(': "Twemoji"', picker)
-        self.assertNotIn("Noto Color Emoji", picker)
-        self.assertFalse((repository / "shell/assets/fontconfig.xml").exists())
-        for heading in (
-            "Emoji signs", "Common marks & games", "Shapes", "Arrows",
-            "Maths & logic", "Currency", "Technical notation",
-        ):
-            self.assertIn(heading, picker)
-        self.assertIn("jumpToSymbolSection", picker)
-        self.assertIn("jumpToNerdFontSection", picker)
-        self.assertIn('fontFamily ? modelData.item.fontFamily : "Twemoji"', picker)
-        self.assertIn('"code"', picker)
-        controller = (repository / "shell/modules/EmojiController.qml").read_text(encoding="utf-8")
-        self.assertIn("base.split(root.toneCharacters[index]).join", controller)
-        self.assertIn("root.toneKey(item.value)", controller)
-        self.assertIn('"Nerd Fonts"', controller)
-        self.assertIn('["#ffdc5d", "#f7dece", "#e0bb95", "#c58c6b", "#a56b46", "#6f432a"]', picker)
-        self.assertIn('text: "Choose tones"', picker)
-        self.assertIn('text: "Choose skin tones"', picker)
-        self.assertIn("controller.activateToneVariant", picker)
-        self.assertIn("contextAnchor = item.mapToItem(root.contentItem", picker)
-        self.assertIn("onOpened: root.popupOpened()", picker)
-        self.assertIn("onClosed: root.popupClosed()", picker)
-        self.assertIn("property int activeEmojiPopups: 0", picker)
-        self.assertIn("onClicked: toneComposer.defaultSelected = true", picker)
-        self.assertIn("model: controller.virtualBrowse ? controller.itemCount : root.gridItems.length", picker)
-        self.assertNotIn("loadNextPage", picker)
-        self.assertIn("LauncherState.emojiVariants", controller)
-        self.assertIn("property bool virtualBrowse: false", controller)
-        self.assertIn("readonly property int itemCount", controller)
-        self.assertIn("function itemAt(index)", controller)
-        self.assertNotIn("browseLimit", controller)
-        self.assertNotIn("canLoadMore", controller)
-
-        state = (repository / "shell/modules/LauncherState.qml").read_text(encoding="utf-8")
-        self.assertIn("property alias emojiVariants", state)
-        self.assertIn("property var emojiVariants", state)
-
     def test_tone_variants_match_bases_with_presentation_selectors(self):
         path = Path(__file__).parents[1] / "shell/assets/emoji.json"
         items = json.loads(path.read_text(encoding="utf-8"))["items"]

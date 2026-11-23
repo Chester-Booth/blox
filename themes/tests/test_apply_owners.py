@@ -349,7 +349,7 @@ class ApplyOwnersTests(unittest.TestCase):
         self._exercise_deferred_obsidian_apply(True)
 
     def _exercise_deferred_obsidian_apply(self, newer_selection):
-        from themes.lib.blox_theme import obsidian
+        from themes.lib.blox_theme import obsidian, runtime_loaders
         from themes.lib.blox_theme.core import OBSIDIAN_THEME_DIRECTORY
         vault = self.root / 'vault'
         (vault / '.obsidian').mkdir(parents=True)
@@ -379,7 +379,7 @@ class ApplyOwnersTests(unittest.TestCase):
             child.poll.return_value = 0
             return child
         with mock.patch.object(runtime, '_run', self.runner), \
-             mock.patch.object(runtime, '_proc_main_pid', return_value=0), \
+             mock.patch.object(runtime_loaders, '_proc_main_pid', return_value=0), \
              mock.patch.object(obsidian, '_obsidian_is_running', return_value=True), \
              mock.patch.object(obsidian.subprocess, 'Popen', side_effect=process), \
              mock.patch.object(obsidian, '_stop_obsidian_cli'), \

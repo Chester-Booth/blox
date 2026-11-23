@@ -5,7 +5,7 @@ import unittest
 from unittest import mock
 
 from themes.tests.test_apply_owners import ApplyOwnersTests as _ApplyFixture
-from themes.lib.blox_theme import runtime, target_preimage
+from themes.lib.blox_theme import runtime, runtime_editors, target_preimage
 from themes.lib.blox_theme.apply_coordinator import ApplyError
 from themes.lib.blox_theme.apply_owners import create_apply, open_existing_apply
 
@@ -259,7 +259,7 @@ class EditorPublicationTests(unittest.TestCase):
                 dotfiles.rename(moved)
                 dotfiles.symlink_to(other, target_is_directory=True)
                 return install(*args, **kwargs)
-            with mock.patch.object(runtime, 'install_editor_extension', side_effect=redirect_parent_after_guard):
+            with mock.patch.object(runtime_editors, 'install_editor_extension', side_effect=redirect_parent_after_guard):
                 with self.assertRaises(ApplyError):
                     coordinator.apply(request)
             self.assertEqual(other_settings.read_bytes(), b'{"personal": "foreign"}')
@@ -287,7 +287,7 @@ class EditorPublicationTests(unittest.TestCase):
                 settings.symlink_to(other)
                 replacement_inode.append(settings.lstat().st_ino)
                 return result
-            with mock.patch.object(runtime, 'install_editor_extension', side_effect=retarget_after_guard):
+            with mock.patch.object(runtime_editors, 'install_editor_extension', side_effect=retarget_after_guard):
                 with self.assertRaisesRegex(ApplyError, 'restore incomplete'):
                     coordinator.apply(request)
             self.assertIn('workbench.colorTheme', json.loads(original.read_text()))

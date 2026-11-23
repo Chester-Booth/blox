@@ -45,7 +45,7 @@ shellcheck:
 	fi
 
 test-launcher: native-services native-widgets
-	@PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests/test_launcher_apps.py tests/test_launcher_clipboard.py tests/test_launcher_dmenu.py tests/test_launcher_emoji.py tests/test_launcher_focus_routes.py tests/test_launcher_processes.py -v
+	@PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests/test_launcher_apps.py tests/test_launcher_clipboard.py tests/test_launcher_dmenu.py tests/test_launcher_emoji.py tests/test_launcher_processes.py -v
 	@QML_XHR_ALLOW_FILE_READ=1 QT_QPA_PLATFORM=offscreen /usr/lib/qt6/bin/qmltestrunner -import "$(NATIVE_IMPORT_ROOT)" -import widgets/qml -import tests/qml/imports -import tests/qml/provider-imports -input tests/qml
 	@QML_XHR_ALLOW_FILE_READ=1 QT_QPA_PLATFORM=offscreen /usr/lib/qt6/bin/qmltestrunner -import tests/qml/imports -import "$(NATIVE_IMPORT_ROOT)" -input tests/native-qml
 

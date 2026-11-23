@@ -27,12 +27,12 @@ PHASE2_TARGETS = ("quickshell", "kitty", "wallpaper")
 
 class ShellPathTests(unittest.TestCase):
     def test_stopped_shell_resolves_installed_prefix(self):
-        from blox_theme import runtime
+        from blox_theme import runtime, runtime_loaders
         with tempfile.TemporaryDirectory() as directory:
             home = Path(directory)
             with mock.patch.dict(os.environ, {}, clear=True), \
                     mock.patch("pathlib.Path.home", return_value=home), \
-                    mock.patch.object(runtime, "_proc_main_pid", return_value=0):
+                    mock.patch.object(runtime_loaders, "_proc_main_pid", return_value=0):
                 self.assertEqual(home / ".local/share/blox/shell", runtime.quickshell_config_path())
                 with mock.patch.dict(os.environ, {"BLOX_PREFIX": str(home / "custom")}):
                     self.assertEqual(home / "custom/share/blox/shell", runtime.quickshell_config_path())
@@ -1040,7 +1040,7 @@ class RuntimeTests(unittest.TestCase):
                 events.append("published")
             original_unlink(path, *args, **kwargs)
 
-        with mock.patch("blox_theme.runtime.restore_settings", side_effect=record_restore), mock.patch.object(Path, "unlink", autospec=True, side_effect=record_unlink):
+        with mock.patch("blox_theme.runtime_editors.restore_settings", side_effect=record_restore), mock.patch.object(Path, "unlink", autospec=True, side_effect=record_unlink):
             reset_target("zed", run_command=FakeCommands())
 
         self.assertLess(events.index("settings"), events.index("published"))
@@ -1083,7 +1083,7 @@ class RuntimeTests(unittest.TestCase):
         settings.parent.mkdir(parents=True)
         original = '{"theme":"One Dark"}\n'
         settings.write_text(original, encoding="utf-8")
-        with mock.patch("blox_theme.runtime.shutil.which", return_value=None):
+        with mock.patch("blox_theme.runtime_editors.shutil.which", return_value=None):
             _, warnings = apply_theme(self.canonical_path, self.canonical, ("zed",), run_command=FakeCommands())
 
         self.assertTrue(any("Zed is not installed" in warning for warning in warnings))

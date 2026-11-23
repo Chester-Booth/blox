@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.20)
+project(widget_gpu_fixture LANGUAGES CXX)
+find_package(Qt6 6.12 REQUIRED COMPONENTS Quick GuiPrivate)
+add_executable(widget-gpu-fixture render.cpp)
+target_link_libraries(widget-gpu-fixture PRIVATE Qt6::Quick Qt6::GuiPrivate)

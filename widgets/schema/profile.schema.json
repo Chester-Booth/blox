@@ -1,0 +1,2272 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://blox.local/widgets/profile.schema.json",
+  "title": "Blox widget profile",
+  "description": "Fresh schema 1. Unknown fields and old formats are rejected. x-blox-uniqueBy requires unique ids and x-blox-orderedRange requires ascending inclusive endpoints; the stdlib validator enforces both. Native fullscreen modes are fixed; QML modes must be declared and verified by the trusted host registry.",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "widgets": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "kind": {
+                "const": "clock"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              },
+              "enabled": {
+                "type": "boolean"
+              },
+              "placement": {
+                "$ref": "#/$defs/placement"
+              },
+              "workspaces": {
+                "$ref": "#/$defs/workspaces"
+              },
+              "visibility": {
+                "enum": [
+                  "always",
+                  "empty-workspace"
+                ]
+              },
+              "appearance": {
+                "$ref": "#/$defs/appearance"
+              },
+              "fullscreen": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "mode": {
+                    "enum": [
+                      "native"
+                    ]
+                  }
+                },
+                "required": [
+                  "enabled",
+                  "mode"
+                ],
+                "additionalProperties": false
+              },
+              "settings": {
+                "$ref": "#/$defs/clockSettings"
+              }
+            },
+            "required": [
+              "id",
+              "kind",
+              "name",
+              "enabled",
+              "placement",
+              "workspaces",
+              "visibility",
+              "appearance",
+              "fullscreen",
+              "settings"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "kind": {
+                "const": "music"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              },
+              "enabled": {
+                "type": "boolean"
+              },
+              "placement": {
+                "$ref": "#/$defs/placement"
+              },
+              "workspaces": {
+                "$ref": "#/$defs/workspaces"
+              },
+              "visibility": {
+                "enum": [
+                  "always",
+                  "empty-workspace"
+                ]
+              },
+              "appearance": {
+                "$ref": "#/$defs/appearance"
+              },
+              "fullscreen": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "mode": {
+                    "enum": [
+                      "native"
+                    ]
+                  }
+                },
+                "required": [
+                  "enabled",
+                  "mode"
+                ],
+                "additionalProperties": false
+              },
+              "settings": {
+                "$ref": "#/$defs/musicSettings"
+              }
+            },
+            "required": [
+              "id",
+              "kind",
+              "name",
+              "enabled",
+              "placement",
+              "workspaces",
+              "visibility",
+              "appearance",
+              "fullscreen",
+              "settings"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "kind": {
+                "const": "system"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              },
+              "enabled": {
+                "type": "boolean"
+              },
+              "placement": {
+                "$ref": "#/$defs/placement"
+              },
+              "workspaces": {
+                "$ref": "#/$defs/workspaces"
+              },
+              "visibility": {
+                "enum": [
+                  "always",
+                  "empty-workspace"
+                ]
+              },
+              "appearance": {
+                "$ref": "#/$defs/appearance"
+              },
+              "fullscreen": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "mode": {
+                    "enum": [
+                      "native"
+                    ]
+                  }
+                },
+                "required": [
+                  "enabled",
+                  "mode"
+                ],
+                "additionalProperties": false
+              },
+              "settings": {
+                "$ref": "#/$defs/systemSettings"
+              }
+            },
+            "required": [
+              "id",
+              "kind",
+              "name",
+              "enabled",
+              "placement",
+              "workspaces",
+              "visibility",
+              "appearance",
+              "fullscreen",
+              "settings"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "kind": {
+                "const": "network"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              },
+              "enabled": {
+                "type": "boolean"
+              },
+              "placement": {
+                "$ref": "#/$defs/placement"
+              },
+              "workspaces": {
+                "$ref": "#/$defs/workspaces"
+              },
+              "visibility": {
+                "enum": [
+                  "always",
+                  "empty-workspace"
+                ]
+              },
+              "appearance": {
+                "$ref": "#/$defs/appearance"
+              },
+              "fullscreen": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "mode": {
+                    "enum": [
+                      "native"
+                    ]
+                  }
+                },
+                "required": [
+                  "enabled",
+                  "mode"
+                ],
+                "additionalProperties": false
+              },
+              "settings": {
+                "$ref": "#/$defs/networkSettings"
+              }
+            },
+            "required": [
+              "id",
+              "kind",
+              "name",
+              "enabled",
+              "placement",
+              "workspaces",
+              "visibility",
+              "appearance",
+              "fullscreen",
+              "settings"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "kind": {
+                "const": "calendar"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              },
+              "enabled": {
+                "type": "boolean"
+              },
+              "placement": {
+                "$ref": "#/$defs/placement"
+              },
+              "workspaces": {
+                "$ref": "#/$defs/workspaces"
+              },
+              "visibility": {
+                "enum": [
+                  "always",
+                  "empty-workspace"
+                ]
+              },
+              "appearance": {
+                "$ref": "#/$defs/appearance"
+              },
+              "fullscreen": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "mode": {
+                    "enum": [
+                      "native"
+                    ]
+                  }
+                },
+                "required": [
+                  "enabled",
+                  "mode"
+                ],
+                "additionalProperties": false
+              },
+              "settings": {
+                "$ref": "#/$defs/calendarSettings"
+              }
+            },
+            "required": [
+              "id",
+              "kind",
+              "name",
+              "enabled",
+              "placement",
+              "workspaces",
+              "visibility",
+              "appearance",
+              "fullscreen",
+              "settings"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "kind": {
+                "const": "notes"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              },
+              "enabled": {
+                "type": "boolean"
+              },
+              "placement": {
+                "$ref": "#/$defs/placement"
+              },
+              "workspaces": {
+                "$ref": "#/$defs/workspaces"
+              },
+              "visibility": {
+                "enum": [
+                  "always",
+                  "empty-workspace"
+                ]
+              },
+              "appearance": {
+                "$ref": "#/$defs/appearance"
+              },
+              "fullscreen": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "mode": {
+                    "enum": [
+                      "native"
+                    ]
+                  }
+                },
+                "required": [
+                  "enabled",
+                  "mode"
+                ],
+                "additionalProperties": false
+              },
+              "settings": {
+                "$ref": "#/$defs/notesSettings"
+              }
+            },
+            "required": [
+              "id",
+              "kind",
+              "name",
+              "enabled",
+              "placement",
+              "workspaces",
+              "visibility",
+              "appearance",
+              "fullscreen",
+              "settings"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "kind": {
+                "const": "files"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              },
+              "enabled": {
+                "type": "boolean"
+              },
+              "placement": {
+                "$ref": "#/$defs/placement"
+              },
+              "workspaces": {
+                "$ref": "#/$defs/workspaces"
+              },
+              "visibility": {
+                "enum": [
+                  "always",
+                  "empty-workspace"
+                ]
+              },
+              "appearance": {
+                "$ref": "#/$defs/appearance"
+              },
+              "fullscreen": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "mode": {
+                    "enum": [
+                      "native"
+                    ]
+                  }
+                },
+                "required": [
+                  "enabled",
+                  "mode"
+                ],
+                "additionalProperties": false
+              },
+              "settings": {
+                "$ref": "#/$defs/filesSettings"
+              }
+            },
+            "required": [
+              "id",
+              "kind",
+              "name",
+              "enabled",
+              "placement",
+              "workspaces",
+              "visibility",
+              "appearance",
+              "fullscreen",
+              "settings"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "kind": {
+                "const": "shortcuts"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              },
+              "enabled": {
+                "type": "boolean"
+              },
+              "placement": {
+                "$ref": "#/$defs/placement"
+              },
+              "workspaces": {
+                "$ref": "#/$defs/workspaces"
+              },
+              "visibility": {
+                "enum": [
+                  "always",
+                  "empty-workspace"
+                ]
+              },
+              "appearance": {
+                "$ref": "#/$defs/appearance"
+              },
+              "fullscreen": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "mode": {
+                    "enum": [
+                      "native"
+                    ]
+                  }
+                },
+                "required": [
+                  "enabled",
+                  "mode"
+                ],
+                "additionalProperties": false
+              },
+              "settings": {
+                "$ref": "#/$defs/shortcutsSettings"
+              }
+            },
+            "required": [
+              "id",
+              "kind",
+              "name",
+              "enabled",
+              "placement",
+              "workspaces",
+              "visibility",
+              "appearance",
+              "fullscreen",
+              "settings"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "kind": {
+                "const": "weather"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              },
+              "enabled": {
+                "type": "boolean"
+              },
+              "placement": {
+                "$ref": "#/$defs/placement"
+              },
+              "workspaces": {
+                "$ref": "#/$defs/workspaces"
+              },
+              "visibility": {
+                "enum": [
+                  "always",
+                  "empty-workspace"
+                ]
+              },
+              "appearance": {
+                "$ref": "#/$defs/appearance"
+              },
+              "fullscreen": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "mode": {
+                    "enum": [
+                      "native"
+                    ]
+                  }
+                },
+                "required": [
+                  "enabled",
+                  "mode"
+                ],
+                "additionalProperties": false
+              },
+              "settings": {
+                "$ref": "#/$defs/weatherSettings"
+              }
+            },
+            "required": [
+              "id",
+              "kind",
+              "name",
+              "enabled",
+              "placement",
+              "workspaces",
+              "visibility",
+              "appearance",
+              "fullscreen",
+              "settings"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "kind": {
+                "const": "command"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              },
+              "enabled": {
+                "type": "boolean"
+              },
+              "placement": {
+                "$ref": "#/$defs/placement"
+              },
+              "workspaces": {
+                "$ref": "#/$defs/workspaces"
+              },
+              "visibility": {
+                "enum": [
+                  "always",
+                  "empty-workspace"
+                ]
+              },
+              "appearance": {
+                "$ref": "#/$defs/appearance"
+              },
+              "fullscreen": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "mode": {
+                    "enum": [
+                      "native"
+                    ]
+                  }
+                },
+                "required": [
+                  "enabled",
+                  "mode"
+                ],
+                "additionalProperties": false
+              },
+              "settings": {
+                "$ref": "#/$defs/commandSettings"
+              }
+            },
+            "required": [
+              "id",
+              "kind",
+              "name",
+              "enabled",
+              "placement",
+              "workspaces",
+              "visibility",
+              "appearance",
+              "fullscreen",
+              "settings"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "kind": {
+                "const": "terminal"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              },
+              "enabled": {
+                "type": "boolean"
+              },
+              "placement": {
+                "$ref": "#/$defs/placement"
+              },
+              "workspaces": {
+                "$ref": "#/$defs/workspaces"
+              },
+              "visibility": {
+                "enum": [
+                  "always",
+                  "empty-workspace"
+                ]
+              },
+              "appearance": {
+                "$ref": "#/$defs/appearance"
+              },
+              "fullscreen": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "mode": {
+                    "enum": [
+                      "resize",
+                      "fit",
+                      "scroll"
+                    ]
+                  }
+                },
+                "required": [
+                  "enabled",
+                  "mode"
+                ],
+                "additionalProperties": false
+              },
+              "settings": {
+                "$ref": "#/$defs/terminalSettings"
+              }
+            },
+            "required": [
+              "id",
+              "kind",
+              "name",
+              "enabled",
+              "placement",
+              "workspaces",
+              "visibility",
+              "appearance",
+              "fullscreen",
+              "settings"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "kind": {
+                "const": "qml"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              },
+              "enabled": {
+                "type": "boolean"
+              },
+              "placement": {
+                "$ref": "#/$defs/placement"
+              },
+              "workspaces": {
+                "$ref": "#/$defs/workspaces"
+              },
+              "visibility": {
+                "enum": [
+                  "always",
+                  "empty-workspace"
+                ]
+              },
+              "appearance": {
+                "$ref": "#/$defs/appearance"
+              },
+              "fullscreen": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "mode": {
+                    "enum": [
+                      "native",
+                      "resize",
+                      "fit",
+                      "scroll",
+                      "crop"
+                    ]
+                  }
+                },
+                "required": [
+                  "enabled",
+                  "mode"
+                ],
+                "additionalProperties": false
+              },
+              "settings": {
+                "$ref": "#/$defs/qmlSettings"
+              }
+            },
+            "required": [
+              "id",
+              "kind",
+              "name",
+              "enabled",
+              "placement",
+              "workspaces",
+              "visibility",
+              "appearance",
+              "fullscreen",
+              "settings"
+            ],
+            "additionalProperties": false,
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "fullscreen": {
+                      "properties": {
+                        "mode": {
+                          "const": "native"
+                        }
+                      }
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "settings": {
+                      "properties": {
+                        "layouts": {
+                          "contains": {
+                            "const": "native"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "fullscreen": {
+                      "properties": {
+                        "mode": {
+                          "const": "resize"
+                        }
+                      }
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "settings": {
+                      "properties": {
+                        "layouts": {
+                          "contains": {
+                            "const": "resize"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "fullscreen": {
+                      "properties": {
+                        "mode": {
+                          "const": "fit"
+                        }
+                      }
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "settings": {
+                      "properties": {
+                        "layouts": {
+                          "contains": {
+                            "const": "fit"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "fullscreen": {
+                      "properties": {
+                        "mode": {
+                          "const": "scroll"
+                        }
+                      }
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "settings": {
+                      "properties": {
+                        "layouts": {
+                          "contains": {
+                            "const": "scroll"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "fullscreen": {
+                      "properties": {
+                        "mode": {
+                          "const": "crop"
+                        }
+                      }
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "settings": {
+                      "properties": {
+                        "layouts": {
+                          "contains": {
+                            "const": "crop"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "minItems": 0,
+      "maxItems": 256,
+      "x-blox-uniqueBy": "id"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "widgets"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*(?![\\s\\S])"
+    },
+    "placement": {
+      "type": "object",
+      "properties": {
+        "anchor": {
+          "enum": [
+            "top-left",
+            "top-right",
+            "bottom-left",
+            "bottom-right",
+            "centre"
+          ]
+        },
+        "x": {
+          "type": "integer",
+          "minimum": -100000,
+          "maximum": 100000
+        },
+        "y": {
+          "type": "integer",
+          "minimum": -100000,
+          "maximum": 100000
+        },
+        "width": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16384
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16384
+        },
+        "sizing": {
+          "enum": [
+            "fixed",
+            "content"
+          ],
+          "default": "fixed"
+        }
+      },
+      "required": [
+        "anchor",
+        "x",
+        "y",
+        "width",
+        "height"
+      ],
+      "additionalProperties": false
+    },
+    "workspaces": {
+      "type": "object",
+      "properties": {
+        "mode": {
+          "enum": [
+            "all",
+            "include"
+          ]
+        },
+        "ids": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": -1000000,
+                "maximum": 1000000
+              },
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              }
+            ]
+          },
+          "minItems": 0,
+          "maxItems": 128,
+          "uniqueItems": true
+        },
+        "ranges": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": -1000000,
+              "maximum": 1000000
+            },
+            "minItems": 2,
+            "maxItems": 2,
+            "x-blox-orderedRange": true
+          },
+          "minItems": 0,
+          "maxItems": 128,
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "mode",
+        "ids",
+        "ranges"
+      ],
+      "additionalProperties": false
+    },
+    "appearance": {
+      "type": "object",
+      "properties": {
+        "backgroundOpacity": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "scrollbars": {
+          "enum": [
+            "auto",
+            "show",
+            "hide"
+          ]
+        },
+        "presentation": {
+          "enum": [
+            "open",
+            "compact"
+          ],
+          "default": "open"
+        }
+      },
+      "required": [
+        "backgroundOpacity",
+        "scrollbars"
+      ],
+      "additionalProperties": false
+    },
+    "jsonValue0": {
+      "anyOf": [
+        {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "number",
+              "minimum": -1000000000000.0,
+              "maximum": 1000000000000.0
+            },
+            {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 16384
+            }
+          ]
+        },
+        {
+          "$ref": "#/$defs/jsonObject1"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/jsonValue1"
+          },
+          "minItems": 0,
+          "maxItems": 256
+        }
+      ]
+    },
+    "jsonObject0": {
+      "type": "object",
+      "maxProperties": 64,
+      "propertyNames": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 128
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/jsonValue0"
+      }
+    },
+    "jsonValue1": {
+      "anyOf": [
+        {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "number",
+              "minimum": -1000000000000.0,
+              "maximum": 1000000000000.0
+            },
+            {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 16384
+            }
+          ]
+        },
+        {
+          "$ref": "#/$defs/jsonObject2"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/jsonValue2"
+          },
+          "minItems": 0,
+          "maxItems": 256
+        }
+      ]
+    },
+    "jsonObject1": {
+      "type": "object",
+      "maxProperties": 64,
+      "propertyNames": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 128
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/jsonValue1"
+      }
+    },
+    "jsonValue2": {
+      "anyOf": [
+        {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "number",
+              "minimum": -1000000000000.0,
+              "maximum": 1000000000000.0
+            },
+            {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 16384
+            }
+          ]
+        },
+        {
+          "$ref": "#/$defs/jsonObject3"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/jsonValue3"
+          },
+          "minItems": 0,
+          "maxItems": 256
+        }
+      ]
+    },
+    "jsonObject2": {
+      "type": "object",
+      "maxProperties": 64,
+      "propertyNames": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 128
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/jsonValue2"
+      }
+    },
+    "jsonValue3": {
+      "anyOf": [
+        {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "number",
+              "minimum": -1000000000000.0,
+              "maximum": 1000000000000.0
+            },
+            {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 16384
+            }
+          ]
+        },
+        {
+          "$ref": "#/$defs/jsonObject4"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/jsonValue4"
+          },
+          "minItems": 0,
+          "maxItems": 256
+        }
+      ]
+    },
+    "jsonObject3": {
+      "type": "object",
+      "maxProperties": 64,
+      "propertyNames": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 128
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/jsonValue3"
+      }
+    },
+    "jsonValue4": {
+      "anyOf": [
+        {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "number",
+              "minimum": -1000000000000.0,
+              "maximum": 1000000000000.0
+            },
+            {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 16384
+            }
+          ]
+        },
+        {
+          "$ref": "#/$defs/jsonObject5"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/jsonValue5"
+          },
+          "minItems": 0,
+          "maxItems": 256
+        }
+      ]
+    },
+    "jsonObject4": {
+      "type": "object",
+      "maxProperties": 64,
+      "propertyNames": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 128
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/jsonValue4"
+      }
+    },
+    "jsonValue5": {
+      "anyOf": [
+        {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "number",
+              "minimum": -1000000000000.0,
+              "maximum": 1000000000000.0
+            },
+            {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 16384
+            }
+          ]
+        },
+        {
+          "$ref": "#/$defs/jsonObject6"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/jsonValue6"
+          },
+          "minItems": 0,
+          "maxItems": 256
+        }
+      ]
+    },
+    "jsonObject5": {
+      "type": "object",
+      "maxProperties": 64,
+      "propertyNames": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 128
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/jsonValue5"
+      }
+    },
+    "jsonValue6": {
+      "anyOf": [
+        {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "number",
+              "minimum": -1000000000000.0,
+              "maximum": 1000000000000.0
+            },
+            {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 16384
+            }
+          ]
+        },
+        {
+          "$ref": "#/$defs/jsonObject7"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/jsonValue7"
+          },
+          "minItems": 0,
+          "maxItems": 256
+        }
+      ]
+    },
+    "jsonObject6": {
+      "type": "object",
+      "maxProperties": 64,
+      "propertyNames": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 128
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/jsonValue6"
+      }
+    },
+    "jsonValue7": {
+      "anyOf": [
+        {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "number",
+              "minimum": -1000000000000.0,
+              "maximum": 1000000000000.0
+            },
+            {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 16384
+            }
+          ]
+        },
+        {
+          "$ref": "#/$defs/jsonObject8"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/jsonValue8"
+          },
+          "minItems": 0,
+          "maxItems": 256
+        }
+      ]
+    },
+    "jsonObject7": {
+      "type": "object",
+      "maxProperties": 64,
+      "propertyNames": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 128
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/jsonValue7"
+      }
+    },
+    "jsonValue8": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "number",
+          "minimum": -1000000000000.0,
+          "maximum": 1000000000000.0
+        },
+        {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384
+        }
+      ]
+    },
+    "jsonObject8": {
+      "type": "object",
+      "maxProperties": 64,
+      "propertyNames": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 128
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/jsonValue8"
+      }
+    },
+    "clockSettings": {
+      "type": "object",
+      "properties": {
+        "style": {
+          "enum": [
+            "digital",
+            "analogue"
+          ]
+        },
+        "timezone": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "format": "blox-timezone",
+          "description": "local or an IANA identifier available through Python ZoneInfo. blox-timezone is an asserted application format."
+        },
+        "format": {
+          "enum": [
+            "24h",
+            "12h"
+          ]
+        },
+        "showSeconds": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "style",
+        "timezone",
+        "format",
+        "showSeconds"
+      ],
+      "additionalProperties": false
+    },
+    "musicSettings": {
+      "type": "object",
+      "properties": {
+        "style": {
+          "enum": [
+            "radial",
+            "card",
+            "compact"
+          ]
+        },
+        "player": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 256
+        },
+        "showArtwork": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "style",
+        "player",
+        "showArtwork"
+      ],
+      "additionalProperties": false
+    },
+    "systemSettings": {
+      "type": "object",
+      "properties": {
+        "style": {
+          "enum": [
+            "rings",
+            "chart"
+          ]
+        },
+        "intervalSeconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 60
+        },
+        "historySize": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 240
+        }
+      },
+      "required": [
+        "style",
+        "intervalSeconds",
+        "historySize"
+      ],
+      "additionalProperties": false
+    },
+    "networkSettings": {
+      "type": "object",
+      "properties": {
+        "interfaces": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "minItems": 0,
+          "maxItems": 64,
+          "uniqueItems": true
+        },
+        "intervalSeconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 60
+        },
+        "historySize": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 240
+        }
+      },
+      "required": [
+        "interfaces",
+        "intervalSeconds",
+        "historySize"
+      ],
+      "additionalProperties": false
+    },
+    "calendarSettings": {
+      "type": "object",
+      "properties": {
+        "style": {
+          "enum": [
+            "month",
+            "agenda"
+          ]
+        },
+        "path": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 4096
+        },
+        "daysAhead": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 366
+        },
+        "maxEvents": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 256
+        }
+      },
+      "required": [
+        "style",
+        "path",
+        "daysAhead",
+        "maxEvents"
+      ],
+      "additionalProperties": false
+    },
+    "notesSettings": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 256
+        },
+        "text": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 65536
+        }
+      },
+      "required": [
+        "title",
+        "text"
+      ],
+      "additionalProperties": false
+    },
+    "filesSettings": {
+      "type": "object",
+      "properties": {
+        "directory": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 4096
+        },
+        "showHidden": {
+          "type": "boolean"
+        },
+        "maxEntries": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 256
+        }
+      },
+      "required": [
+        "directory",
+        "showHidden",
+        "maxEntries"
+      ],
+      "additionalProperties": false
+    },
+    "shortcutsSettings": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*(?![\\s\\S])"
+              },
+              "label": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              },
+              "command": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 0,
+                  "maxLength": 8192,
+                  "pattern": "^[^\\u0000]*$"
+                },
+                "minItems": 1,
+                "maxItems": 128,
+                "prefixItems": [
+                  {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 8192,
+                    "pattern": "^[^\\u0000]+$"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "label",
+              "command"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0,
+          "maxItems": 128,
+          "x-blox-uniqueBy": "id"
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "additionalProperties": false
+    },
+    "weatherSettings": {
+      "type": "object",
+      "properties": {
+        "provider": {
+          "enum": [
+            "open-meteo"
+          ]
+        },
+        "latitude": {
+          "type": "number",
+          "minimum": -90,
+          "maximum": 90
+        },
+        "longitude": {
+          "type": "number",
+          "minimum": -180,
+          "maximum": 180
+        },
+        "intervalSeconds": {
+          "type": "integer",
+          "minimum": 300,
+          "maximum": 86400
+        }
+      },
+      "required": [
+        "provider",
+        "latitude",
+        "longitude",
+        "intervalSeconds"
+      ],
+      "additionalProperties": false
+    },
+    "terminalSettings": {
+      "type": "object",
+      "properties": {
+        "command": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 4096,
+            "pattern": "^[^\\u0000]*$",
+            "x-blox-maxUtf8Bytes": 16384
+          },
+          "minItems": 1,
+          "maxItems": 128,
+          "prefixItems": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4096,
+              "pattern": "^[^\\u0000]+$",
+              "x-blox-maxUtf8Bytes": 16384
+            }
+          ]
+        },
+        "workingDirectory": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 4096,
+          "pattern": "^(?:|/[^\\u0000]*)(?![\\s\\S])",
+          "x-blox-maxUtf8Bytes": 16384
+        },
+        "environment": {
+          "type": "object",
+          "maxProperties": 128,
+          "propertyNames": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*(?![\\s\\S])"
+          },
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 4096,
+            "pattern": "^[^\\u0000]*$",
+            "x-blox-maxUtf8Bytes": 16384
+          }
+        },
+        "columns": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 240
+        },
+        "rows": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "maxRuntimeSeconds": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 86400
+        },
+        "restartPolicy": {
+          "type": "string",
+          "enum": [
+            "never",
+            "always"
+          ]
+        }
+      },
+      "required": [
+        "command",
+        "workingDirectory",
+        "environment",
+        "columns",
+        "rows",
+        "maxRuntimeSeconds",
+        "restartPolicy"
+      ],
+      "additionalProperties": false,
+      "x-blox-terminalBudget": {
+        "maxCells": 12000,
+        "maxArgvEnvironmentUtf8Bytes": 65536,
+        "maxEncodedJsonBytes": 49152
+      },
+      "description": "Complete terminal configuration. Empty workingDirectory inherits the broker directory; otherwise use an absolute path. x-blox-maxUtf8Bytes asserts valid Unicode and limits the UTF-8 bytes per string. x-blox-terminalBudget limits columns times rows to maxCells, the sum of UTF-8 bytes in argv plus environment keys and values to maxArgvEnvironmentUtf8Bytes, and compact ensure_ascii=true JSON of this settings object to maxEncodedJsonBytes. The ASCII budget also bounds Unicode-literal JSON and leaves request metadata room within the broker 64 KiB line limit. The stdlib validator asserts these application constraints for profiles and standalone provider settings."
+    },
+    "qmlSettings": {
+      "type": "object",
+      "properties": {
+        "manifest": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*(?![\\s\\S])"
+        },
+        "providers": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "clock",
+              "music",
+              "system",
+              "network",
+              "calendar",
+              "notes",
+              "files",
+              "shortcuts",
+              "weather",
+              "terminal",
+              "command"
+            ]
+          },
+          "minItems": 0,
+          "maxItems": 16,
+          "uniqueItems": true
+        },
+        "layouts": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "native",
+              "resize",
+              "fit",
+              "scroll",
+              "crop"
+            ]
+          },
+          "minItems": 1,
+          "maxItems": 5,
+          "uniqueItems": true
+        },
+        "settings": {
+          "$ref": "#/$defs/jsonObject0"
+        }
+      },
+      "required": [
+        "manifest",
+        "providers",
+        "layouts",
+        "settings"
+      ],
+      "additionalProperties": false
+    },
+    "commandSettings": {
+      "type": "object",
+      "properties": {
+        "command": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 4096,
+            "pattern": "^[^\\u0000]*$",
+            "x-blox-maxUtf8Bytes": 16384
+          },
+          "minItems": 1,
+          "maxItems": 128,
+          "prefixItems": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4096,
+              "pattern": "^[^\\u0000]+$",
+              "x-blox-maxUtf8Bytes": 16384
+            }
+          ]
+        },
+        "workingDirectory": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 4096,
+          "pattern": "^(?:|/[^\\u0000]*)(?![\\s\\S])",
+          "x-blox-maxUtf8Bytes": 16384
+        },
+        "environment": {
+          "type": "object",
+          "maxProperties": 128,
+          "propertyNames": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^(?!BLOX_WIDGET_ACTION_CONTEXT$)[A-Za-z_][A-Za-z0-9_]*(?![\\s\\S])"
+          },
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 4096,
+            "pattern": "^[^\\u0000]*$",
+            "x-blox-maxUtf8Bytes": 16384
+          }
+        },
+        "intervalSeconds": {
+          "type": "number",
+          "minimum": 0.25,
+          "maximum": 86400
+        },
+        "timeoutSeconds": {
+          "type": "number",
+          "minimum": 0.01,
+          "maximum": 86400
+        },
+        "fontFamily": {
+          "type": "string",
+          "maxLength": 256
+        },
+        "fontSize": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 144
+        },
+        "padding": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 256
+        },
+        "actions": {
+          "type": "object",
+          "properties": {
+            "left": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "const": "run"
+                    },
+                    "command": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 0,
+                        "maxLength": 4096,
+                        "pattern": "^[^\\u0000]*$",
+                        "x-blox-maxUtf8Bytes": 16384
+                      },
+                      "minItems": 1,
+                      "maxItems": 128,
+                      "prefixItems": [
+                        {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 4096,
+                          "pattern": "^[^\\u0000]+$",
+                          "x-blox-maxUtf8Bytes": 16384
+                        }
+                      ]
+                    },
+                    "workingDirectory": {
+                      "type": "string",
+                      "minLength": 0,
+                      "maxLength": 4096,
+                      "pattern": "^(?:|/[^\\u0000]*)(?![\\s\\S])",
+                      "x-blox-maxUtf8Bytes": 16384
+                    },
+                    "environment": {
+                      "type": "object",
+                      "maxProperties": 128,
+                      "propertyNames": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 128,
+                        "pattern": "^(?!BLOX_WIDGET_ACTION_CONTEXT$)[A-Za-z_][A-Za-z0-9_]*(?![\\s\\S])"
+                      },
+                      "additionalProperties": {
+                        "type": "string",
+                        "minLength": 0,
+                        "maxLength": 4096,
+                        "pattern": "^[^\\u0000]*$",
+                        "x-blox-maxUtf8Bytes": 16384
+                      }
+                    },
+                    "timeoutSeconds": {
+                      "type": "number",
+                      "minimum": 0.01,
+                      "maximum": 120
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "command",
+                    "workingDirectory",
+                    "environment",
+                    "timeoutSeconds"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "const": "launch"
+                    },
+                    "command": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 0,
+                        "maxLength": 4096,
+                        "pattern": "^[^\\u0000]*$",
+                        "x-blox-maxUtf8Bytes": 16384
+                      },
+                      "minItems": 1,
+                      "maxItems": 128,
+                      "prefixItems": [
+                        {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 4096,
+                          "pattern": "^[^\\u0000]+$",
+                          "x-blox-maxUtf8Bytes": 16384
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "command"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            },
+            "right": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "const": "run"
+                    },
+                    "command": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 0,
+                        "maxLength": 4096,
+                        "pattern": "^[^\\u0000]*$",
+                        "x-blox-maxUtf8Bytes": 16384
+                      },
+                      "minItems": 1,
+                      "maxItems": 128,
+                      "prefixItems": [
+                        {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 4096,
+                          "pattern": "^[^\\u0000]+$",
+                          "x-blox-maxUtf8Bytes": 16384
+                        }
+                      ]
+                    },
+                    "workingDirectory": {
+                      "type": "string",
+                      "minLength": 0,
+                      "maxLength": 4096,
+                      "pattern": "^(?:|/[^\\u0000]*)(?![\\s\\S])",
+                      "x-blox-maxUtf8Bytes": 16384
+                    },
+                    "environment": {
+                      "type": "object",
+                      "maxProperties": 128,
+                      "propertyNames": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 128,
+                        "pattern": "^(?!BLOX_WIDGET_ACTION_CONTEXT$)[A-Za-z_][A-Za-z0-9_]*(?![\\s\\S])"
+                      },
+                      "additionalProperties": {
+                        "type": "string",
+                        "minLength": 0,
+                        "maxLength": 4096,
+                        "pattern": "^[^\\u0000]*$",
+                        "x-blox-maxUtf8Bytes": 16384
+                      }
+                    },
+                    "timeoutSeconds": {
+                      "type": "number",
+                      "minimum": 0.01,
+                      "maximum": 120
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "command",
+                    "workingDirectory",
+                    "environment",
+                    "timeoutSeconds"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "const": "launch"
+                    },
+                    "command": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 0,
+                        "maxLength": 4096,
+                        "pattern": "^[^\\u0000]*$",
+                        "x-blox-maxUtf8Bytes": 16384
+                      },
+                      "minItems": 1,
+                      "maxItems": 128,
+                      "prefixItems": [
+                        {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 4096,
+                          "pattern": "^[^\\u0000]+$",
+                          "x-blox-maxUtf8Bytes": 16384
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "command"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "required": [
+            "left",
+            "right"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "command",
+        "workingDirectory",
+        "environment",
+        "intervalSeconds",
+        "timeoutSeconds",
+        "fontFamily",
+        "fontSize",
+        "padding",
+        "actions"
+      ],
+      "additionalProperties": false,
+      "x-blox-commandBudget": {
+        "maxArgvEnvironmentUtf8Bytes": 65536,
+        "maxEncodedJsonBytes": 49152
+      }
+    }
+  }
+}

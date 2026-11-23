@@ -1,0 +1,365 @@
+{
+  "description": "Frozen, invented test observations. No live provider or network access.",
+  "values": {
+    "clock": {
+      "epochMs": 1792230138000,
+      "iso": "2026-10-17T10:42:18+01:00",
+      "timeZone": "Europe/London",
+      "hour": 10,
+      "minute": 42,
+      "second": 18,
+      "day": 17,
+      "month": 10,
+      "year": 2026,
+      "date": "2026-10-17",
+      "text": "10:42"
+    },
+    "music": {
+      "title": "Fixture track",
+      "artist": "Fixture artist",
+      "album": "Fixture album",
+      "artUrl": "fixture-artwork.svg",
+      "positionSeconds": 138,
+      "lengthSeconds": 317,
+      "playbackState": "Playing",
+      "canPlay": true,
+      "canPause": true,
+      "canGoNext": true,
+      "canGoPrevious": true
+    },
+    "system": {
+      "cpuPercent": 28,
+      "cpuFrequencyGHz": 3.2,
+      "cpuTemperatureC": 48,
+      "memoryUsedBytes": 10952166604,
+      "memoryTotalBytes": 17179869184,
+      "memoryPercent": 63,
+      "powerW": 12.4,
+      "uptimeSeconds": 13320,
+      "history": [
+        {
+          "cpuPercent": 18,
+          "memoryPercent": 63,
+          "cpuTemperatureC": 48,
+          "rxBytesPerSecond": 130000,
+          "txBytesPerSecond": 18571.428571428572
+        },
+        {
+          "cpuPercent": 21,
+          "memoryPercent": 63,
+          "cpuTemperatureC": 48,
+          "rxBytesPerSecond": 220000,
+          "txBytesPerSecond": 31428.571428571428
+        },
+        {
+          "cpuPercent": 20,
+          "memoryPercent": 63,
+          "cpuTemperatureC": 48,
+          "rxBytesPerSecond": 180000,
+          "txBytesPerSecond": 25714.285714285714
+        },
+        {
+          "cpuPercent": 29,
+          "memoryPercent": 63,
+          "cpuTemperatureC": 48,
+          "rxBytesPerSecond": 540000,
+          "txBytesPerSecond": 77142.85714285714
+        },
+        {
+          "cpuPercent": 33,
+          "memoryPercent": 63,
+          "cpuTemperatureC": 48,
+          "rxBytesPerSecond": 820000,
+          "txBytesPerSecond": 117142.85714285714
+        },
+        {
+          "cpuPercent": 31,
+          "memoryPercent": 63,
+          "cpuTemperatureC": 48,
+          "rxBytesPerSecond": 660000,
+          "txBytesPerSecond": 94285.71428571429
+        },
+        {
+          "cpuPercent": 26,
+          "memoryPercent": 63,
+          "cpuTemperatureC": 48,
+          "rxBytesPerSecond": 430000,
+          "txBytesPerSecond": 61428.57142857143
+        },
+        {
+          "cpuPercent": 24,
+          "memoryPercent": 63,
+          "cpuTemperatureC": 48,
+          "rxBytesPerSecond": 380000,
+          "txBytesPerSecond": 54285.71428571428
+        },
+        {
+          "cpuPercent": 19,
+          "memoryPercent": 63,
+          "cpuTemperatureC": 48,
+          "rxBytesPerSecond": 240000,
+          "txBytesPerSecond": 34285.71428571428
+        },
+        {
+          "cpuPercent": 22,
+          "memoryPercent": 63,
+          "cpuTemperatureC": 48,
+          "rxBytesPerSecond": 340000,
+          "txBytesPerSecond": 48571.42857142857
+        },
+        {
+          "cpuPercent": null,
+          "memoryPercent": 63,
+          "cpuTemperatureC": 48,
+          "rxBytesPerSecond": null,
+          "txBytesPerSecond": null
+        },
+        {
+          "cpuPercent": 25,
+          "memoryPercent": 63,
+          "cpuTemperatureC": 48,
+          "rxBytesPerSecond": 610000,
+          "txBytesPerSecond": 87142.85714285714
+        },
+        {
+          "cpuPercent": 27,
+          "memoryPercent": 63,
+          "cpuTemperatureC": 48,
+          "rxBytesPerSecond": 940000,
+          "txBytesPerSecond": 134285.7142857143
+        },
+        {
+          "cpuPercent": 31,
+          "memoryPercent": 63,
+          "cpuTemperatureC": 48,
+          "rxBytesPerSecond": 870000,
+          "txBytesPerSecond": 124285.71428571429
+        },
+        {
+          "cpuPercent": 35,
+          "memoryPercent": 63,
+          "cpuTemperatureC": 48,
+          "rxBytesPerSecond": 710000,
+          "txBytesPerSecond": 101428.57142857143
+        },
+        {
+          "cpuPercent": 29,
+          "memoryPercent": 63,
+          "cpuTemperatureC": 48,
+          "rxBytesPerSecond": 480000,
+          "txBytesPerSecond": 68571.42857142857
+        },
+        {
+          "cpuPercent": 24,
+          "memoryPercent": 63,
+          "cpuTemperatureC": 48,
+          "rxBytesPerSecond": 360000,
+          "txBytesPerSecond": 51428.57142857143
+        },
+        {
+          "cpuPercent": 28,
+          "memoryPercent": 63,
+          "cpuTemperatureC": 48,
+          "rxBytesPerSecond": 520000,
+          "txBytesPerSecond": 74285.71428571429
+        }
+      ]
+    },
+    "network": {
+      "interfaces": [
+        {
+          "name": "fixture0",
+          "rxBytesPerSecond": 520000,
+          "txBytesPerSecond": 74285
+        }
+      ],
+      "rxBytesPerSecond": 520000,
+      "txBytesPerSecond": 74285,
+      "history": [
+        {
+          "cpuPercent": 18,
+          "memoryPercent": 63,
+          "cpuTemperatureC": 48,
+          "rxBytesPerSecond": 130000,
+          "txBytesPerSecond": 18571.428571428572
+        },
+        {
+          "cpuPercent": 21,
+          "memoryPercent": 63,
+          "cpuTemperatureC": 48,
+          "rxBytesPerSecond": 220000,
+          "txBytesPerSecond": 31428.571428571428
+        },
+        {
+          "cpuPercent": 20,
+          "memoryPercent": 63,
+          "cpuTemperatureC": 48,
+          "rxBytesPerSecond": 180000,
+          "txBytesPerSecond": 25714.285714285714
+        },
+        {
+          "cpuPercent": 29,
+          "memoryPercent": 63,
+          "cpuTemperatureC": 48,
+          "rxBytesPerSecond": 540000,
+          "txBytesPerSecond": 77142.85714285714
+        },
+        {
+          "cpuPercent": 33,
+          "memoryPercent": 63,
+          "cpuTemperatureC": 48,
+          "rxBytesPerSecond": 820000,
+          "txBytesPerSecond": 117142.85714285714
+        },
+        {
+          "cpuPercent": 31,
+          "memoryPercent": 63,
+          "cpuTemperatureC": 48,
+          "rxBytesPerSecond": 660000,
+          "txBytesPerSecond": 94285.71428571429
+        },
+        {
+          "cpuPercent": 26,
+          "memoryPercent": 63,
+          "cpuTemperatureC": 48,
+          "rxBytesPerSecond": 430000,
+          "txBytesPerSecond": 61428.57142857143
+        },
+        {
+          "cpuPercent": 24,
+          "memoryPercent": 63,
+          "cpuTemperatureC": 48,
+          "rxBytesPerSecond": 380000,
+          "txBytesPerSecond": 54285.71428571428
+        },
+        {
+          "cpuPercent": 19,
+          "memoryPercent": 63,
+          "cpuTemperatureC": 48,
+          "rxBytesPerSecond": 240000,
+          "txBytesPerSecond": 34285.71428571428
+        },
+        {
+          "cpuPercent": 22,
+          "memoryPercent": 63,
+          "cpuTemperatureC": 48,
+          "rxBytesPerSecond": 340000,
+          "txBytesPerSecond": 48571.42857142857
+        },
+        {
+          "cpuPercent": null,
+          "memoryPercent": 63,
+          "cpuTemperatureC": 48,
+          "rxBytesPerSecond": null,
+          "txBytesPerSecond": null
+        },
+        {
+          "cpuPercent": 25,
+          "memoryPercent": 63,
+          "cpuTemperatureC": 48,
+          "rxBytesPerSecond": 610000,
+          "txBytesPerSecond": 87142.85714285714
+        },
+        {
+          "cpuPercent": 27,
+          "memoryPercent": 63,
+          "cpuTemperatureC": 48,
+          "rxBytesPerSecond": 940000,
+          "txBytesPerSecond": 134285.7142857143
+        },
+        {
+          "cpuPercent": 31,
+          "memoryPercent": 63,
+          "cpuTemperatureC": 48,
+          "rxBytesPerSecond": 870000,
+          "txBytesPerSecond": 124285.71428571429
+        },
+        {
+          "cpuPercent": 35,
+          "memoryPercent": 63,
+          "cpuTemperatureC": 48,
+          "rxBytesPerSecond": 710000,
+          "txBytesPerSecond": 101428.57142857143
+        },
+        {
+          "cpuPercent": 29,
+          "memoryPercent": 63,
+          "cpuTemperatureC": 48,
+          "rxBytesPerSecond": 480000,
+          "txBytesPerSecond": 68571.42857142857
+        },
+        {
+          "cpuPercent": 24,
+          "memoryPercent": 63,
+          "cpuTemperatureC": 48,
+          "rxBytesPerSecond": 360000,
+          "txBytesPerSecond": 51428.57142857143
+        },
+        {
+          "cpuPercent": 28,
+          "memoryPercent": 63,
+          "cpuTemperatureC": 48,
+          "rxBytesPerSecond": 520000,
+          "txBytesPerSecond": 74285.71428571429
+        }
+      ]
+    },
+    "calendar": {
+      "epochMs": 1792230138000,
+      "events": [
+        {
+          "id": "fixture-lecture",
+          "title": "Fixture lecture",
+          "start": "2026-10-17T11:00:00+01:00",
+          "end": "2026-10-17T12:00:00+01:00",
+          "allDay": false,
+          "calendar": "Fixture calendar",
+          "color": "#89b4fa"
+        },
+        {
+          "id": "fixture-meeting",
+          "title": "Fixture meeting",
+          "start": "2026-10-17T14:30:00+01:00",
+          "end": "2026-10-17T15:00:00+01:00",
+          "allDay": false,
+          "calendar": "Fixture calendar",
+          "color": "#94e2d5"
+        }
+      ]
+    },
+    "files": {
+      "directory": "/fixture/files",
+      "entries": [
+        {
+          "name": "fixture-widget.qml",
+          "path": "/fixture/files/fixture-widget.qml",
+          "isDirectory": false,
+          "sizeBytes": 3072,
+          "modifiedMs": 1792230138000
+        },
+        {
+          "name": "fixture-notes.md",
+          "path": "/fixture/files/fixture-notes.md",
+          "isDirectory": false,
+          "sizeBytes": 1024,
+          "modifiedMs": 1792230138000
+        },
+        {
+          "name": "fixture-project",
+          "path": "/fixture/files/fixture-project",
+          "isDirectory": true,
+          "sizeBytes": 0,
+          "modifiedMs": 1792230138000
+        }
+      ]
+    },
+    "weather": {
+      "temperatureC": 14,
+      "weatherCode": 3,
+      "isDay": true,
+      "windSpeedKph": 12
+    },
+    "notes": {},
+    "shortcuts": {}
+  }
+}

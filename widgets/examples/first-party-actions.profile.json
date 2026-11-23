@@ -1,0 +1,135 @@
+{
+  "schemaVersion": 1,
+  "widgets": [
+    {
+      "id": "todo",
+      "kind": "command",
+      "name": "Todo",
+      "enabled": true,
+      "placement": {
+        "anchor": "top-left",
+        "x": 24,
+        "y": 24,
+        "width": 360,
+        "height": 240,
+        "sizing": "content"
+      },
+      "workspaces": {
+        "mode": "all",
+        "ids": [],
+        "ranges": []
+      },
+      "visibility": "always",
+      "appearance": {
+        "backgroundOpacity": 0.8,
+        "scrollbars": "auto",
+        "presentation": "open"
+      },
+      "fullscreen": {
+        "enabled": false,
+        "mode": "native"
+      },
+      "settings": {
+        "workingDirectory": "",
+        "environment": {},
+        "intervalSeconds": 60,
+        "timeoutSeconds": 15,
+        "fontFamily": "",
+        "fontSize": 15,
+        "padding": 24,
+        "actions": {
+          "left": {
+            "kind": "run",
+            "command": [
+              "blox-widget-action",
+              "todo",
+              "next"
+            ],
+            "workingDirectory": "",
+            "environment": {},
+            "timeoutSeconds": 5
+          },
+          "right": {
+            "kind": "run",
+            "command": [
+              "blox-widget-action",
+              "todo",
+              "edit"
+            ],
+            "workingDirectory": "",
+            "environment": {},
+            "timeoutSeconds": 10
+          }
+        },
+        "command": [
+          "/fixture/blox/shell/scripts/widgets/todo-content.sh"
+        ]
+      }
+    },
+    {
+      "id": "calendar",
+      "kind": "command",
+      "name": "Calendar",
+      "enabled": true,
+      "placement": {
+        "anchor": "top-left",
+        "x": 24,
+        "y": 24,
+        "width": 360,
+        "height": 240,
+        "sizing": "content"
+      },
+      "workspaces": {
+        "mode": "all",
+        "ids": [],
+        "ranges": []
+      },
+      "visibility": "always",
+      "appearance": {
+        "backgroundOpacity": 0.8,
+        "scrollbars": "auto",
+        "presentation": "open"
+      },
+      "fullscreen": {
+        "enabled": false,
+        "mode": "native"
+      },
+      "settings": {
+        "workingDirectory": "",
+        "environment": {},
+        "intervalSeconds": 60,
+        "timeoutSeconds": 15,
+        "fontFamily": "",
+        "fontSize": 15,
+        "padding": 24,
+        "actions": {
+          "left": {
+            "kind": "run",
+            "command": [
+              "blox-widget-action",
+              "calendar",
+              "next"
+            ],
+            "workingDirectory": "",
+            "environment": {},
+            "timeoutSeconds": 120
+          },
+          "right": {
+            "kind": "run",
+            "command": [
+              "blox-widget-action",
+              "calendar",
+              "open"
+            ],
+            "workingDirectory": "",
+            "environment": {},
+            "timeoutSeconds": 120
+          }
+        },
+        "command": [
+          "/fixture/blox/shell/scripts/widgets/gcal-content.sh"
+        ]
+      }
+    }
+  ]
+}

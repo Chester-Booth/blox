@@ -1,0 +1,194 @@
+{
+  "schemaVersion": 1,
+  "description": "Native widgets use read-only providers. Weather requires explicit coordinates. Command output, terminal and shortcut commands execute with your user permissions. Only enable commands you trust. QML manifests resolve through an explicitly trusted host registry. A manifest is not a sandbox.",
+  "widgets": [
+    {
+      "kind": "clock",
+      "name": "Clock",
+      "route": "native",
+      "optional": false,
+      "width": 280,
+      "height": 160,
+      "requiresConfiguration": [],
+      "defaultSettings": {
+        "style": "digital",
+        "timezone": "local",
+        "format": "24h",
+        "showSeconds": false
+      }
+    },
+    {
+      "kind": "music",
+      "name": "Music",
+      "route": "native",
+      "optional": false,
+      "width": 360,
+      "height": 220,
+      "requiresConfiguration": [],
+      "defaultSettings": {
+        "style": "card",
+        "player": "",
+        "showArtwork": true
+      }
+    },
+    {
+      "kind": "system",
+      "name": "System",
+      "route": "native",
+      "optional": false,
+      "width": 360,
+      "height": 220,
+      "requiresConfiguration": [],
+      "defaultSettings": {
+        "style": "chart",
+        "intervalSeconds": 2,
+        "historySize": 60
+      }
+    },
+    {
+      "kind": "network",
+      "name": "Network",
+      "route": "native",
+      "optional": false,
+      "width": 360,
+      "height": 180,
+      "requiresConfiguration": [],
+      "defaultSettings": {
+        "interfaces": [],
+        "intervalSeconds": 2,
+        "historySize": 60
+      }
+    },
+    {
+      "kind": "calendar",
+      "name": "Calendar",
+      "route": "native",
+      "optional": false,
+      "width": 360,
+      "height": 340,
+      "requiresConfiguration": [],
+      "defaultSettings": {
+        "style": "month",
+        "path": "",
+        "daysAhead": 30,
+        "maxEvents": 128
+      }
+    },
+    {
+      "kind": "notes",
+      "name": "Notes",
+      "route": "native",
+      "optional": false,
+      "width": 320,
+      "height": 240,
+      "requiresConfiguration": [],
+      "defaultSettings": {
+        "title": "",
+        "text": ""
+      }
+    },
+    {
+      "kind": "files",
+      "name": "Files",
+      "route": "native",
+      "optional": false,
+      "width": 360,
+      "height": 280,
+      "requiresConfiguration": [],
+      "defaultSettings": {
+        "directory": "",
+        "showHidden": false,
+        "maxEntries": 100
+      }
+    },
+    {
+      "kind": "shortcuts",
+      "name": "Shortcuts",
+      "route": "native",
+      "optional": false,
+      "width": 320,
+      "height": 200,
+      "requiresConfiguration": [],
+      "defaultSettings": {
+        "items": []
+      }
+    },
+    {
+      "kind": "weather",
+      "name": "Weather",
+      "route": "native",
+      "optional": true,
+      "width": 320,
+      "height": 200,
+      "requiresConfiguration": [
+        "latitude",
+        "longitude"
+      ],
+      "defaultSettings": {
+        "provider": "open-meteo",
+        "intervalSeconds": 1800
+      }
+    },
+    {
+      "kind": "command",
+      "name": "Command output",
+      "route": "command",
+      "optional": false,
+      "width": 360,
+      "height": 240,
+      "requiresConfiguration": [
+        "command"
+      ],
+      "defaultSettings": {
+        "workingDirectory": "",
+        "environment": {},
+        "intervalSeconds": 60,
+        "timeoutSeconds": 15,
+        "fontFamily": "",
+        "fontSize": 15,
+        "padding": 24,
+        "actions": {
+          "left": null,
+          "right": null
+        }
+      }
+    },
+    {
+      "kind": "terminal",
+      "name": "Terminal",
+      "route": "terminal",
+      "optional": false,
+      "width": 640,
+      "height": 360,
+      "requiresConfiguration": [
+        "command"
+      ],
+      "defaultSettings": {
+        "workingDirectory": "",
+        "environment": {},
+        "columns": 80,
+        "rows": 24,
+        "maxRuntimeSeconds": 0,
+        "restartPolicy": "never"
+      }
+    },
+    {
+      "kind": "qml",
+      "name": "Trusted QML",
+      "route": "trusted-qml",
+      "optional": false,
+      "width": 360,
+      "height": 240,
+      "requiresConfiguration": [
+        "manifest"
+      ],
+      "defaultSettings": {
+        "providers": [],
+        "layouts": [
+          "native"
+        ],
+        "settings": {}
+      }
+    }
+  ]
+}

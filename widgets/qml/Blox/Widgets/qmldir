@@ -1,0 +1,5 @@
+module Blox.Widgets
+WidgetView 1.0 WidgetView.qml
+WidgetHost 1.0 WidgetHost.qml
+WidgetTheme 1.0 WidgetTheme.qml
+JsonValue 1.0 JsonValue.js

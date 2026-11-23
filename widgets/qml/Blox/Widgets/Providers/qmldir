@@ -1,0 +1,2 @@
+module Blox.Widgets.Providers
+NativeProvider 1.0 NativeProvider.qml

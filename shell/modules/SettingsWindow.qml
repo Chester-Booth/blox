@@ -819,43 +819,9 @@ FloatingWindow {
         themeMenuState.closeMenu(shelfOpen);
     }
 
-    function updateShelfCursor(raw) {
-        if (!shelfOpen)
-            return;
-        try {
-            const point = JSON.parse(raw);
-            const x = Number(point.x);
-            const y = Number(point.y);
-            if (!Number.isFinite(x) || !Number.isFinite(y))
-                return;
-            if (point.title !== "Blox settings") {
-                setShelfCursor({x: -1, y: -1, occluded: false});
-                return;
-            }
-            const localX = x - Number(point.originX) - frame.x;
-            const localY = y - Number(point.originY) - frame.y;
-            const menu = themeShelfOverlay.themeCardMenuOverlay.mapToItem(frame, 0, 0);
-            const occluded = themeCardMenuOpen
-                && localX >= menu.x && localX <= menu.x + themeShelfOverlay.themeCardMenuOverlay.width
-                && localY >= menu.y && localY <= menu.y + themeShelfOverlay.themeCardMenuOverlay.height;
-            setShelfCursor({x: localX, y: localY, occluded: occluded});
-        } catch (_) {
-            // Pointer events still provide hover state when Hyprland is unavailable.
-        }
-    }
-
-    function setShelfCursor(point) {
-        shelfCursor = point;
-        Qt.callLater(() => syncThemeCardHover());
-    }
-
-    function syncThemeCardHover() {
-        for (let index = 0; index < themeShelfOverlay.themeList.count; index++) {
-            const card = themeShelfOverlay.themeList.itemAtIndex(index);
-            if (card)
-                card.syncGlobalPointer();
-        }
-    }
+    function updateShelfCursor(raw) { shelfCursorTracker.updateShelfCursor(raw); }
+    function setShelfCursor(point) { shelfCursorTracker.setShelfCursor(point); }
+    function syncThemeCardHover() { shelfCursorTracker.syncThemeCardHover(); }
 
     function requestThemeAction(action, themeId) {
         if (mutationProtected) return;
@@ -897,8 +863,6 @@ FloatingWindow {
     }
 
     onShelfOpenChanged: {
-        if (!shelfOpen)
-            shelfCursor = ({x: -1, y: -1, occluded: false});
         Qt.callLater(() => {
             if (shelfOpen)
                 themeShelfOverlay.themeSearchField.forceActiveFocus();
@@ -906,25 +870,14 @@ FloatingWindow {
                 sidebar.activeThemeCard.focusAction();
         });
     }
-    property var shelfCursor: ({x: -1, y: -1, occluded: false})
+    property alias shelfCursor: shelfCursorTracker.shelfCursor
 
-    Timer {
-        interval: 120
-        repeat: true
-        running: root.shelfOpen
-        triggeredOnStart: true
-        onTriggered: {
-            if (!shelfCursorProcess.running)
-                shelfCursorProcess.running = true;
-        }
-    }
-
-    Process {
-        id: shelfCursorProcess
-        command: ["python3", Quickshell.shellDir + "/scripts/pointer_position.py"]
-        stdout: StdioCollector {
-            onStreamFinished: root.updateShelfCursor(this.text)
-        }
+    SettingsThemeShelfCursor {
+        id: shelfCursorTracker
+        frameItem: frame
+        themeShelfOverlay: themeShelfOverlay
+        shelfOpen: root.shelfOpen
+        themeCardMenuOpen: root.themeCardMenuOpen
     }
 
     onNewMenuOpenChanged: Qt.callLater(() => {

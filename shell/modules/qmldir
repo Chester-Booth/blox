@@ -8,6 +8,7 @@ OsdSurface 1.0 OsdSurface.qml
 SettingsWindow 1.0 SettingsWindow.qml
 SettingsSidebar 1.0 SettingsSidebar.qml
 SettingsThemeShelfOverlay 1.0 SettingsThemeShelfOverlay.qml
+SettingsThemeShelfCursor 1.0 SettingsThemeShelfCursor.qml
 SettingsWidgetMetadataLoader 1.0 SettingsWidgetMetadataLoader.qml
 SettingsBarAdvancedPage 1.0 SettingsBarAdvancedPage.qml
 SettingsBarItemRow 1.0 SettingsBarItemRow.qml
@@ -33,6 +34,9 @@ SettingsBarEditorModel 1.0 SettingsBarEditorModel.qml
 SettingsColourPicker 1.0 SettingsColourPicker.qml
 SettingsColourController 1.0 SettingsColourController.qml
 SettingsThemeEditorController 1.0 SettingsThemeEditorController.qml
+SettingsBarDragController 1.0 SettingsBarDragController.qml
+SettingsThemeDiscoveryController 1.0 SettingsThemeDiscoveryController.qml
+SettingsThemeWallpaperController 1.0 SettingsThemeWallpaperController.qml
 SettingsThemeCreationFlow 1.0 SettingsThemeCreationFlow.qml
 SettingsEditorFileDialogs 1.0 SettingsEditorFileDialogs.qml
 SettingsThemeCreationController 1.0 SettingsThemeCreationController.qml
@@ -50,6 +54,7 @@ ClipboardController 1.0 ClipboardController.qml
 ClipboardPicker 1.0 ClipboardPicker.qml
 ClipboardWatcher 1.0 ClipboardWatcher.qml
 CalendarEventWindows 1.0 CalendarEventWindows.qml
+CalendarEventEditorWindow 1.0 CalendarEventEditorWindow.qml
 CalendarEventDetailWindow 1.0 CalendarEventDetailWindow.qml
 CalendarDeleteConfirmOverlay 1.0 CalendarDeleteConfirmOverlay.qml
 CalendarEventDescriptionField 1.0 CalendarEventDescriptionField.qml

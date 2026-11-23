@@ -36,22 +36,22 @@ Scope {
     property var sourceTheme: null
     property var touchedPaths: []
     property string selectedId: ""
-    property var browserTargets: []
-    property bool browserTargetsLoaded: false
-    property string browserTargetOutput: ""
-    property var wallpapers: []
-    property bool wallpapersLoaded: false
-    property string wallpaperOutput: ""
-    property int wallpaperRevision: 0
-    property string wallpaperFilter: "All"
-    property string wallpaperRemovalId: ""
-    property string wallpaperRemovalName: ""
-    property string wallpaperRemovalReference: ""
-    property var wallpaperRemovalUsers: []
-    property string wallpaperRemovalError: ""
-    property var iconThemes: []
-    property bool iconThemesLoaded: false
-    property string iconThemeOutput: ""
+    property alias browserTargets: discoveryController.browserTargets
+    property alias browserTargetsLoaded: discoveryController.browserTargetsLoaded
+    property alias browserTargetOutput: discoveryController.browserTargetOutput
+    property alias wallpapers: wallpaperController.wallpapers
+    property alias wallpapersLoaded: wallpaperController.wallpapersLoaded
+    property alias wallpaperOutput: wallpaperController.wallpaperOutput
+    property alias wallpaperRevision: wallpaperController.wallpaperRevision
+    property alias wallpaperFilter: wallpaperController.wallpaperFilter
+    property alias wallpaperRemovalId: wallpaperController.removalId
+    property alias wallpaperRemovalName: wallpaperController.removalName
+    property alias wallpaperRemovalReference: wallpaperController.removalReference
+    property alias wallpaperRemovalUsers: wallpaperController.removalUsers
+    property alias wallpaperRemovalError: wallpaperController.removalError
+    property alias iconThemes: discoveryController.iconThemes
+    property alias iconThemesLoaded: discoveryController.iconThemesLoaded
+    property alias iconThemeOutput: discoveryController.iconThemeOutput
     property var previewData: ({
     })
     property var apiWarnings: []
@@ -120,8 +120,8 @@ Scope {
     property alias generatedDownloadFile: generationController.downloadFile
     property alias generatedDownloadArchive: generationController.downloadArchive
     property string wallpaperDialogTarget: "overview"
-    property var fontFamilies: []
-    property string fontOutput: ""
+    property alias fontFamilies: discoveryController.fontFamilies
+    property alias fontOutput: discoveryController.fontOutput
     property alias colourPickerOpen: colourController.open
     property alias colourPickerKey: colourController.key
     property alias colourPickerTarget: colourController.target
@@ -135,14 +135,14 @@ Scope {
     property alias colourSaturation: colourController.saturation
     property alias colourValue: colourController.value
     property alias colourHex: colourController.hex
-    property bool barDragActive: false
-    property string barDragItemId: ""
-    property string barDragLabel: ""
-    property string barDropRegion: ""
-    property int barDropIndex: -1
-    property string barDropTarget: ""
-    property real barDragOriginX: 0
-    property real barDragOriginY: 0
+    property alias barDragActive: barDragController.active
+    property alias barDragItemId: barDragController.itemId
+    property alias barDragLabel: barDragController.label
+    property alias barDropRegion: barDragController.dropRegion
+    property alias barDropIndex: barDragController.dropIndex
+    property alias barDropTarget: barDragController.dropTarget
+    property alias barDragOriginX: barDragController.originX
+    property alias barDragOriginY: barDragController.originY
     property var editorWheelOwner: null
     readonly property bool dirty: candidate !== null && (JSON.stringify(candidate) !== baselineJson || touchedPaths.length > 0)
     readonly property string apiPath: Quickshell.shellDir + "/scripts/theme/themectl.sh"
@@ -184,43 +184,9 @@ Scope {
     })
     readonly property var barRegions: ["start", "centre", "end", "tray"]
 
-    function beginBarDrag(row, itemId) {
-        const point = row.mapToItem(pickerRootItem, 0, 0);
-        barDragItemId = itemId;
-        barDragLabel = barItemLabel(itemId);
-        barDragProxyItem.width = row.width;
-        barDragProxyItem.height = row.height;
-        barDragProxyItem.x = point.x;
-        barDragProxyItem.y = point.y;
-        barDragOriginX = point.x;
-        barDragOriginY = point.y;
-        barDropRegion = "";
-        barDropIndex = -1;
-        barDropTarget = "";
-        barDragActive = true;
-    }
-
-    function moveBarDragProxy(deltaX, deltaY) {
-        if (!barDragActive)
-            return ;
-
-        barDragProxyItem.x = barDragOriginX + deltaX;
-        barDragProxyItem.y = barDragOriginY + deltaY;
-    }
-
-    function scrollBarDrag() {
-        if (!barDragActive)
-            return ;
-
-        const viewport = editorScrollItem.mapToItem(pickerRootItem, 0, 0);
-        const pointerY = barDragProxyItem.y + barDragProxyItem.height / 2;
-        const edge = 54;
-        const maximum = Math.max(editorScrollItem.originY, editorScrollItem.originY + editorScrollItem.contentHeight - editorScrollItem.height);
-        if (pointerY > viewport.y + editorScrollItem.height - edge)
-            editorScrollItem.contentY = Math.min(maximum, editorScrollItem.contentY + 14);
-        else if (pointerY < viewport.y + edge)
-            editorScrollItem.contentY = Math.max(editorScrollItem.originY, editorScrollItem.contentY - 14);
-    }
+    function beginBarDrag(row, itemId) { barDragController.begin(row, itemId); }
+    function moveBarDragProxy(deltaX, deltaY) { barDragController.moveProxy(deltaX, deltaY); }
+    function scrollBarDrag() { barDragController.scrollEditor(); }
 
     function claimEditorWheel(owner) {
         if (!owner)
@@ -232,68 +198,11 @@ Scope {
         return editorWheelOwner === owner;
     }
 
-    function setBarDropTarget(region, index, target) {
-        if (!barDragActive)
-            return ;
-
-        if (!barDropAllowed(barDragItemId, region, index)) {
-            barDropRegion = "";
-            barDropIndex = -1;
-            barDropTarget = "";
-            return ;
-        }
-        barDropRegion = region;
-        barDropIndex = index;
-        barDropTarget = target;
-    }
-
-    function barDropAllowed(id, region, index) {
-        if (id === "application-tray") {
-            if (region !== "hidden")
-                return false;
-
-            const count = barItems().filter((item) => {
-                return item.region === "hidden";
-            }).length;
-            return applicationTrayAtStart() ? index === 0 : index === count;
-        }
-        if (id !== "tray")
-            return true;
-
-        if (region === "hidden")
-            return false;
-
-        const count = barItems().filter((item) => {
-            return item.region === region;
-        }).length;
-        if (region === "start")
-            return index === count;
-
-        if (region === "end")
-            return index === 0;
-
-        return region === "centre" && (index === 0 || index === count);
-    }
-
-    function commitBarDrop() {
-        if (barDragItemId.length > 0 && barDropRegion.length > 0 && barDropIndex >= 0)
-            moveBarItemTo(barDragItemId, barDropRegion, barDropIndex);
-
-    }
-
-    function endBarDrag() {
-        barDragActive = false;
-        barDragItemId = "";
-        barDragLabel = "";
-        barDropRegion = "";
-        barDropIndex = -1;
-        barDropTarget = "";
-    }
-
-    function finishBarDrag() {
-        commitBarDrop();
-        endBarDrag();
-    }
+    function setBarDropTarget(region, index, target) { barDragController.setDropTarget(region, index, target); }
+    function barDropAllowed(id, region, index) { return barDragController.dropAllowed(id, region, index); }
+    function commitBarDrop() { barDragController.commitDrop(); }
+    function endBarDrag() { barDragController.end(); }
+    function finishBarDrag() { barDragController.finish(); }
 
     function targetAvailable(key) {
         if (unavailableTargetKeys.indexOf(key) >= 0)
@@ -505,13 +414,7 @@ Scope {
         return apiController.run(nextAction, args);
     }
 
-    function browserTargetInfo(key) {
-        for (const entry of browserTargets) {
-            if (entry.target === key)
-                return entry;
-        }
-        return null;
-    }
+    function browserTargetInfo(key) { return discoveryController.browserTargetInfo(key); }
 
     function iconThemeInfo(id) {
         for (const entry of iconThemeOptions) {
@@ -548,164 +451,21 @@ Scope {
         markCandidate(next, "icons.theme");
     }
 
-    function refreshIconThemes() {
-        if (iconThemesProcess.running)
-            return ;
-
-        iconThemesLoaded = false;
-        iconThemeOutput = "";
-        iconThemesProcess.running = true;
-    }
-
-    function loadIconThemes() {
-        let response = null;
-        try {
-            response = JSON.parse(iconThemeOutput.trim());
-        } catch (error) {
-        }
-        const entries = response && Array.isArray(response.themes) ? response.themes.filter((entry) => {
-            return entry && entry.id && entry.name && entry.samples;
-        }) : [];
-        const active = Theme.activeIconTheme || "Adwaita";
-        if (!entries.some((entry) => entry.id === active))
-            entries.unshift({"id": active, "name": active, "samples": {}});
-        iconThemes = entries;
-        iconThemesLoaded = true;
-    }
-
-    function refreshBrowserTargets() {
-        if (browserTargetsProcess.running)
-            return ;
-
-        browserTargetsLoaded = false;
-        browserTargets = [];
-        browserTargetOutput = "";
-        browserTargetsProcess.running = true;
-    }
-
-    function loadBrowserTargets() {
-        let response = null;
-        try {
-            response = JSON.parse(browserTargetOutput.trim());
-        } catch (error) {
-        }
-        browserTargets = response && response.ok === true && Array.isArray(response.data) ? response.data : [];
-        browserTargetsLoaded = true;
-    }
-
-    function refreshWallpapers() {
-        if (wallpapersProcess.running)
-            return ;
-
-        wallpapersLoaded = false;
-        wallpaperOutput = "";
-        wallpapersProcess.running = true;
-    }
-
-    function loadWallpapers() {
-        let response = null;
-        try {
-            response = JSON.parse(wallpaperOutput.trim());
-        } catch (error) {
-        }
-        wallpapers = response && response.ok === true && Array.isArray(response.data) ? response.data : [];
-        wallpapersLoaded = true;
-        wallpaperRevision += 1;
-    }
-
-    function wallpaperPathsEqual(left, right) {
-        const leftPath = wallpaperDisplayPath(left);
-        const rightPath = wallpaperDisplayPath(right);
-        return leftPath.length > 0 && leftPath === rightPath;
-    }
-
-    function wallpaperItems() {
-        wallpaperRevision;
-        const entries = Array.isArray(wallpapers) ? wallpapers.slice() : [];
-        const raw = candidate && candidate.wallpaper ? String(candidate.wallpaper.path || "").trim() : "";
-        if (!raw)
-            return entries;
-
-        const present = entries.some((entry) => {
-            return wallpaperPathsEqual(raw, entry.reference || "") || wallpaperPathsEqual(raw, entry.path || "");
-        });
-        if (!present && wallpapersLoaded) {
-            const displayPath = wallpaperDisplayPath(raw);
-            const pieces = raw.split(/[\\/]/);
-            const filename = pieces.length > 0 ? pieces[pieces.length - 1] : raw;
-            const packageWallpaper = raw.startsWith("wallpapers/showcase/") || raw.startsWith("wallpapers/builtin/");
-            entries.push({
-                "id": "current:" + raw,
-                "name": filename.replace(/\.[^.]+$/, "") || "Current wallpaper",
-                "kind": packageWallpaper ? "Built in" : "Imported",
-                "path": displayPath,
-                "reference": raw,
-                "removable": false,
-                "missing": true
-            });
-        }
-        return entries;
-    }
-
-    function filteredWallpapers() {
-        wallpaperRevision;
-        const entries = wallpaperItems();
-        if (wallpaperFilter === "All")
-            return entries;
-        return entries.filter((entry) => entry.kind === wallpaperFilter);
-    }
-
-    function wallpaperItemSelected(entry) {
-        if (!entry || !candidate || !candidate.wallpaper)
-            return false;
-        const raw = String(candidate.wallpaper.path || "");
-        return wallpaperPathsEqual(raw, entry.reference || "") || wallpaperPathsEqual(raw, entry.path || "");
-    }
-
-    function chooseWallpaper(entry) {
-        if (!entry || entry.missing || !themeControlsEnabled || busy)
-            return ;
-        setWallpaperPath(entry.reference || entry.path || "");
-        statusMessage = "Previewing " + entry.name + ".";
-    }
-
-    function importWallpaper(path) {
-        if (!candidate || !themeControlsEnabled || busy || !path)
-            return ;
-        runApi("wallpapers-import", ["wallpapers", "import", path, "--theme-id", candidate.id]);
-    }
-
-    function requestWallpaperRemoval(entry) {
-        if (!entry || !entry.removable || !themeControlsEnabled || busy)
-            return ;
-        wallpaperRemovalId = entry.id || "";
-        wallpaperRemovalName = entry.name || "wallpaper";
-        wallpaperRemovalReference = entry.reference || entry.path || "";
-        wallpaperRemovalUsers = themes.filter((theme) => {
-            const preview = theme && theme.preview ? theme.preview.wallpaper : "";
-            return preview && (wallpaperPathsEqual(preview, entry.reference || "") || wallpaperPathsEqual(preview, entry.path || ""));
-        }).map((theme) => theme.name || theme.id).filter((name, index, values) => name && values.indexOf(name) === index);
-        wallpaperRemovalError = "";
-        showModal("wallpaper-remove");
-    }
-
-    function wallpaperRemovalMessage() {
-        if (wallpaperRemovalUsers.length > 0)
-            return "Cannot remove this wallpaper. It is used by: " + wallpaperRemovalUsers.join(", ") + ". Choose another wallpaper in those themes first.";
-        if (wallpaperRemovalError.length > 0)
-            return wallpaperRemovalError;
-        return "Blox removes its copy and leaves the original file where you imported it from.";
-    }
-
-    function restoreWallpaperForRemoval() {
-        if (!wallpaperRemovalReference || !candidate || !candidate.wallpaper)
-            return ;
-        if (!wallpaperPathsEqual(candidate.wallpaper.path, wallpaperRemovalReference))
-            return ;
-        const activePath = wallpaperDisplayPath(Theme.activeWallpaperSource);
-        if (activePath)
-            setWallpaperPath(activePath);
-    }
+    function refreshIconThemes() { discoveryController.refreshIconThemes(); }
+    function loadIconThemes() { discoveryController.loadIconThemes(); }
+    function refreshBrowserTargets() { discoveryController.refreshBrowserTargets(); }
+    function loadBrowserTargets() { discoveryController.loadBrowserTargets(); }
+    function refreshWallpapers() { wallpaperController.refresh(); }
+    function loadWallpapers() { wallpaperController.load(); }
+    function wallpaperPathsEqual(left, right) { return wallpaperController.pathsEqual(left, right); }
+    function wallpaperItems() { return wallpaperController.items(); }
+    function filteredWallpapers() { return wallpaperController.filtered(); }
+    function wallpaperItemSelected(entry) { return wallpaperController.isSelected(entry); }
+    function chooseWallpaper(entry) { wallpaperController.choose(entry); }
+    function importWallpaper(path) { wallpaperController.importFrom(path); }
+    function requestWallpaperRemoval(entry) { wallpaperController.requestRemoval(entry); }
+    function wallpaperRemovalMessage() { return wallpaperController.removalMessage(); }
+    function restoreWallpaperForRemoval() { wallpaperController.restoreForRemoval(); }
 
     function refreshThemes(refreshOnly) {
         runApi(refreshOnly ? "list-refresh" : "list", ["list"]);
@@ -1320,15 +1080,32 @@ Scope {
     }
 
     onOpenChanged: {
-        if (open)
+        if (open) {
             rendered = true;
-        else
+            discoveryController.ensureFontFamilies();
+        } else {
             hideTimer.restart();
+        }
     }
 
     onColourPickerOpenChanged: {
         if (!colourPickerOpen)
             Qt.callLater(restoreOverlayFocus);
+    }
+
+    SettingsBarDragController {
+        id: barDragController
+        host: root
+    }
+
+    SettingsThemeDiscoveryController {
+        id: discoveryController
+        host: root
+    }
+
+    SettingsThemeWallpaperController {
+        id: wallpaperController
+        host: root
     }
 
     SettingsColourController {
@@ -1494,68 +1271,4 @@ Scope {
         repeat: false
         onTriggered: root.requestPalettes()
     }
-
-    Process {
-        id: browserTargetsProcess
-
-        command: [root.apiPath, "targets", "--json"]
-        onExited: root.loadBrowserTargets()
-
-        stdout: StdioCollector {
-            onStreamFinished: root.browserTargetOutput = this.text
-        }
-    }
-
-    Process {
-        id: wallpapersProcess
-
-        command: [root.apiPath, "wallpapers", "migrate", "--json"]
-        onExited: root.loadWallpapers()
-
-        stdout: StdioCollector {
-            onStreamFinished: root.wallpaperOutput = this.text
-        }
-    }
-
-    Process {
-        id: iconThemesProcess
-
-        command: ["python3", root.scriptRoot + "/theme/icon_themes.py"]
-        onExited: root.loadIconThemes()
-
-        stdout: StdioCollector {
-            onStreamFinished: root.iconThemeOutput = this.text
-        }
-    }
-
-    Process {
-        command: ["fc-list", "--format=%{family}\\n"]
-        running: true
-        onExited: {
-            const seen = ({
-            });
-            const families = [];
-            root.fontOutput.split("\n").forEach((line) => {
-                line.split(",").forEach((value) => {
-                    const family = value.trim();
-                    if (family && !seen[family]) {
-                        seen[family] = true;
-                        families.push(family);
-                    }
-                });
-            });
-            families.sort((left, right) => {
-                return left.localeCompare(right);
-            });
-            root.fontFamilies = families;
-        }
-
-        stdout: StdioCollector {
-            onStreamFinished: root.fontOutput = this.text
-        }
-
-    }
-
-
-
 }

@@ -82,6 +82,7 @@ def is_allowed_data_literal(path: str, line: str) -> bool:
     if stripped in ALLOWED_EXACT.get(path, set()):
         return True
     if path in {
+        "modules/CalendarEventEditorWindow.qml",
         "modules/CalendarEventWindows.qml",
         "popouts/CalendarEventMenu.qml",
         "services/CalendarController.qml",

@@ -24,6 +24,9 @@ SettingsThemeApiController 1.0 ../../../../../shell/modules/SettingsThemeApiCont
 SettingsBarEditorModel 1.0 ../../../../../shell/modules/SettingsBarEditorModel.qml
 SettingsColourController 1.0 ../../../../../shell/modules/SettingsColourController.qml
 SettingsThemeEditorController 1.0 ../../../../../shell/modules/SettingsThemeEditorController.qml
+SettingsBarDragController 1.0 ../../../../../shell/modules/SettingsBarDragController.qml
+SettingsThemeDiscoveryController 1.0 ../../../../../shell/modules/SettingsThemeDiscoveryController.qml
+SettingsThemeWallpaperController 1.0 ../../../../../shell/modules/SettingsThemeWallpaperController.qml
 SettingsThemeCreationController 1.0 ../../../../../shell/modules/SettingsThemeCreationController.qml
 SettingsHyprlandPreview 1.0 ../../../../../shell/modules/SettingsHyprlandPreview.qml
 SettingsEditorModal 1.0 ../../../../../shell/modules/SettingsEditorModal.qml

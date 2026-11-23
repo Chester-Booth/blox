@@ -247,6 +247,15 @@ Scope {
         onTriggered: root.refresh(false)
     }
 
+    Component.onCompleted: {
+        if (root.providerReady && root.interval <= 0)
+            root.refresh(false);
+    }
+    onProviderReadyChanged: {
+        if (root.providerReady && root.interval <= 0 && !root.syncReady)
+            root.refresh(false);
+    }
+
     Connections {
         target: state
         ignoreUnknownSignals: true

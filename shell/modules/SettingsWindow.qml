@@ -22,16 +22,14 @@ FloatingWindow {
     property bool importedSourceReloadPending: false
     property var activeWidgetsAtOpen: []
     readonly property string widgetSourceRoot: Quickshell.env("BLOX_WIDGETS_ROOT") || Quickshell.shellDir + "/../widgets"
-    property var widgetCatalogue: null
-    property var widgetSchema: null
-    property var widgetRegistry: ({})
-    property string widgetCatalogueError: ""
-    property string widgetSchemaError: ""
-    property string widgetRegistryError: ""
-    property var widgetRegistryErrors: []
-    property string widgetRegistryOutput: ""
-    property string widgetRegistryStderr: ""
-    readonly property string widgetMetadataError: widgetCatalogueError || widgetSchemaError || widgetRegistryError
+    property alias widgetCatalogue: widgetMetadata.widgetCatalogue
+    property alias widgetSchema: widgetMetadata.widgetSchema
+    property alias widgetRegistry: widgetMetadata.widgetRegistry
+    property alias widgetCatalogueError: widgetMetadata.widgetCatalogueError
+    property alias widgetSchemaError: widgetMetadata.widgetSchemaError
+    property alias widgetRegistryError: widgetMetadata.widgetRegistryError
+    property alias widgetRegistryErrors: widgetMetadata.widgetRegistryErrors
+    readonly property string widgetMetadataError: widgetMetadata.widgetMetadataError
     readonly property bool hasUnappliedChanges: draftUserEdited || (themeEditorController && (themeEditorController.dirty || (themeEditorController.selectedId && themeEditorController.selectedId !== Theme.activeThemeId)))
     readonly property int draftEnabledTargetCount: {
         const targets = resolvedSettings().targets || {};
@@ -82,95 +80,12 @@ FloatingWindow {
     readonly property bool settingsMutationPending: settingsController.busy || pendingSettingsRequestId.length > 0 || Object.keys(pendingSettingsWrites).length > 0
     readonly property bool mutationProtected: SettingsApplyController.busy || SettingsApplyController.previewPreparing || bundleController.busy
 
-    function loadWidgetMetadata(kind, text) {
-        try {
-            const document = JSON.parse(text);
-            if (kind === "catalogue") {
-                if (!document || document.schemaVersion !== 1 || !Array.isArray(document.widgets))
-                    throw new Error("Expected the version 1 widget catalogue.");
-                widgetCatalogue = document;
-                widgetCatalogueError = "";
-            } else {
-                if (!document || !document.$defs || !document.properties || !document.properties.widgets
-                        || !document.properties.widgets.items || !Array.isArray(document.properties.widgets.items.oneOf))
-                    throw new Error("Expected the widget profile schema.");
-                widgetSchema = document;
-                widgetSchemaError = "";
-            }
-        } catch (error) {
-            if (kind === "catalogue") {
-                widgetCatalogue = null;
-                widgetCatalogueError = "Could not parse the widget catalogue. " + error.message;
-            } else {
-                widgetSchema = null;
-                widgetSchemaError = "Could not parse the widget schema. " + error.message;
-            }
-        }
-    }
+    function loadWidgetMetadata(kind, text) { widgetMetadata.loadMetadata(kind, text); }
 
-    function finishWidgetRegistry(exitCode, exitStatus) {
-        if (!windowOpen) return;
-        let response = null;
-        try { response = JSON.parse(widgetRegistryOutput); }
-        catch (error) {
-            widgetRegistry = ({});
-            widgetRegistryError = widgetRegistryStderr.trim() || "Could not parse the trusted widget registry. " + error.message;
-            return;
-        }
-        if (exitCode !== 0 || exitStatus !== 0 || !response || response.ok !== true
-                || !response.registry || typeof response.registry !== "object" || Array.isArray(response.registry)
-                || !Array.isArray(response.errors)) {
-            widgetRegistry = ({});
-            widgetRegistryError = response && response.error && response.error.message
-                ? response.error.message : widgetRegistryStderr.trim() || "Could not load the trusted widget registry.";
-            return;
-        }
-        widgetRegistry = response.registry;
-        widgetRegistryErrors = response.errors || [];
-        widgetRegistryError = widgetRegistryErrors.map(entry => entry.package + ": " + entry.message).join("\n");
-        Theme.widgetRegistry = response.registry;
-        Theme.widgetRegistryLoaded = true;
-    }
-
-    FileView {
-        id: widgetCatalogueFile
-        path: root.windowOpen ? root.widgetSourceRoot + "/catalogue.json" : ""
-        preload: root.windowOpen
-        printErrors: false
-        onLoaded: { if (root.windowOpen) root.loadWidgetMetadata("catalogue", text()); }
-        onLoadFailed: {
-            if (!root.windowOpen) return;
-            root.widgetCatalogue = null;
-            root.widgetCatalogueError = "Could not read the widget catalogue.";
-        }
-    }
-    FileView {
-        id: widgetSchemaFile
-        path: root.windowOpen ? root.widgetSourceRoot + "/schema/profile.schema.json" : ""
-        preload: root.windowOpen
-        printErrors: false
-        onLoaded: { if (root.windowOpen) root.loadWidgetMetadata("schema", text()); }
-        onLoadFailed: {
-            if (!root.windowOpen) return;
-            root.widgetSchema = null;
-            root.widgetSchemaError = "Could not read the widget profile schema.";
-        }
-    }
-    Process {
-        id: widgetRegistryProcess
-        command: ["python3", "-m", "blox_widgets.cli", "registry"]
-        environment: ({PYTHONPATH: root.widgetSourceRoot + "/lib"})
-        running: root.windowOpen
-        onStarted: {
-            root.widgetRegistry = ({});
-            root.widgetRegistryErrors = [];
-            root.widgetRegistryError = "";
-            root.widgetRegistryOutput = "";
-            root.widgetRegistryStderr = "";
-        }
-        onExited: (exitCode, exitStatus) => root.finishWidgetRegistry(exitCode, exitStatus)
-        stdout: StdioCollector { onStreamFinished: root.widgetRegistryOutput = this.text }
-        stderr: StdioCollector { onStreamFinished: root.widgetRegistryStderr = this.text }
+    SettingsWidgetMetadataLoader {
+        id: widgetMetadata
+        active: root.windowOpen
+        widgetSourceRoot: root.widgetSourceRoot
     }
 
     Connections {

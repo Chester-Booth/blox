@@ -18,28 +18,15 @@ FloatingWindow {
     property var gridItems: []
     readonly property var categoryIcons: ["magnifying-glass", "clock-counter-clockwise", "smiley", "person-simple", "paw-print", "hamburger", "soccer-ball", "airplane", "lamp", "flag", "shapes", "code"]
     readonly property var toneColours: ["#ffdc5d", "#f7dece", "#e0bb95", "#c58c6b", "#a56b46", "#6f432a"]
-    readonly property var symbolSections: [{
-        "key": "emoji",
-        "title": "Emoji signs"
-    }, {
-        "key": "common",
-        "title": "Common marks & games"
-    }, {
-        "key": "shape",
-        "title": "Shapes"
-    }, {
-        "key": "arrow",
-        "title": "Arrows"
-    }, {
-        "key": "maths",
-        "title": "Maths & logic"
-    }, {
-        "key": "currency",
-        "title": "Currency"
-    }, {
-        "key": "technical",
-        "title": "Technical notation"
-    }]
+    readonly property var symbolSections: [
+        {key: "emoji", title: "Emoji signs"},
+        {key: "common", title: "Common marks & games"},
+        {key: "shape", title: "Shapes"},
+        {key: "arrow", title: "Arrows"},
+        {key: "maths", title: "Maths & logic"},
+        {key: "currency", title: "Currency"},
+        {key: "technical", title: "Technical notation"}
+    ]
     property string activeNerdFontSection: "files"
     property string activeSymbolSection: "emoji"
 
@@ -53,7 +40,6 @@ FloatingWindow {
         activeEmojiPopups = Math.max(0, activeEmojiPopups - 1);
         if (activeEmojiPopups === 0)
             toneGuard.restart();
-
     }
 
     function prepareEmojiContext(itemIndex, item) {
@@ -64,42 +50,21 @@ FloatingWindow {
 
     function symbolSectionKey(subcategory) {
         const subgroup = String(subcategory || "");
-        if (!subgroup.startsWith("text-"))
-            return "emoji";
-
-        if (subgroup === "text-common" || subgroup === "text-punctuation")
-            return "common";
-
-        if (subgroup === "text-shape")
-            return "shape";
-
-        if (subgroup === "text-arrow")
-            return "arrow";
-
-        if (subgroup === "text-maths")
-            return "maths";
-
-        if (subgroup === "text-currency")
-            return "currency";
-
+        if (!subgroup.startsWith("text-")) return "emoji";
+        if (subgroup === "text-common" || subgroup === "text-punctuation") return "common";
+        if (subgroup === "text-shape") return "shape";
+        if (subgroup === "text-arrow") return "arrow";
+        if (subgroup === "text-maths") return "maths";
+        if (subgroup === "text-currency") return "currency";
         return "technical";
     }
 
     function appendHeading(target, key, title, columns) {
-        while (target.length % columns)target.push({
-            "kind": "spacer",
-            "itemIndex": -1
-        })
-        target.push({
-            "kind": "heading",
-            "sectionKey": key,
-            "title": title,
-            "itemIndex": -1
-        });
-        for (let index = 1; index < columns; index++) target.push({
-            "kind": "spacer",
-            "itemIndex": -1
-        })
+        while (target.length % columns)
+            target.push({kind: "spacer", itemIndex: -1});
+        target.push({kind: "heading", sectionKey: key, title: title, itemIndex: -1});
+        for (let index = 1; index < columns; index++)
+            target.push({kind: "spacer", itemIndex: -1});
     }
 
     function gridItemRow(index) {
@@ -109,9 +74,8 @@ FloatingWindow {
     function rebuildGridItems() {
         if (controller.virtualBrowse) {
             gridItems = [];
-            return ;
+            return;
         }
-        // itemsChanged can arrive before the derived itemCount binding refreshes.
         const itemCount = controller.nativeCategoryBrowse ? controller.categoryIndices.length : controller.items.length;
         const columns = Math.max(1, Math.floor((emojiGrid.width - emojiGrid.rightMargin) / emojiGrid.cellWidth));
         const display = [];
@@ -120,19 +84,19 @@ FloatingWindow {
             for (const section of sections) {
                 const matches = [];
                 for (let index = 0; index < itemCount; index++) {
-                    const sectionKey = controller.category === "Symbols" ? symbolSectionKey(controller.itemSubcategory(index)) : controller.itemSubcategory(index);
+                    const sectionKey = controller.category === "Symbols"
+                        ? symbolSectionKey(controller.itemSubcategory(index))
+                        : controller.itemSubcategory(index);
                     if (sectionKey === section.key)
                         matches.push(root.gridItemRow(index));
-
                 }
-                if (!matches.length)
-                    continue;
-
+                if (!matches.length) continue;
                 appendHeading(display, section.key, section.title, columns);
-                for (const match of matches) display.push(match)
+                for (const match of matches) display.push(match);
             }
         } else {
-            for (let index = 0; index < itemCount; index++) display.push(root.gridItemRow(index))
+            for (let index = 0; index < itemCount; index++)
+                display.push(root.gridItemRow(index));
         }
         gridItems = display;
     }
@@ -141,60 +105,43 @@ FloatingWindow {
         for (let index = 0; index < gridItems.length; index++) {
             if (gridItems[index].itemIndex === itemIndex)
                 return index;
-
         }
         return -1;
     }
 
-    function jumpToSymbolSection(key) {
+    function jumpToSection(key, isNerdFonts) {
         for (let index = 0; index < gridItems.length; index++) {
             const item = gridItems[index];
             if (item.kind === "heading" && item.sectionKey === key) {
-                activeSymbolSection = key;
+                if (isNerdFonts) activeNerdFontSection = key;
+                else activeSymbolSection = key;
                 emojiGrid.positionViewAtIndex(index, GridView.Beginning);
                 emojiGrid.forceActiveFocus();
-                return ;
-            }
-        }
-    }
-
-    function jumpToNerdFontSection(key) {
-        for (let index = 0; index < gridItems.length; index++) {
-            const item = gridItems[index];
-            if (item.kind === "heading" && item.sectionKey === key) {
-                activeNerdFontSection = key;
-                emojiGrid.positionViewAtIndex(index, GridView.Beginning);
-                emojiGrid.forceActiveFocus();
-                return ;
+                return;
             }
         }
     }
 
     function updateActiveSymbolSection() {
         if (controller.category !== "Symbols" && controller.category !== "Nerd Fonts")
-            return ;
-
+            return;
         const columns = Math.max(1, Math.floor((emojiGrid.width - emojiGrid.rightMargin) / emojiGrid.cellWidth));
         const firstIndex = Math.min(gridItems.length - 1, Math.max(0, Math.floor(emojiGrid.contentY / emojiGrid.cellHeight) * columns));
         for (let index = firstIndex; index >= 0; index--) {
             if (gridItems[index].kind === "heading") {
-                if (controller.category === "Symbols")
-                    activeSymbolSection = gridItems[index].sectionKey;
-                else
-                    activeNerdFontSection = gridItems[index].sectionKey;
-                return ;
+                if (controller.category === "Symbols") activeSymbolSection = gridItems[index].sectionKey;
+                else activeNerdFontSection = gridItems[index].sectionKey;
+                return;
             }
         }
         if (controller.category === "Symbols")
             activeSymbolSection = "emoji";
-
     }
 
     function nerdFontSourceTitle() {
         for (const source of controller.nerdFontSources) {
             if (source.key === controller.nerdFontSource)
                 return source.title;
-
         }
         return "All sources";
     }
@@ -209,29 +156,21 @@ FloatingWindow {
     onWidthChanged: {
         if (visible && width >= minimumSize.width)
             LauncherState.emojiWidth = width;
-
     }
     onHeightChanged: {
         if (visible && height >= minimumSize.height)
             LauncherState.emojiHeight = height;
-
     }
     onOpenChanged: {
         if (open) {
-            Qt.callLater(() => {
-                return emojiGrid.positionViewAtBeginning();
-            });
+            Qt.callLater(() => emojiGrid.positionViewAtBeginning());
             if (controller.category === "Search")
                 focusTimer.restart();
             else
-                Qt.callLater(() => {
-                return emojiGrid.forceActiveFocus();
-            });
+                Qt.callLater(() => emojiGrid.forceActiveFocus());
         } else {
-            toneMenu.close();
-            if (emojiGrid.currentItem && emojiGrid.currentItem.closePopups)
-                emojiGrid.currentItem.closePopups();
-
+            emojiSidebar.closeToneMenu();
+            contextPopups.closeAll();
             activeEmojiPopups = 0;
             suppressEmojiActivation = false;
             toneGuard.stop();
@@ -244,22 +183,10 @@ FloatingWindow {
     }
 
     Connections {
-        function onItemsChanged() {
-            root.rebuildGridItems();
-            emojiGrid.positionViewAtBeginning();
-        }
-
-        function onBrowseRevisionChanged() {
-            root.rebuildGridItems();
-            emojiGrid.positionViewAtBeginning();
-        }
-
-        function onVirtualBrowseChanged() {
-            root.rebuildGridItems();
-            emojiGrid.positionViewAtBeginning();
-        }
-
         target: controller
+        function onItemsChanged() { root.rebuildGridItems(); emojiGrid.positionViewAtBeginning(); }
+        function onBrowseRevisionChanged() { root.rebuildGridItems(); emojiGrid.positionViewAtBeginning(); }
+        function onVirtualBrowseChanged() { root.rebuildGridItems(); emojiGrid.positionViewAtBeginning(); }
     }
 
     Rectangle {
@@ -273,9 +200,7 @@ FloatingWindow {
         clip: true
         opacity: root.positionReady ? 1 : 0
 
-        MouseArea {
-            anchors.fill: parent
-        }
+        MouseArea { anchors.fill: parent }
 
         MouseArea {
             anchors.left: parent.left
@@ -292,195 +217,18 @@ FloatingWindow {
             anchors.margins: Theme.scaledSpacing(10)
             spacing: Theme.scaledSpacing(8)
 
-            Item {
-                width: 44
+            EmojiSidebar {
+                id: emojiSidebar
                 height: parent.height
-
-                ListView {
-                    id: categoryList
-
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.top: parent.top
-                    anchors.bottom: categoryToneSeparator.top
-                    anchors.bottomMargin: Theme.scaledSpacing(5)
-                    model: controller.categories
-                    spacing: Theme.scaledSpacing(5)
-                    clip: true
-                    boundsBehavior: Flickable.StopAtBounds
-
-                    WheelHandler {
-                        acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-                        onWheel: (event) => {
-                            const delta = event.pixelDelta.y || event.angleDelta.y / 2;
-                            categoryList.contentY = Math.max(categoryList.originY, Math.min(categoryList.originY + categoryList.contentHeight - categoryList.height, categoryList.contentY - delta * 4));
-                            event.accepted = true;
-                        }
-                    }
-
-                    delegate: Rectangle {
-                        id: categoryButton
-
-                        required property string modelData
-                        required property int index
-
-                        width: 40
-                        height: 40
-                        radius: Theme.scaledRadius(8)
-                        color: controller.category === modelData ? Theme.surfaceAlt : categoryHover.hovered ? Theme.withAlpha(Theme.foreground, 0.1) : "transparent"
-                        border.width: controller.category === modelData || categoryHover.hovered ? 1 : 0
-                        border.color: controller.category === modelData ? Theme.accent : Theme.withAlpha(Theme.foreground, 0.4)
-
-                        PhosphorIcon {
-                            anchors.centerIn: parent
-                            width: 20
-                            height: 20
-                            iconName: root.categoryIcons[index]
-                            opacity: controller.category === modelData ? 1 : 0.62
-                        }
-
-                        BloxToolTip {
-                            shown: categoryHover.hovered
-                            text: modelData
-                        }
-
-                        HoverHandler {
-                            id: categoryHover
-
-                            cursorShape: Qt.PointingHandCursor
-                        }
-
-                        TapHandler {
-                            onTapped: {
-                                controller.category = modelData;
-                                if (modelData === "Search")
-                                    search.focusEditor(false);
-                                else
-                                    emojiGrid.forceActiveFocus();
-                            }
-                        }
-
-                    }
-
+                controller: root.controller
+                categoryIcons: root.categoryIcons
+                toneColours: root.toneColours
+                onPopupOpened: root.popupOpened()
+                onPopupClosed: root.popupClosed()
+                onCategorySelected: name => {
+                    if (name === "Search") search.focusEditor(false);
+                    else emojiGrid.forceActiveFocus();
                 }
-
-                Rectangle {
-                    id: categoryToneSeparator
-
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.bottom: toneButton.top
-                    anchors.bottomMargin: Theme.scaledSpacing(5)
-                    height: 1
-                    color: Theme.border
-                }
-
-                Rectangle {
-                    id: toneButton
-
-                    anchors.left: parent.left
-                    anchors.bottom: parent.bottom
-                    width: 40
-                    height: 40
-                    radius: Theme.scaledRadius(8)
-                    color: toneHover.hovered ? Theme.surfaceAlt : "transparent"
-
-                    Rectangle {
-                        anchors.centerIn: parent
-                        width: 20
-                        height: 20
-                        radius: Theme.scaledRadius(10)
-                        color: root.toneColours[LauncherState.emojiTone]
-                        border.color: Theme.border
-                    }
-
-                    BloxToolTip {
-                        shown: toneHover.hovered && !toneMenu.opened
-                        text: "Skin tone"
-                    }
-
-                    HoverHandler {
-                        id: toneHover
-
-                        cursorShape: Qt.PointingHandCursor
-                    }
-
-                    TapHandler {
-                        onTapped: toneMenu.opened ? toneMenu.close() : toneMenu.open()
-                    }
-
-                    Popup {
-                        id: toneMenu
-
-                        parent: toneButton
-                        popupType: Popup.Item
-                        modal: true
-                        dim: false
-                        x: toneButton.width + 6
-                        y: (toneButton.height - height) / 2
-                        width: toneRow.implicitWidth + 12
-                        height: 46
-                        padding: Theme.scaledSpacing(6)
-                        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
-                        onOpened: root.popupOpened()
-                        onClosed: root.popupClosed()
-
-                        contentItem: Row {
-                            id: toneRow
-
-                            spacing: Theme.scaledSpacing(5)
-
-                            Repeater {
-                                model: root.toneColours
-
-                                Rectangle {
-                                    id: toneChoice
-
-                                    required property color modelData
-                                    required property int index
-
-                                    width: 30
-                                    height: 30
-                                    radius: Theme.scaledRadius(15)
-                                    color: modelData
-                                    border.width: LauncherState.emojiTone === index || toneChoiceHover.hovered ? 3 : 1
-                                    border.color: LauncherState.emojiTone === index || toneChoiceHover.hovered ? Theme.accent : Theme.border
-
-                                    MouseArea {
-                                        anchors.fill: parent
-                                        cursorShape: Qt.PointingHandCursor
-                                        onPressed: (mouse) => {
-                                            return mouse.accepted = true;
-                                        }
-                                        onClicked: (mouse) => {
-                                            mouse.accepted = true;
-                                            LauncherState.emojiTone = index;
-                                            toneMenu.close();
-                                        }
-                                    }
-
-                                    HoverHandler {
-                                        id: toneChoiceHover
-
-                                        cursorShape: Qt.PointingHandCursor
-                                    }
-
-                                }
-
-                            }
-
-                        }
-
-                        background: Rectangle {
-                            radius: Theme.scaledRadius(9)
-                            color: Theme.surfaceAlt
-                            border.color: Theme.border
-                        }
-
-                    }
-
-                }
-
             }
 
             Rectangle {
@@ -502,9 +250,7 @@ FloatingWindow {
                     height: visible ? implicitHeight : 0
                     placeholderText: "Search emoji and icons"
                     text: controller.query
-                    onTextEdited: (value) => {
-                        return controller.query = value;
-                    }
+                    onTextEdited: value => controller.query = value
                     onAccepted: controller.activate()
                     Keys.onEscapePressed: controller.dismissRequested()
                 }
@@ -528,7 +274,6 @@ FloatingWindow {
 
                         TextMetrics {
                             id: sourceLabelMetrics
-
                             font.family: Theme.bodyFontFamily
                             font.pixelSize: 12
                             text: root.nerdFontSourceTitle()
@@ -537,15 +282,7 @@ FloatingWindow {
                         Row {
                             anchors.centerIn: parent
                             spacing: Theme.scaledSpacing(7)
-
-                            PhosphorIcon {
-                                anchors.verticalCenter: parent.verticalCenter
-                                width: 16
-                                height: 16
-                                iconName: "funnel"
-                                iconColor: Theme.foreground
-                            }
-
+                            PhosphorIcon { anchors.verticalCenter: parent.verticalCenter; width: 16; height: 16; iconName: "funnel"; iconColor: Theme.foreground }
                             Text {
                                 anchors.verticalCenter: parent.verticalCenter
                                 width: nerdFontSourceButton.width - 42
@@ -555,7 +292,6 @@ FloatingWindow {
                                 font.pixelSize: 12
                                 elide: Text.ElideRight
                             }
-
                         }
 
                         Popup {
@@ -574,23 +310,16 @@ FloatingWindow {
 
                             contentItem: ListView {
                                 id: nerdFontSourceList
-
                                 clip: true
                                 spacing: Theme.scaledSpacing(3)
                                 boundsBehavior: Flickable.StopAtBounds
                                 model: controller.nerdFontSources
-
                                 ScrollBar.vertical: BloxScrollBar {
-                                    id: nerdFontSourceScrollbar
-
                                     width: 8
                                     policy: nerdFontSourceList.contentHeight > nerdFontSourceList.height ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff
-
                                 }
-
                                 delegate: BloxButton {
                                     required property var modelData
-
                                     width: nerdFontSourceList.width - 8
                                     height: 34
                                     compact: true
@@ -602,22 +331,14 @@ FloatingWindow {
                                         emojiGrid.forceActiveFocus();
                                     }
                                 }
-
                             }
 
-                            background: Rectangle {
-                                radius: Theme.scaledRadius(9)
-                                color: Theme.surfaceAlt
-                                border.color: Theme.border
-                            }
-
+                            background: Rectangle { radius: Theme.scaledRadius(9); color: Theme.surfaceAlt; border.color: Theme.border }
                         }
-
                     }
 
                     Rectangle {
                         id: nerdFontSectionDivider
-
                         visible: controller.category === "Nerd Fonts"
                         width: visible ? 1 : 0
                         height: 26
@@ -638,39 +359,28 @@ FloatingWindow {
 
                         WheelHandler {
                             acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-                            onWheel: (event) => {
-                                const pixelDelta = event.pixelDelta.y || 0;
-                                const angleDelta = event.angleDelta.y || 0;
-                                const delta = pixelDelta !== 0 ? pixelDelta : angleDelta / 2;
-                                const maximumContentX = Math.max(symbolJumpList.originX, symbolJumpList.originX + symbolJumpList.contentWidth - symbolJumpList.width);
-                                symbolJumpList.contentX = Math.max(symbolJumpList.originX, Math.min(maximumContentX, symbolJumpList.contentX - delta * 4));
+                            onWheel: event => {
+                                const delta = (event.pixelDelta.y || 0) !== 0 ? event.pixelDelta.y : (event.angleDelta.y || 0) / 2;
+                                const maxX = Math.max(symbolJumpList.originX, symbolJumpList.originX + symbolJumpList.contentWidth - symbolJumpList.width);
+                                symbolJumpList.contentX = Math.max(symbolJumpList.originX, Math.min(maxX, symbolJumpList.contentX - delta * 4));
                                 event.accepted = true;
                             }
                         }
 
                         delegate: BloxButton {
                             required property var modelData
-
                             height: 34
                             width: implicitWidth
                             compact: true
                             text: modelData.title
                             checked: controller.category === "Symbols" ? root.activeSymbolSection === modelData.key : root.activeNerdFontSection === modelData.key
-                            onClicked: {
-                                if (controller.category === "Symbols")
-                                    root.jumpToSymbolSection(modelData.key);
-                                else
-                                    root.jumpToNerdFontSection(modelData.key);
-                            }
+                            onClicked: root.jumpToSection(modelData.key, controller.category === "Nerd Fonts")
                         }
-
                     }
-
                 }
 
                 Text {
                     id: partialDataError
-
                     width: parent.width
                     height: visible ? 16 : 0
                     visible: controller.partialDataErrorText.length > 0
@@ -697,34 +407,28 @@ FloatingWindow {
                     onWidthChanged: root.rebuildGridItems()
                     onContentYChanged: root.updateActiveSymbolSection()
                     Component.onCompleted: root.rebuildGridItems()
-                    Keys.onPressed: (event) => {
+                    Keys.onPressed: event => {
                         const columns = Math.max(1, Math.floor(width / cellWidth));
                         const pageSize = columns * Math.max(1, Math.floor(height / cellHeight));
                         let delta = 0;
-                        if (event.key === Qt.Key_Left) {
-                            delta = -1;
-                        } else if (event.key === Qt.Key_Right) {
-                            delta = 1;
-                        } else if (event.key === Qt.Key_Up) {
-                            delta = -columns;
-                        } else if (event.key === Qt.Key_Down) {
-                            delta = columns;
-                        } else if (event.key === Qt.Key_PageUp) {
-                            delta = -pageSize;
-                        } else if (event.key === Qt.Key_PageDown) {
-                            delta = pageSize;
-                        } else if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter) && (event.modifiers & Qt.ShiftModifier) && currentItem && currentItem.mixedToneCapable) {
+                        if (event.key === Qt.Key_Left) delta = -1;
+                        else if (event.key === Qt.Key_Right) delta = 1;
+                        else if (event.key === Qt.Key_Up) delta = -columns;
+                        else if (event.key === Qt.Key_Down) delta = columns;
+                        else if (event.key === Qt.Key_PageUp) delta = -pageSize;
+                        else if (event.key === Qt.Key_PageDown) delta = pageSize;
+                        else if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter) && (event.modifiers & Qt.ShiftModifier) && currentItem && currentItem.mixedToneCapable) {
                             currentItem.openToneComposer();
                             event.accepted = true;
-                            return ;
+                            return;
                         } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
                             controller.activate();
                             event.accepted = true;
-                            return ;
+                            return;
                         } else if (event.key === Qt.Key_Escape) {
                             controller.dismissRequested();
                             event.accepted = true;
-                            return ;
+                            return;
                         }
                         if ((event.key === Qt.Key_Home || event.key === Qt.Key_End) && controller.itemCount) {
                             if (controller.virtualBrowse) {
@@ -733,14 +437,14 @@ FloatingWindow {
                             } else {
                                 const step = event.key === Qt.Key_Home ? 1 : -1;
                                 let target = event.key === Qt.Key_Home ? 0 : root.gridItems.length - 1;
-                                while (target >= 0 && target < root.gridItems.length && root.gridItems[target].kind !== "emoji")target += step
+                                while (target >= 0 && target < root.gridItems.length && root.gridItems[target].kind !== "emoji") target += step;
                                 if (target >= 0 && target < root.gridItems.length) {
                                     controller.selectedIndex = root.gridItems[target].itemIndex;
                                     positionViewAtIndex(target, GridView.Contain);
                                 }
                             }
                             event.accepted = true;
-                            return ;
+                            return;
                         }
                         if (delta !== 0 && controller.itemCount) {
                             if (controller.virtualBrowse) {
@@ -750,7 +454,7 @@ FloatingWindow {
                             } else {
                                 let target = Math.max(0, Math.min(root.gridItems.length - 1, currentIndex + delta));
                                 const direction = delta < 0 ? -1 : 1;
-                                while (target >= 0 && target < root.gridItems.length && root.gridItems[target].kind !== "emoji")target += direction
+                                while (target >= 0 && target < root.gridItems.length && root.gridItems[target].kind !== "emoji") target += direction;
                                 if (target >= 0 && target < root.gridItems.length) {
                                     controller.selectedIndex = root.gridItems[target].itemIndex;
                                     positionViewAtIndex(target, GridView.Contain);
@@ -762,7 +466,7 @@ FloatingWindow {
 
                     WheelHandler {
                         acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-                        onWheel: (event) => {
+                        onWheel: event => {
                             const delta = event.pixelDelta.y || event.angleDelta.y / 2;
                             emojiGrid.contentY = Math.max(emojiGrid.originY, Math.min(emojiGrid.originY + emojiGrid.contentHeight - emojiGrid.height, emojiGrid.contentY - delta * 4));
                             event.accepted = true;
@@ -771,10 +475,8 @@ FloatingWindow {
 
                     ScrollBar.vertical: BloxScrollBar {
                         id: emojiScrollbar
-
                         width: 8
                         policy: emojiGrid.contentHeight > emojiGrid.height ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff
-
                     }
 
                     Text {
@@ -800,23 +502,21 @@ FloatingWindow {
                         readonly property bool mixedToneCapable: Boolean(modelData.kind === "emoji" && modelData.item && modelData.item.hasMixedTones)
 
                         function openToneComposer() {
-                            if (!mixedToneCapable)
-                                return ;
-
+                            if (!mixedToneCapable) return;
                             root.prepareEmojiContext(modelData.itemIndex, emojiCell);
-                            toneComposer.openForItem();
+                            contextPopups.openToneComposer(modelData.itemIndex, root.contextAnchor);
                         }
 
                         function closePopups() {
-                            emojiMenu.close();
-                            toneComposer.close();
+                            contextPopups.closeAll();
                         }
 
                         width: 48
                         height: 48
                         radius: Theme.scaledRadius(8)
                         z: modelData.kind === "heading" ? 2 : 0
-                        color: modelData.kind === "emoji" && modelData.itemIndex === controller.selectedIndex ? Theme.surfaceAlt : emojiHover.hovered ? Theme.withAlpha(Theme.foreground, 0.07) : "transparent"
+                        color: modelData.kind === "emoji" && modelData.itemIndex === controller.selectedIndex ? Theme.surfaceAlt
+                            : emojiHover.hovered ? Theme.withAlpha(Theme.foreground, 0.07) : "transparent"
 
                         Text {
                             anchors.left: parent.left
@@ -864,23 +564,17 @@ FloatingWindow {
                             Rectangle {
                                 anchors.left: parent.left
                                 anchors.verticalCenter: parent.verticalCenter
-                                width: 10
-                                height: 10
-                                radius: Theme.scaledRadius(5)
+                                width: 10; height: 10; radius: Theme.scaledRadius(5)
                                 color: root.toneColours[controller.preferredTonePair(modelData.item)[0]]
                                 border.color: Theme.surface
                             }
-
                             Rectangle {
                                 anchors.right: parent.right
                                 anchors.verticalCenter: parent.verticalCenter
-                                width: 10
-                                height: 10
-                                radius: Theme.scaledRadius(5)
+                                width: 10; height: 10; radius: Theme.scaledRadius(5)
                                 color: root.toneColours[controller.preferredTonePair(modelData.item)[1]]
                                 border.color: Theme.surface
                             }
-
                         }
 
                         BloxToolTip {
@@ -890,13 +584,12 @@ FloatingWindow {
 
                         HoverHandler {
                             id: emojiHover
-
                             enabled: modelData.kind === "emoji"
                             cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
                         }
 
                         TapHandler {
-                            enabled: modelData.kind === "emoji" && !root.suppressEmojiActivation && !toneMenu.opened
+                            enabled: modelData.kind === "emoji" && !root.suppressEmojiActivation && !emojiSidebar.toneMenuOpen
                             onTapped: {
                                 controller.selectedIndex = modelData.itemIndex;
                                 controller.activate();
@@ -908,385 +601,39 @@ FloatingWindow {
                             enabled: modelData.kind === "emoji"
                             onTapped: {
                                 root.prepareEmojiContext(modelData.itemIndex, emojiCell);
-                                emojiMenu.open();
+                                contextPopups.openContextMenu(modelData.itemIndex, root.contextAnchor);
                             }
                         }
-
-                        Popup {
-                            id: emojiMenu
-
-                            parent: root.contentItem
-                            popupType: Popup.Item
-                            modal: true
-                            dim: false
-                            x: Math.max(6, Math.min(root.width - width - 6, root.contextAnchor.x - width))
-                            y: root.contextAnchor.y + height <= root.height - 6 ? root.contextAnchor.y : Math.max(6, root.contextAnchor.y - emojiCell.height - height)
-                            width: 168
-                            padding: Theme.scaledSpacing(4)
-                            closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
-                            onOpened: root.popupOpened()
-                            onClosed: root.popupClosed()
-
-                            contentItem: Column {
-                                spacing: Theme.scaledSpacing(3)
-
-                                BloxButton {
-                                    visible: Boolean(modelData.item && modelData.item.hasMixedTones)
-                                    width: emojiMenu.availableWidth
-                                    height: visible ? 34 : 0
-                                    compact: true
-                                    text: "Choose tones"
-                                    onClicked: {
-                                        emojiMenu.close();
-                                        emojiCell.openToneComposer();
-                                    }
-                                }
-
-                                BloxButton {
-                                    width: emojiMenu.availableWidth
-                                    height: 34
-                                    compact: true
-                                    text: modelData.item && modelData.item.pinned ? "Unpin" : "Pin"
-                                    onClicked: {
-                                        controller.togglePin(modelData.itemIndex);
-                                        emojiMenu.close();
-                                    }
-
-                                    PhosphorIcon {
-                                        anchors.left: parent.left
-                                        anchors.leftMargin: Theme.scaledSpacing(9)
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        width: 15
-                                        height: 15
-                                        iconName: "push-pin"
-                                        iconColor: Theme.foreground
-                                    }
-
-                                }
-
-                            }
-
-                            background: Rectangle {
-                                radius: Theme.scaledRadius(9)
-                                color: Theme.surfaceAlt
-                                border.color: Theme.border
-                            }
-
-                        }
-
-                        Popup {
-                            id: toneComposer
-
-                            property int firstTone: 3
-                            property int secondTone: 3
-                            property bool defaultSelected: false
-                            readonly property string previewValue: !modelData.item ? "" : defaultSelected ? modelData.item.baseValue : controller.variantValue(modelData.item, firstTone, secondTone)
-
-                            function openForItem() {
-                                const pair = controller.preferredTonePair(modelData.item);
-                                firstTone = pair[0] > 0 ? pair[0] : 3;
-                                secondTone = pair[1] > 0 ? pair[1] : 3;
-                                defaultSelected = controller.prefersDefaultVariant(modelData.item);
-                                open();
-                                Qt.callLater(() => {
-                                    const choice = firstToneChoices.itemAt(firstTone - 1);
-                                    if (choice)
-                                        choice.forceActiveFocus();
-
-                                });
-                            }
-
-                            parent: root.contentItem
-                            popupType: Popup.Item
-                            modal: true
-                            dim: false
-                            x: Math.max(6, Math.min(root.width - width - 6, root.contextAnchor.x - width))
-                            y: root.contextAnchor.y + height <= root.height - 6 ? root.contextAnchor.y : Math.max(6, root.contextAnchor.y - emojiCell.height - height)
-                            width: 264
-                            height: 226
-                            padding: Theme.scaledSpacing(10)
-                            closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
-                            onOpened: root.popupOpened()
-                            onClosed: root.popupClosed()
-
-                            contentItem: Column {
-                                spacing: Theme.scaledSpacing(8)
-
-                                Text {
-                                    width: parent.width
-                                    text: "Choose skin tones"
-                                    color: Theme.foreground
-                                    font.family: Theme.bodyFontFamily
-                                    font.pixelSize: 13
-                                    font.bold: true
-                                }
-
-                                Rectangle {
-                                    width: parent.width
-                                    height: 54
-                                    radius: Theme.scaledRadius(8)
-                                    color: Theme.withAlpha(Theme.foreground, 0.06)
-
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: toneComposer.previewValue || (modelData.item ? modelData.item.baseValue : "")
-                                        font.family: "Twemoji"
-                                        font.pixelSize: 32
-                                    }
-
-                                }
-
-                                Row {
-                                    width: parent.width
-                                    height: 30
-                                    spacing: Theme.scaledSpacing(7)
-
-                                    Text {
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        width: 40
-                                        text: "Left"
-                                        color: Theme.muted
-                                        font.family: Theme.bodyFontFamily
-                                        font.pixelSize: 12
-                                    }
-
-                                    Repeater {
-                                        id: firstToneChoices
-
-                                        model: 5
-
-                                        Rectangle {
-                                            required property int index
-
-                                            activeFocusOnTab: true
-                                            width: 28
-                                            height: 28
-                                            radius: Theme.scaledRadius(14)
-                                            color: root.toneColours[index + 1]
-                                            border.width: !toneComposer.defaultSelected && toneComposer.firstTone === index + 1 ? 3 : 1
-                                            border.color: !toneComposer.defaultSelected && toneComposer.firstTone === index + 1 || activeFocus ? Theme.accent : Theme.border
-                                            Keys.onReturnPressed: {
-                                                toneComposer.defaultSelected = false;
-                                                toneComposer.firstTone = index + 1;
-                                            }
-                                            Keys.onEnterPressed: {
-                                                toneComposer.defaultSelected = false;
-                                                toneComposer.firstTone = index + 1;
-                                            }
-                                            Keys.onSpacePressed: {
-                                                toneComposer.defaultSelected = false;
-                                                toneComposer.firstTone = index + 1;
-                                            }
-
-                                            TapHandler {
-                                                onTapped: {
-                                                    toneComposer.defaultSelected = false;
-                                                    toneComposer.firstTone = index + 1;
-                                                }
-                                            }
-
-                                            HoverHandler {
-                                                cursorShape: Qt.PointingHandCursor
-                                            }
-
-                                        }
-
-                                    }
-
-                                }
-
-                                Row {
-                                    width: parent.width
-                                    height: 30
-                                    spacing: Theme.scaledSpacing(7)
-
-                                    Text {
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        width: 40
-                                        text: "Right"
-                                        color: Theme.muted
-                                        font.family: Theme.bodyFontFamily
-                                        font.pixelSize: 12
-                                    }
-
-                                    Repeater {
-                                        id: secondToneChoices
-
-                                        model: 5
-
-                                        Rectangle {
-                                            required property int index
-
-                                            activeFocusOnTab: true
-                                            width: 28
-                                            height: 28
-                                            radius: Theme.scaledRadius(14)
-                                            color: root.toneColours[index + 1]
-                                            border.width: !toneComposer.defaultSelected && toneComposer.secondTone === index + 1 ? 3 : 1
-                                            border.color: !toneComposer.defaultSelected && toneComposer.secondTone === index + 1 || activeFocus ? Theme.accent : Theme.border
-                                            Keys.onReturnPressed: {
-                                                toneComposer.defaultSelected = false;
-                                                toneComposer.secondTone = index + 1;
-                                            }
-                                            Keys.onEnterPressed: {
-                                                toneComposer.defaultSelected = false;
-                                                toneComposer.secondTone = index + 1;
-                                            }
-                                            Keys.onSpacePressed: {
-                                                toneComposer.defaultSelected = false;
-                                                toneComposer.secondTone = index + 1;
-                                            }
-
-                                            TapHandler {
-                                                onTapped: {
-                                                    toneComposer.defaultSelected = false;
-                                                    toneComposer.secondTone = index + 1;
-                                                }
-                                            }
-
-                                            HoverHandler {
-                                                cursorShape: Qt.PointingHandCursor
-                                            }
-
-                                        }
-
-                                    }
-
-                                }
-
-                                Row {
-                                    width: parent.width
-                                    height: 34
-                                    spacing: Theme.scaledSpacing(7)
-
-                                    BloxButton {
-                                        width: (parent.width - parent.spacing) / 2
-                                        height: 34
-                                        compact: true
-                                        checked: toneComposer.defaultSelected
-                                        text: "Default"
-                                        onClicked: toneComposer.defaultSelected = true
-                                    }
-
-                                    Item {
-                                        id: copyReasonWrapper
-
-                                        width: (parent.width - parent.spacing) / 2
-                                        height: 34
-                                        activeFocusOnTab: !copyButton.enabled || activeFocus
-
-                                        BloxButton {
-                                            id: copyButton
-
-                                            anchors.fill: parent
-                                            compact: true
-                                            enabled: toneComposer.previewValue.length > 0
-                                            text: "Copy"
-                                            onEnabledChanged: {
-                                                if (enabled && copyReasonWrapper.activeFocus)
-                                                    forceActiveFocus();
-                                            }
-                                            onClicked: {
-                                                if (toneComposer.defaultSelected)
-                                                    controller.activateDefaultVariant(modelData.itemIndex);
-                                                else
-                                                    controller.activateToneVariant(modelData.itemIndex, toneComposer.firstTone, toneComposer.secondTone);
-                                                toneComposer.close();
-                                            }
-                                        }
-
-                                        HoverHandler {
-                                            id: copyReasonHover
-                                        }
-
-                                        Item {
-                                            anchors.fill: parent
-
-                                            BloxToolTip {
-                                                shown: !copyButton.enabled && (copyReasonHover.hovered || copyReasonWrapper.activeFocus)
-                                                text: "No emoji for these tones."
-                                            }
-                                        }
-                                    }
-
-                                }
-
-                            }
-
-                            background: Rectangle {
-                                radius: Theme.scaledRadius(10)
-                                color: Theme.surfaceAlt
-                                border.color: Theme.border
-                            }
-
-                        }
-
                     }
-
                 }
-
             }
-
         }
 
-        MouseArea {
-            anchors.right: parent.right
-            anchors.top: parent.top
-            anchors.bottom: parent.bottom
-            width: 7
-            z: 100
-            cursorShape: Qt.SizeHorCursor
-            onPressed: root.contentItem.QsWindow.window.startSystemResize(Qt.RightEdge)
-        }
+        WindowResizeHandles { targetWindow: root; baseZ: 100 }
+    }
 
-        MouseArea {
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.bottom: parent.bottom
-            height: 7
-            z: 101
-            cursorShape: Qt.SizeVerCursor
-            onPressed: root.contentItem.QsWindow.window.startSystemResize(Qt.BottomEdge)
-        }
-
-        MouseArea {
-            anchors.left: parent.left
-            anchors.top: parent.top
-            anchors.bottom: parent.bottom
-            width: 7
-            z: 102
-            cursorShape: Qt.SizeHorCursor
-            onPressed: root.contentItem.QsWindow.window.startSystemResize(Qt.LeftEdge)
-        }
-
-        MouseArea {
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.top: parent.top
-            height: 7
-            z: 103
-            cursorShape: Qt.SizeVerCursor
-            onPressed: root.contentItem.QsWindow.window.startSystemResize(Qt.TopEdge)
-        }
-
+    EmojiContextPopups {
+        id: contextPopups
+        controller: root.controller
+        hostContentItem: root.contentItem
+        toneColours: root.toneColours
+        emojiFontFamily: "Twemoji"
+        onPopupOpened: root.popupOpened()
+        onPopupClosed: root.popupClosed()
     }
 
     Timer {
         id: focusTimer
-
         interval: 30
         onTriggered: search.focusEditor(false)
     }
 
     Timer {
         id: toneGuard
-
         interval: 180
         onTriggered: {
             if (root.activeEmojiPopups === 0)
                 root.suppressEmojiActivation = false;
-
         }
     }
-
 }

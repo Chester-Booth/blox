@@ -6,6 +6,9 @@ OsdController 1.0 OsdController.qml
 OsdIpc 1.0 OsdIpc.qml
 OsdSurface 1.0 OsdSurface.qml
 SettingsWindow 1.0 SettingsWindow.qml
+SettingsSidebar 1.0 SettingsSidebar.qml
+SettingsThemeShelfOverlay 1.0 SettingsThemeShelfOverlay.qml
+SettingsWidgetMetadataLoader 1.0 SettingsWidgetMetadataLoader.qml
 SettingsBarAdvancedPage 1.0 SettingsBarAdvancedPage.qml
 SettingsBarItemRow 1.0 SettingsBarItemRow.qml
 SettingsBarItemsPage 1.0 SettingsBarItemsPage.qml
@@ -47,9 +50,14 @@ ClipboardController 1.0 ClipboardController.qml
 ClipboardPicker 1.0 ClipboardPicker.qml
 ClipboardWatcher 1.0 ClipboardWatcher.qml
 CalendarEventWindows 1.0 CalendarEventWindows.qml
+CalendarEventDetailWindow 1.0 CalendarEventDetailWindow.qml
+CalendarDeleteConfirmOverlay 1.0 CalendarDeleteConfirmOverlay.qml
 CalendarEventDescriptionField 1.0 CalendarEventDescriptionField.qml
 EmojiController 1.0 EmojiController.qml
 EmojiPicker 1.0 EmojiPicker.qml
+EmojiSidebar 1.0 EmojiSidebar.qml
+EmojiContextPopups 1.0 EmojiContextPopups.qml
+WindowResizeHandles 1.0 WindowResizeHandles.qml
 DmenuServer 1.0 DmenuServer.qml
 PasteController 1.0 PasteController.qml
 ShortcutGuide 1.0 ShortcutGuide.qml

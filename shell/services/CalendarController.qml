@@ -2,6 +2,7 @@ import qs.shared
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import "CalendarNoticeHelpers.js" as NoticeHelpers
 
 Scope {
     id: root
@@ -140,96 +141,11 @@ Scope {
     }
 
     function failureHeading(item, errorObject) {
-        var command = item.command;
-        var code = errorObject && errorObject.code || "provider_error";
-        if (code === "partial_mutation")
-            return "Google Calendar only completed part of the change";
-
-        if (code === "not_applied")
-            return "Google Calendar did not save the change";
-
-        if (code === "reconciliation_failed")
-            return "Couldn’t confirm what Google Calendar saved";
-
-        if (code === "auth_required")
-            return "Google Calendar needs you to sign in";
-
-        if (code === "etag_conflict")
-            return "This event changed in Google Calendar";
-
-        if (code === "permission_denied")
-            return "Google Calendar refused this change";
-
-        if (code === "rate_limited")
-            return "Google Calendar is busy";
-
-        if (code === "timeout")
-            return command === "refresh" ? "Calendar refresh timed out" : "The calendar request timed out";
-
-        if (code === "provider_unavailable")
-            return "Google Calendar is unavailable";
-
-        if (command === "create")
-            return "Event wasn’t created";
-
-        if (command === "delete")
-            return "Event wasn’t deleted";
-
-        if (command === "refresh")
-            return "Couldn’t refresh Google Calendar";
-
-        if (item.actionLabel === "colour")
-            return "Couldn’t change the event colour";
-
-        if (item.actionLabel === "move" || item.actionLabel === "resize")
-            return "Couldn’t change the event time";
-
-        return "Couldn’t update the event";
+        return NoticeHelpers.failureHeading(item, errorObject);
     }
 
     function failureDetail(item, errorObject) {
-        var command = item.command;
-        var code = errorObject && errorObject.code || "provider_error";
-        if (code === "partial_mutation")
-            return "Refresh to see the result before trying another change.";
-
-        if (code === "not_applied")
-            return "The event is unchanged. You can try again.";
-
-        if (code === "reconciliation_failed")
-            return "It will retry when the connection returns. You can also retry now.";
-
-        if (code === "auth_required")
-            return "Run gcalcli once, then return and try again.";
-
-        if (code === "etag_conflict")
-            return "Reload the latest version before saving your changes.";
-
-        if (code === "permission_denied")
-            return "Check that this calendar still allows changes.";
-
-        if (code === "rate_limited")
-            return "Wait a moment, then try again.";
-
-        if (command === "refresh")
-            return "Showing saved events from the last successful refresh.";
-
-        if (code === "provider_unavailable" || code === "timeout")
-            return "Your local data is unchanged.";
-
-        if (command === "create")
-            return "Your details are still here. Check the connection, then try again.";
-
-        if (command === "delete")
-            return "The event is unchanged. You can try again.";
-
-        if (item.actionLabel === "colour")
-            return "The previous colour has been restored.";
-
-        if (item.actionLabel === "move" || item.actionLabel === "resize")
-            return "The previous time has been restored.";
-
-        return "The previous value has been restored.";
+        return NoticeHelpers.failureDetail(item, errorObject);
     }
 
     function open(date, screen) {

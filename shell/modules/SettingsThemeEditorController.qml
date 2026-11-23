@@ -4,6 +4,7 @@ import QtQuick.Window
 import Quickshell
 import Quickshell.Io
 import "../shared/Shape.js" as Shape
+import "SettingsThemeCandidateLogic.js" as CandidateLogic
 
 Scope {
     id: root
@@ -797,43 +798,29 @@ Scope {
         statusMessage = dirty ? "Temporary Quickshell preview — unsaved" : "Temporary Quickshell preview";
     }
 
-    function hyprlandValue(key, fallback) {
-        return candidate && candidate.hyprland && candidate.hyprland[key] !== undefined
-            ? candidate.hyprland[key]
-            : fallback;
-    }
+    function hyprlandValue(key, fallback) { return CandidateLogic.hyprlandValue(candidate, key, fallback); }
 
     function setHyprlandValue(key, value) {
-        if (!candidate)
-            return;
-
+        if (!candidate) return;
         const next = cloneCandidate();
         next.hyprland = next.hyprland || {};
-        if (value === null || value === undefined)
-            delete next.hyprland[key];
-        else
-            next.hyprland[key] = value;
+        if (value === null || value === undefined) delete next.hyprland[key];
+        else next.hyprland[key] = value;
         markCandidate(next, "hyprland." + key);
     }
 
     function setHyprlandInactiveOpacity(value) {
-        if (!Number.isFinite(value))
-            return;
-
-        setHyprlandValue("inactive_opacity", Math.max(0.1, Math.min(1.0, Math.round(value * 100) / 100)));
+        if (Number.isFinite(value))
+            setHyprlandValue("inactive_opacity", Math.max(0.1, Math.min(1.0, Math.round(value * 100) / 100)));
     }
 
     function setHyprlandBorderSize(value) {
-        if (!Number.isFinite(value))
-            return;
-
-        setHyprlandValue("border_size", Math.max(0, Math.min(8, Math.round(value))));
+        if (Number.isFinite(value))
+            setHyprlandValue("border_size", Math.max(0, Math.min(8, Math.round(value))));
     }
 
     function markCandidatePaths(value, paths, allowBuiltinChange) {
-        if (selectedThemeBuiltin && !allowBuiltinChange)
-            return false;
-
+        if (selectedThemeBuiltin && !allowBuiltinChange) return false;
         candidate = value;
         const nextTouchedPaths = touchedPaths.slice();
         for (const path of paths || []) {
@@ -865,12 +852,9 @@ Scope {
     }
 
     function setStylusStyleSet(index) {
-        if (!candidate || index < 0 || index >= stylusStyleSetValues.length)
-            return ;
-
+        if (!candidate || index < 0 || index >= stylusStyleSetValues.length) return;
         const next = cloneCandidate();
-        next.stylus = next.stylus || {
-        };
+        next.stylus = next.stylus || {};
         next.stylus.style_set = stylusStyleSetValues[index];
         markCandidate(next, "stylus.style_set");
     }
@@ -887,58 +871,18 @@ Scope {
         markCandidate(next, "fonts." + key);
     }
 
-    function shapeValue(key, fallback) {
-        return candidate && candidate.shape && candidate.shape[key] !== undefined
-            ? candidate.shape[key]
-            : fallback;
-    }
-
-    function effectiveWindowGap() {
-        return candidate && candidate.shape ? Shape.effectiveWindowGap(candidate.shape) : 5;
-    }
-
-    function cursorValue(key, fallback) {
-        return candidate && candidate.cursor && candidate.cursor[key] !== undefined
-            ? candidate.cursor[key]
-            : fallback;
-    }
-
-    function cursorGenerated() {
-        return cursorValue("mode", "generated") === "generated";
-    }
-
-    function cursorFollowsThemeRoundness() {
-        return cursorValue("shape_source", "theme") === "theme";
-    }
-
-    function cursorEffectiveBase() {
-        return shapeValue("radius_scale", 1.25) === 0
-            ? "Bibata-Original-Classic"
-            : "Bibata-Modern-Classic";
-    }
-
-    function cursorShapeIndex() {
-        const base = cursorFollowsThemeRoundness()
-            ? cursorEffectiveBase()
-            : cursorValue("base", "Bibata-Modern-Classic");
-        return ["Bibata-Original-Classic", "Bibata-Modern-Classic"].indexOf(base);
-    }
-
-    function cursorDirectionIndex() {
-        return ["right", "left"].indexOf(cursorValue("handedness", "right"));
-    }
-
-    function cursorSize() {
-        const sizes = cursorValue("sizes", [26]);
-        if (!Array.isArray(sizes) || sizes.length === 0 || !Number.isInteger(sizes[0]))
-            return 26;
-        return sizes[0];
-    }
+    function shapeValue(key, fallback) { return CandidateLogic.shapeValue(candidate, key, fallback); }
+    function effectiveWindowGap() { return candidate && candidate.shape ? Shape.effectiveWindowGap(candidate.shape) : 5; }
+    function cursorValue(key, fallback) { return CandidateLogic.cursorValue(candidate, key, fallback); }
+    function cursorGenerated() { return CandidateLogic.cursorGenerated(candidate); }
+    function cursorFollowsThemeRoundness() { return CandidateLogic.cursorFollowsThemeRoundness(candidate); }
+    function cursorEffectiveBase() { return CandidateLogic.cursorEffectiveBase(candidate); }
+    function cursorShapeIndex() { return CandidateLogic.cursorShapeIndex(candidate); }
+    function cursorDirectionIndex() { return CandidateLogic.cursorDirectionIndex(candidate); }
+    function cursorSize() { return CandidateLogic.cursorSize(candidate); }
 
     function setCursorFollowsThemeRoundness(follows) {
-        if (!candidate || !cursorGenerated() || cursorFollowsThemeRoundness() === !!follows)
-            return ;
-
+        if (!candidate || !cursorGenerated() || cursorFollowsThemeRoundness() === !!follows) return;
         const next = cloneCandidate();
         next.cursor = next.cursor || {};
         const paths = ["cursor.shape_source"];
@@ -953,9 +897,7 @@ Scope {
     }
 
     function setCursorShape(index) {
-        if (!candidate || !cursorGenerated() || index < 0 || index > 1)
-            return ;
-
+        if (!candidate || !cursorGenerated() || index < 0 || index > 1) return;
         const next = cloneCandidate();
         next.cursor = next.cursor || {};
         next.cursor.base = index === 0 ? "Bibata-Original-Classic" : "Bibata-Modern-Classic";
@@ -964,9 +906,7 @@ Scope {
     }
 
     function setCursorDirection(index) {
-        if (!candidate || !cursorGenerated() || index < 0 || index > 1)
-            return ;
-
+        if (!candidate || !cursorGenerated() || index < 0 || index > 1) return;
         const next = cloneCandidate();
         next.cursor = next.cursor || {};
         next.cursor.handedness = index === 0 ? "right" : "left";
@@ -974,83 +914,38 @@ Scope {
     }
 
     function setCursorSize(value) {
-        if (!candidate || !candidate.cursor || !Number.isFinite(value))
-            return ;
-
+        if (!candidate || !candidate.cursor || !Number.isFinite(value)) return;
         const size = Math.max(16, Math.min(96, Math.round(value)));
         const next = cloneCandidate();
         next.cursor = next.cursor || {};
         const existing = Array.isArray(next.cursor.sizes) ? next.cursor.sizes : [];
-        const remaining = existing.slice(1).filter(entry => entry !== size);
-        next.cursor.sizes = [size].concat(remaining);
+        next.cursor.sizes = [size].concat(existing.slice(1).filter(entry => entry !== size));
         markCandidate(next, "cursor.sizes");
     }
 
     function setShapeValue(key, value) {
-        if (!candidate)
-            return;
-
+        if (!candidate) return;
         const next = cloneCandidate();
-        next.shape = next.shape || {"radius_scale": 1.25, "density_scale": 1.0};
-        if (value === null || value === undefined)
-            delete next.shape[key];
-        else
-            next.shape[key] = value;
+        next.shape = next.shape || {radius_scale: 1.25, density_scale: 1.0};
+        if (value === null || value === undefined) delete next.shape[key];
+        else next.shape[key] = value;
         markCandidate(next, "shape." + key);
     }
 
     function setAutomaticWindowGap(automatic) {
-        if (!candidate)
-            return;
-
-        if (automatic) {
-            setShapeValue("window_gap", null);
-            return;
-        }
-        setShapeValue("window_gap", effectiveWindowGap());
+        if (candidate) setShapeValue("window_gap", automatic ? null : effectiveWindowGap());
     }
 
-    function barOverrideSpec(axis) {
-        return axis === "radius" ? {
-            "automatic": "radius_automatic",
-            "value": "radius_scale",
-            "shape": "radius_scale",
-            "fallback": 1.25
-        } : {
-            "automatic": "density_automatic",
-            "value": "density_scale",
-            "shape": "density_scale",
-            "fallback": 1.0
-        };
-    }
-
-    function barOverrideAutomatic(axis) {
-        const spec = barOverrideSpec(axis);
-        const value = shellValue("bar", spec.automatic);
-        return value === undefined ? true : value;
-    }
-
-    function barOverrideValue(axis) {
-        const spec = barOverrideSpec(axis);
-        const inherited = shapeValue(spec.shape, spec.fallback);
-        if (barOverrideAutomatic(axis))
-            return inherited;
-
-        const value = shellValue("bar", spec.value);
-        return value === undefined ? inherited : value;
-    }
+    function barOverrideSpec(axis) { return CandidateLogic.barOverrideSpec(axis); }
+    function barOverrideAutomatic(axis) { return CandidateLogic.barOverrideAutomatic(candidate, axis); }
+    function barOverrideValue(axis) { return CandidateLogic.barOverrideValue(candidate, axis); }
 
     function setBarOverrideAutomatic(axis, automatic) {
-        if (!candidate)
-            return ;
-
+        if (!candidate) return;
         const spec = barOverrideSpec(axis);
         const next = cloneCandidate();
-        if (!next.shell)
-            next.shell = shellDefaults();
-        if (!next.shell.bar)
-            next.shell.bar = { };
-
+        next.shell = next.shell || shellDefaults();
+        next.shell.bar = next.shell.bar || {};
         next.shell.bar[spec.automatic] = !!automatic;
         const paths = ["shell.bar." + spec.automatic];
         if (!automatic && next.shell.bar[spec.value] === undefined) {
@@ -1062,16 +957,11 @@ Scope {
     }
 
     function setBarOverrideValue(axis, value) {
-        if (!candidate)
-            return ;
-
+        if (!candidate) return;
         const spec = barOverrideSpec(axis);
         const next = cloneCandidate();
-        if (!next.shell)
-            next.shell = shellDefaults();
-        if (!next.shell.bar)
-            next.shell.bar = { };
-
+        next.shell = next.shell || shellDefaults();
+        next.shell.bar = next.shell.bar || {};
         next.shell.bar[spec.value] = value;
         next.shell.bar[spec.automatic] = false;
         markCandidatePaths(next, ["shell.bar." + spec.value, "shell.bar." + spec.automatic]);
@@ -1079,46 +969,19 @@ Scope {
     }
 
     function setTarget(key, value) {
-        if (!candidate)
-            return ;
-        if (!targetAvailable(key))
-            return ;
-
+        if (!candidate || !targetAvailable(key)) return;
         const next = cloneCandidate();
         next.targets[key] = value;
         markCandidate(next, "targets." + key, true);
     }
 
     function setOverride(target, key, value) {
-        const next = cloneCandidate();
-        if (!next.overrides)
-            next.overrides = {
-        };
-
-        if (!next.overrides[target])
-            next.overrides[target] = {
-        };
-
-        if (value.trim().length === 0)
-            delete next.overrides[target][key];
-        else
-            next.overrides[target][key] = value.trim();
-        if (Object.keys(next.overrides[target]).length === 0)
-            delete next.overrides[target];
-
-        if (Object.keys(next.overrides).length === 0)
-            delete next.overrides;
-
-        if (target === "ansi")
-            next.terminal.ansi_source = "override";
-
+        const next = CandidateLogic.applyOverride(cloneCandidate(), target, key, value);
         markCandidate(next, "overrides." + target + "." + key);
     }
 
     function setWallpaperPath(path) {
-        if (!candidate)
-            return ;
-
+        if (!candidate) return;
         const next = cloneCandidate();
         next.wallpaper.path = String(path || "").trim();
         markCandidate(next, "wallpaper.path");
@@ -1126,40 +989,12 @@ Scope {
 
     function setWallpaperDisplayPath(path) {
         const value = String(path || "").trim();
-        if (!candidate || value === wallpaperDisplayPath(candidate.wallpaper.path))
-            return ;
-
-        setWallpaperPath(value);
+        if (candidate && value !== wallpaperDisplayPath(candidate.wallpaper.path))
+            setWallpaperPath(value);
     }
 
-    function shellDefaults() {
-        return {
-            "bar": {
-                "position": "left",
-                "separate_groups": false,
-                "border": false,
-                "edge_inset": 0
-            },
-            "osd": {
-                "position": "top-left",
-                "offset_x": 0,
-                "offset_y": 0
-            },
-            "notifications": {
-                "position": "bottom-right",
-                "offset_x": 0,
-                "offset_y": 0
-            }
-        };
-    }
-
-    function shellValue(section, key) {
-        const defaults = shellDefaults();
-        const shell = candidate && candidate.shell ? candidate.shell : defaults;
-        const sectionDefaults = defaults[section] || ({ });
-        const values = shell[section] || sectionDefaults;
-        return values[key] === undefined ? sectionDefaults[key] : values[key];
-    }
+    function shellDefaults() { return CandidateLogic.shellDefaults(); }
+    function shellValue(section, key) { return CandidateLogic.shellValue(candidate, section, key); }
 
     function setShellValue(section, key, value) {
         if (!candidate)

@@ -30,12 +30,7 @@ qmllint: native-services native-widgets
 	fi
 
 py-compile:
-	@while IFS= read -r -d '' file; do \
-		python3 -c 'import ast, pathlib, sys; path = pathlib.Path(sys.argv[1]); ast.parse(path.read_text(), filename=str(path))' "$$file" || exit $$?; \
-	done < <(find $(QS)/scripts bin packaging widgets -type f -name '*.py' -print0)
-	@while IFS= read -r -d '' file; do \
-		python3 -c 'import ast, pathlib, sys; path = pathlib.Path(sys.argv[1]); ast.parse(path.read_text(), filename=str(path))' "$$file" || exit $$?; \
-	done < <(find themes -type f -name '*.py' -print0)
+	@PYTHONDONTWRITEBYTECODE=1 python3 -c 'import ast, pathlib, sys; roots = [pathlib.Path(p) for p in sys.argv[1:]]; files = sorted(p for r in roots for p in r.rglob("*.py") if "__pycache__" not in p.parts); [ast.parse(p.read_text(encoding="utf-8"), filename=str(p)) for p in files]' $(QS)/scripts bin packaging widgets themes
 
 shellcheck:
 	@if command -v shellcheck >/dev/null 2>&1; then \
@@ -72,7 +67,7 @@ test-cutover:
 	@bash tests/test_cutover.sh
 
 test-qml-paths:
-	@PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests/test_qml_no_legacy_paths.py tests/test_quickshell_workflow_import.py tests/test_quickshell_fullscreen_visibility.py -v
+	@PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests/test_quickshell_workflow_import.py tests/test_quickshell_fullscreen_visibility.py -v
 
 test-qml-tokens:
 	@PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests/test_qml_token_hygiene.py -v
@@ -91,7 +86,7 @@ validate-status:
 	@$(QS)/scripts/validate-status.py --timeout 10
 
 validate-themes:
-	@BLOX_DATA_DIR="$(CURDIR)/themes" PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s themes/tests -v
+	@TMPDIR=/tmp BLOX_DATA_DIR="$(CURDIR)/themes" PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s themes/tests -v
 
 stylus-vendor:
 	@deno run -A themes/tools/vendor_catppuccin.ts

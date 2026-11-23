@@ -59,14 +59,14 @@ TestCase {
         window.controller.candidate = {id:"fixture", widgets:{schemaVersion:1,widgets:[]}};
         window.controller.openWidgetEditor(-1);
         window.requestActivate();
-        wait(30);
+        wait(10);
     }
     function cleanup() { window.close(); window.destroy(); window = null; wait(0); }
     function item(name) { const result = findChild(window.modal, name); verify(result, name); return result; }
     function flow() { return item("widget-editor"); }
     function tab(name) { click("widget-tab-" + name); }
     function reveal(control) {
-        wait(20);
+        wait(5);
         const scroll = item("widget-editor-scroll");
         const point = control.mapToItem(scroll.contentItem.contentItem, 0, 0);
         scroll.contentItem.contentY = Math.max(0, Math.min(scroll.contentHeight - scroll.availableHeight, point.y));
@@ -77,12 +77,12 @@ TestCase {
         verify(control.visible, name + " visible");
         verify(control.enabled, name + " enabled");
         if (!name.startsWith("widget-tab-") && name !== "widget-save-button") reveal(control);
-        wait(20);
+        wait(5);
         clickSpy.target = null;
         clickSpy.signalName = typeof control.clicked === "function" ? "clicked" : "toggled";
         clickSpy.target = control;
         clickSpy.clear();
-        mouseClick(control, control.width / 2, control.height / 2, Qt.LeftButton, Qt.NoModifier, 10);
+        mouseClick(control, control.width / 2, control.height / 2, Qt.LeftButton, Qt.NoModifier, 1);
         wait(0);
         compare(clickSpy.count, 1, name + " receives the pointer click");
     }
@@ -109,9 +109,8 @@ TestCase {
         for (let i = 0; i < control.model.length; ++i) keyClick(Qt.Key_Up);
         for (let i = 0; i < index; ++i) keyClick(Qt.Key_Down);
         keyClick(Qt.Key_Return);
-        wait(0);
-        wait(150);
-        compare(control.currentIndex, index, name);
+        tryCompare(control, "currentIndex", index, 500, name);
+        if (control.popup) tryVerify(() => !control.popup.visible, 500, name + " popup closes");
     }
     function kind(kind) { choose("widgetKind", catalogue.widgets.findIndex(entry => entry.kind === kind)); }
     function save() { verify(item("widget-save-button").enabled, window.controller.widgetDraftError || flow().inputError); click("widget-save-button"); tryCompare(window.controller, "modalKind", ""); }

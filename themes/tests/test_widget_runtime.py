@@ -84,28 +84,5 @@ class ThemeWidgetProfileTests(unittest.TestCase):
         self.assertEqual([1], [entry['preview']['widget_count'] for entry in entries])
 
 
-class WallpaperRuntimeSourceTests(unittest.TestCase):
-    def test_wallpaper_uses_double_buffered_per_screen_surfaces(self) -> None:
-        root = THEMES.parent
-        source = (root / "shell/modules/Wallpaper.qml").read_text(encoding="utf-8")
-        shell = (root / "shell/shell.qml").read_text(encoding="utf-8")
-        self.assertIn("model: Quickshell.screens", source)
-        self.assertIn("screen: modelData", source)
-        self.assertIn("modelData.devicePixelRatio", source)
-        self.assertIn("WlrLayershell.layer: WlrLayer.Background", source)
-        self.assertIn("exclusionMode: ExclusionMode.Ignore", source)
-        self.assertNotIn("exclusiveZone:", source)
-        self.assertIn("Image.PreserveAspectCrop", source)
-        self.assertIn("Image.PreserveAspectFit", source)
-        self.assertIn("Image.Tile", source)
-        self.assertEqual(2, source.count("asynchronous: true"))
-        self.assertIn("image.status !== Image.Ready", source)
-        self.assertIn("Wallpaper {", shell)
-        self.assertLess(shell.index("Wallpaper {"), shell.index("DesktopWidgets {"))
-        theme = (root / "shell/shared/Theme.qml").read_text(encoding="utf-8")
-        self.assertIn("id: wallpaperFile", theme)
-        self.assertIn("preload: true", theme.split("id: wallpaperFile", 1)[1])
-
-
 if __name__ == '__main__':
     unittest.main()

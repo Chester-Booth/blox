@@ -15,6 +15,7 @@ PATTERNS = {
     "checkout-path": re.compile(r"/home/blox\b|/home/chester\b|Code/personal/dotfiles"),
     "private-key": re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----"),
 }
+QML_LEGACY_PATH = ".config/quickshell/blox"
 
 def tracked_files() -> list[Path]:
     completed = subprocess.run(["git", "-C", str(REPO_ROOT), "ls-files"], capture_output=True, text=True, check=True)
@@ -36,6 +37,9 @@ def main() -> int:
             for match in pattern.finditer(text):
                 context = text[max(0, match.start() - 40):match.end() + 40].replace("\n", " ")
                 failures.append(f"{name}: {path.relative_to(REPO_ROOT)}: ...{context}...")
+        rel = path.relative_to(REPO_ROOT).as_posix()
+        if rel.startswith("shell/") and rel.endswith(".qml") and QML_LEGACY_PATH in text:
+            failures.append(f"legacy-qml-path: {rel}: contains {QML_LEGACY_PATH}")
     if failures:
         for failure in failures:
             print(failure, file=sys.stderr)

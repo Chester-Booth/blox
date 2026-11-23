@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import json
 import os
-import platform
 import re
 import subprocess
 import sys
@@ -50,10 +49,28 @@ def _check(identifier: str, ok: bool, detail: Any = None, severity: str | None =
 
 
 def _host_checks() -> list[dict[str, Any]]:
-    checks = [_check("host-python", True, platform.python_version())]
     completed = subprocess.run(["quickshell", "--version"], capture_output=True, text=True, check=False)
     version = (completed.stdout or completed.stderr).strip().splitlines()[0] if completed.stdout or completed.stderr else ""
-    checks.append(_check("host-quickshell", completed.returncode == 0, version or None))
+    return [_check("host-quickshell", completed.returncode == 0, version or None)]
+
+
+def _native_services_checks(roots: layout.Roots) -> list[dict[str, Any]]:
+    """Verify the installed native QML plugin and Rust bloxd binary."""
+    module_dir = roots.pkg_root / "shell" / "native" / "qml" / "Blox" / "Services"
+    plugin = module_dir / "libbloxservicesplugin.so"
+    bloxd = module_dir / "bloxd"
+    checks = [_check("native-services-plugin", plugin.is_file(), str(plugin))]
+    if not (bloxd.is_file() and os.access(bloxd, os.X_OK)):
+        checks.append(_check("native-bloxd", False, f"missing or non-executable: {bloxd}"))
+        return checks
+    try:
+        probe = subprocess.run([str(bloxd), "status", "caffeine"], capture_output=True, text=True, timeout=3, check=False)
+        ok = probe.returncode == 0 and bool(json.loads(probe.stdout))
+        detail: Any = str(bloxd) if ok else (probe.stderr.strip() or f"exit {probe.returncode}")
+    except (OSError, ValueError, subprocess.TimeoutExpired) as error:
+        ok = False
+        detail = str(error)
+    checks.append(_check("native-bloxd", ok, detail))
     return checks
 
 
@@ -83,18 +100,8 @@ def _install_checks(roots: layout.Roots) -> list[dict[str, Any]]:
 
 
 def _path_checks(roots: layout.Roots) -> list[dict[str, Any]]:
-    checks: list[dict[str, Any]] = []
-    expected = {
-        "paths-package-data": (roots.pkg_root, True),
-        "paths-user-data": (roots.data, False),
-        "paths-config": (roots.config, False),
-        "paths-state": (roots.state, False),
-        "paths-cache": (roots.cache, False),
-    }
-    for identifier, (path, required) in expected.items():
-        exists = path.is_dir()
-        checks.append(_check(identifier, exists or not required, str(path), severity="info" if exists else ("error" if required else "info")))
-    return checks
+    exists = roots.pkg_root.is_dir()
+    return [_check("paths-package-data", exists, str(roots.pkg_root), severity="info" if exists else "error")]
 
 
 def _theme_state_checks(roots: layout.Roots) -> list[dict[str, Any]]:
@@ -135,7 +142,7 @@ def _unit_checks(roots: layout.Roots) -> list[dict[str, Any]]:
         checks.append(_check(f"unit-{unit.removesuffix('.service')}", path.is_file(), str(path)))
     completed = subprocess.run(["systemctl", "--user", "is-active", "quickshell.service"], capture_output=True, text=True, check=False)
     state = completed.stdout.strip() or "unknown"
-    checks.append(_check("unit-quickshell-active", state == "active", state, severity="info"))
+    checks.append(_check("unit-quickshell-active", state == "active", state, severity="info" if state == "active" else "warn"))
     return checks
 
 
@@ -174,36 +181,18 @@ def _ipc_check() -> list[dict[str, Any]]:
     return [_check("ipc-status", payload.get("ok") is True, payload.get("code"), severity="info")]
 
 
-def _migration_checks(roots: layout.Roots) -> list[dict[str, Any]]:
-    from migrations import read_ledger
-
-    entries = read_ledger(roots)
-    tail = [
-        {"time": entry.get("time"), "migration": entry.get("migration"), "result": entry.get("result")}
-        for entry in entries[-5:]
-    ]
-    return [_check("migrations-ledger", True, {"entries": len(entries), "tail": tail})]
-
-
-def _trust_check(roots: layout.Roots) -> list[dict[str, Any]]:
-    trust_root = roots.data / "trust" / "themes"
-    count = len(list(trust_root.glob("*.json"))) if trust_root.is_dir() else 0
-    return [_check("trust-records", True, {"count": count}, severity="info")]
-
-
 def collect() -> dict[str, Any]:
     roots = layout.resolve_roots()
     checks: list[dict[str, Any]] = []
     checks += _host_checks()
     checks += _install_checks(roots)
+    checks += _native_services_checks(roots)
     checks += _path_checks(roots)
     checks += _theme_state_checks(roots)
     checks += _unit_checks(roots)
     checks += check_dependencies()
     checks += _defaults_check(roots)
     checks += _ipc_check()
-    checks += _migration_checks(roots)
-    checks += _trust_check(roots)
     healthy = all(check["ok"] for check in checks if check["severity"] == "error")
     return {"version": 1, "healthy": healthy, "checks": checks}
 

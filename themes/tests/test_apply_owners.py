@@ -31,6 +31,14 @@ class ApplyOwnersTests(unittest.TestCase):
         })
         environment.start()
         self.addCleanup(environment.stop)
+        for target in (
+            "themes.lib.blox_theme.obsidian.OBSIDIAN_THEME_SWITCH_SETTLE_SECONDS",
+            "themes.lib.blox_theme.obsidian.OBSIDIAN_PACKAGE_APPLY_SETTLE_SECONDS",
+            "themes.lib.blox_theme.runtime_editors.ZED_THEME_WATCH_SETTLE_SECONDS",
+        ):
+            patcher = mock.patch(target, 0)
+            patcher.start()
+            self.addCleanup(patcher.stop)
         (self.root / "config").mkdir()
         entrypoint = self.root / "config/hypr/hyprland.lua"
         entrypoint.parent.mkdir()

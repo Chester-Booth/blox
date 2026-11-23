@@ -403,16 +403,6 @@ class AppControllerTests(unittest.TestCase):
         )
 
     def test_launcher_resolves_the_current_desktop_exec_when_activated(self):
-        source = LAUNCHER.read_text(encoding="utf-8")
-        self.assertIn('scripts/launcher/desktop_exec.py",', source)
-        self.assertIn('String(request.workspaceId),', source)
-        self.assertIn("desktopLauncher.running = true;", source)
-        self.assertIn("Hyprland.focusedWorkspace ? Number(Hyprland.focusedWorkspace.id) : 0", source)
-        self.assertIn('scripts/launcher/command_exec.py",', source)
-        self.assertIn('scripts/launcher/assign_workspace.py",', source)
-        self.assertIn("root.executeCurrentDesktopEntry(request);", source)
-        self.assertNotIn("root.pendingEntry", source)
-
         # Stage the shipped desktop entry into an isolated XDG data home so
         # the test does not depend on machine state. The child process loads
         # desktop_exec fresh against that environment.

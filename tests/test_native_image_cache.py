@@ -158,8 +158,7 @@ fillMode:Image.{fit};smooth:true;cache:false;{cap}}} }}''').encode(), QUrl())
 class NativeImageCacheTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.temporary = tempfile.TemporaryDirectory(prefix="blox-image-cache-build-")
-        cls.imports = Path(cls.temporary.name)/"qml"
+        cls.imports = ROOT / "shell/native/qml"
         result = subprocess.run([sys.executable, "-B", str(ROOT/"packaging/build_native_services.py"), "--output-import-path", str(cls.imports)],
                                 capture_output=True, text=True, timeout=90)
         if result.returncode: raise RuntimeError(result.stdout+result.stderr)
@@ -168,7 +167,7 @@ class NativeImageCacheTests(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.temporary.cleanup()
+        pass
 
     def setUp(self):
         temporary = tempfile.TemporaryDirectory(prefix="blox-image-cache-")

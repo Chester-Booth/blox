@@ -1,6 +1,7 @@
 """Run the production native watcher on private sysfs fixtures and a private D-Bus."""
 
 import fcntl
+import hashlib
 import os
 from pathlib import Path
 import select
@@ -18,24 +19,37 @@ SOURCE = ROOT / "shell/native/services"
 class KeyboardBacklightWatcherTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.temporary = tempfile.TemporaryDirectory(prefix="blox-keyboard-tests-", dir=Path.home() / ".cache")
+        cls.temporary = tempfile.TemporaryDirectory(prefix="blox-keyboard-tests-", dir="/tmp")
         cls.directory = Path(cls.temporary.name)
-        cls.imports = cls.directory / "qml"
-        cls.binary = cls.directory / "keyboard-tests"
+        cls.imports = ROOT / "shell/native/qml"
         cls.run_checked([sys.executable, "-B", str(ROOT / "packaging/build_native_services.py"),
                          "--output-import-path", str(cls.imports)])
-        packages = ["Qt6Test", "Qt6Qml", "Qt6DBus"]
-        flags = shlex.split(cls.run_checked(["pkg-config", "--cflags", *packages]))
-        libraries = shlex.split(cls.run_checked(["pkg-config", "--libs", *packages]))
-        moc = str(Path(cls.run_checked(["pkg-config", "--variable=libexecdir", "Qt6Core"]).strip()) / "moc")
-        for source, output in ((SOURCE / "keyboard_backlight.h", "moc_keyboard_backlight.cpp"),
-                               (SOURCE / "keyboard_backlight.cpp", "keyboard_backlight.moc"),
-                               (ROOT / "tests/native/keyboard_backlight_test.cpp", "keyboard_backlight_test.moc")):
-            cls.run_checked([moc, *flags, str(source), "-o", str(cls.directory / output)])
-        cls.run_checked([*shlex.split(os.environ.get("CXX", "c++")), "-std=c++17", "-O2", "-fPIC",
-                         *flags, "-I", str(SOURCE), "-I", str(cls.directory),
-                         str(SOURCE / "keyboard_backlight.cpp"), str(cls.directory / "moc_keyboard_backlight.cpp"),
-                         str(ROOT / "tests/native/keyboard_backlight_test.cpp"), "-o", str(cls.binary), *libraries])
+        sources = (
+            SOURCE / "keyboard_backlight.h",
+            SOURCE / "keyboard_backlight.cpp",
+            ROOT / "tests/native/keyboard_backlight_test.cpp",
+        )
+        digest = hashlib.sha256()
+        for path in sources:
+            digest.update(path.read_bytes())
+        cache_dir = Path.home() / ".cache/blox-test-cache"
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        cls.binary = cache_dir / f"keyboard-tests-{digest.hexdigest()[:16]}"
+        if not cls.binary.is_file():
+            packages = ["Qt6Test", "Qt6Qml", "Qt6DBus"]
+            flags = shlex.split(cls.run_checked(["pkg-config", "--cflags", *packages]))
+            libraries = shlex.split(cls.run_checked(["pkg-config", "--libs", *packages]))
+            moc = str(Path(cls.run_checked(["pkg-config", "--variable=libexecdir", "Qt6Core"]).strip()) / "moc")
+            for source, output in ((SOURCE / "keyboard_backlight.h", "moc_keyboard_backlight.cpp"),
+                                   (SOURCE / "keyboard_backlight.cpp", "keyboard_backlight.moc"),
+                                   (ROOT / "tests/native/keyboard_backlight_test.cpp", "keyboard_backlight_test.moc")):
+                cls.run_checked([moc, *flags, str(source), "-o", str(cls.directory / output)])
+            staged = cache_dir / f".keyboard-tests-{os.getpid()}"
+            cls.run_checked([*shlex.split(os.environ.get("CXX", "c++")), "-std=c++17", "-O2", "-fPIC",
+                             *flags, "-I", str(SOURCE), "-I", str(cls.directory),
+                             str(SOURCE / "keyboard_backlight.cpp"), str(cls.directory / "moc_keyboard_backlight.cpp"),
+                             str(ROOT / "tests/native/keyboard_backlight_test.cpp"), "-o", str(staged), *libraries])
+            staged.replace(cls.binary)
 
     @classmethod
     def tearDownClass(cls):
@@ -49,7 +63,7 @@ class KeyboardBacklightWatcherTests(unittest.TestCase):
         return result.stdout
 
     def test_native_sysfs_signals_lock_reload_and_async_lifetimes(self):
-        output = self.run_checked([str(self.binary)])
+        output = self.run_checked([str(self.binary)], env={**os.environ, "TMPDIR": "/tmp"})
         self.assertIn("0 failed", output)
         print(output, end="")
 

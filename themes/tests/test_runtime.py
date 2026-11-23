@@ -87,6 +87,13 @@ class RuntimeTests(unittest.TestCase):
             return_value={"available": True, "label": "Helium", "reason": ""},
         )
         self.browser_probe.start()
+        self.settle_patches = [
+            mock.patch("blox_theme.obsidian.OBSIDIAN_THEME_SWITCH_SETTLE_SECONDS", 0),
+            mock.patch("blox_theme.obsidian.OBSIDIAN_PACKAGE_APPLY_SETTLE_SECONDS", 0),
+            mock.patch("blox_theme.runtime_editors.ZED_THEME_WATCH_SETTLE_SECONDS", 0),
+        ]
+        for patcher in self.settle_patches:
+            patcher.start()
         quickshell_loader = self.root / "config/quickshell/blox/shared/Theme.qml"
         quickshell_loader.parent.mkdir(parents=True)
         quickshell_loader.write_text("watchChanges: true\nfunction loadJson() {}\n", encoding="utf-8")
@@ -113,6 +120,8 @@ class RuntimeTests(unittest.TestCase):
         self.alternate = json.loads(self.alternate_path.read_text(encoding="utf-8"))
 
     def tearDown(self) -> None:
+        for patcher in reversed(self.settle_patches):
+            patcher.stop()
         self.browser_probe.stop()
         self.environment.stop()
         self.temporary.cleanup()

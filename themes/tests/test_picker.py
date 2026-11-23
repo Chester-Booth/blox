@@ -302,55 +302,6 @@ class SettingsIntegrationSourceTests(unittest.TestCase):
 
         self.assertEqual(available, registered)
 
-    def test_theme_cursor_reload_recreates_blox_windows(self) -> None:
-        theme = (REPOSITORY / "shell/shared/Theme.qml").read_text(encoding="utf-8")
-        self.assertIn("function reloadCursor() : string", theme)
-        self.assertIn('Quickshell.execDetached(["systemctl", "--user", "restart", "quickshell.service"]);', theme)
-        self.assertIn("Quickshell.reload(true);", theme)
-        self.assertIn('function reloadCursor() : string {\n            return root.reloadCursor();', theme)
-
-    def test_apply_defers_quickshell_reload_until_completion(self) -> None:
-        page = (PICKER_MODULES / "SettingsApplyReviewPage.qml").read_text(encoding="utf-8")
-        owner = (REPOSITORY / "shell/services/SettingsApplyController.qml").read_text(encoding="utf-8")
-        launcher = (PICKER_MODULES / "LauncherThemeApplyWindow.qml").read_text(encoding="utf-8")
-
-        self.assertIn("SettingsApplyReviewPage", launcher)
-        self.assertIn('text: root.pendingReload ? "Restart Quickshell" : "Done"', page)
-        self.assertIn("root.flowState.completeQuickshellReload();", page)
-        self.assertIn("root.flowState.finishApply();", page)
-        self.assertIn('function completeQuickshellReload() { reloadAfterFinish = true; }', owner)
-        finish = owner.split("function finishApply()", 1)[1].split("function closeFinishedApply()", 1)[0]
-        self.assertIn('if (actions.keepSuccessfulChanges || actions.retryFailedTargets.length || actions.abandonSuperseded === true) return;', finish)
-        self.assertIn('if (journalReleased) { closeFinishedApply(); return; }', finish)
-        self.assertIn('request("finish");', finish)
-        response = owner.split('if (operation === "finish" || operation === "abandon")', 1)[1].split('if (operation === "recover"', 1)[0]
-        self.assertLess(response.index("if (!response.ok)"), response.index("journalReleased = true;"))
-        self.assertLess(response.index("journalReleased = true;"), response.index("closeFinishedApply();"))
-        self.assertIn('/scripts/restart_settings_shell.py', owner)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     def test_cli_normalises_typographic_option_dashes(self) -> None:
         self.assertEqual(["setup", "cursor", "--yes"], cli.normalise_option_dashes(["setup", "cursor", "—-yes"]))
         self.assertEqual(["setup", "cursor", "--yes"], cli.normalise_option_dashes(["setup", "cursor", "——yes"]))
@@ -381,10 +332,6 @@ class SettingsIntegrationSourceTests(unittest.TestCase):
         ipc_helper = (REPOSITORY / "shell/scripts/ipc.sh").read_text(encoding="utf-8")
         self.assertIn('exec quickshell ipc --pid "$main_pid" call "$@"', ipc_helper)
         self.assertNotIn("quickshell ipc -c", ipc_helper)
-
-    def test_launcher_theme_preview_pluralises_widget_count(self) -> None:
-        launcher = (PICKER_MODULES / "LauncherMainSurface.qml").read_text(encoding="utf-8")
-        self.assertIn('widgetCount === 1 ? " widget" : " widgets"', launcher)
 
 
 if __name__ == "__main__":

@@ -26,8 +26,8 @@ class NativeServiceOwnerTests(unittest.TestCase):
         cls.app = QCoreApplication.instance() or QCoreApplication([])
         cls.temporary = tempfile.TemporaryDirectory(prefix="blox-owner-bus-")
         cls.directory = Path(cls.temporary.name)
-        cls.imports = cls.directory / "qml"
-        result = subprocess.run([sys.executable, str(ROOT / "packaging/build_native_services.py"),
+        cls.imports = ROOT / "shell/native/qml"
+        result = subprocess.run([sys.executable, "-B", str(ROOT / "packaging/build_native_services.py"),
                                  "--output-import-path", str(cls.imports)],
                                 capture_output=True, text=True, timeout=60)
         if result.returncode:

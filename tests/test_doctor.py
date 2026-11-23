@@ -57,6 +57,10 @@ class DoctorReportTests(unittest.TestCase):
         self.assertFalse(payload["healthy"])
         ids = {check["id"] for check in payload["checks"]}
         self.assertIn("install-manifest", ids)
+        self.assertIn("native-services-plugin", ids)
+        self.assertIn("native-bloxd", ids)
+        self.assertNotIn("host-python", ids)
+        self.assertNotIn("trust-records", ids)
         for check in payload["checks"]:
             self.assertIn("severity", check)
             self.assertIn("ok", check)

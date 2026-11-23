@@ -11,12 +11,12 @@ from pathlib import Path
 
 
 CLIENT = Path(__file__).parents[1] / "bin/dmenu"
-SERVER = Path(__file__).parents[1] / "shell/scripts/launcher/dmenu_server.py"
+SERVER = Path(__file__).parents[1] / "shell/native/qml/Blox/Services/bloxd"
 
 
 class DmenuClientTests(unittest.TestCase):
     def setUp(self):
-        self.temp = tempfile.TemporaryDirectory()
+        self.temp = tempfile.TemporaryDirectory(dir="/tmp", prefix="blox-dmenu-")
         self.runtime = Path(self.temp.name)
         self.socket_path = self.runtime / "blox-launcher/dmenu.sock"
         self.socket_path.parent.mkdir()
@@ -179,7 +179,7 @@ class DmenuClientTests(unittest.TestCase):
 
     def test_server_drops_an_unterminated_oversized_request(self):
         process = subprocess.Popen(
-            [sys.executable, SERVER],
+            [str(SERVER), "dmenu", "--no-parent-guard"],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             env={**os.environ, "XDG_RUNTIME_DIR": str(self.runtime)},

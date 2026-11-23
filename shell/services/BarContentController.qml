@@ -259,7 +259,8 @@ Scope {
     SystemClock {
         id: clock
 
-        precision: SystemClock.Seconds
+        enabled: root.barVisible || root.openPanel === "calendar" || root.openPanel === "updates"
+        precision: SystemClock.Minutes
     }
 
 }

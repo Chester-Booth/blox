@@ -9,6 +9,7 @@ Item {
     required property BarSurfaceController surfaceController
     required property BarContentController contentController
     required property NotificationController notificationController
+    readonly property bool wantOpen: root.geometry.active && ["updates", "privacy", "caffeine"].indexOf(root.surfaceController.openPanel) >= 0
 
     function runAction(command, keepOpen) {
         if (command === "__refresh_updates") {
@@ -25,39 +26,45 @@ Item {
         contentController.run(command);
         if (!keepOpen)
             surfaceController.closePanel();
-
     }
 
-    HoverPopupWindow {
-        anchorWindow: root.geometry.panelWindow
-        anchorX: root.geometry.popupX(basicPopout.width, root.geometry.openPanelX)
-        anchorY: root.geometry.popupY(basicPopout.height, root.geometry.openPanelY)
-        contentWidth: 320
-        contentHeight: basicPopout.height
-        open: root.geometry.active && ["updates", "privacy", "caffeine"].indexOf(root.surfaceController.openPanel) >= 0
-        persistentKeyboardFocus: open && root.surfaceController.keyboardPanel === root.surfaceController.openPanel
-        onDismissRequested: root.surfaceController.closePanel()
-        onHoverEntered: root.surfaceController.popoutEntered()
-        onHoverExited: root.surfaceController.popoutExited()
+    Loader {
+        id: basicLoader
 
-        BasicPopout {
-            id: basicPopout
+        active: root.wantOpen || (item !== null && item.rendered)
+        asynchronous: false
 
-            width: 320
-            title: root.contentController.content.panelTitle()
-            subtitle: root.contentController.content.panelSubtitle()
-            body: root.contentController.content.panelBody()
-            statusError: root.contentController.statusError(root.surfaceController.openPanel)
-            actions: root.contentController.content.panelActions()
-            currentId: root.surfaceController.openPanel === "caffeine" ? (root.contentController.caffeine.json.mode || "off") : ""
-            headerActionIcon: root.contentController.content.panelHeaderActionIcon()
-            headerActionCommand: root.contentController.content.panelHeaderActionCommand()
-            headerStatus: root.contentController.content.panelHeaderStatus()
-            onAction: (command, keepOpen) => {
-                root.runAction(command, keepOpen);
+        sourceComponent: Component {
+            HoverPopupWindow {
+                anchorWindow: root.geometry.panelWindow
+                anchorX: root.geometry.popupX(basicPopout.width, root.geometry.openPanelX)
+                anchorY: root.geometry.popupY(basicPopout.height, root.geometry.openPanelY)
+                contentWidth: 320
+                contentHeight: basicPopout.height
+                open: root.wantOpen
+                persistentKeyboardFocus: open && root.surfaceController.keyboardPanel === root.surfaceController.openPanel
+                onDismissRequested: root.surfaceController.closePanel()
+                onHoverEntered: root.surfaceController.popoutEntered()
+                onHoverExited: root.surfaceController.popoutExited()
+
+                BasicPopout {
+                    id: basicPopout
+
+                    width: 320
+                    title: root.contentController.content.panelTitle()
+                    subtitle: root.contentController.content.panelSubtitle()
+                    body: root.contentController.content.panelBody()
+                    statusError: root.contentController.statusError(root.surfaceController.openPanel)
+                    actions: root.contentController.content.panelActions()
+                    currentId: root.surfaceController.openPanel === "caffeine" ? (root.contentController.caffeine.json.mode || "off") : ""
+                    headerActionIcon: root.contentController.content.panelHeaderActionIcon()
+                    headerActionCommand: root.contentController.content.panelHeaderActionCommand()
+                    headerStatus: root.contentController.content.panelHeaderStatus()
+                    onAction: (command, keepOpen) => {
+                        root.runAction(command, keepOpen);
+                    }
+                }
             }
         }
-
     }
-
 }

@@ -45,6 +45,12 @@ Scope {
                 frontIsFirst = image === firstImage;
                 firstImage.opacity = frontIsFirst ? 1 : 0;
                 secondImage.opacity = frontIsFirst ? 0 : 1;
+                const inactive = frontIsFirst ? secondImage : firstImage;
+                Qt.callLater(() => {
+                    const currentInactive = wallpaperWindow.frontIsFirst ? secondImage : firstImage;
+                    if (currentInactive === inactive && inactive.opacity === 0 && String(inactive.source) !== "")
+                        inactive.source = "";
+                });
             }
 
             function loadWallpaper() {
@@ -88,7 +94,7 @@ Scope {
 
                 anchors.fill: parent
                 asynchronous: true
-                cache: true
+                cache: false
                 fillMode: root.fillMode(Theme.wallpaperFit)
                 sourceSize: fillMode === Image.Tile ? undefined : Qt.size(
                     Math.max(1, Math.ceil(width * wallpaperWindow.outputScale)),
@@ -105,7 +111,7 @@ Scope {
 
                 anchors.fill: parent
                 asynchronous: true
-                cache: true
+                cache: false
                 fillMode: root.fillMode(Theme.wallpaperFit)
                 sourceSize: fillMode === Image.Tile ? undefined : Qt.size(
                     Math.max(1, Math.ceil(width * wallpaperWindow.outputScale)),

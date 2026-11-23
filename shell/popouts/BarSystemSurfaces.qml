@@ -10,6 +10,10 @@ Item {
     required property BarContentController contentController
     required property UiState uiState
 
+    readonly property bool performanceWantOpen: root.geometry.active && root.surfaceController.openPanel === "system"
+    readonly property bool systemWantOpen: root.geometry.active && ["audio", "network", "bluetooth", "brightness"].indexOf(root.surfaceController.openPanel) >= 0
+    readonly property bool mediaWantOpen: root.geometry.active && root.surfaceController.openPanel === "audio"
+
     function runSystemAction(command, keepOpen) {
         contentController.run(command);
         contentController.audio.refresh();
@@ -18,146 +22,182 @@ Item {
         contentController.network.refresh();
         if (!keepOpen)
             surfaceController.closePanel();
-
     }
 
-    HoverPopupWindow {
-        anchorWindow: root.geometry.panelWindow
-        anchorX: Theme.barPosition === "top" || Theme.barPosition === "bottom" ? root.geometry.adjacentPopupX(mediaPlayer.implicitWidth, systemWindow.anchorX, systemPopout.width) : root.geometry.popupX(mediaPlayer.implicitWidth, root.geometry.openPanelX)
-        anchorY: Theme.barPosition === "left" || Theme.barPosition === "right" ? Math.max(8, systemWindow.anchorY - mediaPlayer.implicitHeight - 8) : root.geometry.popupY(mediaPlayer.implicitHeight, root.geometry.openPanelY)
-        contentWidth: 330
-        contentHeight: mediaPlayer.implicitHeight
-        open: root.geometry.active && root.surfaceController.openPanel === "audio" && mediaPlayer.hasPlayers
-        onHoverEntered: root.surfaceController.popoutEntered()
-        onHoverExited: root.surfaceController.popoutExited()
+    Loader {
+        id: mediaLoader
 
-        MediaPlayer {
-            id: mediaPlayer
+        active: root.mediaWantOpen || (item !== null && item.rendered)
+        asynchronous: false
 
-            width: 330
-            activePlayerName: root.uiState.activeMprisPlayer
-            onSelectPlayer: (playerName) => {
-                root.uiState.activeMprisPlayer = playerName;
+        sourceComponent: Component {
+            HoverPopupWindow {
+                readonly property real refAnchorX: systemLoader.item ? systemLoader.item.anchorX : 0
+                readonly property real refAnchorY: systemLoader.item ? systemLoader.item.anchorY : 0
+                readonly property real refWidth: systemLoader.item ? systemLoader.item.contentWidth : 0
+
+                anchorWindow: root.geometry.panelWindow
+                anchorX: Theme.barPosition === "top" || Theme.barPosition === "bottom"
+                    ? root.geometry.adjacentPopupX(mediaPlayer.implicitWidth, refAnchorX, refWidth)
+                    : root.geometry.popupX(mediaPlayer.implicitWidth, root.geometry.openPanelX)
+                anchorY: Theme.barPosition === "left" || Theme.barPosition === "right"
+                    ? Math.max(8, refAnchorY - mediaPlayer.implicitHeight - 8)
+                    : root.geometry.popupY(mediaPlayer.implicitHeight, root.geometry.openPanelY)
+                contentWidth: 330
+                contentHeight: mediaPlayer.implicitHeight
+                open: root.mediaWantOpen && mediaPlayer.hasPlayers
+                onHoverEntered: root.surfaceController.popoutEntered()
+                onHoverExited: root.surfaceController.popoutExited()
+
+                MediaPlayer {
+                    id: mediaPlayer
+
+                    width: 330
+                    activePlayerName: root.uiState.activeMprisPlayer
+                    onSelectPlayer: (playerName) => {
+                        root.uiState.activeMprisPlayer = playerName;
+                    }
+                }
             }
         }
-
     }
 
-    GpuModeConfirmationWindow {
-        provider: root.contentController.gpu
-        targetScreen: root.geometry.panelWindow ? root.geometry.panelWindow.screen : null
+    Loader {
+        id: gpuConfirmLoader
+
+        active: root.contentController.gpu && root.contentController.gpu.confirmationRequired === true
+        asynchronous: false
+
+        sourceComponent: Component {
+            GpuModeConfirmationWindow {
+                provider: root.contentController.gpu
+                targetScreen: root.geometry.panelWindow ? root.geometry.panelWindow.screen : null
+            }
+        }
     }
 
-    HoverPopupWindow {
-        anchorWindow: root.geometry.panelWindow
-        anchorX: root.geometry.popupX(performancePopout.width, root.geometry.openPanelX)
-        anchorY: root.geometry.popupY(performancePopout.height, root.geometry.openPanelY)
-        contentWidth: performancePopout.width
-        contentHeight: performancePopout.height
-        open: root.geometry.active && root.surfaceController.openPanel === "system"
-        persistentKeyboardFocus: open && root.surfaceController.keyboardPanel === "system"
-        onDismissRequested: root.surfaceController.closePanel()
-        onHoverEntered: root.surfaceController.popoutEntered()
-        onHoverExited: root.surfaceController.popoutExited()
-        onVisibleChanged: {
-            if (root.geometry.active)
-                root.contentController.setPerformancePolling(visible);
+    Loader {
+        id: performanceLoader
 
+        active: root.performanceWantOpen || (item !== null && item.rendered)
+        asynchronous: false
+        onActiveChanged: {
+            if (!active && root.geometry.active)
+                root.contentController.setPerformancePolling(false);
         }
 
-        PerformancePopout {
-            id: performancePopout
+        sourceComponent: Component {
+            HoverPopupWindow {
+                anchorWindow: root.geometry.panelWindow
+                anchorX: root.geometry.popupX(performancePopout.width, root.geometry.openPanelX)
+                anchorY: root.geometry.popupY(performancePopout.height, root.geometry.openPanelY)
+                contentWidth: performancePopout.width
+                contentHeight: performancePopout.height
+                open: root.performanceWantOpen
+                persistentKeyboardFocus: open && root.surfaceController.keyboardPanel === "system"
+                onDismissRequested: root.surfaceController.closePanel()
+                onHoverEntered: root.surfaceController.popoutEntered()
+                onHoverExited: root.surfaceController.popoutExited()
+                onVisibleChanged: {
+                    if (root.geometry.active)
+                        root.contentController.setPerformancePolling(visible);
+                }
 
-            maxWidth: Math.max(1, root.geometry.screenWidth - 16)
-            maxHeight: Math.max(1, root.geometry.screenHeight - 16)
-            status: root.contentController.systemInfo.json || ({
-            })
-            batteryStatus: root.contentController.battery.json || ({
-            })
-            powerProfileStatus: root.contentController.powerProfile.json || ({
-            })
-            powerProfileProvider: root.contentController.powerProfile
-            vendorPerformanceStatus: root.contentController.vendorPerformance.json || ({
-            })
-            vendorPerformanceProvider: root.contentController.vendorPerformance
-            gpuStatus: root.contentController.gpu.json || ({
-            })
-            gpuProvider: root.contentController.gpu
-            monitorStatus: root.contentController.monitors.json || ({})
-            monitorProvider: root.contentController.monitors
-            scriptRoot: root.surfaceController.scriptRoot
-            actionBusy: root.contentController.actions.performanceBusy
-            actionError: root.contentController.actions.performanceError
-            statusError: root.contentController.statusError("system")
-            onAction: (command) => {
-                root.contentController.runPerformance(command);
+                PerformancePopout {
+                    id: performancePopout
+
+                    maxWidth: Math.max(1, root.geometry.screenWidth - 16)
+                    maxHeight: Math.max(1, root.geometry.screenHeight - 16)
+                    status: root.contentController.systemInfo.json || ({})
+                    batteryStatus: root.contentController.battery.json || ({})
+                    powerProfileStatus: root.contentController.powerProfile.json || ({})
+                    powerProfileProvider: root.contentController.powerProfile
+                    vendorPerformanceStatus: root.contentController.vendorPerformance.json || ({})
+                    vendorPerformanceProvider: root.contentController.vendorPerformance
+                    gpuStatus: root.contentController.gpu.json || ({})
+                    gpuProvider: root.contentController.gpu
+                    monitorStatus: root.contentController.monitors.json || ({})
+                    monitorProvider: root.contentController.monitors
+                    scriptRoot: root.surfaceController.scriptRoot
+                    actionBusy: root.contentController.actions.performanceBusy
+                    actionError: root.contentController.actions.performanceError
+                    statusError: root.contentController.statusError("system")
+                    onAction: (command) => {
+                        root.contentController.runPerformance(command);
+                    }
+                }
             }
         }
-
     }
 
-    HoverPopupWindow {
-        id: systemWindow
+    Loader {
+        id: systemLoader
 
-        anchorWindow: root.geometry.panelWindow
-        anchorX: root.geometry.popupX(systemPopout.width, root.geometry.openPanelX)
-        anchorY: root.geometry.popupY(systemPopout.height, root.geometry.openPanelY)
-        contentWidth: systemPopout.width
-        contentHeight: systemPopout.height
-        open: root.geometry.active && ["audio", "network", "bluetooth", "brightness"].indexOf(root.surfaceController.openPanel) >= 0
-        persistentKeyboardFocus: open && root.surfaceController.keyboardPanel === root.surfaceController.openPanel
-        onDismissRequested: root.surfaceController.closePanel()
-        onHoverEntered: root.surfaceController.popoutEntered()
-        onHoverExited: root.surfaceController.popoutExited()
-        onVisibleChanged: {
-            if (!visible && root.geometry.active && ["audio", "network", "bluetooth", "brightness"].indexOf(root.surfaceController.openPanel) >= 0)
-                root.surfaceController.closePanel();
+        active: root.systemWantOpen || (item !== null && item.rendered)
+        asynchronous: false
 
+        sourceComponent: Component {
+            HoverPopupWindow {
+                id: systemWindow
+
+                anchorWindow: root.geometry.panelWindow
+                anchorX: root.geometry.popupX(systemPopout.width, root.geometry.openPanelX)
+                anchorY: root.geometry.popupY(systemPopout.height, root.geometry.openPanelY)
+                contentWidth: systemPopout.width
+                contentHeight: systemPopout.height
+                open: root.systemWantOpen
+                persistentKeyboardFocus: open && root.surfaceController.keyboardPanel === root.surfaceController.openPanel
+                onDismissRequested: root.surfaceController.closePanel()
+                onHoverEntered: root.surfaceController.popoutEntered()
+                onHoverExited: root.surfaceController.popoutExited()
+                onVisibleChanged: {
+                    if (!visible && root.systemWantOpen)
+                        root.surfaceController.closePanel();
+                }
+
+                SystemPopout {
+                    id: systemPopout
+
+                    keyboardFocusWindow: systemWindow
+                    title: root.contentController.content.systemPanelTitle()
+                    body: root.contentController.content.systemPanelBody()
+                    statusError: root.contentController.statusError(root.surfaceController.openPanel)
+                    actions: root.contentController.content.systemPanelActions()
+                    mode: root.surfaceController.openPanel
+                    audioVolume: root.contentController.audio.json.volume || 0
+                    audioIcon: root.contentController.audio.json.icon || "󰕾"
+                    audioMuted: !!root.contentController.audio.json.muted
+                    micMuted: !!root.contentController.audio.json.micMuted
+                    audioCanChange: !!(root.contentController.audio.json.capability && root.contentController.audio.json.capability.canChange === true)
+                    micCanChange: root.contentController.audio.json.micCanChange === undefined ? !!(root.contentController.audio.json.capability && root.contentController.audio.json.capability.canChange === true) : root.contentController.audio.json.micCanChange === true
+                    audioProvider: root.contentController.audio
+                    networkEnabled: root.contentController.network.json.wifiEnabled === true
+                    networkCanChange: !!(root.contentController.network.json.capability && root.contentController.network.json.capability.canChange === true)
+                    bluetoothEnabled: root.contentController.bluetooth.json.enabled === true
+                    bluetoothCanChange: !!(root.contentController.bluetooth.json.capability && root.contentController.bluetooth.json.capability.canChange === true)
+                    networkProvider: root.contentController.network
+                    bluetoothProvider: root.contentController.bluetooth
+                    wifiIcon: root.contentController.network.json.icon || "󰤩"
+                    wifiText: root.contentController.network.json.ssid || root.contentController.network.json.summary || root.contentController.network.json.class || "Wi-Fi"
+                    bluetoothIcon: root.contentController.bluetooth.json.icon || "󰂯"
+                    brightnessIcon: root.contentController.brightness.json.icon || "󰃠"
+                    brightnessPercent: root.contentController.brightness.json.percent || 0
+                    brightnessCanChange: !!(root.contentController.brightness.json.capability && root.contentController.brightness.json.capability.canChange === true)
+                    brightnessProvider: root.contentController.brightness
+                    blueLightMode: root.contentController.brightness.json.blueLightMode || "auto"
+                    blueLightActive: !!root.contentController.brightness.json.blueLightActive
+                    scriptRoot: root.surfaceController.scriptRoot
+                    onAction: (command, keepOpen) => {
+                        root.runSystemAction(command, keepOpen);
+                    }
+                    onLevelPreview: (kind, value, muted) => {
+                        root.surfaceController.osdLevelPreview(kind, value, muted);
+                    }
+                    onSectionSelected: (panel) => {
+                        root.surfaceController.switchSystemPanel(panel);
+                    }
+                }
+            }
         }
-
-        SystemPopout {
-            id: systemPopout
-
-            keyboardFocusWindow: systemWindow
-            title: root.contentController.content.systemPanelTitle()
-            body: root.contentController.content.systemPanelBody()
-            statusError: root.contentController.statusError(root.surfaceController.openPanel)
-            actions: root.contentController.content.systemPanelActions()
-            mode: root.surfaceController.openPanel
-            audioVolume: root.contentController.audio.json.volume || 0
-            audioIcon: root.contentController.audio.json.icon || "󰕾"
-            audioMuted: !!root.contentController.audio.json.muted
-            micMuted: !!root.contentController.audio.json.micMuted
-            audioCanChange: !!(root.contentController.audio.json.capability && root.contentController.audio.json.capability.canChange === true)
-            micCanChange: root.contentController.audio.json.micCanChange === undefined ? !!(root.contentController.audio.json.capability && root.contentController.audio.json.capability.canChange === true) : root.contentController.audio.json.micCanChange === true
-            audioProvider: root.contentController.audio
-            networkEnabled: root.contentController.network.json.wifiEnabled === true
-            networkCanChange: !!(root.contentController.network.json.capability && root.contentController.network.json.capability.canChange === true)
-            bluetoothEnabled: root.contentController.bluetooth.json.enabled === true
-            bluetoothCanChange: !!(root.contentController.bluetooth.json.capability && root.contentController.bluetooth.json.capability.canChange === true)
-            networkProvider: root.contentController.network
-            bluetoothProvider: root.contentController.bluetooth
-            wifiIcon: root.contentController.network.json.icon || "󰤩"
-            wifiText: root.contentController.network.json.ssid || root.contentController.network.json.summary || root.contentController.network.json.class || "Wi-Fi"
-            bluetoothIcon: root.contentController.bluetooth.json.icon || "󰂯"
-            brightnessIcon: root.contentController.brightness.json.icon || "󰃠"
-            brightnessPercent: root.contentController.brightness.json.percent || 0
-            brightnessCanChange: !!(root.contentController.brightness.json.capability && root.contentController.brightness.json.capability.canChange === true)
-            brightnessProvider: root.contentController.brightness
-            blueLightMode: root.contentController.brightness.json.blueLightMode || "auto"
-            blueLightActive: !!root.contentController.brightness.json.blueLightActive
-            scriptRoot: root.surfaceController.scriptRoot
-            onAction: (command, keepOpen) => {
-                root.runSystemAction(command, keepOpen);
-            }
-            onLevelPreview: (kind, value, muted) => {
-                root.surfaceController.osdLevelPreview(kind, value, muted);
-            }
-            onSectionSelected: (panel) => {
-                root.surfaceController.switchSystemPanel(panel);
-            }
-        }
-
     }
-
 }

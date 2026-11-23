@@ -68,9 +68,9 @@ KeyboardBacklightWatcher::KeyboardBacklightWatcher(const Options &options, QObje
     : QObject(parent), m_options(options)
 {
     // Firmware may update sysfs without either UPower brightness signal.
-    m_poll.setInterval(200);
+    m_poll.setInterval(qMax(1, m_options.pollIntervalMs));
     m_poll.setTimerType(Qt::PreciseTimer);
-    m_retry.setInterval(2000);
+    m_retry.setInterval(qMax(1, m_options.retryIntervalMs));
     m_retry.setSingleShot(true);
     connect(&m_poll, &QTimer::timeout, this, &KeyboardBacklightWatcher::poll);
     connect(&m_retry, &QTimer::timeout, this, &KeyboardBacklightWatcher::start);

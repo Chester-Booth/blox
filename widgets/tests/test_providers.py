@@ -1,4 +1,5 @@
 """Focused native observations using owned sources, never live network services."""
+from concurrent.futures import ThreadPoolExecutor
 import io
 import json
 import os
@@ -562,15 +563,17 @@ class AdapterLifecycleTest(unittest.TestCase):
         self.root = Path(self.temp.name)
         self.repo = Path(__file__).resolve().parents[2]
 
-    def run_qml(self, source, timeout=7):
-        fixture = self.root / 'fixture.qml'
+    def run_qml(self, source, timeout=7, workdir=None):
+        run_root = workdir or self.root
+        run_root.mkdir(parents=True, exist_ok=True)
+        fixture = run_root / 'fixture.qml'
         source = source.replace(json.dumps(str(self.repo / 'widgets/lib')), json.dumps(self.supervision.pythonpath(str(self.repo / 'widgets/lib'))))
         fixture.write_text(source)
         environment = dict(os.environ, QT_QPA_PLATFORM='offscreen', QT_QUICK_BACKEND='software',
             QT_QPA_PLATFORMTHEME='generic', QT_STYLE_OVERRIDE='Fusion',
             DBUS_SESSION_BUS_ADDRESS='unix:path=/nonexistent', DBUS_SYSTEM_BUS_ADDRESS='unix:path=/nonexistent',
-            HOME=str(self.root), XDG_CONFIG_HOME=str(self.root), XDG_DATA_HOME=str(self.root),
-            XDG_CACHE_HOME=str(self.root), XDG_RUNTIME_DIR=str(self.root),
+            HOME=str(run_root), XDG_CONFIG_HOME=str(run_root), XDG_DATA_HOME=str(run_root),
+            XDG_CACHE_HOME=str(run_root), XDG_RUNTIME_DIR=str(run_root),
             QML_IMPORT_PATH=os.pathsep.join(filter(None,[os.environ.get('QML_IMPORT_PATH'),str(self.repo / 'widgets/qml')])), BLOX_DATA_DIR=str(self.repo / 'themes'))
         for name in ('DISPLAY', 'WAYLAND_DISPLAY', 'HYPRLAND_INSTANCE_SIGNATURE'):
             environment.pop(name, None)
@@ -924,37 +927,39 @@ Scope {
 
     def _assert_current_command_subscription(self, mutations, restore_immediately=False, reenter=False):
         from blox_widgets.model import default_widget
-        for state, mutation in mutations.items():
-            for moment in ('callback', 'before'):
-                with self.subTest(state=state, moment=moment):
-                    marker = self.root / f'eligibility-{state}-{moment}-actions'
-                    count = self.root / f'eligibility-{state}-{moment}-content'
 
-                    def command(word):
-                        return [sys.executable, '-c',
-                            f'from pathlib import Path; import time; Path({str(marker)!r}).open("a").write({word!r} + "\\n"); time.sleep(.05)']
+        def run_case(case):
+            state, mutation, moment = case
+            case_root = self.root / f'eligibility-{state}-{moment}'
+            case_root.mkdir(parents=True, exist_ok=True)
+            marker = case_root / 'actions'
+            count = case_root / 'content'
 
-                    producer = (f'from pathlib import Path; p=Path({str(count)!r}); '
-                                'n=int(p.read_text())+1 if p.exists() else 1; '
-                                'p.write_text(str(n)); print("content-"+str(n))')
-                    widget = default_widget('command', 'eligibility-fixture', {
-                        'command': [sys.executable, '-c', producer], 'intervalSeconds': 60,
-                        'actions': {'left': dict(kind='run', command=command('ran-while-ineligible'),
-                            workingDirectory='', environment={}, timeoutSeconds=5), 'right': None}})
-                    if state in ('ids', 'workspace-id'):
-                        widget['workspaces'] = dict(mode='include', ids=[1], ranges=[])
-                    if state == 'range':
-                        widget['workspaces'] = dict(mode='include', ids=[], ranges=[[1, 1]])
-                    if state == 'workspace-empty':
-                        widget['visibility'] = 'empty-workspace'
-                    if state in ('named-workspace', 'special-workspace'):
-                        widget['workspaces'] = dict(mode='include', ids=[
-                            'named' if state == 'named-workspace' else 'special:scratch'], ranges=[])
-                    workspace = dict(id=1, name='1', special=False, empty=state != 'visibility')
-                    if state in ('named-workspace', 'special-workspace'):
-                        workspace.update(id=-1, name='named' if state == 'named-workspace' else 'scratch',
-                                         special=state == 'special-workspace')
-                    source = '''import QtQuick
+            def command(word):
+                return [sys.executable, '-c',
+                    f'from pathlib import Path; import time; Path({str(marker)!r}).open("a").write({word!r} + "\\n"); time.sleep(.05)']
+
+            producer = (f'from pathlib import Path; p=Path({str(count)!r}); '
+                        'n=int(p.read_text())+1 if p.exists() else 1; '
+                        'p.write_text(str(n)); print("content-"+str(n))')
+            widget = default_widget('command', 'eligibility-fixture', {
+                'command': [sys.executable, '-c', producer], 'intervalSeconds': 60,
+                'actions': {'left': dict(kind='run', command=command('ran-while-ineligible'),
+                    workingDirectory='', environment={}, timeoutSeconds=5), 'right': None}})
+            if state in ('ids', 'workspace-id'):
+                widget['workspaces'] = dict(mode='include', ids=[1], ranges=[])
+            if state == 'range':
+                widget['workspaces'] = dict(mode='include', ids=[], ranges=[[1, 1]])
+            if state == 'workspace-empty':
+                widget['visibility'] = 'empty-workspace'
+            if state in ('named-workspace', 'special-workspace'):
+                widget['workspaces'] = dict(mode='include', ids=[
+                    'named' if state == 'named-workspace' else 'special:scratch'], ranges=[])
+            workspace = dict(id=1, name='1', special=False, empty=state != 'visibility')
+            if state in ('named-workspace', 'special-workspace'):
+                workspace.update(id=-1, name='named' if state == 'named-workspace' else 'scratch',
+                                 special=state == 'special-workspace')
+            source = '''import QtQuick
 import Quickshell
 import Blox.Widgets 1.0 as Widgets
 import Blox.Widgets.Providers 1.0
@@ -1044,16 +1049,24 @@ Scope {
     }
     Timer { interval: 4000; running: true; onTriggered: Qt.exit(16) }
 }'''
-                    self.run_qml(source.replace('BROKER', json.dumps([sys.executable, '-m', 'blox_widgets.broker']))
-                        .replace('LIBRARY', json.dumps(str(self.repo / 'widgets/lib')))
-                        .replace('WIDGET', json.dumps(widget))
-                        .replace('WORKSPACE', json.dumps(workspace))
-                        .replace('MUTATION', mutation).replace('CALLBACK', json.dumps(moment == 'callback'))
-                        .replace('RESTORE_IMMEDIATELY', json.dumps(restore_immediately))
-                        .replace('REENTER', json.dumps(reenter))
-                        .replace('CURRENT_COMMAND', json.dumps(command('current-action'))))
-                    self.assertEqual(marker.read_text().splitlines(), ['current-action'])
-                    self.assertEqual(count.read_text(), '3')
+            self.run_qml(source.replace('BROKER', json.dumps([sys.executable, '-m', 'blox_widgets.broker']))
+                .replace('LIBRARY', json.dumps(str(self.repo / 'widgets/lib')))
+                .replace('WIDGET', json.dumps(widget))
+                .replace('WORKSPACE', json.dumps(workspace))
+                .replace('MUTATION', mutation).replace('CALLBACK', json.dumps(moment == 'callback'))
+                .replace('RESTORE_IMMEDIATELY', json.dumps(restore_immediately))
+                .replace('REENTER', json.dumps(reenter))
+                .replace('CURRENT_COMMAND', json.dumps(command('current-action'))),
+                workdir=case_root)
+            return state, moment, marker.read_text().splitlines(), count.read_text()
+
+        cases = [(state, mutation, moment) for state, mutation in mutations.items() for moment in ('callback', 'before')]
+        workers = min(8, os.cpu_count() or 4, len(cases))
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            for state, moment, actions, content_count in pool.map(run_case, cases):
+                with self.subTest(state=state, moment=moment):
+                    self.assertEqual(actions, ['current-action'])
+                    self.assertEqual(content_count, '3')
 
     def test_command_run_transport_busy_failure_and_single_refresh(self):
         from blox_widgets.model import default_widget

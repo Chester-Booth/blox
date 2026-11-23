@@ -66,7 +66,7 @@ PopupWindow {
             activateKeyboardFocusWhenReady();
 
     }
-    onOpenChanged: {
+    function applyOpenState() {
         if (open) {
             hideAnimation.stop();
             if (!rendered) {
@@ -76,11 +76,17 @@ PopupWindow {
             }
             rendered = true;
             showAnimation.restart();
-        } else {
+        } else if (rendered) {
             showAnimation.stop();
             hideAnimation.restart();
         }
     }
+
+    Component.onCompleted: {
+        if (open && !rendered)
+            applyOpenState();
+    }
+    onOpenChanged: applyOpenState()
 
     Item {
         id: contentHost

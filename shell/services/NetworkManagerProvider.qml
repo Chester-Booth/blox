@@ -31,6 +31,11 @@ Scope {
     readonly property string lastError: root.actionError
     readonly property var json: state.json
 
+    onProviderReadyChanged: {
+        if (root.providerReady)
+            root.refreshWifiStatus();
+    }
+
     onWifiDeviceChanged: {
         root.wifiConnectionRevision += 1;
         root.measuredWifiSignal = 0;

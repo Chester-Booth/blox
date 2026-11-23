@@ -30,18 +30,6 @@ Scope {
     property alias privacy: privacy
     property alias caffeine: bloxDaemon.caffeine
 
-    function pluggedIn() {
-        const value = battery.json || ({});
-        return value.class === "charging" || value.class === "plugged";
-    }
-
-    function railInterval(batteryVisible, acVisible, batteryHidden, acHidden) {
-        if (barVisible)
-            return pluggedIn() ? acVisible : batteryVisible;
-
-        return pluggedIn() ? acHidden : batteryHidden;
-    }
-
     function refreshControl() {
         audio.refresh();
         brightness.refresh();
@@ -70,11 +58,11 @@ Scope {
         const shouldRefresh = refreshVisible === undefined ? true : refreshVisible;
         const controlPanels = ["audio", "network", "bluetooth", "brightness", "notifications", "privacy"];
         const controlsVisible = controlPanels.indexOf(openPanel) >= 0;
-        // Native D-Bus / PipeWire providers do not fork subprocesses.
-        audio.interval = controlsVisible ? 2000 : railInterval(30000, 15000, 120000, 60000);
-        network.interval = controlsVisible ? 2000 : railInterval(30000, 15000, 120000, 60000);
-        bluetooth.interval = controlsVisible ? 2000 : 30000;
-        battery.interval = performanceVisible ? 1000 : railInterval(30000, 15000, 60000, 30000);
+        // Native D-Bus / PipeWire providers are signal-driven when idle (0 = signals only).
+        audio.interval = 0;
+        network.interval = controlsVisible ? 5000 : 0;
+        bluetooth.interval = 0;
+        battery.interval = performanceVisible ? 2000 : 0;
         powerProfile.interval = performanceVisible ? 2000 : 0;
 
         // Script-backed providers stay quiet when closed (0 = startup + event/action only).
@@ -137,8 +125,7 @@ Scope {
     PowerStatus {
         id: battery
 
-        interval: 30000
-        onJsonChanged: root.updatePolling(false)
+        interval: 0
     }
 
     PowerProfileStatus {
@@ -153,7 +140,7 @@ Scope {
         id: audio
 
         scriptRoot: root.scriptRoot
-        interval: 30000
+        interval: 0
     }
 
     BrightnessStatus {
@@ -166,13 +153,13 @@ Scope {
     NetworkStatus {
         id: network
 
-        interval: 30000
+        interval: 0
     }
 
     BluetoothStatus {
         id: bluetooth
 
-        interval: 30000
+        interval: 0
     }
 
     TouchpadStatus {

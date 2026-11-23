@@ -151,7 +151,7 @@ private slots:
     {
         directory = std::make_unique<QTemporaryDir>();
         QVERIFY(directory->isValid());
-        options = {directory->path() + "/leds", directory->path() + "/runtime", {}, address};
+        options = {directory->path() + "/leds", directory->path() + "/runtime", {}, address, 20, 80};
     }
     void cleanup() { releaseService(); directory.reset(); }
 
@@ -162,16 +162,16 @@ private slots:
         QSignalSpy levels(&watcher, &KeyboardBacklightWatcher::levelChanged);
         watcher.componentComplete();
         QCOMPARE(watcher.status(), "sysfs");
-        QTest::qWait(230);
+        QTest::qWait(45);
         QCOMPARE(levels.size(), 0);
         writeFile(root + "/brightness", "2\n");
         QTRY_COMPARE_WITH_TIMEOUT(levels.size(), 1, 500);
         QCOMPARE(levels.first(), QVariantList({2, 3}));
-        QTest::qWait(240);
+        QTest::qWait(45);
         QCOMPARE(levels.size(), 1);
         for (const auto invalid : {"garbage\n", "-1\n", "4\n", "2147483648\n"}) {
             writeFile(root + "/brightness", invalid);
-            QTest::qWait(220);
+            QTest::qWait(35);
             QCOMPARE(levels.size(), 1);
             QCOMPARE(watcher.status(), "sysfs");
         }
@@ -181,7 +181,7 @@ private slots:
         QTRY_COMPARE_WITH_TIMEOUT(watcher.status(), "unavailable", 500);
         QVERIFY(!watcher.error().isEmpty());
         writeFile(root + "/brightness", "3\n");
-        QTRY_COMPARE_WITH_TIMEOUT(watcher.status(), "sysfs", 2500);
+        QTRY_COMPARE_WITH_TIMEOUT(watcher.status(), "sysfs", 1000);
         QCOMPARE(levels.size(), 2); // Recovery establishes a fresh quiet baseline.
     }
 
@@ -194,7 +194,7 @@ private slots:
         QSignalSpy levels(&watcher, &KeyboardBacklightWatcher::levelChanged);
         watcher.componentComplete();
         writeFile(first + "/brightness", "2\n");
-        QTest::qWait(220);
+        QTest::qWait(45);
         QCOMPARE(levels.size(), 0);
         writeFile(selected + "/brightness", "4\n");
         QTRY_COMPARE_WITH_TIMEOUT(levels.size(), 1, 500);
@@ -220,7 +220,7 @@ private slots:
             QCOMPARE(watcher.status(), "invalid-device");
             QVERIFY(!watcher.error().isEmpty());
         }
-        QTest::qWait(100);
+        QTest::qWait(35);
         QCOMPARE(upower->calls, 0);
     }
 
@@ -251,7 +251,7 @@ private slots:
         upower->level(*server, 2, true);
         upower->level(*server, -1);
         upower->level(*server, 4, true);
-        QTest::qWait(100);
+        QTest::qWait(35);
         QCOMPARE(levels.size(), 1);
         upower->level(*server, 0, true);
         QTRY_COMPARE_WITH_TIMEOUT(levels.size(), 2, 500);
@@ -467,8 +467,8 @@ private slots:
         const auto before = file.readAll();
         KeyboardBacklightWatcher watcher(options);
         watcher.componentComplete();
-        for (int sample = 0; sample < 60; ++sample) {
-            QTest::qWait(20);
+        for (int sample = 0; sample < 12; ++sample) {
+            QTest::qWait(15);
             file.seek(0);
             QCOMPARE(file.readAll(), before);
         }

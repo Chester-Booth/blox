@@ -16,9 +16,11 @@ class KeyboardBacklightWatcher : public QObject, public QQmlParserStatus {
     Q_PROPERTY(QString status READ status NOTIFY stateChanged)
     Q_PROPERTY(QString error READ error NOTIFY stateChanged)
 public:
-    // Native tests supply private files and a private bus. QML uses the real paths.
+    // Native tests supply private files, a private bus, and short intervals. QML uses the real paths.
     struct Options {
         QString sysfsRoot, runtimeDirectory, device, busAddress;
+        int pollIntervalMs = 200;
+        int retryIntervalMs = 2000;
     };
     explicit KeyboardBacklightWatcher(QObject *parent = nullptr);
     KeyboardBacklightWatcher(const Options &options, QObject *parent = nullptr);

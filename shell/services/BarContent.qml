@@ -210,9 +210,9 @@ QtObject {
         const hour = now.getHours() % 12 || 12;
         if (horizontal) {
             const ampmState = now.getHours() < 12 ? "AM" : "PM";
-            return twoDigit(hour) + ":" + twoDigit(now.getMinutes()) + " " + ampmState;
+            return twoDigit(hour) + ":" + twoDigit(now.getMinutes()) + ":" + twoDigit(now.getSeconds()) + " " + ampmState;
         }
-        return twoDigit(hour) + "\n" + twoDigit(now.getMinutes());
+        return twoDigit(hour) + "\n" + twoDigit(now.getMinutes()) + "\n" + twoDigit(now.getSeconds());
     }
 
     function elapsedText(ms) {

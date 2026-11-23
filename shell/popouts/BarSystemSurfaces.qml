@@ -13,6 +13,22 @@ Item {
     readonly property bool performanceWantOpen: root.geometry.active && root.surfaceController.openPanel === "system"
     readonly property bool systemWantOpen: root.geometry.active && ["audio", "network", "bluetooth", "brightness"].indexOf(root.surfaceController.openPanel) >= 0
     readonly property bool mediaWantOpen: root.geometry.active && root.surfaceController.openPanel === "audio"
+    readonly property bool gpuConfirmWantOpen: root.contentController.gpu && root.contentController.gpu.confirmationRequired === true
+    property bool mediaLoaded: false
+    property bool performanceLoaded: false
+    property bool systemLoaded: false
+    property bool gpuConfirmLoaded: false
+
+    onMediaWantOpenChanged: if (mediaWantOpen) mediaLoaded = true
+    onPerformanceWantOpenChanged: if (performanceWantOpen) performanceLoaded = true
+    onSystemWantOpenChanged: if (systemWantOpen) systemLoaded = true
+    onGpuConfirmWantOpenChanged: if (gpuConfirmWantOpen) gpuConfirmLoaded = true
+    Component.onCompleted: {
+        if (mediaWantOpen) mediaLoaded = true;
+        if (performanceWantOpen) performanceLoaded = true;
+        if (systemWantOpen) systemLoaded = true;
+        if (gpuConfirmWantOpen) gpuConfirmLoaded = true;
+    }
 
     function runSystemAction(command, keepOpen) {
         contentController.run(command);
@@ -27,7 +43,7 @@ Item {
     Loader {
         id: mediaLoader
 
-        active: root.mediaWantOpen || (item !== null && item.rendered)
+        active: root.mediaLoaded
         asynchronous: false
 
         sourceComponent: Component {
@@ -65,7 +81,7 @@ Item {
     Loader {
         id: gpuConfirmLoader
 
-        active: root.contentController.gpu && root.contentController.gpu.confirmationRequired === true
+        active: root.gpuConfirmLoaded
         asynchronous: false
 
         sourceComponent: Component {
@@ -79,12 +95,8 @@ Item {
     Loader {
         id: performanceLoader
 
-        active: root.performanceWantOpen || (item !== null && item.rendered)
+        active: root.performanceLoaded
         asynchronous: false
-        onActiveChanged: {
-            if (!active && root.geometry.active)
-                root.contentController.setPerformancePolling(false);
-        }
 
         sourceComponent: Component {
             HoverPopupWindow {
@@ -133,7 +145,7 @@ Item {
     Loader {
         id: systemLoader
 
-        active: root.systemWantOpen || (item !== null && item.rendered)
+        active: root.systemLoaded
         asynchronous: false
 
         sourceComponent: Component {

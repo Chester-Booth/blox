@@ -260,7 +260,7 @@ Scope {
         id: clock
 
         enabled: root.barVisible || root.openPanel === "calendar" || root.openPanel === "updates"
-        precision: SystemClock.Minutes
+        precision: SystemClock.Seconds
     }
 
 }

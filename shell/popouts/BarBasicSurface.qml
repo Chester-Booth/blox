@@ -10,6 +10,10 @@ Item {
     required property BarContentController contentController
     required property NotificationController notificationController
     readonly property bool wantOpen: root.geometry.active && ["updates", "privacy", "caffeine"].indexOf(root.surfaceController.openPanel) >= 0
+    property bool loaded: false
+
+    onWantOpenChanged: if (wantOpen) loaded = true
+    Component.onCompleted: if (wantOpen) loaded = true
 
     function runAction(command, keepOpen) {
         if (command === "__refresh_updates") {
@@ -31,7 +35,7 @@ Item {
     Loader {
         id: basicLoader
 
-        active: root.wantOpen || (item !== null && item.rendered)
+        active: root.loaded
         asynchronous: false
 
         sourceComponent: Component {

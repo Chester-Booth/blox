@@ -13,6 +13,7 @@ Item {
     readonly property bool externalChildWindowOpen: root.contentController.calendarController.detailsOpen
         || root.contentController.calendarController.editorOpen
         || root.contentController.calendarController.confirmDeleteOpen
+    property bool loaded: false
 
     function dismissPopup() {
         if (root.contentController.calendarController.eventMenuOpen && calendarLoader.item)
@@ -30,15 +31,26 @@ Item {
     }
 
     onWantOpenChanged: {
-        if (wantOpen && root.geometry.panelWindow)
-            root.contentController.calendarController.open(root.contentController.now, root.geometry.panelWindow.screen);
+        if (wantOpen) {
+            loaded = true;
+            if (root.geometry.panelWindow)
+                root.contentController.calendarController.open(root.contentController.now, root.geometry.panelWindow.screen);
+        }
+    }
+    onExternalChildWindowOpenChanged: {
+        if (externalChildWindowOpen)
+            loaded = true;
+    }
+    Component.onCompleted: {
+        if (wantOpen || externalChildWindowOpen)
+            loaded = true;
     }
 
-    // Construct the calendar popup tree only while opened or animating closed.
+    // Construct the calendar popup lazily on first open and retain its Wayland/EGL surface.
     Loader {
         id: calendarLoader
 
-        active: root.wantOpen || root.externalChildWindowOpen || (item !== null && item.rendered)
+        active: root.loaded
         asynchronous: false
 
         sourceComponent: Component {

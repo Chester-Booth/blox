@@ -9,11 +9,15 @@ Item {
     required property BarSurfaceController surfaceController
     required property NotificationController notificationController
     readonly property bool wantOpen: root.geometry.active && root.surfaceController.openPanel === "notifications"
+    property bool loaded: false
+
+    onWantOpenChanged: if (wantOpen) loaded = true
+    Component.onCompleted: if (wantOpen) loaded = true
 
     Loader {
         id: notificationLoader
 
-        active: root.wantOpen || (item !== null && item.rendered)
+        active: root.loaded
         asynchronous: false
 
         sourceComponent: Component {

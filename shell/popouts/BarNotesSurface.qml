@@ -9,16 +9,16 @@ Item {
     required property BarSurfaceController surfaceController
     required property BarContentController contentController
     readonly property bool wantOpen: root.geometry.active && root.surfaceController.openPanel === "todo"
+    property bool loaded: false
+
+    onWantOpenChanged: if (wantOpen) loaded = true
+    Component.onCompleted: if (wantOpen) loaded = true
 
     Loader {
         id: notesLoader
 
-        active: root.wantOpen || (item !== null && item.rendered)
+        active: root.loaded
         asynchronous: false
-        onActiveChanged: {
-            if (!active && root.geometry.active)
-                root.surfaceController.setInputPopupLocked(false);
-        }
 
         sourceComponent: Component {
             HoverPopupWindow {

@@ -17,7 +17,7 @@ THEMES = Path(__file__).resolve().parents[1]
 REPOSITORY = THEMES.parent
 sys.path.insert(0, str(THEMES / "lib"))
 
-from blox_theme.core import DEFAULT_BAR_ITEMS, apply_theme_defaults, contrast_ratio, dependency_checks, derive_ansi, derive_shape, list_themes, load_theme, render_manifest, render_theme, resolve_wallpaper_path, resolved_bar_items, schema_errors, sparsify_theme, themes_dir, validate_theme
+from blox_theme.core import DEFAULT_BAR_ITEMS, apply_theme_defaults, contrast_ratio, dependency_checks, derive_ansi, derive_shape, list_themes, load_theme, render_manifest, render_theme, resolve_wallpaper_path, resolved_bar_items, schema_errors, sparsify_theme, themes_dir, validate_theme, widget_model
 
 
 def run_cli(*arguments: str, environment: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
@@ -175,24 +175,7 @@ class ThemeSchemaTests(unittest.TestCase):
 
     def test_widget_schema_rejects_invalid_identifiers_and_unknown_fields(self) -> None:
         _, source = load_theme("catppuccin-mocha")
-        widget = {
-            "id": "clock",
-            "name": "Clock",
-            "type": "clock",
-            "enabled": True,
-            "content_command": "tty-clock -c",
-            "left_click_command": "",
-            "right_click_command": "",
-            "interval_ms": 1000,
-            "visibility": "always",
-            "anchor": "top-left",
-            "offset_x": 20,
-            "offset_y": 20,
-            "width": 0,
-            "height": 0,
-            "shape": "auto",
-            "options": {},
-        }
+        widget = widget_model().default_widget("clock", "clock")
         mutations = {
             "invalid id": lambda value: value.update(id="Invalid Widget ID"),
             "unknown field": lambda value: value.update(unknown=True),
@@ -202,7 +185,7 @@ class ThemeSchemaTests(unittest.TestCase):
                 theme = copy.deepcopy(source)
                 candidate = copy.deepcopy(widget)
                 mutate(candidate)
-                theme["widgets"]["items"] = [candidate]
+                theme["widgets"]["widgets"] = [candidate]
                 self.assertTrue(schema_errors(theme))
 
     def test_dependency_checks_respect_target_enablement(self) -> None:
@@ -389,6 +372,7 @@ class RendererTests(unittest.TestCase):
                 self.assertIn(f"color-scheme: {expected_scheme};", css)
                 self.assertIn(f"--radius-m: {expected_radius};", css)
                 self.assertIn(f"--background-primary: {theme['colours']['background']};", css)
+                self.assertIn('BlinkMacSystemFont, "Segoe UI", sans-serif;', css)
 
     def test_code_target_renders_complete_extension(self) -> None:
         self.theme["targets"]["code"] = True
@@ -783,39 +767,19 @@ class RendererTests(unittest.TestCase):
 
 class CliContractTests(unittest.TestCase):
     def test_detached_widgets_export_import_round_trip_and_validation(self) -> None:
-        widgets = {
-            "profile": "compact",
-            "items": [{
-                "id": "clock",
-                "name": "Clock",
-                "type": "clock",
-                "enabled": True,
-                "content_command": "tty-clock -c",
-                "left_click_command": "",
-                "right_click_command": "",
-                "interval_ms": 1000,
-                "visibility": "always",
-                "anchor": "top-right",
-                "offset_x": 24,
-                "offset_y": 32,
-                "width": 320,
-                "height": 180,
-                "shape": "rounded",
-                "options": {"seconds": True},
-            }],
-        }
+        widgets = {"schemaVersion": 1, "widgets": [
+            widget_model().default_widget('terminal', 'terminal', {'command': ['/bin/echo', 'review me']})]}
         with tempfile.TemporaryDirectory() as temporary:
             exported = Path(temporary) / "widgets.json"
             result = run_cli("widgets-export", json.dumps(widgets), "--output", str(exported), "--json")
             self.assertEqual(0, result.returncode, result.stderr)
             document = json.loads(exported.read_text(encoding="utf-8"))
-            self.assertEqual({"schema_version": 1, "kind": "blox-widgets", "widgets": widgets}, document)
+            self.assertEqual(widgets, document)
 
             imported = run_cli("widgets-import", str(exported), "--json")
             self.assertEqual(0, imported.returncode, imported.stderr)
             safe_widgets = copy.deepcopy(widgets)
-            for field in ("content_command", "left_click_command", "right_click_command"):
-                safe_widgets["items"][0][field] = ""
+            safe_widgets['widgets'][0]['enabled'] = False
             self.assertEqual(safe_widgets, json.loads(imported.stdout)["data"])
             self.assertTrue(json.loads(imported.stdout)["warnings"])
 
@@ -826,116 +790,11 @@ class CliContractTests(unittest.TestCase):
             self.assertFalse(json.loads(rejected_document.stdout)["ok"])
 
             invalid_widgets = copy.deepcopy(widgets)
-            invalid_widgets["items"][0]["id"] = "Invalid Widget ID"
+            invalid_widgets["widgets"][0]["id"] = "Invalid Widget ID"
             rejected_widget = run_cli("widgets-export", json.dumps(invalid_widgets), "--output", str(Path(temporary) / "invalid.json"), "--json")
             self.assertEqual(3, rejected_widget.returncode)
             self.assertFalse(json.loads(rejected_widget.stdout)["ok"])
 
-    def test_theme_picker_exposes_widget_tab_editor_and_detached_io(self) -> None:
-        modules = REPOSITORY / "shell/modules"
-        widgets = (modules / "ThemePickerWidgets.qml").read_text(encoding="utf-8")
-        modal = (modules / "ThemePickerModal.qml").read_text(encoding="utf-8")
-        dialogs = (modules / "ThemePickerFileDialogs.qml").read_text(encoding="utf-8")
-        for source, expected in (
-            (widgets, 'text: "Widgets"'),
-            (widgets, 'text: "New Widget"'),
-            (widgets, 'Import"'),
-            (widgets, 'Export"'),
-            (modal, 'text: "Save widget"'),
-            (dialogs, 'id: widgetImportDialog'),
-            (dialogs, 'id: widgetExportDialog'),
-            (dialogs, 'controller.runApi("widgets-import"'),
-            (dialogs, 'controller.runApi("widgets-export"'),
-            (widgets, 'controller.openWidgetEditor(-1)'),
-        ):
-            with self.subTest(expected=expected):
-                self.assertIn(expected, source)
-
-    def test_bar_consumes_configured_regions_and_positions(self) -> None:
-        source = (REPOSITORY / "shell/modules/Bar.qml").read_text(encoding="utf-8")
-        theme = (REPOSITORY / "shell/shared/Theme.qml").read_text(encoding="utf-8")
-        controller = (REPOSITORY / "shell/services/BarSurfaceController.qml").read_text(encoding="utf-8")
-        delegate = (REPOSITORY / "shell/shared/BarItemDelegate.qml").read_text(encoding="utf-8")
-        status_item = (REPOSITORY / "shell/shared/BarStatusItem.qml").read_text(encoding="utf-8")
-        clock_item = (REPOSITORY / "shell/shared/BarClockItem.qml").read_text(encoding="utf-8")
-        region = (REPOSITORY / "shell/shared/BarRegion.qml").read_text(encoding="utf-8")
-        for expected in (
-            'regionItems: Theme.barStartItems',
-            'regionItems: Theme.barCentreItems',
-            'regionItems: Theme.barEndItems',
-            'Theme.barSeparateGroups',
-            'Theme.barBorder',
-            'Theme.barEdgeInset',
-            'component GroupSurface',
-            'component TraySurface',
-            'trayJoin',
-            'trayJoinExtent',
-            'trayItem: verticalExpandedTrayContent',
-            'trayItem: horizontalExpandedTrayContent',
-            'verticalExpandedTrayContent',
-            'horizontalExpandedTrayContent',
-            'clip: true',
-            'property real slideProgress',
-            'Behavior on slideProgress',
-            'slideProgress > 0.001',
-            'z: 110',
-            'z: 120',
-            'Theme.barPosition === "left"',
-            'Theme.barPosition === "right"',
-            'Theme.barPosition === "top"',
-            'Theme.barPosition === "bottom"',
-        ):
-            with self.subTest(expected=expected):
-                self.assertIn(expected, source)
-        self.assertIn("readonly property int barDepth: Theme.railWidth + barInset * 2", source)
-        self.assertIn("readonly property int barEndInset: Math.round(barInset / 2)", source)
-        self.assertIn("panel.barInset + Math.round(-panel.barDepth", source)
-        self.assertIn("panel.barInset + Math.round(panel.barDepth", source)
-        self.assertIn("Math.round(barDepth * barSurfaceController.barSlide)", source)
-        self.assertIn("Math.max(0, parent.width - panel.barEndInset * 2)", source)
-        self.assertIn("Math.max(0, parent.height - panel.barEndInset * 2)", source)
-        self.assertIn('model: Theme.barHiddenItems.filter', source)
-        for item_id in ("power", "notes", "workspaces", "clock", "battery", "notifications", "wifi", "sound", "privacy", "awake", "display", "bt", "updates", "fan", "gpu", "touchpad", "tray", "application-tray"):
-            with self.subTest(item_id=item_id):
-                self.assertIn(f'"{item_id}"', delegate)
-        edge_trigger = source.split("MouseArea {", 1)[1].split("Rectangle {", 1)[0]
-        self.assertIn("readonly property int triggerLength", edge_trigger)
-        self.assertIn("width: barSurfaceController.horizontalBar ? triggerLength : 1", edge_trigger)
-        self.assertIn("height: barSurfaceController.horizontalBar ? 1 : triggerLength", edge_trigger)
-        self.assertIn("parent.width - width", edge_trigger)
-        self.assertIn(": parent.height - height", edge_trigger)
-        self.assertIn("barSurfaceController.enterEdgeTrigger()", edge_trigger)
-        self.assertIn("barSurfaceController.leaveEdgeTrigger()", edge_trigger)
-        self.assertIn('Theme.barPosition === "bottom"', edge_trigger)
-        self.assertIn('Theme.barPosition === "right"', edge_trigger)
-        self.assertIn("Hyprland.activeToplevel.lastIpcObject", controller)
-        self.assertIn("Hyprland.refreshToplevels()", controller)
-        self.assertIn("ToplevelManager.activeToplevel", controller)
-        self.assertIn("activeWaylandToplevel.fullscreen", controller)
-        self.assertIn("readonly property bool fullscreenActive", controller)
-        self.assertIn("readonly property bool barPinnedOpen: barOpen && !fullscreenActive", controller)
-        self.assertIn("exclusiveZone: barSurfaceController.barPinnedOpen", source)
-        self.assertIn("visible: Theme.ready", source)
-        self.assertIn("property bool ready: false", theme)
-        self.assertIn("root.ready = defaults.ready", theme)
-        self.assertIn("ThemeDefaults {", theme)
-        self.assertEqual(6, source.count("BarRegion {"))
-        self.assertIn("BarItemDelegate {", region)
-        self.assertIn("Row {", region)
-        self.assertIn("Column {", region)
-        self.assertIn("root.regionItems.length - 1", region)
-        self.assertIn("root.trayHost.registerTrayToggle(this, root.horizontal, root.region)", region)
-        self.assertIn("root.trayHost.unregisterTrayToggle(this, root.horizontal)", region)
-        self.assertIn("function publishNotificationPosition()", delegate)
-        self.assertIn("anchors.fill: parent", delegate)
-        self.assertIn("horizontal !== surfaceController.horizontalBar", delegate)
-        self.assertIn("notificationController.panelY = mappedCentre", delegate)
-        self.assertIn("onHorizontalChanged: publishNotificationPosition()", delegate)
-        self.assertIn("function onHorizontalBarChanged()", delegate)
-        self.assertIn('return content.network.json.icon || "󰤩"', status_item)
-        self.assertNotIn('return content.network.json.icon || "󰔩"', status_item)
-        self.assertIn("text: root.context.contentController.railClockText(root.context.horizontal)", clock_item)
-        self.assertNotIn("text: root.context.contentController.railClockText()", clock_item)
 
     def test_bar_uses_explicit_domain_controllers(self) -> None:
         bar = (REPOSITORY / "shell/modules/Bar.qml").read_text(encoding="utf-8")
@@ -1080,8 +939,8 @@ class CliContractTests(unittest.TestCase):
         shared = REPOSITORY / "shell/shared"
         qmldir = (shared / "qmldir").read_text(encoding="utf-8")
         item = (shared / "BarActiveWindowTitleItem.qml").read_text(encoding="utf-8")
-        picker_model = (REPOSITORY / "shell/modules/ThemePickerBarModel.qml").read_text(encoding="utf-8")
-        picker = (REPOSITORY / "shell/modules/ThemePickerAdvanced.qml").read_text(encoding="utf-8")
+        picker_model = (REPOSITORY / "shell/modules/SettingsBarEditorModel.qml").read_text(encoding="utf-8")
+        picker = (REPOSITORY / "shell/modules/SettingsBarItemRow.qml").read_text(encoding="utf-8")
         self.assertIn("BarActiveWindowTitleItem 1.0 BarActiveWindowTitleItem.qml", qmldir)
         self.assertIn("activeWindow.workspace.id === Hyprland.focusedWorkspace.id", item)
         self.assertIn("activeWindowIsHere ? activeWindow.title", item)
@@ -1105,7 +964,7 @@ class CliContractTests(unittest.TestCase):
         self.assertIn('barSurfaceController.trayOpen && horizontalTrayRegion === "end"', bar)
         self.assertIn('"active-window-title": "Active window title"', picker_model)
         self.assertIn('["inward", "outward", "horizontal"]', picker)
-        self.assertIn('["left", "right"].indexOf(barPosition) >= 0', picker)
+        self.assertIn('["left", "right"].indexOf(root.page.barPosition) >= 0', picker)
         self.assertIn('["flip inward", "flip outward", "stay horizontal"]', picker)
 
     def test_configured_battery_uses_live_status_without_cross_axis_jump(self) -> None:
@@ -1226,8 +1085,7 @@ class CliContractTests(unittest.TestCase):
         self.assertIn("audioProvider", controller)
         bar_controller = (REPOSITORY / "shell/services/BarContentController.qml").read_text(encoding="utf-8")
         self.assertIn("function audio(operation: string, value: string)", bar_controller)
-        self.assertIn("audio-set-silent", controller)
-        self.assertIn("brightness-set-silent", controller)
+        # Provider dispatch outcomes run in tst_SystemPopoutController.qml.
         self.assertIn("setMicMuted(id === \"muted\")", audio)
         self.assertIn("setNetworkEnabled(id === \"on\")", connectivity)
         self.assertIn("setBluetoothEnabled(id === \"on\")", connectivity)
@@ -1310,7 +1168,7 @@ class CliContractTests(unittest.TestCase):
         solarized = next(entry for entry in entries if entry["id"] == "solarized-dark")
         self.assertTrue(solarized["builtin"])
         dracula = next(entry for entry in entries if entry["id"] == "dracula")
-        self.assertEqual(1, dracula["preview"]["widget_count"])
+        self.assertEqual(0, dracula["preview"]["widget_count"])
         self.assertEqual(
             str(REPOSITORY / "themes/wallpapers/showcase/solarized-dark.webp"),
             solarized["preview"]["wallpaper"],

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import fcntl
 import hashlib
 import json
@@ -18,7 +19,7 @@ from . import RENDERER_VERSION
 from .browser_targets import BROWSER_TARGET_BY_ID, browser_target, detect_browser_target
 from .core import DEFAULT_THEME_ID, EDITOR_THEME_PACKAGE_NAME, EDITOR_THEME_PUBLISHER, EDITOR_THEME_RELATIVE_PATH, EDITOR_THEME_VERSION, ZED_THEME_FAMILY_NAME, canonical_json, editor_colours, is_builtin_theme_path, load_theme, render_theme, repository_root, resolve_wallpaper_path, sha256_text, state_dir
 from .editor import EditorSettingsFailure, apply_fragment, members, read_settings_values, restore_settings
-from .obsidian import ObsidianFailure, needs_reapply as obsidian_needs_reapply, preflight as obsidian_preflight, publish as publish_obsidian_theme, reset as reset_obsidian_theme
+from .obsidian import ObsidianFailure, ObsidianSelectionConflict, needs_reapply as obsidian_needs_reapply, preflight as obsidian_preflight, publish as publish_obsidian_theme, reset as reset_obsidian_theme
 
 
 TARGET_FILES = {
@@ -74,6 +75,14 @@ ZED_THEME_WATCH_SETTLE_SECONDS = 0.2
 
 class RuntimeFailure(Exception):
     """A safe, user-facing runtime failure."""
+
+
+class ObsidianPublicationConflict(RuntimeFailure):
+    """Publication cleanup preserved a newer Obsidian selection."""
+
+
+class _ObsidianConflictWarning(str):
+    """Keep the conflict classification through the existing reload warnings."""
 
 
 class LockContended(RuntimeFailure):
@@ -374,6 +383,12 @@ def _obsidian_failure_warning(warnings: Iterable[str]) -> str | None:
     return next((warning for warning in warnings if warning.startswith("Obsidian theme was not changed:")), None)
 
 
+def _raise_obsidian_failure(warning: str) -> None:
+    if isinstance(warning, _ObsidianConflictWarning):
+        raise ObsidianPublicationConflict(warning)
+    raise RuntimeFailure(warning)
+
+
 def _restore_generation_after_application_failure(
     root: Path,
     previous_path: Path | None,
@@ -457,19 +472,19 @@ def _save_editor_integration(root: Path, data: dict[str, Any]) -> None:
     _fsync_directory(path.parent)
 
 
-def _capture_editor_settings(root: Path, target: str, fragment: dict[str, Any]) -> tuple[Path, dict[str, Any], dict[str, Any]]:
+def _capture_editor_settings(root: Path, target: str, fragment: dict[str, Any], settings_destination: Path | None = None, directory_fd: int | None = None) -> tuple[Path, dict[str, Any], dict[str, Any]]:
     settings = editor_settings_path(target)
     keys = {key: fragment[key] for key in EDITOR_SETTING_KEYS[target] if key in fragment}
     if not keys:
         raise RuntimeFailure(f"renderer produced no managed settings for {target}")
     data = _load_editor_integration(root)
     record = data["editors"].setdefault(target, {"settings_path": str(settings), "keys": {}, "last": {}})
-    current = read_settings_values(settings, tuple(keys))
+    current = read_settings_values(settings_destination or settings, tuple(keys), follow_symlinks=settings_destination is None, directory_fd=directory_fd)
     for key, value in current.items():
         record["keys"].setdefault(key, value)
     record["settings_path"] = str(settings)
     _save_editor_integration(root, data)
-    return settings, data, keys
+    return settings_destination or settings, data, keys
 
 
 def _record_editor_settings_applied(root: Path, target: str, data: dict[str, Any], values: dict[str, Any]) -> None:
@@ -477,9 +492,9 @@ def _record_editor_settings_applied(root: Path, target: str, data: dict[str, Any
     _save_editor_integration(root, data)
 
 
-def apply_editor_settings(root: Path, target: str, fragment: dict[str, Any]) -> None:
-    settings, data, values = _capture_editor_settings(root, target, fragment)
-    apply_fragment(settings, values)
+def apply_editor_settings(root: Path, target: str, fragment: dict[str, Any], *, settings_destination: Path | None = None, directory_fd: int | None = None) -> None:
+    settings, data, values = _capture_editor_settings(root, target, fragment, settings_destination, directory_fd)
+    apply_fragment(settings, values, follow_symlinks=settings_destination is None, directory_fd=directory_fd)
     _record_editor_settings_applied(root, target, data, values)
 
 
@@ -999,7 +1014,7 @@ def _remove_legacy_editor_extension(extension_root: Path) -> list[str]:
     return []
 
 
-def install_editor_extension(root: Path, target: str) -> list[str]:
+def install_editor_extension(root: Path, target: str, *, retire_legacy: bool = True) -> list[str]:
     source = _editor_package_source(root, target)
     _editor_package_manifest(source)
     theme_source = source / EDITOR_THEME_RELATIVE_PATH
@@ -1034,7 +1049,33 @@ def install_editor_extension(root: Path, target: str) -> list[str]:
             shutil.rmtree(backup)
     finally:
         shutil.rmtree(temporary, ignore_errors=True)
-    return _remove_legacy_editor_extension(extension_root)
+    return _remove_legacy_editor_extension(extension_root) if retire_legacy else []
+
+
+def publish_editor_target(root: Path, target: str, *, external_image: dict[str, Any]) -> None:
+    """Publish application packages and selections without restarting applications."""
+    if target in ("code", "cursor_editor"):
+        from .target_preimage import editor_publication_destination
+        from .apply_coordinator import BeforeTargetPublicationFailure, ApplyError
+        try:
+            destination, directory_fd = editor_publication_destination(target, external_image)
+        except (ApplyError, OSError) as error:
+            raise BeforeTargetPublicationFailure(str(error)) from error
+        try:
+            fragment = json.loads((_editor_package_source(root, target) / "settings.json").read_text(encoding="utf-8"))
+            install_editor_extension(root, target, retire_legacy=False)
+            apply_editor_settings(root, target, fragment, settings_destination=destination, directory_fd=directory_fd)
+            # The pinned file may be correct while the application's link changed.
+            from .target_preimage import verify_editor_link
+            verify_editor_link(target, external_image)
+        finally:
+            os.close(directory_fd)
+    elif target == "zed":
+        _publish_zed_theme(root)
+    elif target == "t3code":
+        _publish_t3code_theme(root)
+    else:
+        raise RuntimeFailure(f"unsupported editor publication target: {target}")
 
 
 def remove_editor_extension(target: str) -> None:
@@ -1050,7 +1091,7 @@ def remove_editor_extension(target: str) -> None:
     shutil.rmtree(destination)
 
 
-def _run(command: list[str]) -> subprocess.CompletedProcess[str]:
+def _run(command: list[str], *, timeout: float | None = None) -> subprocess.CompletedProcess[str]:
     try:
         environment = None
         if command and Path(command[0]).name == "obsidian":
@@ -1059,7 +1100,7 @@ def _run(command: list[str]) -> subprocess.CompletedProcess[str]:
             # fails before it reaches the official CLI.
             environment = os.environ.copy()
             environment.pop("ELECTRON_RUN_AS_NODE", None)
-        return subprocess.run(command, check=False, capture_output=True, text=True, env=environment)
+        return subprocess.run(command, check=False, capture_output=True, text=True, env=environment, timeout=timeout)
     except OSError as error:
         return subprocess.CompletedProcess(command, 127, "", str(error))
 
@@ -1076,7 +1117,7 @@ def _proc_main_pid() -> int:
 
 
 def _pid_shell_path(pid: int, read_cmdline: Callable[[int], list[str]] | None = None) -> Path | None:
-    reader = read_cmdline or (lambda p: open(f"/proc/{p}/cmdline", "rb").read().decode().split("\0"))
+    reader = read_cmdline or (lambda p: Path(f"/proc/{p}/cmdline").read_bytes().decode().split("\0"))
     try:
         argv = reader(pid)
     except (OSError, UnicodeDecodeError):
@@ -1092,8 +1133,7 @@ def quickshell_config_path(read_cmdline: Callable[[int], list[str]] | None = Non
     """Locate the RUNNING shell so reload and widget IPC reach it.
 
     Preference order: an explicit BLOX_SHELL_DIR override, the supervised
-    service's own --path argument, the checkout location under
-    XDG_CONFIG_HOME when present, otherwise the installed tree."""
+    service's own --path argument, otherwise the installed tree."""
     home = Path.home()
     prefix_default = home / ".local"
     override = os.environ.get("BLOX_SHELL_DIR")
@@ -1104,11 +1144,7 @@ def quickshell_config_path(read_cmdline: Callable[[int], list[str]] | None = Non
         running = _pid_shell_path(main_pid, read_cmdline)
         if running is not None:
             return running
-    config_home = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")).expanduser()
-    legacy = config_home / "quickshell/blox"
-    if (legacy / "shell.qml").is_file():
-        return legacy
-    installed = Path(os.environ.get("BLOX_PREFIX", home)).expanduser() / "share/blox/shell"
+    installed = Path(os.environ.get("BLOX_PREFIX", prefix_default)).expanduser() / "share/blox/shell"
     return installed
 
 
@@ -1609,26 +1645,31 @@ def sync_dynamic_loaders(root: Path, enabled_targets: Iterable[str], targets_to_
         _sync_hyprtoolkit_loader(root, "hyprland" in enabled)
 
 
-def cleanup_managed_loaders(root: Path) -> None:
+def cleanup_managed_loaders(root: Path, targets_to_clean: Iterable[str] | None = None) -> None:
+    selected = set(TARGET_NAMES) if targets_to_clean is None else set(targets_to_clean)
     pairs = ((kitty_theme_link(), root / "current/kitty/theme.conf"),)
     for link, expected in pairs:
-        if link.is_symlink() and Path(os.readlink(link)) == expected:
+        if "kitty" in selected and link.is_symlink() and Path(os.readlink(link)) == expected:
             link.unlink()
-    if _load_gtk_integration(root):
+    if "gtk" in selected and _load_gtk_integration(root):
         try:
             ensure_gtk_loaders(root, False)
         except RuntimeFailure:
             pass
     try:
-        ensure_cursor_loader(root, False)
+        if "cursor" in selected:
+            ensure_cursor_loader(root, False)
     except RuntimeFailure:
         pass
     for target in phase7_loader_specs(root):
+        if target not in selected:
+            continue
         try:
             remove_phase7_loader(root, target)
         except RuntimeFailure:
             pass
-    _sync_hyprtoolkit_loader(root, False)
+    if "hyprland" in selected:
+        _sync_hyprtoolkit_loader(root, False)
 
 
 def verify_tracked_loaders(targets: Iterable[str]) -> None:
@@ -1977,6 +2018,8 @@ def run_reload_actions(root: Path, targets: Iterable[str], mode: str = "reload",
                 else:
                     vault = publish_obsidian_theme(root, run_command, real_cli=run_command is _run)
                     warnings.append(f"Obsidian native theme selected in {vault}")
+            except ObsidianSelectionConflict as error:
+                warnings.append(_ObsidianConflictWarning(f"Obsidian theme was not changed: {error}"))
             except (OSError, EditorSettingsFailure, ObsidianFailure) as error:
                 warnings.append(f"Obsidian theme was not changed: {error}")
         elif target == "powerlevel10k":
@@ -1999,7 +2042,11 @@ def run_reload_actions(root: Path, targets: Iterable[str], mode: str = "reload",
     return warnings
 
 
-def apply_theme(theme_path: Path, theme: dict[str, Any], targets: Iterable[str], run_command: Callable[[list[str]], subprocess.CompletedProcess[str]] = _run, renderer: Callable[[dict[str, Any]], tuple[dict[str, str], list[str]]] = render_theme, cursor_builder: Callable[[dict[str, Any], Path], tuple[Path, bool]] | None = None, progress: Callable[[dict[str, Any]], None] | None = None, defer_quickshell_restart: bool = False, authoritative_targets: bool = False) -> tuple[dict[str, Any], list[str]]:
+class WidgetPublicationConflict(RuntimeFailure):
+    """A competing generation superseded the requested widget publication."""
+
+
+def apply_theme(theme_path: Path, theme: dict[str, Any], targets: Iterable[str], run_command: Callable[[list[str]], subprocess.CompletedProcess[str]] = _run, renderer: Callable[[dict[str, Any]], tuple[dict[str, str], list[str]]] = render_theme, cursor_builder: Callable[[dict[str, Any], Path], tuple[Path, bool]] | None = None, progress: Callable[[dict[str, Any]], None] | None = None, defer_quickshell_restart: bool = False, authoritative_targets: bool = False, preserve_history: bool = False, activate_only: bool = False, widget_generation: str | None = None, widget_publication: str | None = None) -> tuple[dict[str, Any], list[str]]:
     root = state_dir()
     selected = tuple(dict.fromkeys(targets))
     enabled_selection = {
@@ -2034,6 +2081,14 @@ def apply_theme(theme_path: Path, theme: dict[str, Any], targets: Iterable[str],
         previous_record = current_generation(root)
         previous_path = previous_record[0] if previous_record else None
         previous_manifest = previous_record[1] if previous_record else None
+        if widget_generation is not None:
+            if selected != ("widgets",) or previous_path is None or previous_path.name != widget_generation:
+                raise WidgetPublicationConflict("widget generation changed before publication")
+        if widget_publication is not None:
+            if (widget_generation is None or not isinstance(widget_publication, str)
+                    or not GENERATION_PATTERN.fullmatch(widget_publication)
+                    or (generations / widget_publication).exists()):
+                raise WidgetPublicationConflict("invalid or occupied widget publication identity")
         legacy_editor_theme = theme
         if previous_manifest is not None:
             try:
@@ -2082,7 +2137,7 @@ def apply_theme(theme_path: Path, theme: dict[str, Any], targets: Iterable[str],
             _ensure_cursor_integration(root, run_command)
         report("stage", "cursor", "done", cursor_message, 2)
 
-        generation_id = _new_generation_id()
+        generation_id = widget_publication or _new_generation_id()
         candidate = generations / f".candidate-{uuid.uuid4().hex}"
         final = generations / generation_id
         candidate.mkdir(mode=0o700)
@@ -2133,6 +2188,12 @@ def apply_theme(theme_path: Path, theme: dict[str, Any], targets: Iterable[str],
                 "files": _manifest_files(candidate),
                 "derived": {"ansi": json.loads(files["quickshell/theme.json"])["ansi"] if "quickshell/theme.json" in files else {}},
             }
+            if widget_generation is not None:
+                for key in ("source", "source_sha256", "theme_id", "origin", "derived"):
+                    if key in previous_manifest:
+                        manifest[key] = copy.deepcopy(previous_manifest[key])
+                    else:
+                        manifest.pop(key, None)
             _write_text(candidate / "manifest.json", canonical_json(manifest))
             _fsync_directory(candidate)
             os.replace(candidate, final)
@@ -2157,6 +2218,8 @@ def apply_theme(theme_path: Path, theme: dict[str, Any], targets: Iterable[str],
                     shutil.rmtree(final, ignore_errors=True)
                 raise
             report("stage", "activation", "done", "Theme generation activated", 3)
+            if activate_only:
+                return manifest, []
             report(
                 "stage",
                 "applications",
@@ -2199,9 +2262,10 @@ def apply_theme(theme_path: Path, theme: dict[str, Any], targets: Iterable[str],
             obsidian_failure = _obsidian_failure_warning(reload_warnings)
             if obsidian_failure is not None:
                 _restore_generation_after_application_failure(root, previous_path, previous_manifest, selected, final)
-                raise RuntimeFailure(obsidian_failure)
+                _raise_obsidian_failure(obsidian_failure)
             report("stage", "applications", "done", "Application targets finished", progress_total)
-            _prune_generations(root, final)
+            if not preserve_history:
+                _prune_generations(root, final)
             return manifest, reload_warnings
         except Exception as error:
             report("stage", "applications" if application_started else "activation", "failed", str(error), 3 if application_started else 2)
@@ -2276,7 +2340,7 @@ def rollback(generation_id: str | None = None, run_command: Callable[[list[str]]
                 current_record[1],
                 TARGET_NAMES,
             )
-            raise RuntimeFailure(obsidian_failure)
+            _raise_obsidian_failure(obsidian_failure)
         return manifest, warnings
 
 
@@ -2338,7 +2402,7 @@ def reset_target(target: str, run_command: Callable[[list[str]], subprocess.Comp
             obsidian_failure = _obsidian_failure_warning(warnings)
             if target == "obsidian" and obsidian_failure is not None:
                 _restore_generation_after_application_failure(root, previous, previous_manifest, (target,), final)
-                raise RuntimeFailure(obsidian_failure)
+                _raise_obsidian_failure(obsidian_failure)
             _prune_generations(root, final)
             return manifest, warnings
         except Exception:

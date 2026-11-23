@@ -1,0 +1,37 @@
+{
+  "coreFailure": {
+    "code": "core-failure",
+    "phase": "restored",
+    "states": {"kitty": "unchanged", "wallpaper": "unchanged"},
+    "actions": {"retryFailedTargets": [], "keepSuccessfulChanges": false, "rollBack": false, "cancel": false},
+    "ledger": {"appearance": "unknown", "wallpaper": "unknown"}
+  },
+  "independentFailure": {
+    "code": "partial",
+    "phase": "partial",
+    "states": {"kitty": "failure", "wallpaper": "success"},
+    "actions": {"retryFailedTargets": ["kitty"], "keepSuccessfulChanges": true, "rollBack": true, "cancel": false},
+    "ledger": {"appearance": "unknown", "wallpaper": "managed"}
+  },
+  "retry": {
+    "code": "ok",
+    "phase": "complete",
+    "states": {"kitty": "success", "wallpaper": "success"},
+    "actions": {"retryFailedTargets": [], "keepSuccessfulChanges": false, "rollBack": true, "cancel": false},
+    "ledger": {"appearance": "managed", "wallpaper": "managed"}
+  },
+  "kept": {
+    "code": "kept",
+    "phase": "partial",
+    "states": {"kitty": "failure", "wallpaper": "success"},
+    "actions": {"retryFailedTargets": [], "keepSuccessfulChanges": false, "rollBack": false, "cancel": false},
+    "ledger": {"appearance": "unknown", "wallpaper": "managed"}
+  },
+  "rolledBack": {
+    "code": "rolled-back",
+    "phase": "restored",
+    "states": {"kitty": "unchanged", "wallpaper": "unchanged"},
+    "actions": {"retryFailedTargets": [], "keepSuccessfulChanges": false, "rollBack": false, "cancel": false},
+    "ledger": {"appearance": "unknown", "wallpaper": "managed"}
+  }
+}

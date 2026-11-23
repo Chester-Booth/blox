@@ -52,8 +52,9 @@ class OsdRuntimeTests(unittest.TestCase):
         self.assertIn("OsdSurface {", root)
         self.assertNotIn("Process {", root)
         self.assertNotIn("PanelWindow {", root)
-        self.assertIn("watch-audio.sh", controller)
-        self.assertIn("watch-keyboard-backlight.sh", controller)
+        self.assertIn("property var audioStatus: null", controller)
+        self.assertNotIn("Process {", controller)
+        self.assertIn("KeyboardBacklightWatcher {", controller)
         self.assertIn("function showNotice(", controller)
         self.assertIn('target: "osd"', ipc)
         for command in (

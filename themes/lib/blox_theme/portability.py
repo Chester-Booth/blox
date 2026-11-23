@@ -316,7 +316,10 @@ def import_theme(path: Path, library: Path, reserved_ids: set[str] | None = None
         source_kind = "json"
         if not Path(theme["wallpaper"]["path"]).expanduser().is_absolute():
             theme["wallpaper"]["path"] = str(resolve_wallpaper_path(theme["wallpaper"]["path"], source))
-    theme, executable_fields = strip_widget_commands(theme)
+    try:
+        theme, executable_fields = strip_widget_commands(theme)
+    except ValueError as error:
+        raise PortabilityFailure(f"invalid imported widget profile: {error}") from error
     checked = validate_theme(theme, check_dependencies=False, source_path=source)
     if checked.errors:
         raise PortabilityFailure("invalid imported theme: " + "; ".join(checked.errors))

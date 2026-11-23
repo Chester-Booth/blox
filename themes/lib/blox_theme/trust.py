@@ -10,11 +10,6 @@ from pathlib import Path
 from typing import Any
 
 
-EXECUTABLE_WIDGET_FIELDS = (
-    "content_command",
-    "left_click_command",
-    "right_click_command",
-)
 TRUST_SCHEMA_VERSION = 1
 SAFE_ID = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 
@@ -27,42 +22,40 @@ def _digest(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
-def _field_paths(widgets: dict[str, Any]) -> list[str]:
-    fields: list[str] = []
-    for index, item in enumerate(widgets.get("items", [])):
-        if not isinstance(item, dict):
-            continue
-        for field in EXECUTABLE_WIDGET_FIELDS:
-            if isinstance(item.get(field), str) and item[field]:
-                fields.append(f"widgets.items[{index}].{field}")
+def widget_executables(profile: dict[str, Any]) -> list[tuple[dict, str, Any]]:
+    """Return executable references and their owning widget without changing data."""
+    from .core import widget_model
+    widget_model().validate_profile(profile)
+    fields = []
+    for index, item in enumerate(profile["widgets"]):
+        prefix = f"widgets[{index}].settings"
+        if item["kind"] in ("terminal", "command"):
+            fields.append((item, prefix + ".command", item["settings"]))
+        elif item["kind"] == "shortcuts":
+            for entry_index, entry in enumerate(item["settings"]["items"]):
+                fields.append((item, f"{prefix}.items[{entry_index}].command", entry["command"]))
+        elif item["kind"] == "qml":
+            # A trusted local registry entry is executable code, not import consent.
+            fields.append((item, prefix + ".manifest", item["settings"]))
     return fields
 
 
-def strip_widget_commands(theme: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
-    """Return an imported copy with every executable widget field disabled."""
-    sanitised = copy.deepcopy(theme)
-    widgets = sanitised.get("widgets")
-    if not isinstance(widgets, dict):
-        return sanitised, []
-    fields = _field_paths(widgets)
-    for item in widgets.get("items", []):
-        if not isinstance(item, dict):
-            continue
-        for field in EXECUTABLE_WIDGET_FIELDS:
-            if field in item:
-                item[field] = ""
-    return sanitised, fields
-
-
 def strip_widget_document(document: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
-    """Apply the same import rule to a detached widget document."""
-    widgets = document.get("widgets")
-    if not isinstance(widgets, dict):
-        return copy.deepcopy(document), []
-    sanitised_widgets, fields = strip_widget_commands({"widgets": widgets})
+    """Disable imported executable widgets while retaining complete valid settings."""
     sanitised = copy.deepcopy(document)
-    sanitised["widgets"] = sanitised_widgets["widgets"]
-    return sanitised, [field.removeprefix("widgets.") for field in fields]
+    fields = widget_executables(sanitised)
+    for item, _, _ in fields:
+        item["enabled"] = False
+    return sanitised, [path for _, path, _ in fields]
+
+
+def strip_widget_commands(theme: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
+    """Disable imported command and QML widgets without invalidating their profile."""
+    sanitised = copy.deepcopy(theme)
+    if "widgets" not in sanitised:
+        return sanitised, []
+    sanitised["widgets"], fields = strip_widget_document(sanitised["widgets"])
+    return sanitised, ["widgets." + field for field in fields]
 
 
 def trust_directory(library: Path) -> Path:

@@ -13,8 +13,8 @@ REPOSITORY = THEMES.parent
 sys.path.insert(0, str(THEMES / "lib"))
 
 from blox_theme import portability
-from blox_theme.core import load_theme
-from blox_theme.trust import TrustFailure, safe_template_output, trust_record_allows_commands, write_template_output
+from blox_theme.core import load_theme, widget_model
+from blox_theme.trust import TrustFailure, safe_template_output, strip_widget_document, trust_record_allows_commands, write_template_output
 
 
 class TrustTests(unittest.TestCase):
@@ -30,36 +30,18 @@ class TrustTests(unittest.TestCase):
 
     def test_import_disables_commands_and_keeps_trust_metadata_outside_theme(self) -> None:
         self.theme["id"] = "untrusted-widgets"
-        self.theme["widgets"]["items"] = [{
-            "id": "clock",
-            "name": "Clock",
-            "type": "clock",
-            "enabled": True,
-            "content_command": "touch /tmp/should-not-run",
-            "left_click_command": "sh -c hidden-click",
-            "right_click_command": "",
-            "interval_ms": 1000,
-            "visibility": "always",
-            "anchor": "top-right",
-            "offset_x": 0,
-            "offset_y": 0,
-            "width": 320,
-            "height": 160,
-            "shape": "rounded",
-        }]
+        widget = widget_model().default_widget('terminal', 'terminal',
+            {'command': ['/bin/echo', 'review me']})
+        self.theme['widgets'] = {'schemaVersion': 1, 'widgets': [widget]}
         source = self.root / "untrusted.json"
         source.write_text(json.dumps(self.theme), encoding="utf-8")
 
         data, warnings = portability.import_theme(source, self.library)
         saved = json.loads(Path(data["path"]).read_text(encoding="utf-8"))
-        item = saved["widgets"]["items"][0]
-        self.assertEqual("", item["content_command"])
-        self.assertEqual("", item["left_click_command"])
-        self.assertEqual("", item["right_click_command"])
-        self.assertEqual(data["executable_fields"], [
-            "widgets.items[0].content_command",
-            "widgets.items[0].left_click_command",
-        ])
+        item = saved['widgets']['widgets'][0]
+        self.assertFalse(item['enabled'])
+        self.assertEqual(widget['settings'], item['settings'])
+        self.assertEqual(data['executable_fields'], ['widgets.widgets[0].settings.command'])
         self.assertTrue(any("disabled executable fields" in warning for warning in warnings))
         record_path = self.library / "trust/themes/untrusted-widgets.json"
         self.assertEqual(record_path, Path(data["trust_record"]))
@@ -81,6 +63,16 @@ class TrustTests(unittest.TestCase):
         self.assertTrue(trust_record_allows_commands(theme_path, self.library))
         theme_path.write_text(theme_path.read_text(encoding="utf-8") + "\n", encoding="utf-8")
         self.assertFalse(trust_record_allows_commands(theme_path, self.library))
+
+    def test_command_output_import_requires_execution_consent(self) -> None:
+        widget = widget_model().default_widget('command', 'command-output',
+            {'command': ['/bin/echo', 'review me']})
+        original = {'schemaVersion': 1, 'widgets': [widget]}
+        sanitised, fields = strip_widget_document(original)
+        self.assertEqual(['widgets[0].settings.command'], fields)
+        self.assertFalse(sanitised['widgets'][0]['enabled'])
+        self.assertEqual(widget['settings'], sanitised['widgets'][0]['settings'])
+        self.assertTrue(original['widgets'][0]['enabled'])
 
     def test_template_output_stays_below_approved_root(self) -> None:
         approved = self.root / "approved"
@@ -107,7 +99,7 @@ class TrustTests(unittest.TestCase):
         data, warnings = portability.import_theme(source, self.library)
         self.assertEqual([], data["executable_fields"])
         self.assertFalse(any("disabled executable fields" in warning for warning in warnings))
-        self.assertEqual([], json.loads(Path(data["path"]).read_text(encoding="utf-8")).get("widgets", {}).get("items", []))
+        self.assertEqual([], json.loads(Path(data["path"]).read_text(encoding="utf-8")).get("widgets", {}).get("widgets", []))
 
 
 if __name__ == "__main__":

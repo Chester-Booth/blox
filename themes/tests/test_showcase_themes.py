@@ -179,19 +179,10 @@ class ShowcaseThemeTests(unittest.TestCase):
                 self.assertEqual("hidden", application["region"])
                 self.assertEqual("application-tray", expected["id"])
 
-    def test_only_the_three_widget_showcases_bundle_widgets(self) -> None:
-        expected = {
-            "dracula": "pipes",
-            "kanagawa": "aquarium",
-            "tokyo-night": "music",
-        }
+    def test_showcases_start_with_an_empty_fresh_widget_profile(self) -> None:
         for theme_id, theme in self.showcase_themes().items():
             with self.subTest(theme=theme_id):
-                items = theme.get("widgets", {}).get("items", [])
-                if theme_id in expected:
-                    self.assertEqual([expected[theme_id]], [item["type"] for item in items])
-                else:
-                    self.assertEqual([], items)
+                self.assertEqual({"schemaVersion": 1, "widgets": []}, theme["widgets"])
 
     def test_all_colours_are_unmodified_official_swatches_with_complete_ansi(self) -> None:
         for theme_id, theme in self.showcase_themes().items():

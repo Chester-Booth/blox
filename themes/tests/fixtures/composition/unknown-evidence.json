@@ -1,0 +1,14 @@
+{
+  "component": "wallpaper",
+  "observedAt": "2026-09-27T10:06:00Z",
+  "evidence": {
+    "revision": null,
+    "digest": null
+  },
+  "expected": {
+    "status": "unknown",
+    "activeTheme": null,
+    "observedDigest": null,
+    "lastManagedDigest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+  }
+}

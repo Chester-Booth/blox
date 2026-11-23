@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Apply and restore the picker's temporary Hyprland preview transaction."""
+"""Apply and restore Settings' temporary Hyprland preview transaction."""
 
 from __future__ import annotations
 

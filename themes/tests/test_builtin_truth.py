@@ -188,7 +188,7 @@ class BuiltinTruthTests(unittest.TestCase):
         self.assertEqual(defaults["shell"]["notifications"], canonical["shell"]["notifications"])
         self.assertEqual(defaults["wallpaper"], canonical["wallpaper"])
         self.assertEqual(defaults["terminal"], canonical["terminal"])
-        self.assertEqual(DEFAULTS_DOCUMENT["widgets"]["profile"], canonical["widgets"]["profile"])
+        self.assertEqual(DEFAULTS_DOCUMENT["widgets"], canonical["widgets"])
 
     def test_sparse_source_requires_colours_and_wallpaper(self) -> None:
         sparse = {"schema_version": 1, "id": "sparse", "name": "Sparse"}
@@ -212,7 +212,7 @@ class BuiltinTruthTests(unittest.TestCase):
         self.assertEqual(resolved["shape"], defaults["shape"])
         self.assertEqual(resolved["wallpaper"], defaults["wallpaper"])
         self.assertEqual(resolved["terminal"], defaults["terminal"])
-        self.assertEqual(resolved["widgets"]["profile"], DEFAULTS_DOCUMENT["widgets"]["profile"])
+        self.assertEqual(resolved["widgets"], DEFAULTS_DOCUMENT["widgets"])
 
 
 class ConfiguredTargetsContractTests(unittest.TestCase):

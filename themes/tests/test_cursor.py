@@ -230,18 +230,18 @@ class CursorSetupSafetyTests(unittest.TestCase):
 
 
 class CursorCliTests(unittest.TestCase):
-    def test_clean_machine_apply_is_actionable_and_non_mutating(self) -> None:
+    def test_clean_machine_validation_reports_cursor_setup_without_mutating(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             environment = os.environ.copy()
             environment.update({"XDG_DATA_HOME": str(root / "data"), "XDG_STATE_HOME": str(root / "state")})
             completed = subprocess.run(
-                [str(THEMES / "bin/themectl"), "apply", "catppuccin-mocha", "--targets", "cursor", "--json"],
+                [str(THEMES / "bin/themectl"), "validate", "catppuccin-mocha", "--json"],
                 cwd=THEMES.parent, env=environment, capture_output=True, text=True, check=False,
             )
             response = json.loads(completed.stdout)
-            self.assertEqual(3, completed.returncode)
-            self.assertTrue(any("setup cursor --yes" in error for error in response["errors"]))
+            self.assertEqual(0, completed.returncode)
+            self.assertTrue(any("setup cursor --yes" in warning for warning in response["warnings"]))
             self.assertFalse((root / "state/blox/theme").exists())
 
     def test_cursor_setup_requires_confirmation(self) -> None:

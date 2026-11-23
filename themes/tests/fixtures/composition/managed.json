@@ -1,0 +1,29 @@
+{
+  "observedAt": "2026-09-27T10:00:00Z",
+  "themeId": "catppuccin-mocha",
+  "sourceDigest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "generationId": "20260927T100000Z-0123abcd",
+  "components": {
+    "theme-metadata": {
+      "revision": 7,
+      "digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    },
+    "appearance": {
+      "revision": 7,
+      "digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+    },
+    "wallpaper": {
+      "revision": 7,
+      "digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+    },
+    "bar": {
+      "revision": 4,
+      "digest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    }
+  },
+  "expected": {
+    "themeId": "catppuccin-mocha",
+    "sourceDigest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "components": ["appearance", "bar", "theme-metadata", "wallpaper"]
+  }
+}

@@ -261,29 +261,7 @@
     "path": "wallpapers/showcase/kanagawa.webp"
   },
   "widgets": {
-    "items": [
-      {
-        "anchor": "bottom-right",
-        "content_command": "asciiquarium",
-        "enabled": true,
-        "height": 0,
-        "id": "aquarium",
-        "interval_ms": 60000,
-        "left_click_command": "",
-        "name": "Aquarium",
-        "offset_x": 32,
-        "offset_y": 32,
-        "options": {
-          "auto_size": true,
-          "scale": 0.5
-        },
-        "right_click_command": "",
-        "shape": "auto",
-        "type": "aquarium",
-        "visibility": "empty-workspace",
-        "width": 0
-      }
-    ],
-    "profile": "comfortable"
+    "schemaVersion": 1,
+    "widgets": []
   }
 }

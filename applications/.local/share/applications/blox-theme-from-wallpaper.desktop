@@ -2,7 +2,7 @@
 Type=Application
 Name=Create Theme from Current Wallpaper
 Comment=Generate an editable Blox theme from the current wallpaper
-Exec=blox-theme-ipc themePicker generateCurrent
+Exec=blox-settings-ipc settingsUi createFromWallpaper
 Icon=blox-theme-from-wallpaper
 Terminal=false
 Categories=Settings;

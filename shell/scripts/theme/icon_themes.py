@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""List installed icon themes and a few small preview files for the picker."""
+"""List installed icon themes and a few small preview files for Settings."""
 
 from __future__ import annotations
 

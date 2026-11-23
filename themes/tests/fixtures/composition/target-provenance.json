@@ -1,0 +1,46 @@
+{
+  "generationPath": "/home/chester/.local/state/blox/theme/generations/20260927T100000Z-0123abcd",
+  "manifest": {
+    "generation_id": "20260927T100000Z-0123abcd",
+    "created_at": "2026-09-27T10:00:00+00:00",
+    "theme_id": "dracula",
+    "source_sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+    "enabled_targets": ["gtk", "quickshell"],
+    "files": {
+      "gtk/gtk-3.0/settings.ini": "1111111111111111111111111111111111111111111111111111111111111111",
+      "gtk/gtk-4.0/settings.ini": "2222222222222222222222222222222222222222222222222222222222222222",
+      "gtk/metadata.json": "3333333333333333333333333333333333333333333333333333333333333333",
+      "quickshell/theme.json": "4444444444444444444444444444444444444444444444444444444444444444"
+    },
+    "target_sources": {
+      "gtk": {
+        "theme_id": "dracula",
+        "source": "/themes/dracula.json",
+        "source_sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      "quickshell": {
+        "theme_id": "catppuccin-mocha",
+        "source": "/themes/catppuccin-mocha.json",
+        "source_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    }
+  },
+  "expected": {
+    "gtk": {
+      "themeId": "dracula",
+      "sourceDigest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "paths": [
+        "/home/chester/.local/state/blox/theme/generations/20260927T100000Z-0123abcd/gtk/gtk-3.0/settings.ini",
+        "/home/chester/.local/state/blox/theme/generations/20260927T100000Z-0123abcd/gtk/gtk-4.0/settings.ini",
+        "/home/chester/.local/state/blox/theme/generations/20260927T100000Z-0123abcd/gtk/metadata.json"
+      ]
+    },
+    "quickshell": {
+      "themeId": "catppuccin-mocha",
+      "sourceDigest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "paths": [
+        "/home/chester/.local/state/blox/theme/generations/20260927T100000Z-0123abcd/quickshell/theme.json"
+      ]
+    }
+  }
+}

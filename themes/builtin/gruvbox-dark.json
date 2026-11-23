@@ -261,7 +261,7 @@
     "path": "wallpapers/showcase/gruvbox-dark.webp"
   },
   "widgets": {
-    "items": [],
-    "profile": "comfortable"
+    "schemaVersion": 1,
+    "widgets": []
   }
 }

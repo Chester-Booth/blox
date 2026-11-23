@@ -6,6 +6,7 @@ import signal
 import shutil
 import subprocess
 import time
+import tempfile
 import uuid
 from dataclasses import dataclass
 from pathlib import Path
@@ -17,6 +18,10 @@ from .editor import EditorSettingsFailure, apply_fragment, members, read_setting
 
 class ObsidianFailure(RuntimeError):
     """A safe, user-facing Obsidian integration failure."""
+
+
+class ObsidianSelectionConflict(ObsidianFailure):
+    """A newer saved selection must survive Apply and its cleanup."""
 
 
 OBSIDIAN_CLI_TIMEOUT_SECONDS = 8.0
@@ -428,45 +433,42 @@ def _stop_obsidian_cli(process: subprocess.Popen[bytes]) -> None:
         process.wait(timeout=1)
 
 
-def _run_live_theme_set(paths: ObsidianPaths, name: str) -> None:
-    """Ask an already running Obsidian instance to select a theme.
-
-    Obsidian's command wrapper can remain alive with the desktop process, so
-    its exit status is not a useful completion signal. Watch the vault file
-    instead and keep the helper bounded.
-    """
-    command = ["obsidian", f"vault={paths.vault.vault_id}", "theme:set", f"name={name}"]
+def _run_live_cli(paths: ObsidianPaths, arguments: list[str], expected: str) -> None:
+    """Verify a bounded native CLI reply even when its wrapper stays alive."""
+    command = ["obsidian", f"vault={paths.vault.vault_id}", *arguments]
     environment = os.environ.copy()
     environment.pop("ELECTRON_RUN_AS_NODE", None)
-    try:
-        process = subprocess.Popen(
-            command,
-            stdin=subprocess.DEVNULL,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            env=environment,
-            start_new_session=True,
-        )
-    except OSError as error:
-        raise ObsidianFailure(f"Obsidian could not select {name!r}: {error}") from error
+    with tempfile.TemporaryFile() as output:
+        try:
+            process = subprocess.Popen(command, stdin=subprocess.DEVNULL,
+                                       stdout=output, stderr=output, env=environment,
+                                       start_new_session=True)
+        except OSError as error:
+            raise ObsidianFailure(f"Obsidian CLI request failed: {error}") from error
+        response = ""
+        try:
+            deadline = time.monotonic() + OBSIDIAN_CLI_TIMEOUT_SECONDS
+            while time.monotonic() < deadline:
+                code = process.poll()
+                response = os.pread(output.fileno(), 8192, 0).decode(errors="replace").strip()
+                if code is not None and code != 0:
+                    raise ObsidianFailure(f"Obsidian CLI exited with status {code}: {response[:500]}")
+                if expected in response.splitlines():
+                    return
+                if code is not None:
+                    raise ObsidianFailure(f"Obsidian CLI returned an unexpected reply: {response[:500]}")
+                time.sleep(0.1)
+        finally:
+            _stop_obsidian_cli(process)
+    raise ObsidianFailure(f"Obsidian CLI did not confirm {expected!r} within {OBSIDIAN_CLI_TIMEOUT_SECONDS:g} seconds: {response[:500]}")
 
-    try:
-        deadline = time.monotonic() + OBSIDIAN_CLI_TIMEOUT_SECONDS
-        returncode: int | None = None
-        while time.monotonic() < deadline:
-            selected = read_settings_values(paths.appearance, ("cssTheme",))["cssTheme"]
-            if _theme_selection_matches(selected, name):
-                return
-            returncode = process.poll()
-            if returncode is not None:
-                if returncode != 0:
-                    raise ObsidianFailure(
-                        f"Obsidian could not select {name!r}: CLI exited with status {returncode}"
-                    )
-            time.sleep(0.1)
-    finally:
-        _stop_obsidian_cli(process)
-    raise ObsidianFailure(f"Obsidian did not select {name!r} within {OBSIDIAN_CLI_TIMEOUT_SECONDS:g} seconds")
+
+def _run_live_theme_set(paths: ObsidianPaths, name: str) -> None:
+    # Obsidian can keep its saved selection unchanged during a temporary theme
+    # switch. Query the renderer, rather than treating appearance.json as proof.
+    acknowledgement = "Switched to default theme" if name == "" else "Switched to: " + name
+    _run_live_cli(paths, ["theme:set", f"name={name}"], acknowledgement)
+    _run_live_cli(paths, ["theme"], "(default)" if name == "" else name)
 
 
 def _run_theme_set(vault: ObsidianVault, name: str, run_command: Callable[[list[str]], subprocess.CompletedProcess[str]]) -> None:
@@ -487,18 +489,29 @@ def _select_theme(
         _run_theme_set(paths.vault, name, run_command)
     elif _obsidian_is_running():
         selected = read_settings_values(paths.appearance, ("cssTheme",))["cssTheme"]
+        previous_selection = selected
+        refreshed = False
         if _setting_matches(selected, name):
             # The generated package keeps one stable native name while its
             # CSS changes with each Blox theme. Obsidian does not repaint when
             # asked to select the already-selected name, so visit its built-in
             # theme first to force the open window to reload the package.
             _run_live_theme_set(paths, OBSIDIAN_LIVE_REFRESH_THEME)
+            refreshed = True
             # The CLI updates appearance.json before the open renderer has
             # dropped the old stylesheet. Let that transition finish before
             # selecting the generated package again, or Obsidian can reuse
             # the cached CSS for the previous generation.
             time.sleep(OBSIDIAN_THEME_SWITCH_SETTLE_SECONDS)
         _run_live_theme_set(paths, name)
+        # Native selection is confirmed above, but Obsidian can defer saving
+        # appearance.json. Persist that verified choice for ownership readback
+        # and the next launch without dropping the user's other appearance keys.
+        selected = read_settings_values(paths.appearance, ("cssTheme",))["cssTheme"]
+        if not _setting_matches(selected, name):
+            if selected != previous_selection and not (refreshed and _theme_selection_matches(selected, OBSIDIAN_LIVE_REFRESH_THEME)):
+                raise ObsidianSelectionConflict("Obsidian saved theme changed during selection; preserving the newer choice")
+            apply_fragment(paths.appearance, {"cssTheme": name}, atomic=False)
     else:
         # Starting Obsidian just to run a setter leaves the apply process
         # attached to the GUI. The native package and this setting are enough
@@ -524,6 +537,14 @@ def _restore_previous_setting(
         raise ObsidianFailure("Obsidian did not restore its previous theme selection")
     if not previous["present"] and restored["present"]:
         raise ObsidianFailure("Obsidian did not clear its generated theme selection")
+
+
+def _check_cleanup_selection(paths: ObsidianPaths, previous: dict[str, Any],
+                             refreshed: bool, original_error: Exception) -> None:
+    current = read_settings_values(paths.appearance, ("cssTheme",))["cssTheme"]
+    if (current != previous and not _setting_matches(current, OBSIDIAN_THEME_NAME)
+            and not (refreshed and _theme_selection_matches(current, OBSIDIAN_LIVE_REFRESH_THEME))):
+        raise ObsidianSelectionConflict(f"{original_error}; preserving the newer saved Obsidian theme") from original_error
 
 
 def publish(
@@ -626,21 +647,28 @@ def publish(
         if previous_package_path is not None and previous_package_path != paths.package:
             _remove_package(previous_package_path)
         _save_integration(root, integration)
-    except (OSError, EditorSettingsFailure, ObsidianFailure):
+    except (OSError, EditorSettingsFailure, ObsidianFailure) as error:
         try:
             if previous_package_path is not None and previous_package_path != paths.package:
                 _remove_package(paths.package)
             else:
                 _restore_package(paths, *previous_package)
-            if live_package_was_cleared and current["present"] and isinstance(current.get("value"), str):
-                try:
-                    _select_theme(paths, current["value"], run_command, real_cli)
-                except (EditorSettingsFailure, ObsidianFailure, OSError):
-                    restore_settings(paths.appearance, {"cssTheme": current["value"]}, atomic=False)
-            elif current["present"]:
-                restore_settings(paths.appearance, {"cssTheme": current["value"]}, atomic=False)
+            if isinstance(error, ObsidianSelectionConflict):
+                pass
             else:
-                restore_settings(paths.appearance, {}, ("cssTheme",), atomic=False)
+                _check_cleanup_selection(paths, current, live_package_was_selected, error)
+                if live_package_was_cleared and current["present"] and isinstance(current.get("value"), str):
+                    try:
+                        _select_theme(paths, current["value"], run_command, real_cli)
+                    except ObsidianSelectionConflict as conflict:
+                        raise ObsidianSelectionConflict(f"{error}; cleanup: {conflict}") from conflict
+                    except (EditorSettingsFailure, ObsidianFailure, OSError):
+                        _check_cleanup_selection(paths, current, live_package_was_selected, error)
+                        restore_settings(paths.appearance, {"cssTheme": current["value"]}, atomic=False)
+                elif current["present"]:
+                    restore_settings(paths.appearance, {"cssTheme": current["value"]}, atomic=False)
+                else:
+                    restore_settings(paths.appearance, {}, ("cssTheme",), atomic=False)
             _remove_empty_appearance(paths, appearance_existed)
         finally:
             if created_integration:
@@ -687,9 +715,10 @@ def reset(
         _remove_package(package_path)
         obsidian_integration_path(root).unlink(missing_ok=True)
     except (OSError, EditorSettingsFailure, ObsidianFailure) as error:
-        try:
-            restore_settings(paths.appearance, {"cssTheme": OBSIDIAN_THEME_NAME}, atomic=False)
-        except (OSError, EditorSettingsFailure):
-            pass
+        if not isinstance(error, ObsidianSelectionConflict):
+            try:
+                restore_settings(paths.appearance, {"cssTheme": OBSIDIAN_THEME_NAME}, atomic=False)
+            except (OSError, EditorSettingsFailure):
+                pass
         return [f"Obsidian theme was not reset: {error}"]
     return []

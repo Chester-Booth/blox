@@ -169,24 +169,7 @@
         }
       }
     },
-    "widgets": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["profile", "profiles"],
-      "properties": {
-        "profile": {"enum": ["minimal", "compact", "comfortable"]},
-        "profiles": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["minimal", "compact", "comfortable"],
-          "properties": {
-            "minimal": {"$ref": "#/$defs/widgetProfile"},
-            "compact": {"$ref": "#/$defs/widgetProfile"},
-            "comfortable": {"$ref": "#/$defs/widgetProfile"}
-          }
-        }
-      }
-    }
+    "widgets": {"$ref": "https://blox.local/widgets/profile.schema.json"}
   },
   "$defs": {
     "colour": {"type": "string", "pattern": "^#[0-9a-fA-F]{6}$"},
@@ -236,18 +219,6 @@
         "then": {"properties": {"visibility": {"enum": ["always", "dedicated", "hybrid", "integrated"]}}},
         "else": {"properties": {"visibility": {"enum": ["always", "normal"]}}}
       }]
-    },
-    "widgetProfile": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["opacity", "margin", "padding", "radius", "font_size"],
-      "properties": {
-        "opacity": {"type": "number", "minimum": 0, "maximum": 1},
-        "margin": {"type": "number", "minimum": 0},
-        "padding": {"type": "number", "minimum": 0},
-        "radius": {"type": "number", "minimum": 0},
-        "font_size": {"type": "number", "minimum": 1}
-      }
     }
   }
 }

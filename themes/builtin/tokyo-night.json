@@ -185,30 +185,7 @@
     "path": "wallpapers/showcase/tokyo-night.webp"
   },
   "widgets": {
-    "items": [
-      {
-        "anchor": "bottom-left",
-        "content_command": "cava",
-        "enabled": true,
-        "height": 100,
-        "id": "music",
-        "interval_ms": 250,
-        "left_click_command": "",
-        "name": "Music",
-        "offset_x": 0,
-        "offset_y": 0,
-        "options": {
-          "auto_size": false,
-          "background_opacity": 0,
-          "scale": 1.3
-        },
-        "right_click_command": "",
-        "shape": "auto",
-        "type": "music",
-        "visibility": "empty-workspace",
-        "width": 1450
-      }
-    ],
-    "profile": "compact"
+    "schemaVersion": 1,
+    "widgets": []
   }
 }

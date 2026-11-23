@@ -1,0 +1,14 @@
+{
+  "component": "appearance",
+  "observedAt": "2026-09-27T10:05:00Z",
+  "evidence": {
+    "revision": 8,
+    "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+  },
+  "expected": {
+    "status": "externally-modified",
+    "activeTheme": null,
+    "observedDigest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+    "lastManagedDigest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+  }
+}

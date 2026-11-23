@@ -261,30 +261,7 @@
     "path": "wallpapers/showcase/dracula.webp"
   },
   "widgets": {
-    "items": [
-      {
-        "anchor": "centre",
-        "content_command": "pipes.sh",
-        "enabled": true,
-        "height": 1080,
-        "id": "pipes",
-        "interval_ms": 60000,
-        "left_click_command": "",
-        "name": "Pipes",
-        "offset_x": 0,
-        "offset_y": 0,
-        "options": {
-          "auto_size": false,
-          "background_opacity": 0,
-          "scale": 1
-        },
-        "right_click_command": "",
-        "shape": "auto",
-        "type": "pipes",
-        "visibility": "empty-workspace",
-        "width": 1920
-      }
-    ],
-    "profile": "compact"
+    "schemaVersion": 1,
+    "widgets": []
   }
 }

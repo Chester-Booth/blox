@@ -198,7 +198,7 @@
     "path": "wallpapers/showcase/catppuccin-macchiato.webp"
   },
   "widgets": {
-    "items": [],
-    "profile": "comfortable"
+    "schemaVersion": 1,
+    "widgets": []
   }
 }

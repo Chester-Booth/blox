@@ -261,7 +261,7 @@
     "path": "wallpapers/showcase/solarized-dark.webp"
   },
   "widgets": {
-    "items": [],
-    "profile": "compact"
+    "schemaVersion": 1,
+    "widgets": []
   }
 }

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import stat
 import uuid
 from dataclasses import dataclass
 from pathlib import Path
@@ -198,14 +199,26 @@ def _settings_destination(settings: Path) -> Path:
     return destination
 
 
-def _settings_text(settings: Path) -> tuple[Path, str]:
+def _settings_text(settings: Path, *, follow_symlinks: bool = True, directory_fd: int | None = None) -> tuple[Path, str]:
+    if not follow_symlinks:
+        try:
+            fd = os.open(settings.name if directory_fd is not None else settings, os.O_RDONLY | os.O_NOFOLLOW, dir_fd=directory_fd)
+        except FileNotFoundError:
+            return settings, "{}\n"
+        except OSError as error:
+            raise EditorSettingsFailure("captured editor settings destination changed") from error
+        with os.fdopen(fd, "r", encoding="utf-8") as stream:
+            info = os.fstat(stream.fileno())
+            if not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid():
+                raise EditorSettingsFailure("captured editor settings is not an owned regular file")
+            return settings, stream.read()
     destination = _settings_destination(settings)
     return destination, destination.read_text(encoding="utf-8") if destination.exists() else "{}\n"
 
 
-def read_settings_values(settings: Path, keys: list[str] | tuple[str, ...]) -> dict[str, dict[str, Any]]:
+def read_settings_values(settings: Path, keys: list[str] | tuple[str, ...], *, follow_symlinks: bool = True, directory_fd: int | None = None) -> dict[str, dict[str, Any]]:
     """Read selected JSONC settings while retaining explicit key presence."""
-    _, original = _settings_text(settings)
+    _, original = _settings_text(settings, follow_symlinks=follow_symlinks, directory_fd=directory_fd)
     parsed, _ = members(original)
     values: dict[str, dict[str, Any]] = {}
     for key in keys:
@@ -278,7 +291,23 @@ def remove_members(text: str, keys: list[str] | tuple[str, ...] | set[str]) -> s
     return text
 
 
-def _write_settings(destination: Path, updated: str, atomic: bool = True) -> None:
+def _write_settings(destination: Path, updated: str, atomic: bool = True, directory_fd: int | None = None) -> None:
+    if directory_fd is not None:
+        temporary = f".{destination.name}.{uuid.uuid4().hex}.tmp"
+        try:
+            fd = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600, dir_fd=directory_fd)
+            with os.fdopen(fd, "w", encoding="utf-8") as stream:
+                stream.write(updated)
+                stream.flush()
+                os.fsync(stream.fileno())
+            os.replace(temporary, destination.name, src_dir_fd=directory_fd, dst_dir_fd=directory_fd)
+            os.fsync(directory_fd)
+        finally:
+            try:
+                os.unlink(temporary, dir_fd=directory_fd)
+            except FileNotFoundError:
+                pass
+        return
     if not atomic and destination.exists():
         # Zed 1.17 watches the settings file inode. Keep that inode when its
         # settings change so an open window continues to receive file events.
@@ -306,8 +335,8 @@ def _write_settings(destination: Path, updated: str, atomic: bool = True) -> Non
     os.replace(temporary, destination)
 
 
-def apply_fragment(settings: Path, fragment: dict[str, Any], atomic: bool = True) -> None:
-    destination, original = _settings_text(settings)
+def apply_fragment(settings: Path, fragment: dict[str, Any], atomic: bool = True, *, follow_symlinks: bool = True, directory_fd: int | None = None) -> None:
+    destination, original = _settings_text(settings, follow_symlinks=follow_symlinks, directory_fd=directory_fd)
     parsed, _ = members(original)
     updates = {key: value for key, value in fragment.items() if key != "workbench.colorCustomizations"}
     if "workbench.colorCustomizations" in fragment:
@@ -320,7 +349,7 @@ def apply_fragment(settings: Path, fragment: dict[str, Any], atomic: bool = True
         existing_workbench.update(fragment["workbench.colorCustomizations"])
         updates["workbench.colorCustomizations"] = existing_workbench
     updated = merge_members(original, updates)
-    _write_settings(destination, updated, atomic=atomic)
+    _write_settings(destination, updated, atomic=atomic, directory_fd=directory_fd)
 
 
 def restore_settings(settings: Path, values: dict[str, Any], remove: list[str] | tuple[str, ...] = (), atomic: bool = True) -> None:

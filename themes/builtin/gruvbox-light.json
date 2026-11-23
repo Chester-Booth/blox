@@ -261,7 +261,7 @@
     "path": "wallpapers/showcase/gruvbox-light.webp"
   },
   "widgets": {
-    "items": [],
-    "profile": "minimal"
+    "schemaVersion": 1,
+    "widgets": []
   }
 }

@@ -204,7 +204,7 @@
     "path": "wallpapers/showcase/catppuccin-latte.webp"
   },
   "widgets": {
-    "items": [],
-    "profile": "minimal"
+    "schemaVersion": 1,
+    "widgets": []
   }
 }

@@ -2,19 +2,9 @@
 
 set -u
 
-install_root=${BLOX_INSTALL_ROOT:-${HOME}/.local/share/blox}
-
-# Startup must use the installed product CLI. The live dotfiles checkout can
-# contain an older theme runtime than the product currently running the shell.
-if [ -n "${BLOX_THEMECTL:-}" ]; then
-	theme_cli=${BLOX_THEMECTL}
-elif [ -x "${HOME}/.local/bin/themectl" ]; then
-	theme_cli=${HOME}/.local/bin/themectl
-elif [ -x "${install_root}/bin/themectl" ]; then
-	theme_cli=${install_root}/bin/themectl
-else
-	theme_cli=""
-fi
+# Startup repairs replay the active generation through its private owner.
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+theme_cli="$script_dir/runtime_maintenance.py"
 
 log_output() {
 	if command -v systemd-cat >/dev/null 2>&1; then
@@ -26,7 +16,7 @@ log_output() {
 
 run_logged() {
 	local output status
-	output=$("$theme_cli" "$@" --json 2>&1)
+	output=$("$theme_cli" "$@" 2>&1)
 	status=$?
 	printf '%s\n' "$output" | log_output
 	printf 'command=%q status=%s\n' "$theme_cli $*" "$status" | log_output
@@ -40,7 +30,7 @@ fi
 
 # Reconcile every active target once, as before. Exit 7 means the command
 # completed with reload warnings, so it is not a hard failure here.
-run_logged reconcile
+run_logged
 full_status=$?
 full_failed=0
 if [ "$full_status" -ne 0 ] && [ "$full_status" -ne 7 ]; then
@@ -64,7 +54,7 @@ if [ "$cursor_enabled" -eq 1 ]; then
 		if [ "$delay" -gt 0 ]; then
 			sleep "$delay"
 		fi
-		run_logged reconcile --targets cursor
+		run_logged --targets cursor
 		cursor_status=$?
 		if [ "$cursor_status" -eq 0 ]; then
 			cursor_failed=0

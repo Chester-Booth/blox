@@ -45,7 +45,7 @@ class NotificationRuntimeTests(unittest.TestCase):
 
         self.assertNotIn("/home/", bar)
         self.assertIn('Quickshell.env("BLOX_NOTIFICATION_FOCUS_SCRIPT")', bar)
-        self.assertIn("focusScript.length === 0", controller)
+        self.assertIn("focusScript.trim().length === 0", controller)
 
     def test_notification_card_invokes_the_default_action(self) -> None:
         notification_surface = (
@@ -56,17 +56,7 @@ class NotificationRuntimeTests(unittest.TestCase):
             REPOSITORY
             / "shell/popouts/BarNotificationToastSurface.qml"
         ).read_text(encoding="utf-8")
-        controller = (
-            REPOSITORY
-            / "shell/services/NotificationController.qml"
-        ).read_text(encoding="utf-8")
-
-        activate = controller.split("function activate(notification)", 1)[1].split(
-            "function focusSource", 1
-        )[0]
-        self.assertIn('actions[i].identifier === "default"', activate)
-        self.assertIn("actions[i].invoke()", activate)
-        self.assertIn("focusSource(notification)", activate)
+        # Default-action and focus outcomes run in tst_NotificationActionFeedback.qml.
         self.assertIn(
             "root.notificationController.activate(notification)", toast_surface
         )

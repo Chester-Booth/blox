@@ -1,0 +1,21 @@
+{
+  "component": "bar",
+  "observedAt": "2026-09-27T10:07:00Z",
+  "state": "unavailable",
+  "evidence": {
+    "revision": null,
+    "digest": null
+  },
+  "expected": {
+    "status": "unavailable",
+    "activeTheme": null,
+    "lastManaged": {
+      "themeId": "catppuccin-mocha",
+      "sourceDigest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "generationId": "20260927T100000Z-0123abcd",
+      "revision": 4,
+      "digest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "managedAt": "2026-09-27T10:00:00.000000Z"
+    }
+  }
+}

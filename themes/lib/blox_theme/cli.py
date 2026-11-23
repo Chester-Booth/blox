@@ -54,13 +54,8 @@ from .runtime import (
     RuntimeFailure,
     TARGET_NAMES,
     TARGET_FILES,
-    apply_theme,
-    configured_targets,
     current_generation,
     loader_checks,
-    reconcile,
-    reset_target,
-    rollback,
     setup_cursor,
     setup_gtk,
 )
@@ -116,28 +111,7 @@ def parser() -> argparse.ArgumentParser:
     doctor.add_argument("--json", action="store_true")
     apply_parser = subcommands.add_parser("apply")
     apply_parser.add_argument("theme")
-    apply_parser.add_argument("--targets", help="comma-separated runtime targets")
     apply_parser.add_argument("--json", action="store_true")
-    apply_parser.add_argument("--progress-ndjson", action="store_true", help="write structured progress events to stderr")
-    apply_parser.add_argument(
-        "--defer-quickshell-restart",
-        action="store_true",
-        help="leave the Blox surface reload to the caller after Apply completes",
-    )
-    inline_apply_parser = subcommands.add_parser("apply-inline", help=argparse.SUPPRESS)
-    inline_apply_parser.add_argument("theme")
-    inline_apply_parser.add_argument("--json", action="store_true")
-    inline_apply_parser.add_argument("--progress-ndjson", action="store_true", help=argparse.SUPPRESS)
-    inline_apply_parser.add_argument("--defer-quickshell-restart", action="store_true", help=argparse.SUPPRESS)
-    reconcile_parser = subcommands.add_parser("reconcile")
-    reconcile_parser.add_argument("--targets", help="comma-separated active targets")
-    reconcile_parser.add_argument("--json", action="store_true")
-    rollback_parser = subcommands.add_parser("rollback")
-    rollback_parser.add_argument("generation", nargs="?")
-    rollback_parser.add_argument("--json", action="store_true")
-    reset_parser = subcommands.add_parser("reset-target")
-    reset_parser.add_argument("target", choices=TARGET_NAMES)
-    reset_parser.add_argument("--json", action="store_true")
     setup_parser = subcommands.add_parser("setup")
     setup_parser.add_argument("feature", choices=("gtk", "cursor"))
     setup_parser.add_argument("--yes", action="store_true", help="confirm the reversible loader migration")
@@ -375,31 +349,24 @@ def run(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     if command in ("widgets-export", "widgets-import"):
         try:
             if command == "widgets-export":
-                widgets = json.loads(args.widgets_json)
-                document = {"schema_version": 1, "kind": "blox-widgets", "widgets": widgets}
-                probe = copy.deepcopy(load_theme(DEFAULT_THEME_ID)[1])
-                probe["widgets"] = widgets
-                checked = validate_theme(probe, check_dependencies=False)
-                if checked.errors:
-                    return envelope(command, errors=checked.errors), EXIT_VALIDATION
+                from .core import widget_model
+                document = widget_model().parse_profile(args.widgets_json)
                 output = args.output.expanduser()
                 output.parent.mkdir(parents=True, exist_ok=True)
                 with output.open("x", encoding="utf-8") as handle:
                     handle.write(canonical_json(document))
                 return envelope(command, {"output": str(output)}), EXIT_OK
-            document = json.loads(args.file.read_text(encoding="utf-8"))
-            if not isinstance(document, dict) or document.get("schema_version") != 1 or document.get("kind") != "blox-widgets" or not isinstance(document.get("widgets"), dict):
-                raise ValueError("not a Blox widgets JSON document")
-            probe = copy.deepcopy(load_theme(DEFAULT_THEME_ID)[1])
-            probe["widgets"] = document["widgets"]
-            checked = validate_theme(probe, check_dependencies=False)
-            if checked.errors:
-                return envelope(command, errors=checked.errors), EXIT_VALIDATION
+            from .core import widget_model
+            with args.file.open("rb") as handle:
+                payload = handle.read(4 * 1024 * 1024 + 1)
+            if len(payload) > 4 * 1024 * 1024:
+                raise ValueError("profile: JSON document exceeds 4 MiB")
+            document = widget_model().parse_profile(payload.decode("utf-8"))
             safe_document, executable_fields = strip_widget_document(document)
             warnings = []
             if executable_fields:
                 warnings.append("disabled executable fields from untrusted import: " + ", ".join(executable_fields))
-            return envelope(command, safe_document["widgets"], warnings=warnings), EXIT_OK
+            return envelope(command, safe_document, warnings=warnings), EXIT_OK
         except FileExistsError:
             return envelope(command, errors=[f"refusing to overwrite existing file: {args.output}"]), EXIT_VALIDATION
         except (OSError, json.JSONDecodeError, ValueError) as error:
@@ -575,28 +542,20 @@ def run(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
             return envelope(command, errors=[str(error)]), EXIT_APPLY
         return envelope(command, {"id": candidate["id"], "name": candidate["name"], "path": str(destination), "source_sha256": hashlib.sha256(destination.read_bytes()).hexdigest()}), EXIT_OK
 
-    if command in ("reconcile", "rollback", "reset-target"):
-        try:
-            if command == "reconcile":
-                selected = tuple(value.strip() for value in args.targets.split(",") if value.strip()) if args.targets else None
-                manifest, warnings = reconcile(selected)
-            elif command == "rollback":
-                manifest, warnings = rollback(args.generation)
-            else:
-                manifest, warnings = reset_target(args.target)
-        except LockContended as error:
-            return envelope(command, errors=[str(error)]), EXIT_LOCKED
-        except (OSError, RuntimeFailure) as error:
-            return envelope(command, errors=[str(error)]), EXIT_APPLY
-        data = {"generation": manifest["generation_id"], "theme_id": manifest["theme_id"], "active_targets": manifest["enabled_targets"]}
-        return envelope(command, data, warnings=warnings), EXIT_RELOAD_WARNING if warnings else EXIT_OK
+    if command == "apply":
+        # Public activation shares the Settings owner and its saved target selection.
+        sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+        from shell.scripts import bloxctl
+        exit_status, action = bloxctl.run_theme(type("ThemeApplyArgs", (), {"theme_command": "apply", "theme": args.theme})())
+        errors = [] if action["ok"] else [action["message"] or action["code"]]
+        return envelope(command, action.get("data"), errors=errors), exit_status
 
-    path, theme, failure, code = checked_theme(command, args.theme, check_dependencies=command not in ("show", "apply", "apply-inline"), dependency_gate=command in ("apply", "apply-inline"))
+    path, theme, failure, code = checked_theme(command, args.theme, check_dependencies=command != "show", dependency_gate=False)
     if failure:
         return failure, code
     assert path is not None and theme is not None
 
-    checked = validate_theme(theme, check_dependencies=command != "show", source_path=path, dependency_gate=command in ("apply", "apply-inline"))
+    checked = validate_theme(theme, check_dependencies=command != "show", source_path=path, dependency_gate=False)
     if command == "show":
         try:
             source = load_json(path)
@@ -609,93 +568,6 @@ def run(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     if command == "validate":
         data = {"id": theme["id"], "path": str(path), "valid": True}
         return envelope(command, data, warnings=checked.warnings), EXIT_OK
-
-    if command in ("apply", "apply-inline"):
-        # A normal theme switch owns the complete target selection.  Keep
-        # --targets as an explicit partial-apply escape hatch for retries and
-        # targeted CLI work.
-        authoritative_targets = command == "apply-inline" or (command == "apply" and args.targets is None)
-        try:
-            selected = configured_targets(theme) if authoritative_targets else configured_targets(theme, args.targets)
-        except RuntimeFailure as error:
-            return envelope(command, errors=[str(error)]), EXIT_VALIDATION
-        checked = validate_theme(theme, check_dependencies=True, targets=set(selected), source_path=path)
-        if checked.errors:
-            return envelope(command, errors=checked.errors, warnings=checked.warnings), EXIT_VALIDATION
-        progress_total = 3 + len(TARGET_NAMES if authoritative_targets else selected)
-        last_progress: dict[str, Any] = {}
-        apply_details: dict[str, Any] = {
-            "changed_targets": list(selected),
-            "unchanged_targets": [],
-            "pending_reloads": [],
-        }
-
-        def emit_progress(event: dict[str, Any]) -> None:
-            nonlocal last_progress
-            last_progress = event
-            for key in apply_details:
-                if key in event:
-                    apply_details[key] = event[key]
-            if not args.progress_ndjson:
-                return
-            print(json.dumps({"type": "theme-progress", **event}, sort_keys=True, separators=(",", ":")), file=sys.stderr, flush=True)
-
-        def emit_failure(error: Exception) -> None:
-            if last_progress.get("state") == "failed":
-                return
-            emit_progress({
-                "kind": "stage",
-                "stage": last_progress.get("stage", "source"),
-                "state": "failed",
-                "message": str(error),
-                "completed": last_progress.get("completed", 0),
-                "total": progress_total,
-            })
-
-        emit_progress({
-            "kind": "stage",
-            "stage": "prepare",
-            "state": "active",
-            "message": "Checking theme and dependencies",
-            "completed": 0,
-            "total": progress_total,
-            "targets": list(selected),
-        })
-        try:
-            manifest, warnings = apply_theme(
-                path,
-                theme,
-                TARGET_NAMES if authoritative_targets else selected,
-                progress=emit_progress,
-                defer_quickshell_restart=args.defer_quickshell_restart,
-                authoritative_targets=authoritative_targets,
-            )
-        except LockContended as error:
-            emit_failure(error)
-            return envelope(command, errors=[str(error)]), EXIT_LOCKED
-        except (OSError, RuntimeFailure, TypeError, ValueError) as error:
-            emit_failure(error)
-            return envelope(command, errors=[str(error)]), EXIT_APPLY
-        data = {
-            "generation": manifest["generation_id"],
-            "theme_id": manifest["theme_id"],
-            "changed_targets": apply_details["changed_targets"],
-            "unchanged_targets": apply_details["unchanged_targets"],
-            "pending_reloads": apply_details["pending_reloads"],
-            "active_targets": manifest["enabled_targets"],
-        }
-        operation_warnings = []
-        if "gtk" in selected:
-            operation_warnings.append("GTK changes apply to newly started applications; Libadwaita support is limited to best-effort user CSS")
-            if os.environ.get("GTK_THEME"):
-                operation_warnings.append("the current session still exports GTK_THEME; log out and back in to remove the legacy forced base theme")
-        if "cursor" in apply_details["changed_targets"]:
-            if args.defer_quickshell_restart:
-                operation_warnings.append("Cursor changes reach the compositor immediately; click Complete to recreate Blox Quickshell surfaces. Existing application-owned surfaces such as Helium and Steam may need their app to recreate the cursor. New Blox-launched applications receive the active cursor environment")
-            else:
-                operation_warnings.append("Cursor changes reach the compositor immediately and Blox Quickshell surfaces are recreated automatically; existing application-owned surfaces such as Helium and Steam may need their app to recreate the cursor. New Blox-launched applications receive the active cursor environment")
-        all_warnings = checked.warnings + operation_warnings + warnings
-        return envelope(command, data, warnings=all_warnings), EXIT_RELOAD_WARNING if warnings else EXIT_OK
 
     try:
         files, render_warnings = render_theme(theme, path)

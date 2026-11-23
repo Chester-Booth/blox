@@ -82,7 +82,7 @@ if "--version" in sys.argv:
     print("matugen 4.1.0")
 else:
     assert "--dry-run" in sys.argv and "--source-color-index" in sys.argv
-    assert os.environ["HOME"].startswith("/tmp/themectl-matugen-")
+    assert "/themectl-matugen-" in os.environ["HOME"]
     print({payload!r})
 ''')
         with self.environment():

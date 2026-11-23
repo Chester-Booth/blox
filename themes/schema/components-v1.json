@@ -1,0 +1,258 @@
+{
+  "manifestVersion": 1,
+  "settingsSchemaVersion": 1,
+  "legacyThemeSchemaVersion": 1,
+  "compatibility": {
+    "legacyThemeSchema": "themes/schema/theme.schema.json",
+    "readExistingThemeV1": true,
+    "rewriteExistingThemeFiles": false,
+    "unmappedFieldPolicy": "preserve-as-dormant-data"
+  },
+  "defaultSources": {
+    "settings": "shell/scripts/contracts/settings-defaults-v1.json",
+    "themeAppearance": "themes/defaults/v1.json#/theme",
+    "widgetProfile": "themes/defaults/v1.json#/widgets"
+  },
+  "bundlePresets": {
+    "minimal": [
+      "theme-metadata",
+      "appearance",
+      "wallpaper"
+    ],
+    "standard": [
+      "theme-metadata",
+      "appearance",
+      "wallpaper",
+      "bar",
+      "osd",
+      "notifications",
+      "widgets",
+      "targets",
+      "target-appearance"
+    ],
+    "full": [
+      "theme-metadata",
+      "appearance",
+      "wallpaper",
+      "bar",
+      "osd",
+      "notifications",
+      "widgets",
+      "targets",
+      "target-appearance",
+      "binds",
+      "autostart",
+      "power",
+      "monitors"
+    ]
+  },
+  "selectableComponents": [
+    "wallpaper"
+  ],
+  "components": [
+    {
+      "id": "theme-metadata",
+      "documentPath": "theme",
+      "storageOwner": "theme-library-document",
+      "runtimeOwner": "theme library",
+      "legacyReadPaths": [
+        "theme-v1:id",
+        "theme-v1:name",
+        "theme-v1:variant"
+      ],
+      "presetIncluded": {
+        "minimal": true,
+        "standard": true,
+        "full": true
+      }
+    },
+    {
+      "id": "settings-document",
+      "documentPath": "settings",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Settings document transaction owner",
+      "legacyReadPaths": [],
+      "presetIncluded": {
+        "minimal": false,
+        "standard": false,
+        "full": false
+      }
+    },
+    {
+      "id": "appearance",
+      "documentPath": "theme.components.appearance",
+      "storageOwner": "theme-library-document",
+      "runtimeOwner": "Blox theme runtime",
+      "legacyReadPaths": [
+        "theme-v1:colours",
+        "theme-v1:overrides.ansi",
+        "theme-v1:fonts",
+        "theme-v1:icons.theme",
+        "theme-v1:shape",
+        "theme-v1:hyprland",
+        "theme-v1:cursor"
+      ],
+      "presetIncluded": {
+        "minimal": true,
+        "standard": true,
+        "full": true
+      }
+    },
+    {
+      "id": "wallpaper",
+      "documentPath": "theme.components.wallpaper",
+      "storageOwner": "theme-library-document",
+      "runtimeOwner": "Blox wallpaper owner",
+      "legacyReadPaths": [
+        "theme-v1:wallpaper"
+      ],
+      "presetIncluded": {
+        "minimal": true,
+        "standard": true,
+        "full": true
+      }
+    },
+    {
+      "id": "bar",
+      "documentPath": "settings.bar",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Quickshell bar runtime",
+      "legacyReadPaths": [
+        "theme-v1:shell.bar"
+      ],
+      "presetIncluded": {
+        "minimal": false,
+        "standard": true,
+        "full": true
+      }
+    },
+    {
+      "id": "osd",
+      "documentPath": "settings.osd",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox OSD owner",
+      "legacyReadPaths": [
+        "theme-v1:shell.osd"
+      ],
+      "presetIncluded": {
+        "minimal": false,
+        "standard": true,
+        "full": true
+      }
+    },
+    {
+      "id": "notifications",
+      "documentPath": "settings.notifications",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox notification owner",
+      "legacyReadPaths": [
+        "theme-v1:shell.notifications"
+      ],
+      "presetIncluded": {
+        "minimal": false,
+        "standard": true,
+        "full": true
+      }
+    },
+    {
+      "id": "widgets",
+      "documentPath": "settings.widgets",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "legacyReadPaths": [],
+      "presetIncluded": {
+        "minimal": false,
+        "standard": true,
+        "full": true
+      }
+    },
+    {
+      "id": "targets",
+      "documentPath": "settings.targets",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Theme target registry and named target owners",
+      "legacyReadPaths": [
+        "theme-v1:targets",
+        "theme-v1:stylus.style_set"
+      ],
+      "presetIncluded": {
+        "minimal": false,
+        "standard": true,
+        "full": true
+      }
+    },
+    {
+      "id": "target-appearance",
+      "documentPath": "settings.targets[id].overrides",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Theme target appearance generator",
+      "legacyReadPaths": [
+        "theme-v1:overrides.gtk",
+        "theme-v1:overrides.hyprlock"
+      ],
+      "presetIncluded": {
+        "minimal": false,
+        "standard": true,
+        "full": true
+      }
+    },
+    {
+      "id": "binds",
+      "documentPath": "settings.binds",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Hyprland Lua owner",
+      "legacyReadPaths": [],
+      "presetIncluded": {
+        "minimal": false,
+        "standard": false,
+        "full": true
+      }
+    },
+    {
+      "id": "autostart",
+      "documentPath": "settings.autostart",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Hyprland Lua owner",
+      "legacyReadPaths": [],
+      "presetIncluded": {
+        "minimal": false,
+        "standard": false,
+        "full": true
+      }
+    },
+    {
+      "id": "power",
+      "documentPath": "settings.power",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Power policy owner",
+      "legacyReadPaths": [],
+      "presetIncluded": {
+        "minimal": false,
+        "standard": false,
+        "full": true
+      }
+    },
+    {
+      "id": "monitors",
+      "documentPath": "settings.monitors",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Phase 6 monitor layout owner; dormant in Phase 4",
+      "legacyReadPaths": [],
+      "presetIncluded": {
+        "minimal": false,
+        "standard": false,
+        "full": true
+      }
+    }
+  ],
+  "derivedFields": [
+    {
+      "path": "settings.targets[id].mode",
+      "runtimeOwner": "SettingsThemeEditorController.targetApplyMode and future target capability registry",
+      "persisted": false,
+      "status": "ownership-conflict",
+      "conflict": "Step 9 lists target apply mode under settings.targets[id].mode, while the approved mock shows it as read-only and the current theme runtime derives it from target identity.",
+      "evidence": "shell/modules/SettingsThemeEditorController.qml::targetApplyMode; reference-split/TargetsPage.qml renders mode as a label and exposes no editor."
+    }
+  ]
+}

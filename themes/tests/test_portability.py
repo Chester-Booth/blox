@@ -103,7 +103,7 @@ class PortabilityTests(unittest.TestCase):
             mock.patch("blox_theme.cli.themes_dir", return_value=self.library),
             mock.patch("blox_theme.cli.user_theme_library", return_value=self.library),
             mock.patch("blox_theme.portability.dependency_checks", return_value=missing),
-            mock.patch("blox_theme.cli.apply_theme") as apply_theme,
+            mock.patch("shell.scripts.bloxctl.run_theme") as apply_theme,
         ):
             result, code = cli.run(cli.parser().parse_args(("import", str(source), "--json")))
         self.assertEqual(0, code, result)

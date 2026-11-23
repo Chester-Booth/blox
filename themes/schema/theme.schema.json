@@ -53,11 +53,7 @@
       }
     },
     "widgets": {
-      "type": "object", "additionalProperties": false, "required": ["profile"],
-      "properties": {
-        "profile": {"enum": ["minimal", "compact", "comfortable"]},
-        "items": {"type": "array", "maxItems": 32, "items": {"$ref": "#/$defs/widget"}}
-      }
+      "$ref": "https://blox.local/widgets/profile.schema.json"
     },
     "targets": {
       "type": "object",
@@ -162,28 +158,6 @@
     }
   },
   "$defs": {
-    "widget": {
-      "type": "object", "additionalProperties": false,
-      "required": ["id", "name", "type", "enabled", "content_command", "left_click_command", "right_click_command", "interval_ms", "visibility", "anchor", "offset_x", "offset_y", "width", "height", "shape"],
-      "properties": {
-        "id": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$", "maxLength": 64},
-        "name": {"type": "string", "minLength": 1, "maxLength": 80},
-        "type": {"enum": ["file", "music", "calendar", "clock", "aquarium", "pipes", "tree", "matrix", "fortune", "train", "custom"]},
-        "enabled": {"type": "boolean"},
-        "content_command": {"type": "string", "maxLength": 4096},
-        "left_click_command": {"type": "string", "maxLength": 4096},
-        "right_click_command": {"type": "string", "maxLength": 4096},
-        "interval_ms": {"type": "integer", "minimum": 250, "maximum": 86400000},
-        "visibility": {"enum": ["always", "empty-workspace"]},
-        "anchor": {"enum": ["top-left", "top-right", "bottom-left", "bottom-right", "centre"]},
-        "offset_x": {"type": "integer", "minimum": -10000, "maximum": 10000},
-        "offset_y": {"type": "integer", "minimum": -10000, "maximum": 10000},
-        "width": {"type": "integer", "minimum": 0, "maximum": 10000},
-        "height": {"type": "integer", "minimum": 0, "maximum": 10000},
-        "shape": {"enum": ["auto", "rectangle", "rounded", "circle"]},
-        "options": {"type": "object"}
-      }
-    },
     "barItem": {
       "type": "object", "additionalProperties": false,
       "required": ["id", "enabled", "region", "order"],

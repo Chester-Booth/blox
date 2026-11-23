@@ -198,7 +198,7 @@
     "path": "wallpapers/showcase/nord.webp"
   },
   "widgets": {
-    "items": [],
-    "profile": "minimal"
+    "schemaVersion": 1,
+    "widgets": []
   }
 }

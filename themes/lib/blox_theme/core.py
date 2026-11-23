@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import hashlib
+import importlib
 import json
 import math
 import os
@@ -175,13 +176,22 @@ def default_reset_bar_items() -> list[dict[str, Any]]:
     return copy.deepcopy(load_defaults_document()["theme"]["shell"]["bar"]["reset_items"])
 
 
-def default_widget_profile(profile: str | None = None) -> dict[str, Any]:
-    document = load_defaults_document()
-    name = profile or document["widgets"]["profile"]
-    try:
-        return copy.deepcopy(document["widgets"]["profiles"][name])
-    except KeyError as error:
-        raise DefaultsFailure(f"defaults document has no widget profile: {name}") from error
+def widget_model() -> Any:
+    """Load the shared widget contract from source or the installed data root."""
+    data = Path(__file__).resolve().parents[2]
+    for library in (data / "widgets/lib", data.parent / "widgets/lib"):
+        if (library / "blox_widgets/model.py").is_file():
+            location = str(library)
+            sys.path.insert(0, location)
+            try:
+                return importlib.import_module("blox_widgets.model")
+            finally:
+                sys.path.remove(location)
+    raise DefaultsFailure(f"widget model is missing from the application data root: {data}")
+
+
+def default_widget_profile() -> dict[str, Any]:
+    return widget_model().validate_profile(load_defaults_document()["widgets"])
 
 
 def builtin_themes_dir() -> Path:
@@ -356,7 +366,7 @@ def apply_theme_defaults(theme: dict[str, Any]) -> dict[str, Any]:
         "wallpaper": copy.deepcopy(defaults["wallpaper"]),
         "terminal": copy.deepcopy(defaults["terminal"]),
         "stylus": copy.deepcopy(defaults.get("stylus", {"style_set": "recommended"})),
-        "widgets": {"profile": document["widgets"]["profile"]},
+        "widgets": copy.deepcopy(document["widgets"]),
         "targets": copy.deepcopy(defaults.get("targets", {key: False for key in THEME_TARGET_KEYS})),
     }
     for key in ("gtk", "icons", "cursor"):
@@ -373,7 +383,11 @@ def apply_theme_defaults(theme: dict[str, Any]) -> dict[str, Any]:
                 merged[key] = copy.deepcopy(item)
         return merged
 
-    return merge(fragment, theme)
+    resolved = merge(fragment, theme)
+    # A widget profile is a complete shared document, not a sparse theme section.
+    if "widgets" in theme:
+        resolved["widgets"] = copy.deepcopy(theme["widgets"])
+    return resolved
 
 
 def theme_inherited_paths(source: dict[str, Any], resolved: dict[str, Any], prefix: str = "") -> list[str]:
@@ -482,6 +496,7 @@ def list_themes() -> list[dict[str, Any]]:
             if not isinstance(data, dict):
                 raise ValueError("theme root must be a JSON object")
             resolved = apply_theme_defaults(data)
+            widgets = widget_model().validate_profile(resolved["widgets"])
             theme_id = resolved.get("id", path.stem)
             if theme_id in seen:
                 continue
@@ -500,8 +515,8 @@ def list_themes() -> list[dict[str, Any]]:
                         "wallpaper": str(resolve_wallpaper_path(wallpaper, path)) if wallpaper else "",
                         "widget_count": sum(
                             1
-                            for item in resolved.get("widgets", {}).get("items", [])
-                            if isinstance(item, dict) and item.get("enabled", True)
+                            for item in widgets["widgets"]
+                            if item["enabled"]
                         ),
                         "fonts": {
                             role: resolved.get("fonts", {}).get(role, "")
@@ -534,6 +549,10 @@ def _basic_schema_errors(instance: Any, schema: dict[str, Any], root: dict[str, 
     errors: list[str] = []
     for subschema in schema.get("allOf", []):
         errors.extend(_basic_schema_errors(instance, subschema, root, path))
+    if "anyOf" in schema and not any(
+        not _basic_schema_errors(instance, branch, root, path) for branch in schema["anyOf"]
+    ):
+        errors.append(f"{path}: does not match any allowed form")
     if "if" in schema:
         condition_matches = not _basic_schema_errors(instance, schema["if"], root, path)
         branch = schema.get("then" if condition_matches else "else")
@@ -571,6 +590,8 @@ def _basic_schema_errors(instance: Any, schema: dict[str, Any], root: dict[str, 
     elif isinstance(instance, list):
         if len(instance) < schema.get("minItems", 0):
             errors.append(f"{path}: has too few items")
+        if "maxItems" in schema and len(instance) > schema["maxItems"]:
+            errors.append(f"{path}: has too many items")
         if schema.get("uniqueItems") and len({json.dumps(item, sort_keys=True) for item in instance}) != len(instance):
             errors.append(f"{path}: items must be unique")
         for index, item in enumerate(instance):
@@ -585,31 +606,43 @@ def _basic_schema_errors(instance: Any, schema: dict[str, Any], root: dict[str, 
     elif isinstance(instance, (int, float)) and not isinstance(instance, bool):
         if "minimum" in schema and instance < schema["minimum"]:
             errors.append(f"{path}: must be at least {schema['minimum']}")
+        if "exclusiveMinimum" in schema and instance <= schema["exclusiveMinimum"]:
+            errors.append(f"{path}: must be greater than {schema['exclusiveMinimum']}")
         if "maximum" in schema and instance > schema["maximum"]:
             errors.append(f"{path}: must be at most {schema['maximum']}")
     return errors
 
 
-def schema_errors(theme: dict[str, Any]) -> list[str]:
-    schema = load_json(themes_dir() / "schema/theme.schema.json")
+def _schema_errors_with_widget_profile(document: dict[str, Any], schema: dict[str, Any]) -> list[str]:
+    """Use the shared validator for widgets, including its semantic constraints."""
+    # The published schema references the widget schema by its canonical id.
+    # Validate that field locally so validation never fetches a remote schema.
+    schema["properties"]["widgets"] = {}
+    widget_errors: list[str] = []
+    if isinstance(document, dict) and "widgets" in document:
+        model = widget_model()
+        try:
+            model.validate_profile(document["widgets"])
+        except model.ValidationError as error:
+            widget_errors.append(f"widgets: {error}")
     try:
         import jsonschema
 
         validator = jsonschema.Draft202012Validator(schema)
-        return [f"{'.'.join(str(part) for part in error.absolute_path) or '$'}: {error.message}" for error in sorted(validator.iter_errors(theme), key=lambda item: list(item.absolute_path))]
+        errors = [f"{'.'.join(str(part) for part in error.absolute_path) or '$'}: {error.message}" for error in sorted(validator.iter_errors(document), key=lambda item: list(item.absolute_path))]
     except ImportError:
-        return _basic_schema_errors(theme, schema, schema)
+        errors = _basic_schema_errors(document, schema, schema)
+    return errors + widget_errors
+
+
+def schema_errors(theme: dict[str, Any]) -> list[str]:
+    schema = load_json(themes_dir() / "schema/theme.schema.json")
+    return _schema_errors_with_widget_profile(theme, schema)
 
 
 def defaults_schema_errors(document: dict[str, Any]) -> list[str]:
     schema = load_json(themes_dir() / "schema/defaults.schema.json")
-    try:
-        import jsonschema
-
-        validator = jsonschema.Draft202012Validator(schema)
-        return [f"{'.'.join(str(part) for part in error.absolute_path) or '$'}: {error.message}" for error in sorted(validator.iter_errors(document), key=lambda item: list(item.absolute_path))]
-    except ImportError:
-        return _basic_schema_errors(document, schema, schema)
+    return _schema_errors_with_widget_profile(document, schema)
 
 
 # Keep the old public constant for callers that only need the registry shape,
@@ -696,10 +729,6 @@ def validate_theme(
     bar_item_ids = [item["id"] for item in bar_items]
     if len(bar_item_ids) != len(set(bar_item_ids)):
         result.errors.append("shell.bar.items must not contain duplicate item ids")
-    widget_items = theme.get("widgets", {}).get("items", [])
-    widget_ids = [item["id"] for item in widget_items]
-    if len(widget_ids) != len(set(widget_ids)):
-        result.errors.append("widgets.items must not contain duplicate widget ids")
     colours = theme["colours"]
     pairs = (
         ("foreground", "background", 4.5),
@@ -1667,9 +1696,9 @@ def render_obsidian(theme: dict[str, Any]) -> dict[str, str]:
         "color-cyan": c["teal"],
         "color-blue": c["info"],
         "color-purple": c["mauve"],
-        "font-interface": theme["fonts"]["ui"],
-        "font-text": theme["fonts"]["ui"],
-        "font-monospace": theme["fonts"]["mono"],
+        "font-interface": f'"{theme["fonts"]["ui"]}", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+        "font-text": f'"{theme["fonts"]["ui"]}", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+        "font-monospace": f'"{theme["fonts"]["mono"]}", ui-monospace, monospace',
         "radius-s": f"{radius_s}px",
         "radius-m": f"{radius}px",
         "radius-l": f"{radius_l}px",
@@ -1759,9 +1788,7 @@ typeset -g POWERLEVEL9K_STATUS_ERROR_BACKGROUND=%s
 
 
 def render_widgets(theme: dict[str, Any]) -> str:
-    widgets = theme.get("widgets", {})
-    profile = widgets.get("profile") or load_defaults_document()["widgets"]["profile"]
-    return canonical_json({"schema_version": 1, "profile": profile, **default_widget_profile(profile), "items": widgets.get("items", [])})
+    return canonical_json(widget_model().validate_profile(theme["widgets"]))
 
 
 def render_theme(theme: dict[str, Any], source_path: Path | None = None) -> tuple[dict[str, str], list[str]]:

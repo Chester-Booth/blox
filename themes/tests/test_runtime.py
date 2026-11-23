@@ -25,6 +25,19 @@ from blox_theme.runtime import ApplicationLock, EDITOR_EXTENSION_DIR, EDITOR_LEG
 PHASE2_TARGETS = ("quickshell", "kitty", "wallpaper")
 
 
+class ShellPathTests(unittest.TestCase):
+    def test_stopped_shell_resolves_installed_prefix(self):
+        from blox_theme import runtime
+        with tempfile.TemporaryDirectory() as directory:
+            home = Path(directory)
+            with mock.patch.dict(os.environ, {}, clear=True), \
+                    mock.patch("pathlib.Path.home", return_value=home), \
+                    mock.patch.object(runtime, "_proc_main_pid", return_value=0):
+                self.assertEqual(home / ".local/share/blox/shell", runtime.quickshell_config_path())
+                with mock.patch.dict(os.environ, {"BLOX_PREFIX": str(home / "custom")}):
+                    self.assertEqual(home / "custom/share/blox/shell", runtime.quickshell_config_path())
+
+
 class FakeCommands:
     def __init__(self, returncode: int = 0, fail_obsidian: bool = False) -> None:
         self.returncode = returncode
@@ -1237,79 +1250,46 @@ class RuntimeTests(unittest.TestCase):
 
 
 class RuntimeCliTests(unittest.TestCase):
-    def test_cli_apply_reconcile_reset_and_rollback_envelopes(self) -> None:
+    def test_public_cli_apply_uses_saved_targets_and_releases_shared_journal(self) -> None:
+        from shell.scripts.settings_document import SettingsDocument
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            fake_bin = root / "bin"
-            fake_bin.mkdir()
-            # Every external command used by the targets in this integration
-            # test must be isolated.
-            for name in (
-                "hyprctl",
-                "kitty",
-                "quickshell",
-                "systemctl",
-            ):
+            fake_bin = root / "bin"; fake_bin.mkdir()
+            for name in ("hyprctl", "luac", "kitty", "quickshell", "systemctl"):
                 executable = fake_bin / name
                 executable.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
                 executable.chmod(0o755)
+            (fake_bin / "hyprctl").write_text("#!/bin/sh\nif [ \"$1\" = configerrors ]; then echo 'no flags were set'; else echo ok; fi\n")
             environment = os.environ.copy()
-            environment.update({
-                "XDG_STATE_HOME": str(root / "state"),
-                "XDG_CONFIG_HOME": str(root / "config"),
-                "XDG_DATA_HOME": str(root / "data"),
-                "PATH": f"{fake_bin}:{environment['PATH']}",
-                "QUICKSHELL_IPC_PID": "4242",
-                "BLOX_SHELL_DIR": str(root / "config" / "quickshell" / "blox"),
-            })
-            quickshell_loader = root / "config/quickshell/blox/shared/Theme.qml"
-            quickshell_loader.parent.mkdir(parents=True)
-            quickshell_loader.write_text("watchChanges: true\nfunction loadJson() {}\n", encoding="utf-8")
-            kitty_config = root / "config/kitty/kitty.conf"
-            kitty_config.parent.mkdir(parents=True)
-            kitty_config.write_text("globinclude blox-theme.conf\n", encoding="utf-8")
-
-            def invoke(*arguments: str) -> tuple[int, dict]:
-                completed = subprocess.run([str(THEMES / "bin/themectl"), *arguments, "--json"], cwd=REPOSITORY, env=environment, check=False, capture_output=True, text=True)
-                return completed.returncode, json.loads(completed.stdout)
-
-            apply_code, applied = invoke("apply", "catppuccin-mocha", "--targets", "quickshell,wallpaper")
-            if apply_code != 0:
-                print("APPLY ERRORS:", applied.get("errors"))
-            self.assertEqual(0, apply_code)
-            self.assertTrue(applied["ok"])
-            first = applied["data"]["generation"]
-            streamed = subprocess.run(
-                [str(THEMES / "bin/themectl"), "apply", "catppuccin-mocha", "--targets", "quickshell,wallpaper", "--progress-ndjson", "--json"],
-                cwd=REPOSITORY,
-                env=environment,
-                check=False,
-                capture_output=True,
-                text=True,
-            )
-            self.assertEqual(0, streamed.returncode)
-            events = [json.loads(line) for line in streamed.stderr.splitlines()]
-            self.assertTrue(events)
-            self.assertTrue(all(event["type"] == "theme-progress" for event in events))
-            self.assertEqual(["quickshell", "wallpaper"], events[0]["targets"])
-            stage_ids = list(dict.fromkeys(event["stage"] for event in events if event["kind"] == "stage"))
-            self.assertEqual(["prepare", "cursor", "activation", "applications"], stage_ids)
-            target_events = [event for event in events if event["kind"] == "target"]
-            self.assertEqual(["quickshell", "wallpaper"], [event["target"] for event in target_events])
-            self.assertEqual(["unchanged", "unchanged"], [event["state"] for event in target_events])
-            self.assertEqual([], json.loads(streamed.stdout)["data"]["changed_targets"])
-            self.assertEqual(["quickshell", "wallpaper"], json.loads(streamed.stdout)["data"]["unchanged_targets"])
-            self.assertEqual(events[-1]["total"], events[-1]["completed"])
-            first = json.loads(streamed.stdout)["data"]["generation"]
-            reconcile_code, reconciled = invoke("reconcile")
-            self.assertEqual(0, reconcile_code)
-            self.assertEqual(first, reconciled["data"]["generation"])
-            reset_code, reset = invoke("reset-target", "quickshell")
-            self.assertEqual(0, reset_code)
-            self.assertNotIn("quickshell", reset["data"]["active_targets"])
-            rollback_code, rolled_back = invoke("rollback", first)
-            self.assertEqual(0, rollback_code)
-            self.assertIn("quickshell", rolled_back["data"]["active_targets"])
+            environment.update({"XDG_STATE_HOME": str(root / "state"),
+                "XDG_CONFIG_HOME": str(root / "config"), "XDG_DATA_HOME": str(root / "data"),
+                "XDG_RUNTIME_DIR": str(root / "runtime"), "BLOX_HYPRLAND_PREVIEW_STATE": str(root / "preview"),
+                "PATH": f"{fake_bin}:{environment['PATH']}", "BLOX_DATA_DIR": str(THEMES),
+                "BLOX_SHELL_DIR": str(root / "config/quickshell/blox")})
+            environment.pop("QUICKSHELL_IPC_PID", None)
+            (root / "config/hypr").mkdir(parents=True)
+            from shell.scripts.hyprland_settings import ENTRYPOINT_LINE, MARKER
+            (root / "config/hypr/hyprland.lua").write_text(ENTRYPOINT_LINE + "\n")
+            (root / "config/blox").mkdir(mode=0o700)
+            (root / "config/blox/hyprland-settings.lua").write_text(MARKER)
+            (root / "config/blox/hyprland-settings.lua").chmod(0o600)
+            with mock.patch.dict(os.environ, environment):
+                owner = SettingsDocument()
+                current = owner.get()
+                for target in current.data["targets"]:
+                    current = owner.set("targets." + target + ".enabled", target == "quickshell", current.revision)
+                    self.assertTrue(current.ok)
+            loader = root / "config/quickshell/blox/shared/Theme.qml"
+            loader.parent.mkdir(parents=True); loader.write_text("watchChanges: true\nfunction loadJson() {}\n")
+            completed = subprocess.run([str(THEMES / "bin/themectl"), "apply", "catppuccin-mocha", "--json"], cwd=root, env=environment, capture_output=True, text=True)
+            self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
+            response = json.loads(completed.stdout)
+            self.assertTrue(response["ok"], response)
+            self.assertEqual(response["data"]["phase"], "complete")
+            self.assertEqual(set(response["data"]["targets"]), {"quickshell"})
+            self.assertFalse((root / "state/blox/theme/apply/apply.json").exists())
+            manifest = json.loads((root / "state/blox/theme/current/manifest.json").read_text())
+            self.assertEqual(manifest["enabled_targets"], ["quickshell"])
 
     def test_cli_setup_requires_confirmation(self) -> None:
         completed = subprocess.run([str(THEMES / "bin/themectl"), "setup", "gtk", "--json"], cwd=REPOSITORY, check=False, capture_output=True, text=True)

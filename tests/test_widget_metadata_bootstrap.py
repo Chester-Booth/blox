@@ -13,18 +13,14 @@ ROOT = Path(__file__).resolve().parents[1]
 @unittest.skipUnless(shutil.which("quickshell"), "Quickshell is required for metadata transport verification")
 class WidgetMetadataBootstrapTests(unittest.TestCase):
     def test_closed_open_reopen_and_parse_error(self):
-        source = (ROOT / "shell/modules/SettingsWindow.qml").read_text()
-        properties = source[source.index("    readonly property string widgetSourceRoot:"):
-            source.index("\n", source.index("    readonly property string widgetMetadataError:"))]
-        start = source.index("    function loadWidgetMetadata(")
-        transport = source[start:source.index("\n    Connections {", start)]
-        with tempfile.TemporaryDirectory(prefix="blox-widget-metadata-") as temporary:
+        with tempfile.TemporaryDirectory(dir="/tmp", prefix="blox-widget-meta-") as temporary:
             directory = Path(temporary)
             shared = directory / "shared"
             shared.mkdir()
             (shared / "qmldir").write_text("singleton Theme 1.0 Theme.qml\n")
             (shared / "Theme.qml").write_text("pragma Singleton\nimport QtQml\nQtObject { property var widgetRegistry: ({}); property bool widgetRegistryLoaded: false }")
-            # Use the production properties, parsers, FileViews and registry Process unchanged.
+            shutil.copyfile(ROOT / "shell/modules/SettingsWidgetMetadataLoader.qml", directory / "SettingsWidgetMetadataLoader.qml")
+            # Exercise the real SettingsWidgetMetadataLoader component directly.
             (directory / "shell.qml").write_text("""import QtQuick
 import Quickshell
 import Quickshell.Io
@@ -36,9 +32,19 @@ Scope {
     property int completions: 0
     property int stage: 0
     property int ticks: 0
-""" + properties + "\n" + transport + """
+    readonly property string widgetSourceRoot: Quickshell.env("BLOX_WIDGETS_ROOT")
+    property alias widgetCatalogue: widgetMetadata.widgetCatalogue
+    property alias widgetSchema: widgetMetadata.widgetSchema
+    property alias widgetCatalogueError: widgetMetadata.widgetCatalogueError
+    readonly property string widgetMetadataError: widgetMetadata.widgetMetadataError
+    function loadWidgetMetadata(kind, text) { widgetMetadata.loadMetadata(kind, text); }
+    SettingsWidgetMetadataLoader {
+        id: widgetMetadata
+        active: root.windowOpen
+        widgetSourceRoot: root.widgetSourceRoot
+    }
     Connections {
-        target: widgetRegistryProcess
+        target: widgetMetadata.registryProcess
         function onStarted() { root.scans++; }
         function onExited() { root.completions++; }
     }

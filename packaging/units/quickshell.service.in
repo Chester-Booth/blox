@@ -1,5 +1,6 @@
 [Unit]
 Description=Blox Quickshell desktop shell
+After=graphical-session.target
 StartLimitIntervalSec=30
 StartLimitBurst=5
 

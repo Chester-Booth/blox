@@ -19,6 +19,7 @@ Scope {
     property var widgetRegistryErrors: []
     property string widgetRegistryOutput: ""
     property string widgetRegistryStderr: ""
+    readonly property alias registryProcess: widgetRegistryProcess
     readonly property string widgetMetadataError: widgetCatalogueError || widgetSchemaError || widgetRegistryError
 
     function loadMetadata(kind, text) {
@@ -96,6 +97,7 @@ Scope {
     }
 
     Process {
+        id: widgetRegistryProcess
         command: ["python3", "-m", "blox_widgets.cli", "registry"]
         environment: ({PYTHONPATH: root.widgetSourceRoot + "/lib"})
         running: root.active

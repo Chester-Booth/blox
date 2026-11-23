@@ -44,8 +44,8 @@ Item {
         if (options.kind === "network") controller.updateWidgetOption("interfaces",["wlan0"]);
         if (["command","terminal"].indexOf(options.kind) >= 0) {
             controller.updateWidgetDraft({name:options.kind === "terminal" ? "Tree" : "Todo"});
-            controller.updateWidgetOption("command", options.kind === "terminal" ? ["cbonsai","-l"] : ["/home/blox/Code/blox/shell/scripts/widgets/todo-content.sh"]);
-            controller.updateWidgetOption("workingDirectory", "/home/blox/Todo");
+            controller.updateWidgetOption("command", options.kind === "terminal" ? ["cbonsai","-l"] : ["/tmp/blox-fixture/todo-content.sh"]);
+            controller.updateWidgetOption("workingDirectory", "/tmp/blox-fixture/todo");
             controller.updateWidgetOption("environment", {LANG:"en_GB.UTF-8"});
         }
         if (options.kind === "command") {
@@ -54,11 +54,11 @@ Item {
             controller.updateWidgetOption("fontFamily",Theme.monoFontFamily);
             controller.updateWidgetOption("fontSize",14);
             controller.updateWidgetOption("padding",24);
-            controller.updateWidgetOption("actions", {left:{kind:"run",command:["blox-widget-action","todo","next"],workingDirectory:"/home/blox/Todo",environment:{LANG:"en_GB.UTF-8"},timeoutSeconds:5},right:{kind:"launch",command:["kitty"]}});
+            controller.updateWidgetOption("actions", {left:{kind:"run",command:["blox-widget-action","todo","next"],workingDirectory:"/tmp/blox-fixture/todo",environment:{LANG:"en_GB.UTF-8"},timeoutSeconds:5},right:{kind:"launch",command:["kitty"]}});
             if (options.action && options.actionKind) {
                 const actions = JSON.parse(JSON.stringify(controller.widgetDraft.settings.actions));
                 actions[options.action] = options.actionKind === "none" ? null : options.actionKind === "launch"
-                    ? {kind:"launch",command:["kitty"]} : {kind:"run",command:["blox-widget-action","todo","next"],workingDirectory:"/home/blox/Todo",environment:{LANG:"en_GB.UTF-8"},timeoutSeconds:5};
+                    ? {kind:"launch",command:["kitty"]} : {kind:"run",command:["blox-widget-action","todo","next"],workingDirectory:"/tmp/blox-fixture/todo",environment:{LANG:"en_GB.UTF-8"},timeoutSeconds:5};
                 controller.updateWidgetOption("actions",actions);
             }
         }

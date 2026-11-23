@@ -1,5 +1,5 @@
 {
-  "generationPath": "/home/chester/.local/state/blox/theme/generations/20260927T100000Z-0123abcd",
+  "generationPath": "/home/user/.local/state/blox/theme/generations/20260927T100000Z-0123abcd",
   "manifest": {
     "generation_id": "20260927T100000Z-0123abcd",
     "created_at": "2026-09-27T10:00:00+00:00",
@@ -30,16 +30,16 @@
       "themeId": "dracula",
       "sourceDigest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
       "paths": [
-        "/home/chester/.local/state/blox/theme/generations/20260927T100000Z-0123abcd/gtk/gtk-3.0/settings.ini",
-        "/home/chester/.local/state/blox/theme/generations/20260927T100000Z-0123abcd/gtk/gtk-4.0/settings.ini",
-        "/home/chester/.local/state/blox/theme/generations/20260927T100000Z-0123abcd/gtk/metadata.json"
+        "/home/user/.local/state/blox/theme/generations/20260927T100000Z-0123abcd/gtk/gtk-3.0/settings.ini",
+        "/home/user/.local/state/blox/theme/generations/20260927T100000Z-0123abcd/gtk/gtk-4.0/settings.ini",
+        "/home/user/.local/state/blox/theme/generations/20260927T100000Z-0123abcd/gtk/metadata.json"
       ]
     },
     "quickshell": {
       "themeId": "catppuccin-mocha",
       "sourceDigest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
       "paths": [
-        "/home/chester/.local/state/blox/theme/generations/20260927T100000Z-0123abcd/quickshell/theme.json"
+        "/home/user/.local/state/blox/theme/generations/20260927T100000Z-0123abcd/quickshell/theme.json"
       ]
     }
   }

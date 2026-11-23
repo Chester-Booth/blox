@@ -4695,7 +4695,7 @@
       "runtimeOwner": "SettingsThemeEditorController.targetApplyMode and future target capability registry",
       "persisted": false,
       "status": "resolved",
-      "evidence": "Chester confirmed on 27 September 2026. shell/modules/SettingsThemeEditorController.qml::targetApplyMode derives the label by target ID; reference-split/TargetsPage.qml displays it read-only and has no editor.",
+      "evidence": "Confirmed on 27 September 2026. shell/modules/SettingsThemeEditorController.qml::targetApplyMode derives the label by target ID; reference-split/TargetsPage.qml displays it read-only and has no editor.",
       "resolution": "Read-only apply behavior belongs to the target runtime and is derived from target identity. It is not a user preference and is not persisted in Settings or theme data."
     }
   ]

@@ -227,7 +227,7 @@ class ImageDecodeSizeTests(unittest.TestCase):
         except ImportError:
             self.skipTest('PySide6 is required for isolated rendering')
         for dpr in (1, 2):
-            with self.subTest(dpr=dpr), tempfile.TemporaryDirectory(prefix='chester-image-bounds-') as directory:
+            with self.subTest(dpr=dpr), tempfile.TemporaryDirectory(prefix='blox-image-bounds-') as directory:
                 environment = dict(os.environ, QT_QPA_PLATFORM='offscreen', QT_QUICK_BACKEND='software',
                     QT_SCALE_FACTOR=str(dpr), QT_QPA_PLATFORMTHEME='', QT_STYLE_OVERRIDE='',
                     QT_QUICK_CONTROLS_STYLE='Basic')

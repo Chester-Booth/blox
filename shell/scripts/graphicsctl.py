@@ -120,6 +120,55 @@ def rate_id(rate: float) -> str:
     return f"{rate:.3f}".rstrip("0").rstrip(".")
 
 
+_PLACEHOLDER_SERIALS = {"", "0", "00000000", "unknown", "default", "none", "n/a"}
+
+
+def _normalise_identity_part(value: Any) -> str:
+    return re.sub(r"\s+", " ", str(value or "").strip()).lower()
+
+
+def _fnv64_fingerprint(text: str) -> str:
+    """Match OutputIdentity.js dual FNV-1a 64-bit hex fingerprint."""
+    h1 = 0x811C9DC5
+    h2 = 0x9E3779B9
+    for idx, ch in enumerate(text):
+        code = ord(ch)
+        h1 = ((h1 ^ code) * 0x01000193) & 0xFFFFFFFF
+        h2 = ((h2 ^ ((code + idx) & 0xFF)) * 0x01000193) & 0xFFFFFFFF
+    return f"{h1:08x}{h2:08x}"
+
+
+def logical_output_identity(item: dict[str, Any]) -> dict[str, Any]:
+    """Compute a redacted, deterministic logical identity for one Hyprland monitor."""
+    connector = str(item.get("name", "")).strip()
+    make = _normalise_identity_part(item.get("make"))
+    model = _normalise_identity_part(item.get("model"))
+    serial = _normalise_identity_part(item.get("serial"))
+    description = _normalise_identity_part(item.get("description"))
+    is_headless = connector.startswith("HEADLESS-")
+    serial_valid = bool(serial) and serial not in _PLACEHOLDER_SERIALS and not re.fullmatch(r"0+", serial)
+
+    if not is_headless and serial_valid:
+        kind = "edid"
+        logical_id = "edid:" + _fnv64_fingerprint(f"{make}|{model}|{serial}")
+        volatile = False
+    elif not is_headless and (make or model or (description and description != _normalise_identity_part(connector))):
+        kind = "description"
+        logical_id = "desc:" + _fnv64_fingerprint(f"{make}|{model}|{description}")
+        volatile = False
+    else:
+        kind = "connector"
+        logical_id = f"connector:{connector or 'unknown'}"
+        volatile = True
+
+    return {
+        "logicalId": logical_id,
+        "identityKind": kind,
+        "serialPresent": serial_valid,
+        "volatile": volatile,
+    }
+
+
 def monitor_snapshot(raw: Any) -> dict[str, Any]:
     if not isinstance(raw, list):
         raise AdapterError("invalid-data", "Hyprland returned a non-array monitor snapshot")
@@ -139,10 +188,22 @@ def monitor_snapshot(raw: Any) -> dict[str, Any]:
         except (KeyError, TypeError, ValueError) as error:
             raise AdapterError("invalid-data", "Hyprland returned an invalid active monitor") from error
         rates: dict[str, float] = {}
+        all_modes: dict[tuple[int, int, str], dict[str, Any]] = {}
         for advertised in item.get("availableModes", []):
             parsed = parse_mode(str(advertised))
-            if parsed and parsed[:2] == (width, height):
-                rates[rate_id(parsed[2])] = parsed[2]
+            if not parsed:
+                continue
+            mw, mh, mr = parsed
+            rid = rate_id(mr)
+            all_modes[(mw, mh, rid)] = {
+                "width": mw,
+                "height": mh,
+                "rate": mr,
+                "refreshId": rid,
+                "label": f"{mw}x{mh} @ {mr:g} Hz",
+            }
+            if (mw, mh) == (width, height):
+                rates[rid] = mr
         if not rates:
             rates[rate_id(current_rate)] = current_rate
         choices = [
@@ -150,9 +211,21 @@ def monitor_snapshot(raw: Any) -> dict[str, Any]:
             for key, value in sorted(rates.items(), key=lambda pair: pair[1], reverse=True)
         ]
         current_choice = min(choices, key=lambda choice: abs(choice["rate"] - current_rate))
+        identity = logical_output_identity(item)
+        active_ws = item.get("activeWorkspace") if isinstance(item.get("activeWorkspace"), dict) else {}
         monitors.append({
             "name": name,
+            "make": str(item.get("make", "")),
+            "model": str(item.get("model", "")),
             "description": str(item.get("description", name)),
+            "logicalId": identity["logicalId"],
+            "identityKind": identity["identityKind"],
+            "serialPresent": identity["serialPresent"],
+            "volatile": identity["volatile"],
+            "ambiguous": False,
+            "focused": bool(item.get("focused", False)),
+            "activeWorkspaceId": active_ws.get("id"),
+            "mirrorOf": str(item.get("mirrorOf", "none")),
             "width": width,
             "height": height,
             "refreshRate": current_rate,
@@ -162,8 +235,20 @@ def monitor_snapshot(raw: Any) -> dict[str, Any]:
             "scale": scale,
             "transform": transform,
             "rates": choices,
+            "modes": sorted(
+                all_modes.values(),
+                key=lambda m: (m["width"] * m["height"], m["rate"]),
+                reverse=True,
+            ),
             "canChange": len(choices) > 1,
         })
+    counts: dict[str, int] = {}
+    for monitor in monitors:
+        if monitor["identityKind"] != "connector":
+            counts[monitor["logicalId"]] = counts.get(monitor["logicalId"], 0) + 1
+    for monitor in monitors:
+        if monitor["identityKind"] != "connector" and counts.get(monitor["logicalId"], 0) > 1:
+            monitor["ambiguous"] = True
     can_change = any(item["canChange"] for item in monitors)
     reason = None if can_change else "no-refresh-choice"
     if not monitors:

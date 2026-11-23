@@ -164,6 +164,7 @@ Item {
         workspaceController: root.workspaceController
         notificationController: root.notificationController
         panelAnchorOwner: root.region === "hidden" ? null : root
+        outputName: root.anchorScreen ? root.anchorScreen.name : ""
         horizontal: root.horizontal
         panelExtent: root.panelExtent
         maximumExtent: root.maximumExtent

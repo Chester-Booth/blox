@@ -60,7 +60,7 @@ test-bloxctl:
 	@PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests/test_bloxctl.py tests/test_control_routing.py tests/test_settings_runtime.py tests/test_bundle_runtime.py tests/test_cursor_preview.py tests/test_apply_runtime.py tests/test_settings_shell_restart.py tests/test_obsidian_cli.py tests/test_obsidian_restore.py tests/test_hyprland_settings.py tests/test_settings_hyprland_preview_handoff.py tests/test_installed_helpers.py shell/tests/calendar/test_calendar_adapter.py shell/tests/calendar/test_calendar_store.py -v
 
 test-graphics-control:
-	@PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests/test_graphics_control.py -v
+	@PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests/test_graphics_control.py tests/test_multimonitor_foundations.py -v
 
 test-lifecycle: native-services native-widgets
 	@PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests/test_lifecycle.py tests/test_native_services_packaging.py tests/test_native_widgets_packaging.py -v

@@ -72,6 +72,15 @@ Scope {
     }
 
     Connections {
+        target: barContentController.workspaces
+        function onJsonChanged() {
+            const payload = barContentController.workspaces.json;
+            if (payload && payload.monitors)
+                barSurfaceController.syncFullscreenByOutput(payload.monitors);
+        }
+    }
+
+    Connections {
         target: barContentController.brightness
         function onBrightnessApplied(percent) {
             barSurfaceController.osdLevelPreview("brightness", percent, false);
@@ -85,6 +94,13 @@ Scope {
             id: panel
 
             required property var modelData
+            readonly property string outputName: modelData ? modelData.name : ""
+            readonly property bool panelBarPinnedOpen: barSurfaceController.isBarPinnedOpen(outputName)
+            readonly property bool panelBarVisible: barSurfaceController.isBarVisible(outputName)
+            property real panelBarSlide: panelBarVisible ? 1 : 0
+            Behavior on panelBarSlide {
+                NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
+            }
 
             function claimScreen() {
                 barSurfaceController.activeScreen = modelData;
@@ -100,9 +116,9 @@ Scope {
             property string submittingReservationKey: ""
 
             screen: modelData
-            implicitWidth: barSurfaceController.horizontalBar ? modelData.width : (barSurfaceController.barVisible || barSurfaceController.barSlide > 0.01 ? barDepth : 1)
-            implicitHeight: barSurfaceController.horizontalBar ? (barSurfaceController.barVisible || barSurfaceController.barSlide > 0.01 ? barDepth : 1) : modelData.height
-            exclusiveZone: barSurfaceController.requestedExclusiveZone
+            implicitWidth: barSurfaceController.horizontalBar ? modelData.width : (panelBarVisible || panelBarSlide > 0.01 ? barDepth : 1)
+            implicitHeight: barSurfaceController.horizontalBar ? (panelBarVisible || panelBarSlide > 0.01 ? barDepth : 1) : modelData.height
+            exclusiveZone: Theme.ready && panelBarPinnedOpen ? Math.round(barDepth * panelBarSlide) : 0
             focusable: false
             visible: Theme.ready
             color: "transparent"
@@ -139,17 +155,17 @@ Scope {
                 hoverEnabled: true
                 onEntered: {
                     panel.claimScreen();
-                    barSurfaceController.enterEdgeTrigger();
+                    barSurfaceController.enterEdgeTrigger(panel.outputName);
                 }
-                onExited: barSurfaceController.leaveEdgeTrigger()
+                onExited: barSurfaceController.leaveEdgeTrigger(panel.outputName)
             }
 
             Rectangle {
                 id: railSurface
                 // Keep the mapped bar and its reservation while hiding covered visuals.
                 opacity: root.fullscreenWidgetOutputs.indexOf(panel.modelData.name) >= 0 ? 0 : 1
-                x: barSurfaceController.horizontalBar ? panel.barEndInset : Theme.barPosition === "left" ? panel.barInset + Math.round(-panel.barDepth * (1 - barSurfaceController.barSlide)) : Theme.barPosition === "right" ? panel.barInset + Math.round(panel.barDepth * (1 - barSurfaceController.barSlide)) : 0
-                y: barSurfaceController.horizontalBar ? (Theme.barPosition === "top" ? panel.barInset + Math.round(-panel.barDepth * (1 - barSurfaceController.barSlide)) : Theme.barPosition === "bottom" ? panel.barInset + Math.round(panel.barDepth * (1 - barSurfaceController.barSlide)) : 0) : panel.barEndInset
+                x: barSurfaceController.horizontalBar ? panel.barEndInset : Theme.barPosition === "left" ? panel.barInset + Math.round(-panel.barDepth * (1 - panel.panelBarSlide)) : Theme.barPosition === "right" ? panel.barInset + Math.round(panel.barDepth * (1 - panel.panelBarSlide)) : 0
+                y: barSurfaceController.horizontalBar ? (Theme.barPosition === "top" ? panel.barInset + Math.round(-panel.barDepth * (1 - panel.panelBarSlide)) : Theme.barPosition === "bottom" ? panel.barInset + Math.round(panel.barDepth * (1 - panel.panelBarSlide)) : 0) : panel.barEndInset
                 width: barSurfaceController.horizontalBar ? Math.max(0, parent.width - panel.barEndInset * 2) : Theme.railWidth
                 height: barSurfaceController.horizontalBar ? Theme.railWidth : Math.max(0, parent.height - panel.barEndInset * 2)
                 radius: Math.min(Theme.barScaledRadius(12), Math.min(width, height) / 2)
@@ -162,7 +178,7 @@ Scope {
                         if (hovered)
                             panel.claimScreen();
 
-                        barSurfaceController.railSurfaceHovered = hovered;
+                        barSurfaceController.setRailSurfaceHovered(panel.outputName, hovered);
                     }
                 }
 

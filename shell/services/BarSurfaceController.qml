@@ -5,6 +5,7 @@ import Quickshell.Hyprland
 import Quickshell.Io
 import Quickshell.Wayland
 import "../shared/WidgetWorkArea.js" as WidgetWorkArea
+import "../shared/OutputIdentity.js" as OutputIdentity
 
 Scope {
     id: root
@@ -17,6 +18,12 @@ Scope {
     property var openPanelAnchorItem: null
     property string scriptRoot: Quickshell.shellDir + "/scripts"
     property bool barOpen: true
+    property var outputOverrides: ({})
+    property var edgeTriggerHoveredByOutput: ({})
+    property var railSurfaceHoveredByOutput: ({})
+    property var manualBarOpenByOutput: ({})
+    property var fullscreenByOutput: ({})
+    property string pendingEdgeReleaseOutput: ""
     property bool edgeTriggerHovered: false
     property bool railSurfaceHovered: false
     readonly property var activeToplevelState: Hyprland.activeToplevel ? Hyprland.activeToplevel.lastIpcObject || ({
@@ -184,12 +191,139 @@ Scope {
         onTriggered: { if (reservationQuery.running) reservationQuery.signal(9); }
     }
 
-    function enterEdgeTrigger() {
+    function syncFullscreenByOutput(monitorsMap) {
+        const next = {};
+        if (monitorsMap && typeof monitorsMap === "object") {
+            const keys = Object.keys(monitorsMap);
+            for (let i = 0; i < keys.length; i++) {
+                const name = keys[i];
+                const entry = monitorsMap[name];
+                if (entry && typeof entry === "object")
+                    next[name] = entry.hasFullscreen === true;
+            }
+        }
+        fullscreenByOutput = next;
+    }
+
+    function outputConfigFor(outputName) {
+        const globalConfig = {
+            bar: {
+                visible: barOpen,
+                position: Theme.barPosition,
+                workspaceFilter: "this-display",
+                showEmptyWorkspaces: true
+            }
+        };
+        return OutputIdentity.resolveOutputConfig(globalConfig, outputOverrides, "", outputName || "");
+    }
+
+    function barPositionFor(outputName) {
+        return outputConfigFor(outputName).bar.position;
+    }
+
+    function workspaceFilterFor(outputName) {
+        return outputConfigFor(outputName).bar.workspaceFilter;
+    }
+
+    function showEmptyWorkspacesFor(outputName) {
+        return outputConfigFor(outputName).bar.showEmptyWorkspaces;
+    }
+
+    function isManualBarOpen(outputName) {
+        if (outputName && Object.prototype.hasOwnProperty.call(manualBarOpenByOutput, outputName))
+            return manualBarOpenByOutput[outputName] === true;
+        return outputConfigFor(outputName).bar.visible;
+    }
+
+    function setManualBarOpen(outputName, open) {
+        const target = outputName || (activeScreen ? activeScreen.name : "");
+        if (!target) {
+            barOpen = !!open;
+            return;
+        }
+        const next = Object.assign({}, manualBarOpenByOutput);
+        next[target] = !!open;
+        manualBarOpenByOutput = next;
+        if (!open && activeScreen && activeScreen.name === target)
+            closeBarOverlays();
+    }
+
+    function toggleManualBarOpen(outputName) {
+        const target = outputName || (activeScreen ? activeScreen.name : "");
+        setManualBarOpen(target, !isManualBarOpen(target));
+    }
+
+    function isFullscreenOn(outputName) {
+        if (outputName && Object.prototype.hasOwnProperty.call(fullscreenByOutput, outputName))
+            return fullscreenByOutput[outputName] === true;
+        if (Quickshell.screens.length > 1 && outputName && activeScreen && activeScreen.name !== outputName)
+            return false;
+        return fullscreenActive;
+    }
+
+    function isBarPinnedOpen(outputName) {
+        return isManualBarOpen(outputName) && !isFullscreenOn(outputName);
+    }
+
+    function isOutputOverlayActive(outputName) {
+        if (outputName && activeScreen && activeScreen.name !== outputName)
+            return false;
+        return openPanel.length > 0 || trayOpen || trayMenuOpen || popoutHovered || trayHovered || trayBoundsHovered || inputPopupLocked;
+    }
+
+    function isHoverRevealHeld(outputName) {
+        if (isBarPinnedOpen(outputName))
+            return false;
+        const edgeHeld = outputName ? (edgeTriggerHoveredByOutput[outputName] === true) : edgeTriggerHovered;
+        const railHeld = outputName ? (railSurfaceHoveredByOutput[outputName] === true) : railSurfaceHovered;
+        return edgeHeld || railHeld || isOutputOverlayActive(outputName);
+    }
+
+    function isBarVisible(outputName) {
+        return isBarPinnedOpen(outputName) || isHoverRevealHeld(outputName);
+    }
+
+    function setRailSurfaceHovered(outputName, hovered) {
+        if (outputName) {
+            const next = Object.assign({}, railSurfaceHoveredByOutput);
+            next[outputName] = !!hovered;
+            railSurfaceHoveredByOutput = next;
+        }
+        railSurfaceHovered = !!hovered || Object.keys(railSurfaceHoveredByOutput).some(k => railSurfaceHoveredByOutput[k] === true);
+    }
+
+    function filterWorkspacesForOutput(items, outputName) {
+        const list = Array.isArray(items) ? items : [];
+        const filter = workspaceFilterFor(outputName);
+        const showEmpty = showEmptyWorkspacesFor(outputName);
+        const hasTaggedMonitors = outputName && list.some(item => item && item.monitor && item.monitor.length > 0);
+        const result = [];
+        for (let i = 0; i < list.length; i++) {
+            const item = list[i];
+            if (!item)
+                continue;
+            if (filter === "this-display" && hasTaggedMonitors && item.monitor && item.monitor !== outputName)
+                continue;
+            const isActiveHere = item.activeOnMonitor !== undefined ? item.activeOnMonitor : item.active;
+            if (!showEmpty && item.empty === true && !isActiveHere && !item.active && !item.urgent)
+                continue;
+            result.push(Object.assign({}, item, {active: !!(isActiveHere || item.active)}));
+        }
+        return result;
+    }
+
+    function enterEdgeTrigger(outputName) {
         edgeTriggerRelease.stop();
+        if (outputName) {
+            const next = Object.assign({}, edgeTriggerHoveredByOutput);
+            next[outputName] = true;
+            edgeTriggerHoveredByOutput = next;
+        }
         edgeTriggerHovered = true;
     }
 
-    function leaveEdgeTrigger() {
+    function leaveEdgeTrigger(outputName) {
+        pendingEdgeReleaseOutput = outputName || "";
         edgeTriggerRelease.restart();
     }
 
@@ -572,7 +706,18 @@ Scope {
 
         interval: 140
         repeat: false
-        onTriggered: root.edgeTriggerHovered = false
+        onTriggered: {
+            if (root.pendingEdgeReleaseOutput) {
+                const next = Object.assign({}, root.edgeTriggerHoveredByOutput);
+                next[root.pendingEdgeReleaseOutput] = false;
+                root.edgeTriggerHoveredByOutput = next;
+                root.pendingEdgeReleaseOutput = "";
+                root.edgeTriggerHovered = Object.keys(next).some(k => next[k] === true);
+            } else {
+                root.edgeTriggerHoveredByOutput = ({});
+                root.edgeTriggerHovered = false;
+            }
+        }
     }
 
     Behavior on barSlide {

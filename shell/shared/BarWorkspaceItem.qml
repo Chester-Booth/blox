@@ -16,7 +16,7 @@ Item {
         height: root.context.horizontal ? Theme.buttonSize : implicitHeight
 
         Repeater {
-            model: root.context.workspaceController.items
+            model: root.context.surfaceController.filterWorkspacesForOutput(root.context.workspaceController.items, root.context.outputName)
 
             WorkspaceRailButton {
                 item: modelData

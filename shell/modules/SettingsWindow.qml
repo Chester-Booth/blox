@@ -190,8 +190,8 @@ FloatingWindow {
     }
     function restoreFocusAfterDialog() {
         if (detailLoader.item && detailLoader.item.focusPrimaryAction) detailLoader.item.focusPrimaryAction();
-        else if (shelfOpen) themeSearchField.forceActiveFocus();
-        else activeThemeCard.focusAction();
+        else if (shelfOpen) themeShelfOverlay.themeSearchField.forceActiveFocus();
+        else sidebar.activeThemeCard.focusAction();
     }
     function reviewApplyScripts(records) { bundleController.reviewApplyScripts(records); }
     function refreshAfterApply(preserveSettingsDraft) {
@@ -246,20 +246,20 @@ FloatingWindow {
     readonly property real themeShelfHeight: Math.min(frame.height - 28,
         Theme.scaledSpacing(16) + 38 + Theme.scaledSpacing(6) + (3 * 82) + (2 * Theme.scaledSpacing(5)))
     readonly property real themeShelfWidth: Math.min(265, frame.width - 28)
-    readonly property real themeGeometryRevision: activeThemeCard.x + activeThemeCard.y
-        + activeThemeCard.width + activeThemeCard.height + sidebar.x + sidebar.y
+    readonly property real themeGeometryRevision: sidebar.activeThemeCard.x + sidebar.activeThemeCard.y
+        + sidebar.activeThemeCard.width + sidebar.activeThemeCard.height + sidebar.x + sidebar.y
         + sidebar.width + sidebar.height + frame.x + frame.y + frame.width + frame.height
         + root.width + root.height
     readonly property point themeButtonPosition: {
         const revision = themeGeometryRevision;
-        const activeInFrame = activeThemeCard.mapToItem(frame, 0, 0);
+        const activeInFrame = sidebar.activeThemeCard.mapToItem(frame, 0, 0);
         return Qt.point(frame.x + activeInFrame.x, frame.y + activeInFrame.y);
     }
     readonly property real themeShelfGap: Theme.scaledSpacing(8)
     readonly property real themeShelfX: Math.max(10,
         Math.min(root.width - themeShelfWidth - 10, themeButtonPosition.x))
     readonly property real themeShelfY: {
-        const buttonBottom = themeButtonPosition.y + activeThemeCard.height;
+        const buttonBottom = themeButtonPosition.y + sidebar.activeThemeCard.height;
         const above = themeButtonPosition.y - themeShelfGap - themeShelfHeight;
         if (above >= 10)
             return above;
@@ -888,14 +888,14 @@ FloatingWindow {
         }
         newMenuOpen = false;
         const point = anchor.mapToItem(frame, 0, 0);
-        const menuWidth = themeCardMenuOverlay.width;
-        const menuHeight = themeCardMenuOverlay.height;
+        const menuWidth = themeShelfOverlay.themeCardMenuOverlay.width;
+        const menuHeight = themeShelfOverlay.themeCardMenuOverlay.height;
         const position = themeMenuState.positionFor(point, Qt.size(anchor.width, anchor.height),
             Qt.size(menuWidth, menuHeight), Qt.size(frame.width, frame.height));
         themeCardMenuX = position.x;
         themeCardMenuY = position.y;
         themeCardMenuData = themeLibrary.cardFor(card.id) || card;
-        themeMenuState.openMenu(card.id, anchor, keyboardOpened, themeMenuExportButton);
+        themeMenuState.openMenu(card.id, anchor, keyboardOpened, themeShelfOverlay.themeMenuExportButton);
     }
 
     function closeThemeCardMenu(cardId) {
@@ -919,10 +919,10 @@ FloatingWindow {
             }
             const localX = x - Number(point.originX) - frame.x;
             const localY = y - Number(point.originY) - frame.y;
-            const menu = themeCardMenuOverlay.mapToItem(frame, 0, 0);
+            const menu = themeShelfOverlay.themeCardMenuOverlay.mapToItem(frame, 0, 0);
             const occluded = themeCardMenuOpen
-                && localX >= menu.x && localX <= menu.x + themeCardMenuOverlay.width
-                && localY >= menu.y && localY <= menu.y + themeCardMenuOverlay.height;
+                && localX >= menu.x && localX <= menu.x + themeShelfOverlay.themeCardMenuOverlay.width
+                && localY >= menu.y && localY <= menu.y + themeShelfOverlay.themeCardMenuOverlay.height;
             setShelfCursor({x: localX, y: localY, occluded: occluded});
         } catch (_) {
             // Pointer events still provide hover state when Hyprland is unavailable.
@@ -935,8 +935,8 @@ FloatingWindow {
     }
 
     function syncThemeCardHover() {
-        for (let index = 0; index < themeList.count; index++) {
-            const card = themeList.itemAtIndex(index);
+        for (let index = 0; index < themeShelfOverlay.themeList.count; index++) {
+            const card = themeShelfOverlay.themeList.itemAtIndex(index);
             if (card)
                 card.syncGlobalPointer();
         }
@@ -986,9 +986,9 @@ FloatingWindow {
             shelfCursor = ({x: -1, y: -1, occluded: false});
         Qt.callLater(() => {
             if (shelfOpen)
-                themeSearchField.forceActiveFocus();
+                themeShelfOverlay.themeSearchField.forceActiveFocus();
             else
-                activeThemeCard.focusAction();
+                sidebar.activeThemeCard.focusAction();
         });
     }
     property var shelfCursor: ({x: -1, y: -1, occluded: false})
@@ -1014,9 +1014,9 @@ FloatingWindow {
 
     onNewMenuOpenChanged: Qt.callLater(() => {
         if (newMenuOpen)
-            newFromBlankButton.forceActiveFocus();
+            themeShelfOverlay.newFromBlankButton.forceActiveFocus();
         else if (shelfOpen && !themeCardMenuOpen)
-            newThemeToggleButton.forceActiveFocus();
+            themeShelfOverlay.newThemeToggleButton.forceActiveFocus();
     })
 
     onClosed: { if (!widgetEditing) { windowOpen = true; Qt.callLater(closeWindow); } }
@@ -1068,7 +1068,7 @@ FloatingWindow {
             else if (shellState.searchResultsOpen) {
                 shellState.searchResultsOpen = false;
                 root.loadPage();
-                settingsSearchField.forceActiveFocus();
+                sidebar.searchField.forceActiveFocus();
             } else {
                 event.accepted = false;
                 return;
@@ -1079,12 +1079,12 @@ FloatingWindow {
         TapHandler {
             gesturePolicy: TapHandler.ReleaseWithinBounds
             onTapped: eventPoint => {
-                const fieldPosition = settingsSearchField.mapToItem(frame, 0, 0);
+                const fieldPosition = sidebar.searchField.mapToItem(frame, 0, 0);
                 const point = eventPoint.position;
                 const insideSearch = point.x >= fieldPosition.x
-                    && point.x <= fieldPosition.x + settingsSearchField.width
+                    && point.x <= fieldPosition.x + sidebar.searchField.width
                     && point.y >= fieldPosition.y
-                    && point.y <= fieldPosition.y + settingsSearchField.height;
+                    && point.y <= fieldPosition.y + sidebar.searchField.height;
                 if (!insideSearch)
                     frame.forceActiveFocus();
             }
@@ -1095,338 +1095,15 @@ FloatingWindow {
             anchors.margins: Theme.scaledSpacing(12)
             spacing: Theme.scaledSpacing(14)
 
-            Rectangle {
+            SettingsSidebar {
                 id: sidebar
+                windowOwner: root
+                shellState: shellState
+                frameItem: frame
                 Layout.preferredWidth: 254
                 Layout.minimumWidth: 242
                 Layout.maximumWidth: 264
                 Layout.fillHeight: true
-                color: Theme.surface
-                border.color: Theme.border
-                border.width: 1
-                radius: Theme.scaledRadius(8)
-
-                ColumnLayout {
-                    anchors.fill: parent
-                    anchors.margins: Theme.scaledSpacing(10)
-                    spacing: Theme.scaledSpacing(8)
-
-                    Item {
-                        Layout.fillWidth: true
-                        implicitHeight: settingsSearchField.implicitHeight
-                        z: 100
-
-                        BloxTextField {
-                            id: settingsSearchField
-                            objectName: "settings-search"
-                            anchors.fill: parent
-                            placeholderText: "Search settings…"
-                            text: shellState.settingsSearch
-                            trailingInset: allResultsButton.visible ? 34 : 0
-                            onTextEdited: value => {
-                                shellState.settingsSearch = value;
-                                shellState.searchResultsOpen = false;
-                                shellState.suggestionIndex = 0;
-                                if (value.trim().length > 0)
-                                    suggestionPopup.open();
-                                else
-                                    suggestionPopup.close();
-                            }
-                            onAccepted: root.acceptSearch()
-                            Keys.onEscapePressed: event => {
-                                suggestionPopup.close();
-                                frame.forceActiveFocus();
-                                event.accepted = true;
-                            }
-                            Keys.onDownPressed: event => {
-                                const count = shellState.suggestionResults().length;
-                                if (count > 0) {
-                                    shellState.suggestionIndex = Math.min(count - 1, shellState.suggestionIndex + 1);
-                                    suggestionPopup.open();
-                                }
-                                event.accepted = true;
-                            }
-                            Keys.onUpPressed: event => {
-                                shellState.suggestionIndex = Math.max(0, shellState.suggestionIndex - 1);
-                                event.accepted = true;
-                            }
-                        }
-
-                        Popup {
-                            id: suggestionPopup
-                            parent: settingsSearchField
-                            z: 1000
-                            x: 0
-                            y: settingsSearchField.height + Theme.scaledSpacing(5)
-                            width: settingsSearchField.width
-                            height: Math.min(248, suggestionColumn.implicitHeight + 12)
-                            padding: 6
-                            modal: false
-                            focus: false
-                            closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutsideParent
-                            background: Rectangle {
-                                color: Theme.surface
-                                border.color: Theme.blue
-                                border.width: 1
-                                radius: Theme.scaledRadius(9)
-                            }
-                            contentItem: Column {
-                                id: suggestionColumn
-                                spacing: 2
-
-                                Repeater {
-                                    model: shellState.suggestionResults()
-                                    Rectangle {
-                                        required property var modelData
-                                        required property int index
-                                        width: suggestionPopup.availableWidth
-                                        height: 48
-                                        radius: Theme.scaledRadius(6)
-                                        color: index === shellState.suggestionIndex
-                                            ? Theme.withAlpha(Theme.blue, 0.16)
-                                            : suggestionHover.hovered ? Theme.surfaceAlt : "transparent"
-                                        border.color: index === shellState.suggestionIndex ? Theme.blue : "transparent"
-                                        border.width: index === shellState.suggestionIndex ? 1 : 0
-
-                                        Column {
-                                            anchors.left: parent.left
-                                            anchors.right: parent.right
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            anchors.leftMargin: 8
-                                            anchors.rightMargin: 8
-                                            spacing: 2
-                                            Text {
-                                                width: parent.width
-                                                text: modelData.label
-                                                color: Theme.foreground
-                                                font.family: Theme.bodyFontFamily
-                                                font.pixelSize: 12
-                                                font.bold: true
-                                                elide: Text.ElideRight
-                                            }
-                                            Text {
-                                                width: parent.width
-                                                text: shellState.categoryLabel(modelData.category) + "  ›  "
-                                                    + shellState.sectionLabel(modelData.category, modelData.section)
-                                                color: Theme.muted
-                                                font.family: Theme.bodyFontFamily
-                                                font.pixelSize: 10
-                                                elide: Text.ElideRight
-                                            }
-                                        }
-                                        HoverHandler { id: suggestionHover }
-                                        MouseArea {
-                                            anchors.fill: parent
-                                            preventStealing: true
-                                            propagateComposedEvents: false
-                                            cursorShape: Qt.PointingHandCursor
-                                            onClicked: {
-                                                suggestionPopup.close();
-                                                root.openSearchResult(modelData);
-                                            }
-                                        }
-                                    }
-                                }
-
-                                Text {
-                                    width: suggestionPopup.availableWidth
-                                    height: shellState.suggestionResults().length === 0 ? 34 : 0
-                                    visible: shellState.suggestionResults().length === 0
-                                    text: "No matching settings"
-                                    color: Theme.muted
-                                    font.family: Theme.bodyFontFamily
-                                    font.pixelSize: 10
-                                    verticalAlignment: Text.AlignVCenter
-                                    horizontalAlignment: Text.AlignHCenter
-                                }
-                            }
-                        }
-
-                        Rectangle {
-                            id: allResultsButton
-                            objectName: "all-search-results"
-                            anchors.right: parent.right
-                            anchors.rightMargin: 4
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: 30
-                            height: 30
-                            visible: shellState.settingsSearch.trim().length > 0
-                            activeFocusOnTab: visible
-                            Keys.onReturnPressed: root.openAllSearchResults()
-                            Keys.onSpacePressed: root.openAllSearchResults()
-                            radius: Theme.scaledRadius(7)
-                            color: activeFocus || arrowHover.hovered
-                                ? Theme.withAlpha(Theme.foreground, 0.12) : "transparent"
-                            border.color: activeFocus ? Theme.blue : "transparent"
-
-                            PhosphorIcon {
-                                anchors.centerIn: parent
-                                width: 18
-                                height: 18
-                                iconName: "arrow-right"
-                                iconColor: Theme.foreground
-                            }
-                            HoverHandler { id: arrowHover; cursorShape: Qt.PointingHandCursor }
-                            TapHandler { onTapped: root.openAllSearchResults() }
-                            BloxToolTip { shown: arrowHover.hovered; text: shellState.searchResults().length === 1
-                                ? "Go to result" : "Show all search results"; delay: 400 }
-                        }
-                    }
-
-                    Flickable {
-                        id: sidebarScroll
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        contentWidth: width - (sidebarScroll.contentHeight > sidebarScroll.height ? 10 : 0)
-                        contentHeight: sidebarCategories.implicitHeight
-                        clip: true
-                        boundsBehavior: Flickable.StopAtBounds
-
-                        BloxWheelHandler { flickable: sidebarScroll }
-
-                        ColumnLayout {
-                            id: sidebarCategories
-                            width: sidebarScroll.contentWidth
-                            spacing: Theme.scaledSpacing(2)
-
-                            Repeater {
-                                model: shellState.visibleCategories()
-                                ColumnLayout {
-                                    id: categoryDelegate
-                                    required property var modelData
-                                    Layout.fillWidth: true
-                                    implicitHeight: 38 + nestedSections.height
-                                    spacing: 1
-
-                                    Rectangle {
-                                        objectName: "category-" + categoryDelegate.modelData.id
-                                        Layout.fillWidth: true
-                                        Layout.preferredHeight: 38
-                                        activeFocusOnTab: true
-                                        Keys.onReturnPressed: shellState.openCategory(categoryDelegate.modelData.id)
-                                        Keys.onSpacePressed: shellState.openCategory(categoryDelegate.modelData.id)
-                                        radius: Theme.scaledRadius(9)
-                                        color: shellState.category === categoryDelegate.modelData.id
-                                            ? Theme.withAlpha(Theme.blue, 0.14)
-                                            : categoryHover.hovered ? Theme.withAlpha(Theme.surfaceAlt, 0.6) : "transparent"
-                                        border.color: activeFocus || shellState.category === categoryDelegate.modelData.id
-                                            ? Theme.blue : categoryHover.hovered ? Theme.border : "transparent"
-                                        border.width: activeFocus ? 2 : shellState.category === categoryDelegate.modelData.id ? 1 : 0
-
-                                        RowLayout {
-                                            anchors.fill: parent
-                                            anchors.leftMargin: Theme.scaledSpacing(8)
-                                            anchors.rightMargin: Theme.scaledSpacing(8)
-                                            spacing: Theme.scaledSpacing(9)
-                                            PhosphorIcon {
-                                                Layout.preferredWidth: 18
-                                                Layout.preferredHeight: 18
-                                                iconName: categoryDelegate.modelData.icon
-                                                iconColor: shellState.category === categoryDelegate.modelData.id ? Theme.blue : Theme.foreground
-                                            }
-                                            Text {
-                                                Layout.fillWidth: true
-                                                text: categoryDelegate.modelData.label
-                                                color: shellState.category === categoryDelegate.modelData.id ? Theme.blue : Theme.foreground
-                                                font.family: Theme.bodyFontFamily
-                                                font.pixelSize: 14
-                                                font.bold: shellState.category === categoryDelegate.modelData.id
-                                                elide: Text.ElideRight
-                                            }
-                                        }
-                                        HoverHandler { id: categoryHover }
-                                        TapHandler { onTapped: shellState.openCategory(categoryDelegate.modelData.id) }
-                                    }
-
-                                    ColumnLayout {
-                                        id: nestedSections
-                                        visible: shellState.category === categoryDelegate.modelData.id
-                                        Layout.fillWidth: true
-                                        Layout.preferredHeight: visible ? sectionRepeater.count * 31 : 0
-                                        height: visible ? sectionRepeater.count * 31 : 0
-                                        implicitHeight: visible ? sectionRepeater.count * 31 : 0
-                                        Layout.leftMargin: 27
-                                        spacing: 1
-
-                                        Repeater {
-                                            id: sectionRepeater
-                                            model: shellState.sectionsFor(categoryDelegate.modelData.id)
-                                            Rectangle {
-                                                required property var modelData
-                                                objectName: "section-" + categoryDelegate.modelData.id + "-" + modelData.id
-                                                Layout.fillWidth: true
-                                                Layout.preferredHeight: 30
-                                                height: 30
-                                                activeFocusOnTab: true
-                                                Keys.onReturnPressed: shellState.openSection(categoryDelegate.modelData.id, modelData.id)
-                                                Keys.onSpacePressed: shellState.openSection(categoryDelegate.modelData.id, modelData.id)
-                                                radius: Theme.scaledRadius(7)
-                                                color: shellState.section === modelData.id
-                                                    ? Theme.withAlpha(Theme.blue, 0.10)
-                                                    : sectionHover.hovered ? Theme.withAlpha(Theme.surfaceAlt, 0.52) : "transparent"
-                                                border.color: activeFocus ? Theme.blue : "transparent"
-                                                Text {
-                                                    anchors.left: parent.left
-                                                    anchors.right: parent.right
-                                                    anchors.verticalCenter: parent.verticalCenter
-                                                    anchors.leftMargin: Theme.scaledSpacing(9)
-                                                    anchors.rightMargin: Theme.scaledSpacing(5)
-                                                    text: modelData.label
-                                                    color: shellState.section === modelData.id ? Theme.blue : Theme.foreground
-                                                    font.family: Theme.bodyFontFamily
-                                                    font.pixelSize: 11
-                                                    font.bold: shellState.section === modelData.id
-                                                    elide: Text.ElideRight
-                                                }
-                                                HoverHandler { id: sectionHover }
-                                                TapHandler { onTapped: shellState.openSection(categoryDelegate.modelData.id, modelData.id) }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        ScrollBar.vertical: ScrollBar {
-                            id: sidebarScrollbar
-                            width: 8
-                            policy: sidebarScroll.contentHeight > sidebarScroll.height ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff
-                            background: Rectangle { radius: Theme.scaledRadius(3); color: Theme.withAlpha(Theme.foreground, 0.04) }
-                            contentItem: Rectangle { implicitWidth: 6; radius: Theme.scaledRadius(3); color: sidebarScrollbar.hovered || sidebarScrollbar.pressed ? Theme.foreground : Theme.muted }
-                        }
-                    }
-
-                    Rectangle { Layout.fillWidth: true; height: 1; color: Theme.border }
-
-                    Text {
-                        objectName: "settings-feedback"
-                        Layout.fillWidth: true
-                        visible: root.feedbackText.length > 0
-                        text: root.feedbackText
-                        color: root.settingsController.conflict ? Theme.yellow
-                            : root.settingsController.error || (themeEditorController && themeEditorController.errorMessage.length > 0)
-                                ? Theme.red : Theme.muted
-                        font.family: Theme.bodyFontFamily
-                        font.pixelSize: 10
-                        wrapMode: Text.Wrap
-                    }
-
-                    SettingsThemeCard {
-                        id: activeThemeCard
-                        objectName: "active-theme-card"
-                        Layout.fillWidth: true
-                        compact: true
-                        themeData: root.currentThemeCard || ({id: "", name: "Theme", palette: []})
-                        selected: true
-                        active: true
-                        toggleOpen: root.shelfOpen
-                        onChosen: themeId => root.selectTheme(themeId)
-                        onToggleRequested: {
-                            root.closeThemeCardMenu();
-                            root.shelfOpen = !root.shelfOpen;
-                        }
-                    }
-                }
             }
 
             Rectangle {
@@ -1541,269 +1218,13 @@ FloatingWindow {
             }
         }
 
-        MouseArea {
-            id: shelfDismiss
+        SettingsThemeShelfOverlay {
+            id: themeShelfOverlay
             anchors.fill: parent
-            visible: root.shelfOpen
             z: 19
-            acceptedButtons: Qt.AllButtons
-            onClicked: {
-                root.shelfOpen = false;
-                root.newMenuOpen = false;
-                root.closeThemeCardMenu();
-            }
-        }
-
-        Rectangle {
-            id: themeShelf
-            visible: root.shelfOpen
-            z: 20
-            x: root.themeShelfX
-            y: root.themeShelfY
-            width: root.themeShelfWidth
-            height: root.themeShelfHeight
-            color: Theme.surface
-            border.color: Theme.border
-            border.width: 1
-            radius: Theme.scaledRadius(9)
-
-            MouseArea { anchors.fill: parent; acceptedButtons: Qt.AllButtons; preventStealing: true; onClicked: root.closeThemeCardMenu() }
-
-            ColumnLayout {
-                anchors.fill: parent
-                anchors.margins: Theme.scaledSpacing(8)
-                spacing: Theme.scaledSpacing(6)
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    Layout.minimumHeight: 38
-                    z: 2
-                    spacing: Theme.scaledSpacing(6)
-                    BloxTextField {
-                        id: themeSearchField
-                        Layout.fillWidth: true
-                        placeholderText: "Search themes"
-                        text: themeLibrary.searchText
-                        onTextEdited: value => themeLibrary.searchText = value
-                    }
-                    Item {
-                        id: newThemeButton
-                        Layout.preferredWidth: 38
-                        Layout.preferredHeight: 38
-                        z: root.newMenuOpen ? 100 : 0
-                        BloxButton {
-                            id: newThemeToggleButton
-                            objectName: "new-theme-toggle"
-                            exclusiveTap: true
-                            anchors.fill: parent
-                            compact: true
-                            iconName: "plus"
-                            iconSize: 18
-                            onClicked: {
-                                root.closeThemeCardMenu();
-                                root.newMenuOpen = !root.newMenuOpen;
-                            }
-                        }
-                    }
-                }
-
-                ListView {
-                    id: themeList
-                Text {
-                    parent: themeList
-                    z: 2
-                    visible: themeLibrary.filteredThemes().length === 0
-                    anchors.centerIn: themeList
-                    text: "No themes match the search."
-                    color: Theme.muted
-                    font.family: Theme.bodyFontFamily
-                    font.pixelSize: 12
-                    horizontalAlignment: Text.AlignHCenter
-                }
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    clip: true
-                    spacing: Theme.scaledSpacing(5)
-                    model: themeLibrary.filteredThemes()
-                    boundsBehavior: Flickable.StopAtBounds
-                    BloxWheelHandler { flickable: themeList }
-                    delegate: SettingsThemeCard {
-                        required property var modelData
-                        width: themeList.width - (themeList.contentHeight > themeList.height ? 10 : 0)
-                        pointerCoordinateItem: frame
-                        globalPointer: root.shelfCursor
-                        themeData: themeLibrary.cardFor(modelData.id)
-                        active: modelData.id === themeLibrary.appliedThemeId
-                        selected: modelData.id === themeLibrary.selectedThemeId
-                        menuOpen: root.themeCardMenuOpen && root.themeCardMenuCardId === modelData.id
-                        onContextMenuRequested: (anchor, keyboardOpened) => root.openThemeCardMenu(modelData, anchor, keyboardOpened)
-                        onMenuDismissRequested: root.closeThemeCardMenu(modelData.id)
-                        onChosen: themeId => {
-                            root.closeThemeCardMenu();
-                            root.selectTheme(themeId);
-                            root.shelfOpen = false;
-                        }
-                    }
-                    ScrollBar.vertical: ScrollBar {
-                        id: themeScrollbar
-                        width: 8
-                        policy: themeList.contentHeight > themeList.height ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff
-                        background: Rectangle { radius: Theme.scaledRadius(3); color: Theme.withAlpha(Theme.foreground, 0.04) }
-                        contentItem: Rectangle { implicitWidth: 6; radius: Theme.scaledRadius(3); color: themeScrollbar.hovered || themeScrollbar.pressed ? Theme.foreground : Theme.muted }
-                    }
-                }
-
-
-            }
-
-            MouseArea {
-                id: newMenuDismiss
-                anchors.fill: parent
-                visible: root.newMenuOpen
-                z: 30
-                acceptedButtons: Qt.AllButtons
-                onClicked: root.newMenuOpen = false
-            }
-        }
-
-        Rectangle {
-            id: newThemeMenuOverlay
-            objectName: "new-theme-menu"
-            visible: root.shelfOpen && root.newMenuOpen
-            z: 40
-            x: themeShelf.x + themeShelf.width - Theme.scaledSpacing(8) - width
-            y: themeShelf.y + Theme.scaledSpacing(8) + 38 + Theme.scaledSpacing(4)
-            width: 220
-            height: 126
-            radius: Theme.scaledRadius(9)
-            color: Theme.surfaceAlt
-            border.color: Theme.border
-
-            // Empty padding and disabled actions must also consume pointer events.
-            MouseArea {
-                objectName: "new-menu-pointer-shield"
-                anchors.fill: parent
-                acceptedButtons: Qt.AllButtons
-                preventStealing: true
-                onPressed: mouse => mouse.accepted = true
-                onClicked: mouse => mouse.accepted = true
-                onWheel: wheel => wheel.accepted = true
-            }
-
-            ColumnLayout {
-                anchors.fill: parent
-                anchors.margins: Theme.scaledSpacing(4)
-                spacing: 2
-                BloxButton {
-                    id: newFromBlankButton
-                    objectName: "new-theme-from-blank"
-                    Layout.fillWidth: true
-                    text: "From blank"
-                    elideText: true
-                    onClicked: {
-                        root.newMenuOpen = false;
-                        root.requestThemeAction("new-blank", "");
-                    }
-                }
-                BloxButton {
-                    Layout.fillWidth: true
-                    text: "From wallpaper"
-                    elideText: true
-                    onClicked: {
-                        root.newMenuOpen = false;
-                        root.requestThemeAction("new-wallpaper", "");
-                    }
-                }
-                BloxButton {
-                    Layout.fillWidth: true
-                    text: "Import theme"
-                    elideText: true
-                    onClicked: {
-                        root.newMenuOpen = false;
-                        root.requestThemeAction("import", "");
-                    }
-                }
-            }
-        }
-
-        Rectangle {
-            id: themeCardMenuOverlay
-            objectName: "theme-card-context-menu"
-            visible: root.themeCardMenuOpen
-            z: 51
-            x: root.themeCardMenuX
-            y: root.themeCardMenuY
-            width: 164
-            height: themeCardMenuActions.implicitHeight + Theme.scaledSpacing(8)
-            radius: Theme.scaledRadius(10)
-            color: Theme.surfaceAlt
-            border.color: Theme.border
-
-            // Empty padding and disabled actions must also consume pointer events.
-            MouseArea {
-                objectName: "theme-menu-pointer-shield"
-                anchors.fill: parent
-                acceptedButtons: Qt.AllButtons
-                preventStealing: true
-                onPressed: mouse => mouse.accepted = true
-                onClicked: mouse => mouse.accepted = true
-                onWheel: wheel => wheel.accepted = true
-            }
-
-            Column {
-                id: themeCardMenuActions
-                anchors.fill: parent
-                anchors.margins: Theme.scaledSpacing(4)
-                spacing: Theme.scaledSpacing(4)
-
-                BloxButton {
-                    id: themeMenuExportButton
-                    objectName: "theme-menu-export"
-                    width: parent.width
-                    text: "Export"
-                    onClicked: {
-                        const card = root.themeCardMenuData;
-                        root.closeThemeCardMenu();
-                        root.requestThemeAction("export", card.id);
-                    }
-                }
-                BloxButton {
-                    width: parent.width
-                    text: "Duplicate"
-                    onClicked: {
-                        const card = root.themeCardMenuData;
-                        root.closeThemeCardMenu();
-                        root.requestThemeAction("duplicate", card.id);
-                    }
-                }
-                BloxButton {
-                    width: parent.width
-                    objectName: "theme-menu-rename"
-                    text: "Rename"
-                    enabled: root.themeCardMenuData.id !== "blox-panel"
-                        && String(root.themeCardMenuData.meta || "").toLowerCase().indexOf("built in") < 0
-                        && String(root.themeCardMenuData.meta || "").indexOf("unsaved") < 0
-                    onClicked: {
-                        const card = root.themeCardMenuData;
-                        root.closeThemeCardMenu();
-                        root.requestThemeAction("rename", card.id);
-                    }
-                }
-                BloxButton {
-                    width: parent.width
-                    objectName: "theme-menu-delete"
-                    text: "Delete"
-                    destructive: true
-                    enabled: root.themeCardMenuData.id !== "blox-panel"
-                        && String(root.themeCardMenuData.meta || "").toLowerCase().indexOf("built in") < 0
-                        && root.themeCardMenuData.id !== themeLibrary.appliedThemeId
-                    onClicked: {
-                        const card = root.themeCardMenuData;
-                        root.closeThemeCardMenu();
-                        root.requestThemeAction("delete", card.id);
-                    }
-                }
-            }
+            windowOwner: root
+            themeLibrary: themeLibrary
+            frameItem: frame
         }
 
         SettingsEditorModal {
@@ -1980,8 +1401,8 @@ FloatingWindow {
 
     function acceptSearch() {
         const suggestions = shellState.suggestionResults();
-        if (suggestionPopup.visible && suggestions.length > 0) {
-            suggestionPopup.close();
+        if (sidebar.suggestionPopup.visible && suggestions.length > 0) {
+            sidebar.suggestionPopup.close();
             root.openSearchResult(suggestions[Math.min(shellState.suggestionIndex, suggestions.length - 1)]);
         } else {
             root.openAllSearchResults();
@@ -1989,7 +1410,7 @@ FloatingWindow {
     }
 
     function openAllSearchResults() {
-        suggestionPopup.close();
+        sidebar.suggestionPopup.close();
         const matches = shellState.searchResults();
         if (matches.length === 1) {
             root.openSearchResult(matches[0]);

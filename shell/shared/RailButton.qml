@@ -18,6 +18,17 @@ Rectangle {
     signal hovered(real centerY)
     signal exited()
 
+    activeFocusOnTab: true
+    Keys.onPressed: event => {
+        if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
+            root.clicked(root.y + root.height / 2);
+            event.accepted = true;
+        } else if (event.key === Qt.Key_Menu || (event.key === Qt.Key_F10 && (event.modifiers & Qt.ShiftModifier))) {
+            root.rightClicked();
+            event.accepted = true;
+        }
+    }
+
     Layout.alignment: Qt.AlignHCenter
     implicitWidth: Theme.buttonSize
     implicitHeight: visible ? Theme.buttonSize : 0
@@ -26,6 +37,8 @@ Rectangle {
     radius: Theme.barRadius
     color: alert ? Theme.red : active || mouse.containsMouse ? Theme.surfaceAlt : "transparent"
     opacity: mouse.containsMouse ? 0.68 : 1
+    border.width: activeFocus ? 1 : 0
+    border.color: Theme.blue
 
     Text {
         id: iconText

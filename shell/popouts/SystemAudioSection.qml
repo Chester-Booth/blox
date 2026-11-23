@@ -6,13 +6,16 @@ ColumnLayout {
     id: root
 
     required property SystemPopoutController controller
+    signal keyboardFocusRequested(Item item)
 
     Layout.fillWidth: true
     visible: controller.currentMode() === "audio"
     spacing: Theme.scaledSpacing(10)
 
     SystemLevelSlider {
+        id: volumeSlider
         Layout.fillWidth: true
+        label: "Volume"
         interactive: root.controller.audioCanChange
         value: root.controller.visualAudioVolume
         maxValue: 150
@@ -23,6 +26,7 @@ ColumnLayout {
             root.controller.queueAudio(value);
         }
         onDragFinished: root.controller.finishAudio()
+        onFocusEntered: item => root.keyboardFocusRequested(item)
     }
 
     PillSelector {

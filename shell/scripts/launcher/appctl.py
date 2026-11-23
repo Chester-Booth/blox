@@ -2,6 +2,7 @@
 """Focus the newest matching Hyprland window, if one exists."""
 
 import json
+import re
 import subprocess
 import sys
 
@@ -24,8 +25,11 @@ def main() -> int:
     if not matches:
         return 3
     match = min(matches, key=lambda client: client.get("focusHistoryID", 999999))
+    address = str(match.get("address", ""))
+    if not re.fullmatch(r"0x[0-9a-fA-F]+", address):
+        return 3
     return subprocess.run(
-        ["hyprctl", "dispatch", "focuswindow", f"address:{match['address']}"],
+        ["hyprctl", "eval", f'hl.dispatch(hl.dsp.focus({{window="address:{address}"}}))'],
         check=False,
         stdout=subprocess.DEVNULL,
     ).returncode

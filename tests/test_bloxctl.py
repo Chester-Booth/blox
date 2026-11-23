@@ -11,6 +11,7 @@ from unittest.mock import Mock, patch
 
 
 REPOSITORY = Path(__file__).resolve().parents[1]
+SETTINGS_RESULTS = json.loads((REPOSITORY / "tests/fixtures/settings-owner-results.json").read_text(encoding="utf-8"))
 MODULE_PATH = REPOSITORY / "shell/scripts/bloxctl.py"
 SPEC = importlib.util.spec_from_file_location("bloxctl", MODULE_PATH)
 bloxctl = importlib.util.module_from_spec(SPEC)
@@ -20,7 +21,11 @@ SPEC.loader.exec_module(bloxctl)
 class BloxctlTests(unittest.TestCase):
     def run_cli(self, args, completed=None):
         output = io.StringIO()
-        with patch.object(bloxctl.subprocess, "run", return_value=completed) as run, contextlib.redirect_stdout(output), contextlib.redirect_stderr(output):
+        if isinstance(completed, list):
+            subprocess_patch = patch.object(bloxctl.subprocess, "run", side_effect=completed)
+        else:
+            subprocess_patch = patch.object(bloxctl.subprocess, "run", return_value=completed)
+        with subprocess_patch as run, contextlib.redirect_stdout(output), contextlib.redirect_stderr(output):
             code = bloxctl.main(args)
         return code, json.loads(output.getvalue()), run
 
@@ -129,6 +134,49 @@ class BloxctlTests(unittest.TestCase):
         self.assertEqual(code, bloxctl.EXIT_UNAVAILABLE)
         self.assertEqual(output, action)
 
+    def test_ipc_timeout_is_not_reported_as_missing_shell(self):
+        with patch.object(bloxctl.subprocess, "run", side_effect=subprocess.TimeoutExpired("ipc", 10)):
+            action = bloxctl.call_owner("audio", ["toggle-mute"])
+        self.assertEqual(action["code"], "timeout")
+        self.assertEqual(bloxctl.exit_code(action), bloxctl.EXIT_CONFLICT)
+
+    def test_malformed_typed_fields_are_rejected_before_exit_mapping(self):
+        for changed in ({"version": True}, {"code": []}, {"code": ""}, {"message": {}}):
+            with self.subTest(changed=changed):
+                action = {**bloxctl.result(False, "failed"), **changed}
+                completed = subprocess.CompletedProcess([], 0, json.dumps(action), "")
+                with patch.object(bloxctl.subprocess, "run", return_value=completed):
+                    reply = bloxctl.call_owner()
+                self.assertEqual(reply["code"], "invalid-data")
+                self.assertEqual(bloxctl.exit_code(reply), bloxctl.EXIT_INVALID_DATA)
+
+    def test_settings_poll_deadline_is_typed_timeout_with_request_id(self):
+        pending = bloxctl.result(True, "pending", "", {"requestId": "awaiting-save"})
+        args = SimpleNamespace(settings_command="get")
+        with patch.object(bloxctl, "call_owner", return_value=pending), \
+                patch.object(bloxctl.time, "monotonic", side_effect=[0, 10]):
+            code, action = bloxctl.run_settings(args)
+        self.assertEqual(code, bloxctl.EXIT_CONFLICT)
+        self.assertEqual(action["code"], "timeout")
+        self.assertEqual(action["data"]["requestId"], "awaiting-save")
+
+    def test_caffeine_action_routes_to_shared_shell_owner(self):
+        action = bloxctl.result(True, "pending", "", {"operation": "caffeine", "pending": True})
+        completed = subprocess.CompletedProcess([], 0, json.dumps(action), "")
+        code, output, run = self.run_cli(["caffeine", "set", "indefinite", "--json"], completed)
+        self.assertEqual(code, 0)
+        self.assertEqual(output, action)
+        self.assertEqual(run.call_args.args[0][1:], ["blox", "caffeine", "set", "indefinite"])
+
+    def test_owner_absence_requires_specific_ipc_evidence(self):
+        for returncode, expected in ((3, {"ownerAbsent": True}), (1, None), (2, None)):
+            with self.subTest(returncode=returncode):
+                completed = subprocess.CompletedProcess([], returncode, "", "")
+                with patch.object(bloxctl.subprocess, "run", return_value=completed):
+                    action = bloxctl.call_owner()
+                self.assertEqual(action["code"], "unavailable")
+                self.assertEqual(action["data"], expected)
+
     def test_shell_unavailable_has_a_stable_exit_class(self):
         completed = subprocess.CompletedProcess(["ipc"], 1, "", "not running")
         code, output, _ = self.run_cli(["status", "--json"], completed)
@@ -142,17 +190,55 @@ class BloxctlTests(unittest.TestCase):
         self.assertEqual(code, bloxctl.EXIT_INVALID_DATA)
         self.assertEqual(output["code"], "invalid-data")
 
-    def test_later_groups_are_public_but_not_claimed_early(self):
-        code, output, _ = self.run_cli(["settings", "--json"])
-        self.assertEqual(code, bloxctl.EXIT_UNAVAILABLE)
-        self.assertEqual(output["code"], "unavailable")
-        self.assertIn("later phase", output["message"])
+    def settings_owner_replies(self, action):
+        pending = bloxctl.result(True, "pending", "", {"requestId": "test-request"})
+        return [
+            subprocess.CompletedProcess(["ipc"], 0, json.dumps(pending), ""),
+            subprocess.CompletedProcess(["ipc"], 0, json.dumps(action), ""),
+        ]
+
+    def test_settings_get_and_reset_use_the_running_settings_owner(self):
+        for argv, operation, expected_request, expected_action in (
+            (["settings", "get", "--json"], "get", {}, SETTINGS_RESULTS["get"]),
+            (["settings", "reset", "bar", "--revision", "1", "--json"], "reset", {"section": "bar", "expectedRevision": 1}, SETTINGS_RESULTS["success"]),
+        ):
+            with self.subTest(operation=operation):
+                code, output, run = self.run_cli(argv, self.settings_owner_replies(expected_action))
+                self.assertEqual(code, 0)
+                self.assertEqual(output, expected_action)
+                first_command = run.call_args_list[0].args[0]
+                self.assertEqual(first_command[1:4], ["settings", "begin", operation])
+                self.assertEqual(json.loads(first_command[4]), expected_request)
+                self.assertEqual(run.call_args_list[1].args[0][1:4], ["settings", "poll", "test-request"])
+
+    def test_settings_cli_and_qml_share_success_conflict_and_validation_results(self):
+        cases = (
+            (["settings", "set", "bar.layout.position", '"right"', "--revision", "0", "--json"], "success", bloxctl.EXIT_OK),
+            (["settings", "set", "bar.layout.position", '"left"', "--revision", "0", "--json"], "conflict", bloxctl.EXIT_CONFLICT),
+            (["settings", "set", "bar.layout.position", '"diagonal"', "--revision", "1", "--json"], "validationFailure", bloxctl.EXIT_INVALID_DATA),
+        )
+        for argv, scenario, expected_exit in cases:
+            with self.subTest(scenario=scenario):
+                expected = SETTINGS_RESULTS[scenario]
+                code, output, run = self.run_cli(argv, self.settings_owner_replies(expected))
+                self.assertEqual(code, expected_exit)
+                self.assertEqual(output, expected)
+                self.assertEqual(output["data"]["revision"], expected["data"]["revision"])
+                self.assertEqual(output["code"], expected["code"])
+                self.assertEqual(output["data"]["changedComponents"], expected["data"]["changedComponents"])
+                begin = run.call_args_list[0].args[0]
+                self.assertEqual(begin[1:4], ["settings", "begin", "set"])
+                request = json.loads(begin[4])
+                self.assertEqual(request["path"], "bar.layout.position")
+                self.assertEqual(request["valueJson"], argv[3])
+                self.assertEqual(request["expectedRevision"], int(argv[5]))
 
     def test_theme_list_is_available_through_the_public_adapter(self):
-        code, output, _ = self.run_cli(["theme", "list", "--json"])
-        self.assertEqual(code, 0)
-        self.assertEqual(output["code"], "ok")
-        self.assertTrue(any(item["id"] == "catppuccin-mocha" for item in output["data"]["themes"]))
+        with tempfile.TemporaryDirectory() as temporary, patch.dict("os.environ", {"XDG_DATA_HOME": temporary}):
+            code, output, _ = self.run_cli(["theme", "list", "--json"])
+            self.assertEqual(code, 0)
+            self.assertEqual(output["code"], "ok")
+            self.assertTrue(any(item["id"] == "catppuccin-mocha" for item in output["data"]["themes"]))
 
     def test_theme_show_reports_resolved_values_and_redacts_home_paths(self):
         code, output, _ = self.run_cli(["theme", "show", "catppuccin-mocha", "--json"])
@@ -170,67 +256,48 @@ class BloxctlTests(unittest.TestCase):
             self.assertIn("changes", output["data"])
             self.assertEqual(before, sorted(Path(temporary).rglob("*")))
 
-    def test_theme_apply_uses_the_authoritative_target_set(self):
-        theme = {"id": "demo", "targets": {"quickshell": True}}
-        validation = SimpleNamespace(errors=[], warnings=["restart required"])
-        apply = Mock(return_value=({
-            "generation_id": "20260901T120000Z-12345678",
-            "theme_id": "demo",
-            "enabled_targets": ["quickshell"],
-        }, ["follow-up"]))
-        core = SimpleNamespace(
-            validate_theme=lambda *args, **kwargs: validation,
-        )
-        runtime = SimpleNamespace(
-            TARGET_NAMES=("quickshell", "wallpaper"),
-            RuntimeFailure=RuntimeError,
-            LockContended=RuntimeError,
-            configured_targets=lambda value: ("quickshell",),
-            apply_theme=apply,
-        )
-        args = SimpleNamespace(theme_command="apply", theme="demo")
-        with patch.object(bloxctl, "_theme_modules", return_value=(core, runtime)), patch.object(
-            bloxctl,
-            "_theme_load",
-            return_value=(Path("/tmp/demo.json"), {}, theme, None),
-        ):
-            code, output = bloxctl.run_theme(args)
+    def test_theme_apply_polls_the_loaded_settings_owner(self):
+        receipt = bloxctl.result(True, "ok", data={"phase": "complete", "targets": {"gtk": {"state": "success"}}})
+        with patch.object(bloxctl, "call_owner", side_effect=[bloxctl.result(True, "pending", data={"requestId": "r1"}), receipt]) as owner, patch.object(bloxctl, "_apply_backend") as backend:
+            output = bloxctl._public_apply("apply", Path("/tmp/demo.json"), {"id": "demo"}, None, None)
+        self.assertEqual(output, receipt)
+        self.assertEqual(owner.call_args_list[0].args, ("begin", ["demo", "/tmp/demo.json"]))
+        self.assertEqual(owner.call_args_list[1].kwargs, {"target": "settingsApply"})
+        backend.assert_not_called()
 
-        self.assertEqual(code, 0)
+    def test_theme_apply_does_not_bypass_owner_rejection(self):
+        for code in ("busy", "conflict", "stale", "permission-denied", "timeout", "failed"):
+            with self.subTest(code=code), patch.object(bloxctl, "call_owner", return_value=bloxctl.result(False, code)), patch.object(bloxctl, "_apply_backend") as backend:
+                output = bloxctl._public_apply("apply", Path("/tmp/demo.json"), {"id": "demo"}, None, None)
+                self.assertEqual(output["code"], code)
+                backend.assert_not_called()
+
+    def test_headless_apply_uses_shared_review_apply_and_finish(self):
+        with tempfile.TemporaryDirectory() as temporary, patch.dict("os.environ", {"BLOX_HYPRLAND_PREVIEW_STATE": temporary + "/preview"}), patch.object(bloxctl, "call_owner", return_value=bloxctl.result(False, "unavailable", data={"ownerAbsent": True})), patch.object(bloxctl, "_apply_backend", side_effect=[bloxctl.result(True, "ok"), bloxctl.result(True, "ok", data={"scripts": [], "drift": None}), bloxctl.result(True, "ok", data={"phase": "complete"}), bloxctl.result(True, "ok")]) as backend:
+            output = bloxctl._public_apply("apply", Path(temporary) / "demo.json", {"id": "demo"}, None, None)
         self.assertTrue(output["ok"])
-        self.assertEqual(apply.call_args.args[2], runtime.TARGET_NAMES)
-        self.assertTrue(apply.call_args.kwargs["authoritative_targets"])
-        self.assertIn("follow-up", output["data"]["warnings"])
+        self.assertEqual([call.args[0] for call in backend.call_args_list], ["status", "review", "apply", "finish"])
 
-    def test_theme_reset_uses_recorded_origin(self):
-        theme = {"id": "catppuccin-mocha", "targets": {"quickshell": True}}
-        validation = SimpleNamespace(errors=[], warnings=[])
-        apply = Mock(return_value=({
-            "generation_id": "20260901T120000Z-12345678",
-            "theme_id": "catppuccin-mocha",
-            "enabled_targets": ["quickshell"],
-        }, []))
-        core = SimpleNamespace(
-            DEFAULT_THEME_ID="catppuccin-frappe",
-            validate_theme=lambda *args, **kwargs: validation,
-        )
-        runtime = SimpleNamespace(
-            TARGET_NAMES=("quickshell",),
-            RuntimeFailure=RuntimeError,
-            LockContended=RuntimeError,
-            current_generation=lambda: (Path("/tmp/current"), {"origin": {"kind": "builtin", "theme_id": "catppuccin-mocha", "fallback": False}}),
-            configured_targets=lambda value: ("quickshell",),
-            apply_theme=apply,
-        )
-        load = Mock(return_value=(Path("/tmp/catppuccin-mocha.json"), {}, theme, None))
-        args = SimpleNamespace(theme_command="reset")
-        with patch.object(bloxctl, "_theme_modules", return_value=(core, runtime)), patch.object(bloxctl, "_theme_load", load):
-            code, output = bloxctl.run_theme(args)
+    def test_headless_apply_refuses_retained_preview_or_journal(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            preview = Path(temporary) / "preview"; preview.write_text("{}")
+            with patch.dict("os.environ", {"BLOX_HYPRLAND_PREVIEW_STATE": str(preview)}), patch.object(bloxctl, "call_owner", return_value=bloxctl.result(False, "unavailable", data={"ownerAbsent": True})), patch.object(bloxctl, "_apply_backend") as backend:
+                self.assertEqual(bloxctl._public_apply("apply", preview, {"id": "demo"}, None, None)["code"], "conflict")
+                backend.assert_not_called()
+            preview.unlink()
+            with patch.dict("os.environ", {"BLOX_HYPRLAND_PREVIEW_STATE": str(preview)}), patch.object(bloxctl, "call_owner", return_value=bloxctl.result(False, "unavailable", data={"ownerAbsent": True})), patch.object(bloxctl, "_apply_backend", return_value=bloxctl.result(True, "ok", data={"phase": "partial"})) as backend:
+                self.assertEqual(bloxctl._public_apply("apply", preview, {"id": "demo"}, None, None)["code"], "conflict")
+                self.assertEqual(backend.call_count, 1)
 
+    def test_theme_reset_routes_recorded_origin_through_shared_apply(self):
+        core = SimpleNamespace(DEFAULT_THEME_ID="fallback")
+        runtime = SimpleNamespace(RuntimeFailure=RuntimeError, current_generation=lambda: (Path("/tmp/current"), {"origin": {"theme_id": "origin"}}))
+        load = Mock(return_value=(Path("/tmp/origin.json"), {}, {"id": "origin"}, None))
+        with patch.object(bloxctl, "_theme_modules", return_value=(core, runtime)), patch.object(bloxctl, "_theme_load", load), patch.object(bloxctl, "_public_apply", return_value=bloxctl.result(True, "ok")) as apply:
+            code, output = bloxctl.run_theme(SimpleNamespace(theme_command="reset"))
         self.assertEqual(code, 0)
-        self.assertTrue(output["ok"])
-        self.assertEqual(load.call_args.args[1], "catppuccin-mocha")
-        self.assertEqual(output["data"]["theme_id"], "catppuccin-mocha")
+        self.assertEqual(load.call_args.args[1], "origin")
+        self.assertEqual(apply.call_args.args[2]["id"], "origin")
 
     def test_future_theme_schema_is_invalid_data(self):
         with tempfile.TemporaryDirectory() as temporary:

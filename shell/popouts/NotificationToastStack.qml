@@ -61,6 +61,7 @@ Item {
         spacing: Theme.scaledSpacing(8)
 
         Repeater {
+            id: toastRepeater
             model: root.toasts
 
             Rectangle {

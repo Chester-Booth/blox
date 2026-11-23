@@ -1,9 +1,14 @@
+import hashlib
 import json
 import unittest
 from pathlib import Path
 
 
 class EmojiDatasetTests(unittest.TestCase):
+    def test_emoji_ranking_oracle_is_frozen(self):
+        oracle = Path(__file__).parents[1] / "tests/qml/fixtures/EmojiSearchOracle.mjs"
+        self.assertEqual("5d26094acf6c421fe43a3ae97a3c14d6200c20bbc4d5e9eb2448d26698218977", hashlib.sha256(oracle.read_bytes()).hexdigest())
+
     def test_nerd_font_dataset_matches_catalogue_and_search_aliases(self):
         path = Path(__file__).parents[1] / "shell/assets/nerd-fonts.json"
         document = json.loads(path.read_text(encoding="utf-8"))
@@ -109,11 +114,9 @@ class EmojiDatasetTests(unittest.TestCase):
         self.assertIn('fontFamily ? modelData.item.fontFamily : "Twemoji"', picker)
         self.assertIn('"code"', picker)
         controller = (repository / "shell/modules/EmojiController.qml").read_text(encoding="utf-8")
-        self.assertIn("if (tone !== 0)", controller)
         self.assertIn("base.split(root.toneCharacters[index]).join", controller)
         self.assertIn("root.toneKey(item.value)", controller)
         self.assertIn('"Nerd Fonts"', controller)
-        self.assertIn('item.name + " " + item.keywords', controller)
         self.assertIn('["#ffdc5d", "#f7dece", "#e0bb95", "#c58c6b", "#a56b46", "#6f432a"]', picker)
         self.assertIn('text: "Choose tones"', picker)
         self.assertIn('text: "Choose skin tones"', picker)
@@ -124,15 +127,10 @@ class EmojiDatasetTests(unittest.TestCase):
         self.assertIn("property int activeEmojiPopups: 0", picker)
         self.assertIn("onClicked: toneComposer.defaultSelected = true", picker)
         self.assertIn("model: controller.virtualBrowse ? controller.itemCount : root.gridItems.length", picker)
-        self.assertIn('"item": controller.itemAt(index)', picker)
         self.assertNotIn("loadNextPage", picker)
-        self.assertIn("property var variantMap", controller)
-        self.assertIn("property var multiToneGroups", controller)
         self.assertIn("LauncherState.emojiVariants", controller)
         self.assertIn("property bool virtualBrowse: false", controller)
-        self.assertIn("property var browseItems: []", controller)
         self.assertIn("readonly property int itemCount", controller)
-        self.assertIn("root.browseItems = pinned.concat(unpinned)", controller)
         self.assertIn("function itemAt(index)", controller)
         self.assertNotIn("browseLimit", controller)
         self.assertNotIn("canLoadMore", controller)

@@ -1,3 +1,4 @@
+import qs.shared
 import QtQuick
 import Quickshell
 import Quickshell.Io
@@ -76,7 +77,9 @@ Scope {
         id: restart
 
         interval: 500
-        onTriggered: bridge.running = true
+        onTriggered: {
+            bridge.running = true;
+        }
     }
 
 }

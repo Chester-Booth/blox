@@ -1,5 +1,6 @@
 import qs.shared
 import QtQuick
+import QtQuick.Window
 import QtQuick.Controls
 import Quickshell
 
@@ -12,6 +13,39 @@ FloatingWindow {
     property bool open: false
     property var targetScreen
     property bool searchOpen: false
+    property bool openListFocusPending: false
+    property var openFocusBaseline: null
+    property bool openFocusBaselineReady: false
+    readonly property var nativeWindow: contentItem.Window.window
+
+    function focusListAfterOpen() {
+        if (!openListFocusPending || !open || searchOpen || !nativeWindow
+                || !nativeWindow.active || !openFocusBaselineReady)
+            return;
+
+        if (nativeWindow.activeFocusItem !== openFocusBaseline) {
+            openListFocusPending = false;
+            return;
+        }
+
+        const firstItem = clipboardList.itemAtIndex(0);
+        if (firstItem)
+            firstItem.forceActiveFocus();
+        else
+            clipboardList.forceActiveFocus();
+        openListFocusPending = false;
+    }
+
+    function captureOpenFocusBaseline() {
+        if (!open || !openListFocusPending || openFocusBaselineReady
+                || !nativeWindow || !nativeWindow.active)
+            return;
+
+        openFocusBaseline = nativeWindow.activeFocusItem;
+        openFocusBaselineReady = true;
+        if (!controller.loading)
+            focusListAfterOpen();
+    }
 
     function closeSearch() {
         focusTimer.stop();
@@ -52,18 +86,45 @@ FloatingWindow {
     onOpenChanged: {
         if (open) {
             searchOpen = controller.query.length > 0;
+            openListFocusPending = !searchOpen;
+            openFocusBaselineReady = false;
             controller.refresh();
             if (searchOpen)
                 focusTimer.restart();
+            else
+                Qt.callLater(root.captureOpenFocusBaseline);
 
         } else {
             focusTimer.stop();
+            openListFocusPending = false;
+            openFocusBaselineReady = false;
+            openFocusBaseline = null;
+        }
+    }
+    Connections {
+        target: root.nativeWindow
+        function onActiveChanged() {
+            if (!root.nativeWindow || !root.nativeWindow.active || !root.openListFocusPending)
+                return;
+
+            if (openFocusBaselineReady)
+                Qt.callLater(root.focusListAfterOpen);
+            else
+                Qt.callLater(root.captureOpenFocusBaseline);
+        }
+    }
+
+    Connections {
+        target: controller
+        function onLoadingChanged() {
+            if (!controller.loading && root.openListFocusPending)
+                Qt.callLater(root.focusListAfterOpen);
         }
     }
 
     Shortcut {
         sequence: "Escape"
-        onActivated: controller.closeRequested()
+        onActivated: controller.dismissRequested()
     }
 
     Rectangle {
@@ -176,14 +237,28 @@ FloatingWindow {
                 onAccepted: controller.activate()
             }
 
+            Text {
+                visible: controller.error.length > 0
+                width: parent.width
+                text: controller.error
+                color: Theme.red
+                font.family: Theme.bodyFontFamily
+                font.pixelSize: 11
+                wrapMode: Text.Wrap
+                maximumLineCount: 2
+                elide: Text.ElideRight
+            }
+
             ListView {
                 id: clipboardList
 
                 width: parent.width
                 height: parent.height - 46 - (root.searchOpen ? search.height + 8 : 0)
+                    - (controller.error.length > 0 ? 32 : 0)
                 rightMargin: clipboardScrollbar.policy === ScrollBar.AlwaysOn ? 12 : 0
                 model: controller.items
                 clip: true
+                activeFocusOnTab: true
                 currentIndex: controller.selectedIndex
                 spacing: Theme.scaledSpacing(7)
                 section.property: "group"

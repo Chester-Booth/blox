@@ -21,6 +21,9 @@ Scope {
     property var actionRunner: null
     property var persistentState: null
     property string focusScript: ""
+    property var actionResult: ({"version": 1, "ok": true, "code": "ok", "message": "", "data": null})
+    property int sourceFocusNotificationId: -1
+    property bool sourceFocusNotificationDismissed: false
 
     signal openRequested(real centreY)
     signal closeRequested()
@@ -43,7 +46,10 @@ Scope {
 
     function clear() {
         const current = items ? items.slice() : [];
-        for (let i = 0; i < current.length; i++) current[i].dismiss()
+        for (let i = 0; i < current.length; i++) {
+            notificationDismissed(current[i]);
+            current[i].dismiss();
+        }
         toasts = [];
     }
 
@@ -54,20 +60,58 @@ Scope {
             dnd = !dnd;
     }
 
+    function makeActionResult(ok, code, message, data) {
+        return {"version": 1, "ok": ok, "code": code, "message": message || "", "data": data === undefined ? null : data};
+    }
+
+    function resultNotificationId(result) {
+        return result && result.data && result.data.notificationId !== undefined
+            ? Number(result.data.notificationId) : -1;
+    }
+
+    function clearActionResultForNotification(notification) {
+        const notificationId = Number(notification && notification.id || 0);
+        if (notificationId === sourceFocusNotificationId)
+            sourceFocusNotificationDismissed = true;
+        if (notificationId === resultNotificationId(actionResult))
+            actionResult = makeActionResult(true, "ok", "", null);
+    }
+
+    function notificationDismissed(notification) {
+        if (notification)
+            clearActionResultForNotification(notification);
+    }
+
     function activate(notification) {
         if (!notification)
-            return ;
+            return actionResult = makeActionResult(false, "invalid-data", "This notification is no longer available.", null);
 
         // Focus first so an action can safely close its notification or change
         // the application's own view.
-        focusSource(notification);
+        const focusResult = focusSource(notification, "notification-action");
+        if (focusResult.code === "busy")
+            return focusResult;
         const actions = notification.actions || [];
         for (let i = 0; i < actions.length; i++) {
             if (actions[i].identifier === "default") {
-                actions[i].invoke();
-                return ;
+                try {
+                    actions[i].invoke();
+                } catch (error) {
+                    return actionResult = makeActionResult(false, "failed", "Could not open the notification.", {"operation": "notification-action", "notificationId": notification.id || 0});
+                }
+
+                // NotificationAction.invoke() returns void, so this records
+                // dispatch only. Source-focus completion remains asynchronous.
+                if (focusResult.code !== "pending")
+                    actionResult = makeActionResult(true, "dispatched", "", {"operation": "notification-action", "notificationId": notification.id || 0});
+                return actionResult;
             }
         }
+
+        if (focusResult.code === "disabled")
+            return actionResult = makeActionResult(false, "unavailable", "This notification has no action to open.", {"operation": "notification-action", "notificationId": notification.id || 0});
+
+        return focusResult;
     }
 
     function hint(notification, names) {
@@ -135,19 +179,78 @@ Scope {
         return canFocusSource(notification) ? "Focus" : "";
     }
 
-    function focusSource(notification) {
-        if (!notification || !actionRunner || focusScript.length === 0)
-            return ;
+    function focusSource(notification, operation) {
+        if (!notification)
+            return actionResult = makeActionResult(false, "invalid-data", "This notification is no longer available.", null);
+
+        const notificationId = notification.id || 0;
+        if (sourceFocusProcessObject.running) {
+            return actionResult = makeActionResult(false, "busy", "Another notification is being focused. Try again when it finishes.", {
+                "operation": operation || "notification-focus",
+                "notificationId": notificationId,
+                "sourceFocusNotificationId": sourceFocusNotificationId
+            });
+        }
+
+        if (focusScript.trim().length === 0)
+            return actionResult = makeActionResult(true, "disabled", "", {"operation": "notification-focus", "notificationId": notificationId});
 
         const windowAddress = hint(notification, ["x-blox-window-address", "window-address"]);
         const senderPid = hint(notification, ["x-blox-sender-pid", "sender-pid", "x-kde-pid", "pid"]);
         log("activate", "app=" + (notification.appName || "") + " desktop=" + (notification.desktopEntry || "") + " address=" + windowAddress + " pid=" + senderPid + " summary=" + (notification.summary || ""));
-        actionRunner.runArgs(["env", "BLOX_NOTIFICATION_APP_NAME=" + (notification.appName || ""), "BLOX_NOTIFICATION_DESKTOP_ENTRY=" + (notification.desktopEntry || ""), "BLOX_NOTIFICATION_WINDOW_ADDRESS=" + windowAddress, "BLOX_NOTIFICATION_SENDER_PID=" + senderPid, focusScript]);
+        sourceFocusNotificationId = notificationId;
+        sourceFocusNotificationDismissed = false;
+        actionResult = makeActionResult(true, "pending", "", {"operation": "notification-focus", "pending": true, "notificationId": sourceFocusNotificationId});
+        sourceFocusProcessObject.command = ["env", "BLOX_NOTIFICATION_APP_NAME=" + (notification.appName || ""), "BLOX_NOTIFICATION_DESKTOP_ENTRY=" + (notification.desktopEntry || ""), "BLOX_NOTIFICATION_WINDOW_ADDRESS=" + windowAddress, "BLOX_NOTIFICATION_SENDER_PID=" + senderPid, focusScript];
+        sourceFocusProcessObject.running = true;
+        return actionResult;
+    }
+
+    function finishSourceFocus(exitCode, exitStatus) {
+        const notificationId = sourceFocusNotificationId;
+        const dismissed = sourceFocusNotificationDismissed;
+        sourceFocusNotificationId = -1;
+        sourceFocusNotificationDismissed = false;
+        const data = {"operation": "notification-focus", "notificationId": notificationId, "exitCode": exitCode, "exitStatus": exitStatus};
+        if (dismissed) {
+            const resultSourceFocusId = actionResult && actionResult.code === "busy" && actionResult.data
+                ? Number(actionResult.data.sourceFocusNotificationId) : -1;
+            if (notificationId === resultNotificationId(actionResult) || notificationId === resultSourceFocusId)
+                actionResult = makeActionResult(true, "ok", "", null);
+            return actionResult;
+        }
+
+        const currentResult = actionResult;
+        if (currentResult && currentResult.ok === false && currentResult.code === "failed" && currentResult.data
+            && currentResult.data.operation === "notification-action"
+            && Number(currentResult.data.notificationId) === notificationId)
+            return currentResult;
+
+        if (exitCode === 0 && exitStatus === 0)
+            return actionResult = makeActionResult(true, "ok", "", data);
+
+        let code = "failed";
+        let message = "Could not focus the notification source.";
+        if (exitStatus !== 0)
+            message = "The notification focus helper stopped unexpectedly.";
+        else if (exitCode === 127) {
+            code = "unavailable";
+            message = "The notification focus helper could not be found.";
+        } else if (exitCode === 126) {
+            code = "permission-denied";
+            message = "The notification focus helper could not be run.";
+        } else if (exitCode === 124) {
+            code = "timeout";
+            message = "The notification focus helper timed out.";
+        }
+        return actionResult = makeActionResult(false, code, message, data);
     }
 
     function open(centreY) {
         const now = Date.now();
-        const targetY = centreY !== undefined && centreY > 0 ? centreY : panelY > 0 ? panelY : openPanelY > 0 ? openPanelY : 120;
+        // Only pass an explicit coordinate when the caller supplied one.
+        // Passing -1 lets BarSurfaceController resolve the live anchor on the active screen.
+        const targetY = centreY !== undefined && centreY > 0 ? centreY : -1;
         if (openPanel === "notifications" || now < toggleAllowedAt)
             return ;
 
@@ -252,9 +355,17 @@ Scope {
                 root.addToast(notification);
 
             notification.closed.connect(() => {
+                root.notificationDismissed(notification);
                 return root.removeToast(notification);
             });
         }
+    }
+
+    Process {
+        id: sourceFocusProcessObject
+        objectName: "notification-focus-process"
+
+        onExited: (exitCode, exitStatus) => root.finishSourceFocus(exitCode, exitStatus)
     }
 
     IpcHandler {

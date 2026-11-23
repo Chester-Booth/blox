@@ -9,6 +9,7 @@ Rectangle {
     property alias title: controller.title
     property alias body: controller.body
     property alias statusError: controller.statusError
+    property alias actionError: controller.actionError
     property alias actions: controller.actions
     property alias scriptRoot: controller.scriptRoot
     property alias audioVolume: controller.audioVolume
@@ -33,10 +34,18 @@ Rectangle {
     property alias brightnessPercent: controller.brightnessPercent
     property alias blueLightMode: controller.blueLightMode
     property alias blueLightActive: controller.blueLightActive
+    property var keyboardFocusWindow: null
 
     signal action(string command, bool keepOpen)
     signal sectionSelected(string panel)
     signal levelPreview(string kind, int value, bool muted)
+
+    function requestKeyboardFocus(item) {
+        if (keyboardFocusWindow && keyboardFocusWindow.requestKeyboardFocus)
+            keyboardFocusWindow.requestKeyboardFocus();
+        if (item && item.forceActiveFocus)
+            item.forceActiveFocus();
+    }
 
     width: 330
     height: Math.min(520, Math.max(178, content.implicitHeight + 24))
@@ -83,11 +92,16 @@ Rectangle {
                 }]
 
                 SystemSectionButton {
+                    id: sectionButton
                     required property var modelData
 
                     icon: modelData.icon
+                    label: modelData.panel.charAt(0).toUpperCase() + modelData.panel.slice(1)
                     active: controller.currentMode() === modelData.panel
-                    onClicked: root.sectionSelected(modelData.panel)
+                    onClicked: {
+                        root.requestKeyboardFocus(sectionButton);
+                        root.sectionSelected(modelData.panel);
+                    }
                 }
 
             }
@@ -107,6 +121,17 @@ Rectangle {
                     height: 30
                     radius: Theme.scaledRadius(7)
                     color: controller.currentMode() === "audio" && headerIconMouse.containsMouse ? Theme.surfaceAlt : "transparent"
+                    activeFocusOnTab: controller.currentMode() === "audio" && controller.audioCanChange
+                    Accessible.role: Accessible.Button
+                    Accessible.name: controller.audioMuted ? "Unmute audio" : "Mute audio"
+                    Keys.onReturnPressed: toggleAudio()
+                    Keys.onEnterPressed: toggleAudio()
+                    Keys.onSpacePressed: toggleAudio()
+
+                    function toggleAudio() {
+                        root.requestKeyboardFocus(this);
+                        controller.toggleAudio();
+                    }
 
                     Text {
                         anchors.centerIn: parent
@@ -123,7 +148,12 @@ Rectangle {
                         enabled: controller.currentMode() === "audio" && controller.audioCanChange
                         hoverEnabled: true
                         cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-                        onClicked: controller.toggleAudio()
+                        onClicked: parent.toggleAudio()
+                    }
+
+                    BloxToolTip {
+                        shown: headerIconMouse.containsMouse
+                        text: controller.audioMuted ? "Unmute audio" : "Mute audio"
                     }
 
                 }
@@ -152,38 +182,29 @@ Rectangle {
 
                 }
 
-                Rectangle {
+                BloxButton {
+                    id: appSettingsButton
                     width: 30
                     height: 30
+                    compact: true
+                    text: ""
+                    iconName: "gear-six"
+                    iconSize: 15
                     radius: Theme.scaledRadius(7)
-                    color: cogMouse.containsMouse ? Theme.surfaceAlt : Theme.surface
-                    border.color: Theme.surfaceAlt
-                    border.width: 1
-                    visible: controller.actionByLabel("open app") !== null
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: "󰒓"
-                        color: Theme.foreground
-                        font.family: Theme.fontFamily
-                        font.pixelSize: 14
+                visible: controller.actionByLabel("open app") !== null
+                Accessible.name: "Open app settings"
+                    onClicked: {
+                        root.requestKeyboardFocus(appSettingsButton);
+                        controller.runLabel("open app", false);
                     }
-
-                    MouseArea {
-                        id: cogMouse
-
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: controller.runLabel("open app", false)
-                    }
-
+                    BloxToolTip { shown: appSettingsButton.hovered; text: "Open app settings" }
                 }
 
             }
 
             SystemAudioSection {
                 controller: controller
+                onKeyboardFocusRequested: item => root.requestKeyboardFocus(item)
             }
 
             SystemConnectivitySection {
@@ -192,13 +213,17 @@ Rectangle {
 
             SystemDisplaySection {
                 controller: controller
+                onKeyboardFocusRequested: item => root.requestKeyboardFocus(item)
             }
 
             Text {
+                id: feedbackMessage
+
                 Layout.fillWidth: true
-                visible: controller.statusError.length > 0 || (controller.body.length > 0 && controller.currentMode() !== "network" && controller.currentMode() !== "bluetooth" && controller.currentMode() !== "brightness")
-                text: controller.statusError.length > 0 ? "Status error: " + controller.statusError + (controller.body.length > 0 ? "\n" + controller.body : "") : controller.body
-                color: controller.statusError.length > 0 ? Theme.red : Theme.foreground
+                objectName: "systemFeedbackMessage"
+                visible: controller.feedbackText.length > 0
+                text: controller.feedbackText
+                color: controller.feedbackIsError ? Theme.red : Theme.foreground
                 font.family: Theme.bodyFontFamily
                 font.pixelSize: 12
                 wrapMode: Text.Wrap

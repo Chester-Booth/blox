@@ -62,8 +62,8 @@ FloatingWindow {
         controller.selectedIndex = itemIndex;
     }
 
-    function symbolSectionKey(item) {
-        const subgroup = String(item.subcategory || "");
+    function symbolSectionKey(subcategory) {
+        const subgroup = String(subcategory || "");
         if (!subgroup.startsWith("text-"))
             return "emoji";
 
@@ -102,25 +102,27 @@ FloatingWindow {
         })
     }
 
+    function gridItemRow(index) {
+        return {kind: "emoji", item: controller.nativeCategoryBrowse ? null : controller.items[index], itemIndex: index};
+    }
+
     function rebuildGridItems() {
         if (controller.virtualBrowse) {
             gridItems = [];
             return ;
         }
+        // itemsChanged can arrive before the derived itemCount binding refreshes.
+        const itemCount = controller.nativeCategoryBrowse ? controller.categoryIndices.length : controller.items.length;
         const columns = Math.max(1, Math.floor((emojiGrid.width - emojiGrid.rightMargin) / emojiGrid.cellWidth));
         const display = [];
         if (controller.category === "Symbols" || controller.category === "Nerd Fonts") {
             const sections = controller.category === "Symbols" ? symbolSections : controller.nerdFontPurposes;
             for (const section of sections) {
                 const matches = [];
-                for (let index = 0; index < controller.items.length; index++) {
-                    const sectionKey = controller.category === "Symbols" ? symbolSectionKey(controller.items[index]) : controller.items[index].subcategory;
+                for (let index = 0; index < itemCount; index++) {
+                    const sectionKey = controller.category === "Symbols" ? symbolSectionKey(controller.itemSubcategory(index)) : controller.itemSubcategory(index);
                     if (sectionKey === section.key)
-                        matches.push({
-                        "kind": "emoji",
-                        "item": controller.items[index],
-                        "itemIndex": index
-                    });
+                        matches.push(root.gridItemRow(index));
 
                 }
                 if (!matches.length)
@@ -130,11 +132,7 @@ FloatingWindow {
                 for (const match of matches) display.push(match)
             }
         } else {
-            for (let index = 0; index < controller.items.length; index++) display.push({
-                "kind": "emoji",
-                "item": controller.items[index],
-                "itemIndex": index
-            })
+            for (let index = 0; index < itemCount; index++) display.push(root.gridItemRow(index))
         }
         gridItems = display;
     }
@@ -242,7 +240,7 @@ FloatingWindow {
 
     Shortcut {
         sequence: "Escape"
-        onActivated: controller.closeRequested()
+        onActivated: controller.dismissRequested()
     }
 
     Connections {
@@ -251,10 +249,9 @@ FloatingWindow {
             emojiGrid.positionViewAtBeginning();
         }
 
-        function onBrowseItemsChanged() {
-            if (controller.virtualBrowse)
-                emojiGrid.positionViewAtBeginning();
-
+        function onBrowseRevisionChanged() {
+            root.rebuildGridItems();
+            emojiGrid.positionViewAtBeginning();
         }
 
         function onVirtualBrowseChanged() {
@@ -509,7 +506,7 @@ FloatingWindow {
                         return controller.query = value;
                     }
                     onAccepted: controller.activate()
-                    Keys.onEscapePressed: controller.closeRequested()
+                    Keys.onEscapePressed: controller.dismissRequested()
                 }
 
                 Row {
@@ -671,11 +668,25 @@ FloatingWindow {
 
                 }
 
+                Text {
+                    id: partialDataError
+
+                    width: parent.width
+                    height: visible ? 16 : 0
+                    visible: controller.partialDataErrorText.length > 0
+                    text: controller.partialDataErrorText
+                    color: Theme.red
+                    font.family: Theme.bodyFontFamily
+                    font.pixelSize: 11
+                    elide: Text.ElideRight
+                    verticalAlignment: Text.AlignVCenter
+                }
+
                 GridView {
                     id: emojiGrid
 
                     width: parent.width
-                    height: parent.height - (search.visible ? search.height + 8 : 0) - (sectionBar.visible ? sectionBar.height + 8 : 0)
+                    height: parent.height - (search.visible ? search.height + 8 : 0) - (sectionBar.visible ? sectionBar.height + 8 : 0) - (partialDataError.visible ? partialDataError.height + 8 : 0)
                     rightMargin: emojiScrollbar.policy === ScrollBar.AlwaysOn ? 12 : 0
                     cellWidth: 58
                     cellHeight: 54
@@ -688,6 +699,7 @@ FloatingWindow {
                     Component.onCompleted: root.rebuildGridItems()
                     Keys.onPressed: (event) => {
                         const columns = Math.max(1, Math.floor(width / cellWidth));
+                        const pageSize = columns * Math.max(1, Math.floor(height / cellHeight));
                         let delta = 0;
                         if (event.key === Qt.Key_Left) {
                             delta = -1;
@@ -697,6 +709,10 @@ FloatingWindow {
                             delta = -columns;
                         } else if (event.key === Qt.Key_Down) {
                             delta = columns;
+                        } else if (event.key === Qt.Key_PageUp) {
+                            delta = -pageSize;
+                        } else if (event.key === Qt.Key_PageDown) {
+                            delta = pageSize;
                         } else if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter) && (event.modifiers & Qt.ShiftModifier) && currentItem && currentItem.mixedToneCapable) {
                             currentItem.openToneComposer();
                             event.accepted = true;
@@ -706,7 +722,23 @@ FloatingWindow {
                             event.accepted = true;
                             return ;
                         } else if (event.key === Qt.Key_Escape) {
-                            controller.closeRequested();
+                            controller.dismissRequested();
+                            event.accepted = true;
+                            return ;
+                        }
+                        if ((event.key === Qt.Key_Home || event.key === Qt.Key_End) && controller.itemCount) {
+                            if (controller.virtualBrowse) {
+                                controller.selectedIndex = event.key === Qt.Key_Home ? 0 : controller.itemCount - 1;
+                                positionViewAtIndex(controller.selectedIndex, GridView.Contain);
+                            } else {
+                                const step = event.key === Qt.Key_Home ? 1 : -1;
+                                let target = event.key === Qt.Key_Home ? 0 : root.gridItems.length - 1;
+                                while (target >= 0 && target < root.gridItems.length && root.gridItems[target].kind !== "emoji")target += step
+                                if (target >= 0 && target < root.gridItems.length) {
+                                    controller.selectedIndex = root.gridItems[target].itemIndex;
+                                    positionViewAtIndex(target, GridView.Contain);
+                                }
+                            }
                             event.accepted = true;
                             return ;
                         }
@@ -745,15 +777,26 @@ FloatingWindow {
 
                     }
 
+                    Text {
+                        anchors.centerIn: parent
+                        visible: controller.itemCount === 0 && controller.emptyStateText.length > 0
+                        text: controller.emptyStateText
+                        color: controller.emptyStateIsError ? Theme.red : Theme.muted
+                        font.family: Theme.bodyFontFamily
+                        font.pixelSize: 12
+                        horizontalAlignment: Text.AlignHCenter
+                    }
+
                     delegate: Rectangle {
                         id: emojiCell
 
                         required property int index
-                        readonly property var modelData: controller.virtualBrowse ? ({
-                            "kind": "emoji",
-                            "item": controller.itemAt(index),
-                            "itemIndex": index
-                        }) : root.gridItems[index]
+                        readonly property var modelData: {
+                            const row = controller.virtualBrowse ? {kind: "emoji", itemIndex: index} : root.gridItems[index];
+                            if (!row || row.kind !== "emoji") return row || {kind: "spacer", itemIndex: -1};
+                            if (row.item) return row;
+                            return {kind: "emoji", item: controller.itemAt(row.itemIndex), itemIndex: row.itemIndex};
+                        }
                         readonly property bool mixedToneCapable: Boolean(modelData.kind === "emoji" && modelData.item && modelData.item.hasMixedTones)
 
                         function openToneComposer() {
@@ -804,7 +847,7 @@ FloatingWindow {
                             anchors.topMargin: Theme.scaledSpacing(3)
                             width: 12
                             height: 12
-                            visible: modelData.kind === "emoji" && modelData.item && modelData.item.pinned
+                            visible: Boolean(modelData.kind === "emoji" && modelData.item && modelData.item.pinned)
                             iconName: "push-pin"
                             iconColor: Theme.foreground
                         }
@@ -816,7 +859,7 @@ FloatingWindow {
                             anchors.bottomMargin: Theme.scaledSpacing(3)
                             width: 18
                             height: 11
-                            visible: modelData.kind === "emoji" && modelData.item && modelData.item.hasMixedTones && (emojiHover.hovered || modelData.itemIndex === controller.selectedIndex)
+                            visible: Boolean(modelData.kind === "emoji" && modelData.item && modelData.item.hasMixedTones && (emojiHover.hovered || modelData.itemIndex === controller.selectedIndex))
 
                             Rectangle {
                                 anchors.left: parent.left
@@ -888,7 +931,7 @@ FloatingWindow {
                                 spacing: Theme.scaledSpacing(3)
 
                                 BloxButton {
-                                    visible: modelData.item && modelData.item.hasMixedTones
+                                    visible: Boolean(modelData.item && modelData.item.hasMixedTones)
                                     width: emojiMenu.availableWidth
                                     height: visible ? 34 : 0
                                     compact: true
@@ -1125,18 +1168,44 @@ FloatingWindow {
                                         onClicked: toneComposer.defaultSelected = true
                                     }
 
-                                    BloxButton {
+                                    Item {
+                                        id: copyReasonWrapper
+
                                         width: (parent.width - parent.spacing) / 2
                                         height: 34
-                                        compact: true
-                                        enabled: toneComposer.previewValue.length > 0
-                                        text: "Copy"
-                                        onClicked: {
-                                            if (toneComposer.defaultSelected)
-                                                controller.activateDefaultVariant(modelData.itemIndex);
-                                            else
-                                                controller.activateToneVariant(modelData.itemIndex, toneComposer.firstTone, toneComposer.secondTone);
-                                            toneComposer.close();
+                                        activeFocusOnTab: !copyButton.enabled || activeFocus
+
+                                        BloxButton {
+                                            id: copyButton
+
+                                            anchors.fill: parent
+                                            compact: true
+                                            enabled: toneComposer.previewValue.length > 0
+                                            text: "Copy"
+                                            onEnabledChanged: {
+                                                if (enabled && copyReasonWrapper.activeFocus)
+                                                    forceActiveFocus();
+                                            }
+                                            onClicked: {
+                                                if (toneComposer.defaultSelected)
+                                                    controller.activateDefaultVariant(modelData.itemIndex);
+                                                else
+                                                    controller.activateToneVariant(modelData.itemIndex, toneComposer.firstTone, toneComposer.secondTone);
+                                                toneComposer.close();
+                                            }
+                                        }
+
+                                        HoverHandler {
+                                            id: copyReasonHover
+                                        }
+
+                                        Item {
+                                            anchors.fill: parent
+
+                                            BloxToolTip {
+                                                shown: !copyButton.enabled && (copyReasonHover.hovered || copyReasonWrapper.activeFocus)
+                                                text: "No emoji for these tones."
+                                            }
                                         }
                                     }
 

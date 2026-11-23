@@ -103,6 +103,16 @@ Item {
 
                 Rectangle {
                     required property int index
+                    objectName: "calendar-day-" + index
+                    activeFocusOnTab: true
+                    Keys.onPressed: event => {
+                        if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
+                            root.selected(day);
+                            event.accepted = true;
+                        }
+                    }
+                    border.width: activeFocus ? 1 : 0
+                    border.color: Theme.blue
                     property date day: root.dateAt(index)
                     property bool inMonth: day.getMonth() === root.shownMonth.getMonth()
                     property bool chosen: root.sameDate(day, root.selectedDate)

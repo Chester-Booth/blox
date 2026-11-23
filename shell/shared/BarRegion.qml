@@ -94,6 +94,8 @@ Item {
             workspaceController: root.workspaceController
             notificationController: root.notificationController
             horizontal: root.horizontal
+            region: root.region
+            anchorScreen: root.trayHost.panelScreen
             maximumExtent: modelData.id === "active-window-title" ? root.itemMaximumExtent(index) : Number.POSITIVE_INFINITY
             trayOpensForward: root.region === "start" || root.region === "centre" && index === root.regionItems.length - 1
             panelExtent: root.panelExtent

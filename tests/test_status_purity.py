@@ -10,7 +10,7 @@ from pathlib import Path
 REPOSITORY = Path(__file__).resolve().parents[1]
 SCRIPT = REPOSITORY / "shell/scripts/status/caffeine.sh"
 VENDOR_PERFORMANCE_SCRIPT = REPOSITORY / "shell/scripts/status/vendor-performance.sh"
-CONTROL_SCRIPT = REPOSITORY / "shell/scripts/control.sh"
+CONTROL_SCRIPT = REPOSITORY / "shell/scripts/providers/hardware-control.sh"
 
 
 class CaffeineStatusPurityTests(unittest.TestCase):
@@ -211,7 +211,7 @@ if [[ "$1 $2" == "profile get" ]]; then printf 'Active profile: Quiet\\n'; fi
             environment = os.environ.copy()
             environment.update({"PATH": f"{fake_bin}:/usr/bin:/bin", "FAKE_LOG": str(log)})
             result = subprocess.run(
-                ["/usr/bin/bash", str(CONTROL_SCRIPT), "fan-curves", "on"],
+                ["/usr/bin/bash", str(CONTROL_SCRIPT), "fan-curves-set", "on"],
                 env=environment,
                 capture_output=True,
                 text=True,
@@ -260,6 +260,7 @@ exit 0
                 fake_bin / "systemctl",
                 """#!/usr/bin/env bash
 printf 'systemctl %s\\n' "$*" >> "$FAKE_LOG"
+if [[ "$2" == "show" ]]; then echo notify; exit 0; fi
 if [[ "$2" == "is-active" ]]; then
     if [[ "$FAKE_INHIBITOR_ACTIVE" == "true" || -f "$FAKE_INHIBITOR_MARKER" ]]; then
         exit 0
@@ -323,7 +324,8 @@ exit 0
 
         self.assertTrue(state_exists)
         self.assertIn("systemctl --user start hypridle.service", calls)
-        self.assertIn("systemd-run --user --unit=blox-caffeine --collect --quiet systemd-inhibit --what=idle --who=Blox --why=Awake mode --mode=block sleep infinity", calls)
+        self.assertIn("--property=Type=notify --property=NotifyAccess=all --property=TimeoutStartSec=5s", calls)
+        self.assertIn("systemd-notify --ready", calls)
         self.assertNotIn("pkill", calls)
         self.assertNotIn("hypridle \n", calls)
 
@@ -360,6 +362,7 @@ exit 0
                 fake_bin / "systemctl",
                 """#!/usr/bin/env bash
 printf 'systemctl %s\\n' "$*" >> "$FAKE_LOG"
+if [[ "$2" == "show" ]]; then echo notify; exit 0; fi
 if [[ "$2" == "is-active" && -f "$FAKE_INHIBITOR_MARKER" ]]; then exit 0; fi
 if [[ "$2" == "is-active" ]]; then exit 3; fi
 exit 0
@@ -413,6 +416,158 @@ exit 0
             self.assertIn("systemd-run --user --unit=blox-caffeine --collect --quiet", log.read_text(encoding="utf-8"))
             state_file = state_home / "quickshell/caffeine.json"
             self.assertEqual(json.loads(state_file.read_text(encoding="utf-8"))["mode"], "indefinite")
+
+
+class CaffeineTypedActionTests(unittest.TestCase):
+    def run_action(self, start_result=0, active_after_start=True, original=None, busy=False):
+        import fcntl
+        with tempfile.TemporaryDirectory(prefix="blox-caffeine-typed-") as temporary:
+            root = Path(temporary)
+            fake_bin = root / "bin"
+            fake_bin.mkdir()
+            state_file = root / "state/quickshell/caffeine.json"
+            state_file.parent.mkdir(parents=True)
+            if original is not None:
+                state_file.write_bytes(original)
+            marker = root / "inhibitor"
+            scripts = {
+                "hypridle": "exit 0",
+                "systemd-inhibit": "exit 0",
+                "systemd-run": 'if [[ "$FAKE_START_RESULT" != 0 ]]; then exit "$FAKE_START_RESULT"; fi\nif [[ "$FAKE_ACTIVE" == true ]]; then touch "$FAKE_MARKER"; fi',
+                "systemctl": 'case "$2" in\nstop) [[ -f "$FAKE_MARKER" ]] || exit 5; rm -f "$FAKE_MARKER" ;;\nis-active) [[ -f "$FAKE_MARKER" ]] || exit 3 ;;\nshow) echo not-found ;;\n*) exit 0 ;;\nesac',
+            }
+            for name, body in scripts.items():
+                file = fake_bin / name
+                file.write_text("#!/usr/bin/env bash\n" + body + "\n", encoding="utf-8")
+                file.chmod(0o755)
+            environment = {**os.environ, "HOME": str(root / "home"), "XDG_STATE_HOME": str(root / "state"),
+                "PATH": f"{fake_bin}:/usr/bin:/bin", "FAKE_MARKER": str(marker),
+                "FAKE_START_RESULT": str(start_result), "FAKE_ACTIVE": str(active_after_start).lower()}
+            with (state_file.parent / "caffeine.lock").open("w") as lock:
+                if busy:
+                    fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                completed = subprocess.run(["bash", str(SCRIPT), "action", "indefinite"],
+                    env=environment, capture_output=True, text=True, timeout=5)
+            saved = state_file.read_bytes() if state_file.exists() else None
+            return completed, saved, marker.exists()
+
+    def test_readiness_command_only_runs_after_inhibitor_acquisition(self):
+        with tempfile.TemporaryDirectory(prefix="blox-caffeine-readiness-") as temporary:
+            root = Path(temporary)
+            fake_bin = root / "bin"
+            fake_bin.mkdir()
+            scripts = {
+                "hypridle": "exit 0",
+                "systemctl": 'if [[ "$2" == "is-active" ]]; then [[ -f "$FAKE_READY" ]] || exit 3; fi',
+                "systemd-run": 'while [[ "$1" == --* ]]; do shift; done\nexport NOTIFY_SOCKET=/isolated/socket\n"$@" || exit 1\n[[ -f "$FAKE_READY" ]]',
+                "systemd-inhibit": '[[ "$FAKE_ACQUIRED" == true ]] || exit 1\nunset NOTIFY_SOCKET\nwhile [[ "$1" != sh ]]; do shift; done\nexec "$@"',
+                "systemd-notify": '[[ "$NOTIFY_SOCKET" == /isolated/socket ]] || exit 1\ntouch "$FAKE_READY"',
+                "sleep": "exit 0",
+            }
+            for name, body in scripts.items():
+                file = fake_bin / name
+                file.write_text("#!/usr/bin/env bash\n" + body + "\n", encoding="utf-8")
+                file.chmod(0o755)
+            environment = {**os.environ, "HOME": str(root / "home"), "XDG_STATE_HOME": str(root / "state"),
+                "PATH": f"{fake_bin}:/usr/bin:/bin", "FAKE_READY": str(root / "ready"), "FAKE_ACQUIRED": "false"}
+            failed = subprocess.run(["bash", str(SCRIPT), "action", "indefinite"],
+                env=environment, capture_output=True, text=True, timeout=5)
+            self.assertEqual(failed.returncode, 1, failed.stderr)
+            self.assertFalse((root / "ready").exists())
+            state = root / "state/quickshell/caffeine.json"
+            self.assertFalse(state.exists())
+            environment["FAKE_ACQUIRED"] = "true"
+            success = subprocess.run(["bash", str(SCRIPT), "action", "indefinite"],
+                env=environment, capture_output=True, text=True, timeout=5)
+            self.assertEqual(success.returncode, 0, success.stderr)
+            self.assertTrue((root / "ready").exists())
+            self.assertEqual(json.loads(state.read_text())["mode"], "indefinite")
+
+    def test_failed_inhibitor_never_saves_successful_awake_mode(self):
+        completed, saved, active = self.run_action(start_result=1)
+        self.assertEqual(completed.returncode, 1, completed.stderr)
+        self.assertEqual(json.loads(completed.stdout)["code"], "failed")
+        self.assertIsNone(saved)
+        self.assertFalse(active)
+
+    def test_zero_exit_without_active_inhibitor_does_not_publish(self):
+        original = b'{"deadline":42,"mode":"30m"}\n'
+        completed, saved, active = self.run_action(active_after_start=False, original=original)
+        self.assertEqual(completed.returncode, 1, completed.stderr)
+        self.assertEqual(json.loads(completed.stdout)["code"], "failed")
+        self.assertEqual(saved, original)
+        self.assertFalse(active)
+
+    def test_successful_action_confirms_inhibitor_before_publishing(self):
+        completed, saved, active = self.run_action()
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        reply = json.loads(completed.stdout)
+        self.assertTrue(reply["ok"])
+        self.assertEqual(reply["code"], "ok")
+        self.assertFalse(reply["data"]["pending"])
+        self.assertIsInstance(reply["data"]["observedAtMs"], int)
+        self.assertEqual(json.loads(saved)["mode"], "indefinite")
+        self.assertTrue(active)
+
+    def test_competing_action_is_busy_without_mutation(self):
+        completed, saved, active = self.run_action(busy=True)
+        self.assertEqual(completed.returncode, 75, completed.stderr)
+        self.assertEqual(json.loads(completed.stdout)["code"], "busy")
+        self.assertIsNone(saved)
+        self.assertFalse(active)
+
+
+class NotesActionFailureTests(unittest.TestCase):
+    def test_note_permission_failure_has_denied_exit_without_partial_file(self):
+        if os.getuid() == 0:
+            self.skipTest("Permission refusal requires an unprivileged test process")
+        with tempfile.TemporaryDirectory(prefix="blox-note-denied-") as temporary:
+            folder = Path(temporary) / "read-only"
+            folder.mkdir(mode=0o500)
+            try:
+                completed = subprocess.run(["python3", str(REPOSITORY / "shell/scripts/todo/save.py"),
+                    str(folder / "note.md"), "new note"], capture_output=True, text=True, timeout=5)
+                self.assertEqual(completed.returncode, 4, completed.stderr)
+                self.assertEqual(list(folder.iterdir()), [])
+            finally:
+                folder.chmod(0o700)
+
+    def test_generated_refresh_reports_publication_failure_after_successful_download(self):
+        with tempfile.TemporaryDirectory(prefix="blox-generated-publish-") as temporary:
+            root = Path(temporary)
+            script = root / "generated-refresh.sh"
+            script.write_text((REPOSITORY / "shell/scripts/todo/generated-refresh.sh").read_text(), encoding="utf-8")
+            producer = root / "update-gcal-md.sh"
+            producer.write_text("#!/usr/bin/env bash\nexit 0\n", encoding="utf-8")
+            producer.chmod(0o755)
+            fake_bin = root / "bin"
+            fake_bin.mkdir()
+            for name, body in {"curl": "echo new data", "mv": "exit 1"}.items():
+                file = fake_bin / name
+                file.write_text("#!/usr/bin/env bash\n" + body + "\n")
+                file.chmod(0o755)
+            environment = {**os.environ, "HOME": str(root / "home"), "XDG_RUNTIME_DIR": str(root / "runtime"),
+                "PATH": f"{fake_bin}:/usr/bin:/bin", "EXPENSES_API_BASE_URL": "https://isolated.invalid"}
+            completed = subprocess.run(["bash", str(script)], env=environment, capture_output=True, text=True, timeout=5)
+            self.assertEqual(completed.returncode, 1, completed.stderr)
+            self.assertFalse((root / "home/Documents/todo/80-today.md").exists())
+            self.assertFalse((root / "home/Documents/todo/81-week.md").exists())
+
+    def test_generated_refresh_propagates_failed_producer(self):
+        with tempfile.TemporaryDirectory(prefix="blox-generated-failure-") as temporary:
+            root = Path(temporary)
+            script = root / "generated-refresh.sh"
+            script.write_text((REPOSITORY / "shell/scripts/todo/generated-refresh.sh").read_text(), encoding="utf-8")
+            producer = root / "update-gcal-md.sh"
+            producer.write_text("#!/usr/bin/env bash\nexit 1\n", encoding="utf-8")
+            producer.chmod(0o755)
+            environment = {**os.environ, "HOME": str(root / "home"), "XDG_RUNTIME_DIR": str(root / "runtime"),
+                "EXPENSES_API_BASE_URL": ""}
+            completed = subprocess.run(["bash", str(script)], env=environment, capture_output=True, text=True, timeout=5)
+            self.assertEqual(completed.returncode, 1, completed.stderr)
+            producer.write_text("#!/usr/bin/env bash\nexit 0\n", encoding="utf-8")
+            completed = subprocess.run(["bash", str(script)], env=environment, capture_output=True, text=True, timeout=5)
+            self.assertEqual(completed.returncode, 0, completed.stderr)
 
 
 if __name__ == "__main__":

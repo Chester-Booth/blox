@@ -1,3 +1,4 @@
+import qs.shared
 import QtQuick
 import Quickshell
 import Quickshell.Io
@@ -939,7 +940,6 @@ Scope {
         cancelReconcileRetry(item);
         if (!item)
             return ;
-
         if (item.surface === "editor")
             editorSaving = true;
         else if (item.surface === "delete")

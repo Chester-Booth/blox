@@ -1,0 +1,31 @@
+name: performance
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: performance-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  bench:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Run Blox offline benchmarks and tests
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+          PYTHONPATH: .
+        run: |
+          make test-performance
+          python3 tools/bench.py --iterations 30

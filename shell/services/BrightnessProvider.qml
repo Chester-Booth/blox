@@ -1,3 +1,4 @@
+import qs.shared
 import QtQuick
 import Quickshell
 import Quickshell.Io
@@ -16,8 +17,14 @@ Scope {
     property string pendingRaw: ""
     property string activeBrightness: ""
     property string pendingBrightness: ""
+    property string actionRaw: ""
+    property int actionSerial: 0
+    property int queryActionSerial: 0
+    readonly property real adjustmentBase: pendingBrightness.length > 0 ? Number(pendingBrightness) : state.percent
+    signal brightnessApplied(int percent)
     property string actionError: ""
-    property bool timedOut: false
+    property bool queryTimedOut: false
+    property bool actionTimedOut: false
     readonly property bool providerReady: root.scriptRoot.length > 0
     readonly property bool actionBusy: actionProcess.running || root.pendingBrightness.length > 0
     readonly property int revision: state.revision
@@ -27,12 +34,14 @@ Scope {
     readonly property var json: state.json
     property string queryError: ""
 
-    function applyPayload(payload) {
+    function applyPayload(payload, currentPercent) {
         root.queryError = "";
-        state.backendAvailable = payload.capability && payload.capability.reason !== "command-unavailable";
+        state.backendAvailable = !!payload.capability && payload.capability.available !== false && payload.capability.reason !== "command-unavailable";
+        state.controlAvailable = !!payload.capability && payload.capability.canChange !== false;
         state.device = String(payload.device || "");
         state.backlights = Array.isArray(payload.backlights) ? payload.backlights : [];
-        state.percent = Number(payload.percent || 0);
+        if (currentPercent !== false)
+            state.percent = Number(payload.percent || 0);
         state.blueLightMode = String(payload.blueLightMode || "auto");
         state.blueLightActive = payload.blueLightActive === true;
         state.ddcAvailable = payload.ddcAvailable === true;
@@ -58,14 +67,19 @@ Scope {
         }
         root.refreshPending = false;
         root.pendingRaw = "";
-        root.timedOut = false;
+        // A query overlapping a write cannot confirm its resulting percentage.
+        root.queryActionSerial = root.actionBusy ? -1 : root.actionSerial;
+        root.queryTimedOut = false;
         queryProcess.running = true;
     }
 
     function startBrightness(value) {
         root.activeBrightness = String(value);
+        root.actionSerial += 1;
+        root.actionRaw = "";
+        root.actionTimedOut = false;
         root.actionError = "";
-        actionProcess.command = [root.scriptRoot + "/control.sh", "brightness-set-silent", root.activeBrightness];
+        actionProcess.command = [root.scriptRoot + "/providers/hardware-control.sh", "brightness-set", root.activeBrightness];
         actionProcess.running = true;
     }
 
@@ -95,8 +109,8 @@ Scope {
         onStarted: queryWatchdog.restart()
         onExited: (exitCode, exitStatus) => {
             queryWatchdog.stop();
-            actionKill.stop();
-            if (root.timedOut) {
+            queryKill.stop();
+            if (root.queryTimedOut) {
                 root.applyQueryFailure("query-timeout");
             } else if (exitCode === 0 && exitStatus === 0) {
                 const output = root.pendingRaw.trim();
@@ -104,7 +118,7 @@ Scope {
                     const parsed = output.length > 0 ? JSON.parse(output) : null;
                     if (!parsed || typeof parsed !== "object")
                         throw new Error("brightness status was not an object");
-                    root.applyPayload(parsed);
+                    root.applyPayload(parsed, root.queryActionSerial === root.actionSerial && !root.actionBusy);
                 } catch (error) {
                     root.applyQueryFailure("malformed-status");
                 }
@@ -127,15 +141,25 @@ Scope {
         onStarted: actionWatchdog.restart()
         onExited: (exitCode, exitStatus) => {
             actionWatchdog.stop();
-            if (root.timedOut)
+            actionKill.stop();
+            if (root.actionTimedOut)
                 root.actionError = "action-timeout";
             else if (exitCode !== 0 || exitStatus !== 0)
                 root.actionError = "action-failed";
+            if (root.actionError.length === 0) {
+                const raw = root.actionRaw.trim();
+                const observed = Number(raw);
+                if (!/^[0-9]+$/.test(raw) || observed > 100) {
+                    root.actionError = "malformed-action-status";
+                } else {
+                    state.percent = observed;
+                    root.brightnessApplied(observed);
+                }
+            }
             const next = root.pendingBrightness;
             const completed = root.activeBrightness;
             root.activeBrightness = "";
             if (root.actionError.length === 0 && next.length > 0 && next !== completed) {
-                root.pendingBrightness = "";
                 root.startBrightness(next);
                 return ;
             }
@@ -143,6 +167,10 @@ Scope {
             state.markChanged();
             if (root.actionError.length === 0)
                 root.refresh();
+        }
+
+        stdout: StdioCollector {
+            onStreamFinished: root.actionRaw = this.text
         }
     }
 
@@ -154,9 +182,9 @@ Scope {
         onTriggered: {
             if (!queryProcess.running)
                 return ;
-            root.timedOut = true;
+            root.queryTimedOut = true;
             queryProcess.signal(15);
-            actionKill.restart();
+            queryKill.restart();
         }
     }
 
@@ -168,20 +196,27 @@ Scope {
         onTriggered: {
             if (!actionProcess.running)
                 return ;
-            root.timedOut = true;
+            root.actionTimedOut = true;
             actionProcess.signal(15);
             actionKill.restart();
         }
     }
 
     Timer {
-        id: actionKill
-
+        id: queryKill
         interval: 1000
         repeat: false
         onTriggered: {
             if (queryProcess.running)
                 queryProcess.signal(9);
+        }
+    }
+
+    Timer {
+        id: actionKill
+        interval: 1000
+        repeat: false
+        onTriggered: {
             if (actionProcess.running)
                 actionProcess.signal(9);
         }

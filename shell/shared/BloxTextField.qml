@@ -6,6 +6,7 @@ Rectangle {
     property alias text: editor.text
     property string placeholderText: ""
     property string suffix: ""
+    property real trailingInset: 0
     property bool readOnly: false
     readonly property bool hovered: hover.hovered
     readonly property bool editorFocused: editor.activeFocus
@@ -35,7 +36,8 @@ Rectangle {
         activeFocusOnTab: root.enabled && !root.readOnly
         anchors.fill: parent
         anchors.leftMargin: Theme.scaledSpacing(11)
-        anchors.rightMargin: root.suffix.length > 0 ? suffixLabel.implicitWidth + Theme.scaledSpacing(18) : Theme.scaledSpacing(11)
+        anchors.rightMargin: (root.suffix.length > 0 ? suffixLabel.implicitWidth + Theme.scaledSpacing(18)
+            : Theme.scaledSpacing(11)) + root.trailingInset
         color: root.enabled ? Theme.foreground : Theme.muted
         selectionColor: Theme.withAlpha(Theme.blue, 0.5)
         selectedTextColor: Theme.foreground

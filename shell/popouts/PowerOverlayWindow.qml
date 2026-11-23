@@ -11,6 +11,7 @@ PanelWindow {
     property bool open: false
     property bool rendered: false
     property string updateSummary: ""
+    property var actions: null
 
     signal action(string kind)
     signal close()
@@ -49,10 +50,20 @@ PanelWindow {
         }
     }
 
+    Connections {
+        target: root.actions
+        function onPowerFinished(success) {
+            if (success)
+                root.close();
+        }
+    }
+
     PowerOverlay {
         anchors.fill: parent
         overlayOpen: root.open
         updateSummary: root.updateSummary
+        actionBusy: root.actions ? root.actions.powerBusy : false
+        actionError: root.actions ? root.actions.powerError : ""
         onAction: (kind) => {
             return root.action(kind);
         }

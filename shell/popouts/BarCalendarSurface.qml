@@ -9,6 +9,15 @@ Item {
     required property BarPopoutGeometry geometry
     required property BarSurfaceController surfaceController
     required property BarContentController contentController
+    readonly property bool externalChildWindowOpen: root.contentController.calendarController.detailsOpen
+        || root.contentController.calendarController.editorOpen
+        || root.contentController.calendarController.confirmDeleteOpen
+
+    function dismissPopup() {
+        if (root.contentController.calendarController.eventMenuOpen)
+            calendarPopout.dismissEventMenu();
+        root.surfaceController.closePanel();
+    }
 
     function updateChildAnchor() {
         if (!root.geometry.active)
@@ -20,6 +29,7 @@ Item {
 
     HoverPopupWindow {
         id: calendarWindow
+        objectName: "calendar-popup-window"
 
         readonly property bool verticalBar: Theme.barPosition === "left" || Theme.barPosition === "right"
         readonly property real backingHeight: verticalBar ? calendarPopout.maximumViewHeight : calendarPopout.height
@@ -33,6 +43,9 @@ Item {
         // damage and clear the area formerly occupied by the day view.
         contentHeight: backingHeight
         open: root.geometry.active && root.surfaceController.openPanel === "calendar"
+        persistentKeyboardFocus: open && root.surfaceController.keyboardPanel === "calendar" && !root.contentController.calendarController.childWindowOpen
+        dismissOnFocusClear: root.contentController.calendarController.eventMenuOpen && !root.externalChildWindowOpen
+        onDismissRequested: root.dismissPopup()
         onOpenChanged: {
             if (open) {
                 root.contentController.calendarController.open(root.contentController.now, root.geometry.panelWindow.screen);
@@ -68,8 +81,12 @@ Item {
     Connections {
         function onChildWindowOpenChanged() {
             if (root.geometry.active) {
-                if (root.contentController.calendarController.childWindowOpen)
+                if (root.contentController.calendarController.childWindowOpen) {
                     root.updateChildAnchor();
+                    const controller = root.contentController.calendarController;
+                    if (controller.detailsOpen || controller.editorOpen || controller.confirmDeleteOpen)
+                        calendarWindow.releaseKeyboardFocus();
+                }
 
                 root.surfaceController.setInputPopupLocked(root.contentController.calendarController.childWindowOpen);
             }

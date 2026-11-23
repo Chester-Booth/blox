@@ -1,0 +1,221 @@
+{
+  "version": 1,
+  "scope": "Compact standalone boundary cases. The focused regressions.py runner retains its separate 1228-profile generated comparison.",
+  "bases": {
+    "clock": {
+      "id": "clock",
+      "kind": "clock",
+      "name": "Clock",
+      "enabled": true,
+      "placement": {
+        "anchor": "top-left",
+        "x": 24,
+        "y": 24,
+        "width": 280,
+        "height": 160
+      },
+      "workspaces": {
+        "mode": "include",
+        "ids": [
+          "desk"
+        ],
+        "ranges": []
+      },
+      "visibility": "always",
+      "appearance": {
+        "backgroundOpacity": 0.8,
+        "scrollbars": "auto",
+        "presentation": "open"
+      },
+      "fullscreen": {
+        "enabled": false,
+        "mode": "native"
+      },
+      "settings": {
+        "style": "digital",
+        "timezone": "local",
+        "format": "24h",
+        "showSeconds": false
+      }
+    },
+    "qml": {
+      "id": "qml",
+      "kind": "qml",
+      "name": "Trusted QML",
+      "enabled": true,
+      "placement": {
+        "anchor": "top-left",
+        "x": 24,
+        "y": 24,
+        "width": 360,
+        "height": 240
+      },
+      "workspaces": {
+        "mode": "include",
+        "ids": [
+          "desk"
+        ],
+        "ranges": []
+      },
+      "visibility": "always",
+      "appearance": {
+        "backgroundOpacity": 0.8,
+        "scrollbars": "auto",
+        "presentation": "open"
+      },
+      "fullscreen": {
+        "enabled": false,
+        "mode": "native"
+      },
+      "settings": {
+        "providers": [
+          "clock"
+        ],
+        "layouts": [
+          "native",
+          "fit"
+        ],
+        "settings": {
+          "key": "text"
+        },
+        "manifest": "example"
+      }
+    },
+    "command": {
+      "id": "command",
+      "kind": "command",
+      "name": "Command output",
+      "enabled": true,
+      "placement": {
+        "anchor": "top-left",
+        "x": 24,
+        "y": 24,
+        "width": 360,
+        "height": 240,
+        "sizing": "content"
+      },
+      "workspaces": {
+        "mode": "include",
+        "ids": [
+          "desk"
+        ],
+        "ranges": []
+      },
+      "visibility": "always",
+      "appearance": {
+        "backgroundOpacity": 0.8,
+        "scrollbars": "auto",
+        "presentation": "open"
+      },
+      "fullscreen": {
+        "enabled": false,
+        "mode": "native"
+      },
+      "settings": {
+        "workingDirectory": "/tmp",
+        "environment": {
+          "EXAMPLE": "value"
+        },
+        "intervalSeconds": 60,
+        "timeoutSeconds": 15,
+        "fontFamily": "",
+        "fontSize": 15,
+        "padding": 24,
+        "actions": {
+          "left": {
+            "kind": "run",
+            "command": [
+              "action",
+              "arg"
+            ],
+            "workingDirectory": "/tmp",
+            "environment": {},
+            "timeoutSeconds": 15
+          },
+          "right": {
+            "kind": "launch",
+            "command": [
+              "action",
+              "arg"
+            ]
+          }
+        },
+        "command": [
+          "example",
+          "argument"
+        ]
+      }
+    }
+  },
+  "cases": [
+    {"name": "baseline-clock", "kind": "clock", "changes": [], "backendValid": true},
+    {"name": "baseline-qml", "kind": "qml", "changes": [], "backendValid": true},
+    {"name": "baseline-command", "kind": "command", "changes": [], "backendValid": true},
+    {"name": "name-supplementary-0", "kind": "clock", "changes": [{"path": ["name"], "text": "\ud83d\ude00", "repeat": 0}], "backendValid": false},
+    {"name": "name-supplementary-1", "kind": "clock", "changes": [{"path": ["name"], "text": "\ud83d\ude00", "repeat": 1}], "backendValid": true},
+    {"name": "name-supplementary-119", "kind": "clock", "changes": [{"path": ["name"], "text": "\ud83d\ude00", "repeat": 119}], "backendValid": true},
+    {"name": "name-supplementary-120", "kind": "clock", "changes": [{"path": ["name"], "text": "\ud83d\ude00", "repeat": 120}], "backendValid": true},
+    {"name": "name-supplementary-121", "kind": "clock", "changes": [{"path": ["name"], "text": "\ud83d\ude00", "repeat": 121}], "backendValid": false},
+    {"name": "workspace-supplementary-0", "kind": "clock", "changes": [{"path": ["workspaces", "ids", 0], "text": "\ud83d\ude00", "repeat": 0}], "backendValid": false},
+    {"name": "workspace-supplementary-1", "kind": "clock", "changes": [{"path": ["workspaces", "ids", 0], "text": "\ud83d\ude00", "repeat": 1}], "backendValid": true},
+    {"name": "workspace-supplementary-127", "kind": "clock", "changes": [{"path": ["workspaces", "ids", 0], "text": "\ud83d\ude00", "repeat": 127}], "backendValid": true},
+    {"name": "workspace-supplementary-128", "kind": "clock", "changes": [{"path": ["workspaces", "ids", 0], "text": "\ud83d\ude00", "repeat": 128}], "backendValid": true},
+    {"name": "workspace-supplementary-129", "kind": "clock", "changes": [{"path": ["workspaces", "ids", 0], "text": "\ud83d\ude00", "repeat": 129}], "backendValid": false},
+    {"name": "qml-key-supplementary-0", "kind": "qml", "changes": [{"path": ["settings", "settings"], "keyText": "\ud83d\ude00", "repeat": 0, "value": {"safe": true}}], "backendValid": false},
+    {"name": "qml-key-supplementary-1", "kind": "qml", "changes": [{"path": ["settings", "settings"], "keyText": "\ud83d\ude00", "repeat": 1, "value": {"safe": true}}], "backendValid": true},
+    {"name": "qml-key-supplementary-127", "kind": "qml", "changes": [{"path": ["settings", "settings"], "keyText": "\ud83d\ude00", "repeat": 127, "value": {"safe": true}}], "backendValid": true},
+    {"name": "qml-key-supplementary-128", "kind": "qml", "changes": [{"path": ["settings", "settings"], "keyText": "\ud83d\ude00", "repeat": 128, "value": {"safe": true}}], "backendValid": true},
+    {"name": "qml-key-supplementary-129", "kind": "qml", "changes": [{"path": ["settings", "settings"], "keyText": "\ud83d\ude00", "repeat": 129, "value": {"safe": true}}], "backendValid": false},
+    {"name": "qml-value-supplementary-16383", "kind": "qml", "changes": [{"path": ["settings", "settings", "key"], "text": "\ud83d\ude00", "repeat": 16383}], "backendValid": true},
+    {"name": "qml-value-supplementary-16384", "kind": "qml", "changes": [{"path": ["settings", "settings", "key"], "text": "\ud83d\ude00", "repeat": 16384}], "backendValid": true},
+    {"name": "qml-value-supplementary-16385", "kind": "qml", "changes": [{"path": ["settings", "settings", "key"], "text": "\ud83d\ude00", "repeat": 16385}], "backendValid": false},
+    {"name": "argv-ascii-4095", "kind": "command", "changes": [{"path": ["settings", "command", 1], "text": "a", "repeat": 4095}], "backendValid": true},
+    {"name": "argv-ascii-4096", "kind": "command", "changes": [{"path": ["settings", "command", 1], "text": "a", "repeat": 4096}], "backendValid": true},
+    {"name": "argv-ascii-4097", "kind": "command", "changes": [{"path": ["settings", "command", 1], "text": "a", "repeat": 4097}], "backendValid": false},
+    {"name": "argv-supplementary-2049", "kind": "command", "changes": [{"path": ["settings", "command", 1], "text": "\ud83d\ude00", "repeat": 2049}], "backendValid": true},
+    {"name": "argv-supplementary-3000", "kind": "command", "changes": [{"path": ["settings", "command", 1], "text": "\ud83d\ude00", "repeat": 3000}], "backendValid": true},
+    {"name": "argv-supplementary-4097", "kind": "command", "changes": [{"path": ["settings", "command", 1], "text": "\ud83d\ude00", "repeat": 4097}], "backendValid": false},
+    {"name": "environment-supplementary-2049", "kind": "command", "changes": [{"path": ["settings", "environment", "EXAMPLE"], "text": "\ud83d\ude00", "repeat": 2049}], "backendValid": true},
+    {"name": "environment-supplementary-3000", "kind": "command", "changes": [{"path": ["settings", "environment", "EXAMPLE"], "text": "\ud83d\ude00", "repeat": 3000}], "backendValid": true},
+    {"name": "environment-supplementary-4097", "kind": "command", "changes": [{"path": ["settings", "environment", "EXAMPLE"], "text": "\ud83d\ude00", "repeat": 4097}], "backendValid": false},
+    {"name": "run-argv-supplementary-2049", "kind": "command", "changes": [{"path": ["settings", "actions", "left", "command", 1], "text": "\ud83d\ude00", "repeat": 2049}], "backendValid": true},
+    {"name": "run-argv-supplementary-3000", "kind": "command", "changes": [{"path": ["settings", "actions", "left", "command", 1], "text": "\ud83d\ude00", "repeat": 3000}], "backendValid": true},
+    {"name": "run-argv-supplementary-4097", "kind": "command", "changes": [{"path": ["settings", "actions", "left", "command", 1], "text": "\ud83d\ude00", "repeat": 4097}], "backendValid": false},
+    {"name": "launch-argv-supplementary-2049", "kind": "command", "changes": [{"path": ["settings", "actions", "right", "command", 1], "text": "\ud83d\ude00", "repeat": 2049}], "backendValid": true},
+    {"name": "launch-argv-supplementary-3000", "kind": "command", "changes": [{"path": ["settings", "actions", "right", "command", 1], "text": "\ud83d\ude00", "repeat": 3000}], "backendValid": true},
+    {"name": "launch-argv-supplementary-4097", "kind": "command", "changes": [{"path": ["settings", "actions", "right", "command", 1], "text": "\ud83d\ude00", "repeat": 4097}], "backendValid": false},
+    {"name": "cwd-ascii-4095", "kind": "command", "changes": [{"path": ["settings", "workingDirectory"], "text": "a", "repeat": 4094, "prefix": "/"}], "backendValid": true},
+    {"name": "cwd-ascii-4096", "kind": "command", "changes": [{"path": ["settings", "workingDirectory"], "text": "a", "repeat": 4095, "prefix": "/"}], "backendValid": true},
+    {"name": "cwd-ascii-4097", "kind": "command", "changes": [{"path": ["settings", "workingDirectory"], "text": "a", "repeat": 4096, "prefix": "/"}], "backendValid": false},
+    {"name": "argv-invalid-surrogate-0", "kind": "command", "changes": [{"path": ["settings", "command", 1], "text": "\ud800", "repeat": 1}], "backendValid": false},
+    {"name": "argv-invalid-surrogate-1", "kind": "command", "changes": [{"path": ["settings", "command", 1], "text": "\udfff", "repeat": 1}], "backendValid": false},
+    {"name": "argv-invalid-surrogate-2", "kind": "command", "changes": [{"path": ["settings", "command", 1], "text": "\ud800x", "repeat": 1}], "backendValid": false},
+    {"name": "argv-invalid-surrogate-3", "kind": "command", "changes": [{"path": ["settings", "command", 1], "text": "\ud800\ud800", "repeat": 1}], "backendValid": false},
+    {"name": "argv-invalid-surrogate-4", "kind": "command", "changes": [{"path": ["settings", "command", 1], "text": "x\udfff", "repeat": 1}], "backendValid": false},
+    {"name": "argv-invalid-surrogate-5", "kind": "command", "changes": [{"path": ["settings", "command", 1], "text": "\ud83d\ude00\ud800", "repeat": 1}], "backendValid": false},
+    {"name": "environment-invalid-surrogate", "kind": "command", "changes": [{"path": ["settings", "environment", "EXAMPLE"], "text": "\ud800", "repeat": 1, "prefix": ""}], "backendValid": false},
+    {"name": "cwd-invalid-surrogate", "kind": "command", "changes": [{"path": ["settings", "workingDirectory"], "text": "\ud800", "repeat": 1, "prefix": "/"}], "backendValid": false},
+    {"name": "run-argv-invalid-surrogate", "kind": "command", "changes": [{"path": ["settings", "actions", "left", "command", 1], "text": "\ud800", "repeat": 1, "prefix": ""}], "backendValid": false},
+    {"name": "qml-special-__proto__", "kind": "qml", "changes": [{"path": ["settings", "settings"], "value": {"__proto__": {"__proto__": [true, null, {"safe": true}]}, "sibling": 12}}], "backendValid": true},
+    {"name": "qml-special-constructor", "kind": "qml", "changes": [{"path": ["settings", "settings"], "value": {"constructor": {"constructor": [true, null, {"safe": true}]}, "sibling": 12}}], "backendValid": true},
+    {"name": "qml-special-prototype", "kind": "qml", "changes": [{"path": ["settings", "settings"], "value": {"prototype": {"prototype": [true, null, {"safe": true}]}, "sibling": 12}}], "backendValid": true},
+    {"name": "workspace-quotes", "kind": "clock", "changes": [{"path": ["workspaces", "ids"], "value": [2, "desk,work", "2", "special:notes", -3, "say \"hi\", here", "C:\\desk,work", "tail\\", "__proto__"]}], "backendValid": true},
+    {"name": "workspace-typed", "kind": "clock", "changes": [{"path": ["workspaces", "ids"], "value": [2, "2"]}], "backendValid": true},
+    {"name": "workspace-duplicate", "kind": "clock", "changes": [{"path": ["workspaces", "ids"], "value": [2, 2]}], "backendValid": false},
+    {"name": "workspace-out-of-range", "kind": "clock", "changes": [{"path": ["workspaces", "ids"], "value": [1000001]}], "backendValid": false},
+    {"name": "workspace-negative-ranges", "kind": "clock", "changes": [{"path": ["workspaces", "ranges"], "value": [[-9, -5], [-2, 0], [4, 6]]}], "backendValid": true},
+    {"name": "workspace-descending", "kind": "clock", "changes": [{"path": ["workspaces", "ranges"], "value": [[4, 2]]}], "backendValid": false},
+    {"name": "workspace-duplicate-ranges", "kind": "clock", "changes": [{"path": ["workspaces", "ranges"], "value": [[1, 2], [1, 2]]}], "backendValid": false},
+    {"name": "empty-command", "kind": "command", "changes": [{"path": ["settings", "command"], "value": []}], "backendValid": false},
+    {"name": "empty-executable", "kind": "command", "changes": [{"path": ["settings", "command"], "value": [""]}], "backendValid": false},
+    {"name": "numeric-arg", "kind": "command", "changes": [{"path": ["settings", "command"], "value": ["x", 1]}], "backendValid": false},
+    {"name": "nul-arg", "kind": "command", "changes": [{"path": ["settings", "command"], "value": ["x", "\u0000"]}], "backendValid": false},
+    {"name": "reserved-environment", "kind": "command", "changes": [{"path": ["settings", "environment"], "value": {"BLOX_WIDGET_ACTION_CONTEXT": "x"}}], "backendValid": false},
+    {"name": "relative-cwd", "kind": "command", "changes": [{"path": ["settings", "workingDirectory"], "value": "relative"}], "backendValid": false},
+    {"name": "interval-below", "kind": "command", "changes": [{"path": ["settings", "intervalSeconds"], "value": 0.249}], "backendValid": false},
+    {"name": "launch-extra-field", "kind": "command", "changes": [{"path": ["settings", "actions", "right"], "value": {"kind": "launch", "command": ["x"], "environment": {}}}], "backendValid": false},
+    {"name": "run-timeout-above", "kind": "command", "changes": [{"path": ["settings", "actions", "left", "timeoutSeconds"], "value": 120.001}], "backendValid": false},
+    {"name": "qml-number-above", "kind": "qml", "changes": [{"path": ["settings", "settings"], "value": {"number": 10000000000000.0}}], "backendValid": false},
+    {"name": "timezone-authoritative", "kind": "clock", "changes": [{"path": ["settings", "timezone"], "value": "Definitely/NotAZone"}], "backendValid": false, "formatCase": true}
+  ]
+}

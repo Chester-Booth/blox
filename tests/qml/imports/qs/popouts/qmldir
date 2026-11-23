@@ -1,0 +1,6 @@
+module qs.popouts
+CalendarPopout 1.0 ../../../../../shell/popouts/CalendarPopout.qml
+CalendarMonthView 1.0 ../../../../../shell/popouts/CalendarMonthView.qml
+CalendarDayView 1.0 ../../../../../shell/popouts/CalendarDayView.qml
+CalendarEventBlock 1.0 ../../../../../shell/popouts/CalendarEventBlock.qml
+CalendarEventMenu 1.0 ../../../../../shell/popouts/CalendarEventMenu.qml

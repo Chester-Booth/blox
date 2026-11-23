@@ -56,7 +56,7 @@ QtObject {
             "shell": shell,
             "wallpaper": JSON.parse(JSON.stringify(defaultsDocument.wallpaper)),
             "terminal": JSON.parse(JSON.stringify(defaultsDocument.terminal)),
-            "widgets": {"profile": root.defaults.document.widgets.profile},
+            "widgets": JSON.parse(JSON.stringify(root.defaults.document.widgets)),
             "gtk": JSON.parse(JSON.stringify(defaultsDocument.gtk)),
             "icons": JSON.parse(JSON.stringify(defaultsDocument.icons)),
             "cursor": JSON.parse(JSON.stringify(defaultsDocument.cursor)),
@@ -68,7 +68,11 @@ QtObject {
     }
 
     function resolvedSource(data) {
-        return merge(sourceFallback(), data);
+        const resolved = merge(sourceFallback(), data);
+        // Widget profiles are complete documents, never sparse theme overrides.
+        if (data && Object.prototype.hasOwnProperty.call(data, "widgets"))
+            resolved.widgets = JSON.parse(JSON.stringify(data.widgets));
+        return resolved;
     }
 
     function reset() {
@@ -119,30 +123,34 @@ QtObject {
     }
 
     function resetWidgets() {
-        const profile = root.defaults.widgetProfile();
-        theme.widgetProfile = root.defaults.document.widgets.profile;
-        theme.widgetOpacity = profile.opacity;
-        theme.widgetBasePadding = profile.padding;
-        theme.widgetBaseRadius = profile.radius;
-        theme.widgetFontSize = profile.font_size;
-        theme.widgetItems = [];
-        return theme.widgetProfile;
+        theme.widgetItems = root.defaults.defaultWidgetItems();
+        theme.widgetError = "";
+        return "reset";
     }
 
+    // Python validates published profiles. Reject malformed or old documents here
+    // as well, so an invalid reload cannot leave the previous widgets visible.
     function loadWidgets(raw) {
         try {
             const data = JSON.parse(raw);
-            if (data.schema_version !== 1 || !data.profile)
+            if (data.schemaVersion !== 1 || !Array.isArray(data.widgets)
+                    || Object.keys(data).some(key => key !== "schemaVersion" && key !== "widgets"))
                 throw new Error("unsupported or incomplete widget profile");
-
-            theme.widgetProfile = data.profile;
-            theme.widgetOpacity = data.opacity;
-            theme.widgetBasePadding = data.padding;
-            theme.widgetBaseRadius = data.radius;
-            theme.widgetFontSize = data.font_size;
-            theme.widgetItems = data.items || [];
+            const ids = new Set();
+            const kinds = ["clock", "music", "system", "network", "calendar", "notes", "files", "shortcuts", "weather", "terminal", "command", "qml"];
+            for (const item of data.widgets) {
+                if (!item || typeof item.id !== "string" || !item.id.length || ids.has(item.id)
+                        || kinds.indexOf(item.kind) < 0 || typeof item.enabled !== "boolean"
+                        || !item.placement || !item.workspaces || !item.appearance || !item.fullscreen || !item.settings)
+                    throw new Error("invalid widget item");
+                ids.add(item.id);
+            }
+            theme.widgetItems = JSON.parse(JSON.stringify(data.widgets));
+            theme.widgetError = "";
             return true;
         } catch (error) {
+            theme.widgetItems = [];
+            theme.widgetError = String(error);
             console.warn("[blox.theme] rejected widget profile: " + error);
             return false;
         }
@@ -154,6 +162,8 @@ QtObject {
             if (data.schema_version !== 1 || !data.id || !data.colours || !data.compatibility || !data.fonts || !data.shape || !data.terminal)
                 throw new Error("unsupported or incomplete theme document");
 
+            if (Object.prototype.hasOwnProperty.call(data, "widgets") && !loadWidgetSource(data.widgets))
+                throw new Error("invalid widget profile");
             theme.themeId = data.id;
             theme.activeThemeId = data.id;
             theme.variant = data.variant;
@@ -181,8 +191,6 @@ QtObject {
             if (!theme.activeIconTheme)
                 theme.activeIconTheme = data.icons && data.icons.theme ? data.icons.theme : root.defaults.themeDocument().icons.theme;
             loadShell(data.shell);
-            if (data.widgets)
-                loadWidgetSource(data.widgets.profile);
 
             return true;
         } catch (error) {
@@ -192,19 +200,7 @@ QtObject {
     }
 
     function loadWidgetSource(profile) {
-        const resolved = root.defaults.widgetProfile(profile);
-        if (!resolved)
-            return false;
-
-        return loadWidgets(JSON.stringify({
-            "schema_version": 1,
-            "profile": profile || "minimal",
-            "opacity": resolved.opacity,
-            "margin": resolved.margin,
-            "padding": resolved.padding,
-            "radius": resolved.radius,
-            "font_size": resolved.font_size
-        }));
+        return loadWidgets(JSON.stringify(profile));
     }
 
     function loadShell(shell) {
@@ -260,6 +256,8 @@ QtObject {
             if (data.schema_version !== 1 || !data.id || !data.colours || !data.fonts || !data.shape || !data.terminal)
                 throw new Error("unsupported or incomplete source theme");
 
+            if (!loadWidgetSource(data.widgets))
+                throw new Error("invalid widget profile");
             theme.previewActive = true;
             theme.previewThemeId = data.id;
             theme.themeId = data.id;
@@ -286,9 +284,6 @@ QtObject {
             theme.monoFontFamily = data.fonts.mono;
             theme.bodyFontFamily = data.fonts.ui;
             loadShell(data.shell);
-            loadWidgetSource(data.widgets ? data.widgets.profile : "minimal");
-            if (data.widgets && data.widgets.items)
-                theme.widgetItems = data.widgets.items;
 
             return true;
         } catch (error) {

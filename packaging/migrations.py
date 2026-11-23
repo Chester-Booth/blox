@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 import os
 import shutil
+import stat
 import time
 import uuid
 from pathlib import Path
@@ -366,6 +367,55 @@ def migrate_theme_state_links(roots: Roots, backup_dir: Path) -> dict[str, Any]:
     }
 
 
+def migrate_private_config(roots: Roots, backup_dir: Path) -> dict[str, Any]:
+    """Make Settings roots private without following directory links."""
+    opened = []
+    detail = []
+    try:
+        for path in (roots.config, roots.state):
+            path.parent.mkdir(parents=True, exist_ok=True)
+            fd = os.open("/", os.O_RDONLY | os.O_DIRECTORY)
+            try:
+                for part in path.parts[1:-1]:
+                    child = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=fd)
+                    os.close(fd)
+                    fd = child
+                try:
+                    os.mkdir(path.name, mode=0o700, dir_fd=fd)
+                    created = True
+                except FileExistsError:
+                    created = False
+                child = os.open(path.name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=fd)
+                opened.append(child)
+                info = os.fstat(child)
+                if info.st_uid != os.getuid():
+                    raise RuntimeError("Blox Settings directory belongs to another user")
+                detail.append({"directory": str(path), "previous_mode": None if created else stat.S_IMODE(info.st_mode)})
+            finally:
+                os.close(fd)
+        for fd in opened:
+            os.fchmod(fd, 0o700)
+        return {"moved": any(item["previous_mode"] != 0o700 for item in detail), "detail": {"directories": detail}}
+    finally:
+        for fd in opened:
+            os.close(fd)
+
+
+def _restore_private_config(entry: dict[str, Any]) -> None:
+    for detail in reversed(entry["detail"]["directories"]):
+        path = Path(detail["directory"])
+        fd = os.open(path, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+        try:
+            if os.fstat(fd).st_uid != os.getuid():
+                raise RuntimeError("Blox Settings directory belongs to another user")
+            if detail["previous_mode"] is not None:
+                os.fchmod(fd, detail["previous_mode"])
+        finally:
+            os.close(fd)
+        if detail["previous_mode"] is None:
+            path.rmdir()
+
+
 MIGRATIONS: list[Migration] = [
     Migration("calendar-config-xdg", "Move the calendar allow-list into $XDG_CONFIG_HOME/blox.", migrate_calendar_config),
     Migration("shell-env-config", "Move the personal shell environment file into $XDG_CONFIG_HOME/blox.", migrate_shell_env),
@@ -373,6 +423,7 @@ MIGRATIONS: list[Migration] = [
     Migration("theme-state-root", "Move generated theme state under $XDG_STATE_HOME/blox/theme.", migrate_theme_state_root, keep_on_rollback=True),
     Migration("theme-state-links", "Repoint Blox loaders left behind by the pre-release theme-state root.", migrate_theme_state_links, keep_on_rollback=True),
     Migration("legacy-user-themes", "Relocate imported themes from $XDG_DATA_HOME/blox/themes into the separated user-data root.", migrate_legacy_user_themes, keep_on_rollback=True),
+    Migration("private-settings-config", "Make the Blox Settings directory owner-only.", migrate_private_config, keep_on_rollback=True),
     Migration("active-theme-paths", "Repoint the active theme manifest at the relocated user-data root.", migrate_active_theme_paths, keep_on_rollback=True),
 ]
 
@@ -469,6 +520,10 @@ def restore_ledger_after(roots: Roots, lines_before: int) -> int:
         return 0
     undone = 0
     for entry in reversed(entries[lines_before:]):
+        if entry.get("migration") == "private-settings-config" and entry.get("result") == "applied":
+            _restore_private_config(entry)
+            undone += 1
+            continue
         if entry.get("migration") == "theme-state-root" and entry.get("pre_image_tree"):
             _restore_theme_state_root(entry)
             undone += 1

@@ -123,17 +123,28 @@ Rectangle {
     Popup {
         id: popup
 
+        // Place the menu in the window rather than the clipped settings page.
+        // Choose the side with space, then keep the whole menu inside the frame.
+        parent: root.Window.window ? root.Window.window.contentItem : root
+        property point anchorPoint: Qt.point(0, 0)
+        readonly property real belowSpace: Math.max(0, parent.height - anchorPoint.y - root.height - 9)
+        readonly property real aboveSpace: Math.max(0, anchorPoint.y - 9)
+        readonly property real wantedHeight: Math.min(260, list.contentHeight + topPadding + bottomPadding)
+        readonly property bool below: wantedHeight <= belowSpace || belowSpace >= aboveSpace
         popupType: Popup.Item
         // Selection popups must own the pointer grab until the triggering
         // event is complete. Without a modal overlay, the release can reach a
         // control behind an Item popup after the popup closes.
         modal: true
         dim: false
-        y: root.height + 5
-        width: root.width
-        height: Math.min(260, list.contentHeight + 8)
+        x: Math.max(4, Math.min(parent.width - width - 4, anchorPoint.x))
+        y: below ? anchorPoint.y + root.height + 5 : anchorPoint.y - height - 5
+        width: Math.min(root.width, Math.max(0, parent.width - 8))
+        height: Math.min(wantedHeight, below ? belowSpace : aboveSpace)
+        margins: 4
         padding: Theme.scaledSpacing(4)
         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        onAboutToShow: anchorPoint = root.mapToItem(parent, 0, 0)
         onOpened: {
             list.currentIndex = Math.max(0, Math.min(root.model.length - 1, root.currentIndex));
             list.positionViewAtIndex(list.currentIndex, ListView.Contain);

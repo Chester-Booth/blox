@@ -1,3 +1,4 @@
+import qs.shared
 import QtQuick
 import Quickshell
 import Quickshell.Io
@@ -22,6 +23,7 @@ Scope {
     property string requestedMode: ""
     property var activeClients: []
     property string clientsRaw: ""
+    property bool clientsTimedOut: false
     property bool logoutOnAcceptance: false
     readonly property bool providerReady: root.scriptRoot.length > 0
     readonly property bool actionBusy: actionProcess.running || clientsProcess.running || root.confirmationRequired || root.pendingMode !== null || state.pendingMode !== null
@@ -111,6 +113,7 @@ Scope {
             return true;
         }
         root.clientsRaw = "";
+        root.clientsTimedOut = false;
         clientsProcess.running = true;
         return true;
     }
@@ -145,7 +148,7 @@ Scope {
         onStarted: queryWatchdog.restart()
         onExited: (exitCode, exitStatus) => {
             queryWatchdog.stop();
-            forceKill.stop();
+            queryKill.stop();
             if (root.queryTimedOut) {
                 root.applyQueryFailure("query-timeout");
             } else if (exitCode === 0 && exitStatus === 0) {
@@ -174,10 +177,18 @@ Scope {
         id: clientsProcess
 
         command: [root.scriptRoot + "/graphicsctl.py", "gpu-clients"]
+        onStarted: clientsWatchdog.restart()
         stdout: StdioCollector {
             onStreamFinished: root.clientsRaw = this.text
         }
         onExited: (exitCode, exitStatus) => {
+            clientsWatchdog.stop();
+            clientsKill.stop();
+            if (root.clientsTimedOut) {
+                root.actionError = "client-query-timeout";
+                root.cancelModeRequest();
+                return;
+            }
             const mode = root.requestedMode;
             if (mode.length === 0)
                 return;
@@ -203,6 +214,7 @@ Scope {
         }
         onExited: (exitCode, exitStatus) => {
             actionWatchdog.stop();
+            actionKill.stop();
             const requestedMode = root.pendingMode;
             if (root.actionTimedOut) {
                 root.actionError = "timeout";
@@ -226,6 +238,22 @@ Scope {
     }
 
     Timer {
+        id: clientsWatchdog
+        interval: Math.max(1, root.timeout)
+        onTriggered: {
+            if (!clientsProcess.running) return;
+            root.clientsTimedOut = true;
+            clientsProcess.signal(15);
+            clientsKill.restart();
+        }
+    }
+    Timer {
+        id: clientsKill
+        interval: 1000
+        onTriggered: { if (clientsProcess.running) clientsProcess.signal(9); }
+    }
+
+    Timer {
         id: queryWatchdog
 
         interval: Math.max(1, root.timeout)
@@ -235,7 +263,7 @@ Scope {
                 return ;
             root.queryTimedOut = true;
             queryProcess.signal(15);
-            forceKill.restart();
+            queryKill.restart();
         }
     }
 
@@ -249,18 +277,25 @@ Scope {
                 return ;
             root.actionTimedOut = true;
             actionProcess.signal(15);
-            forceKill.restart();
+            actionKill.restart();
         }
     }
 
     Timer {
-        id: forceKill
-
+        id: queryKill
         interval: 1000
         repeat: false
         onTriggered: {
             if (queryProcess.running)
                 queryProcess.signal(9);
+        }
+    }
+
+    Timer {
+        id: actionKill
+        interval: 1000
+        repeat: false
+        onTriggered: {
             if (actionProcess.running)
                 actionProcess.signal(9);
         }

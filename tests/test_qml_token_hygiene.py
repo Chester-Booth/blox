@@ -44,11 +44,11 @@ ALLOWED_EXACT = {
         'font.family: "Twemoji"',
     },
     "modules/LauncherMainSurface.qml": {'color: "#18000000"'},
-    "modules/ThemePickerColourController.qml": {
+    "modules/SettingsColourController.qml": {
         'property string hex: "#ffffff"',
         'const normalised = /^#[0-9a-fA-F]{6}$/.test(String(colour || "")) ? colour : "#ffffff";',
     },
-    "modules/ThemePickerColourPicker.qml": {
+    "modules/SettingsColourPicker.qml": {
         'color: Theme.withAlpha("#000000", 0.68)',
         'color: "#ffffff"',
         'color: "#00ffffff"',
@@ -61,16 +61,14 @@ ALLOWED_EXACT = {
         'color: "#0000ff"',
         'color: "#ff00ff"',
     },
-    "modules/ThemePickerController.qml": {
+    "modules/SettingsThemeEditorController.qml": {
         'const value = String(colour || "#000000").replace("#", "");',
         'return (red * 299 + green * 587 + blue * 114) / 1000 > 145 ? "#111111" : "#f5f5f5";',
     },
-    "modules/ThemePickerLibrary.qml": {'color: "#18000000"'},
-    "modules/ThemePickerModal.qml": {'color: Theme.withAlpha("#000000", 0.68)'},
-    "modules/ThemePickerOverview.qml": {
+    "modules/SettingsEditorModal.qml": {'color: Theme.withAlpha("#000000", 0.68)'},
+    "modules/SettingsColoursPage.qml": {
         'text: "const accent = \\"#89b4fa\\";  {} [] () => ⚡󰍹"'
     },
-    "modules/ThemePickerWidgets.qml": {'color: Qt.rgba(0, 0, 0, 0.22)'},
     "popouts/MediaPlayer.qml": {
         'border.color: Qt.rgba(1, 1, 1, 0.1)',
         'border.color: Qt.rgba(1, 1, 1, 0.08)',
@@ -89,7 +87,7 @@ def is_allowed_data_literal(path: str, line: str) -> bool:
         "services/CalendarController.qml",
     }:
         return CALENDAR_COLOUR.fullmatch(stripped) is not None
-    if path == "modules/ThemePickerGenerationController.qml":
+    if path == "modules/SettingsThemeCreationController.qml":
         return GENERATED_THEME_COLOUR.fullmatch(stripped) is not None
     return False
 
@@ -107,12 +105,18 @@ def literal_offenders(files: Iterable[tuple[str, str]]) -> list[str]:
 
 
 def shape_offenders(files: Iterable[tuple[str, str]]) -> list[str]:
+    # The approved Settings mock deliberately fixes these small layout offsets.
+    # Only exact lines copied from that reference may bypass density scaling.
+    import json
+    fixed_geometry = json.loads((Path(__file__).parent / "fixtures/settings-approved-fixed-geometry.json").read_text())
     offenders: list[str] = []
     for path, source in files:
-        if path in {"shared/Theme.qml", "modules/ThemeShapePreview.qml"}:
+        if path in {"shared/Theme.qml"}:
             continue
         for number, line in enumerate(source.splitlines(), start=1):
             stripped = line.strip()
+            if stripped in fixed_geometry.get(path, []):
+                continue
             pill_radius = stripped == "radius: 999"
             assignment = SHAPE_ASSIGNMENT.fullmatch(line)
             geometry_radius = (
@@ -156,11 +160,11 @@ class QmlTokenHygieneTests(unittest.TestCase):
 
     def test_data_file_does_not_exempt_unrelated_style_literals(self):
         offenders = literal_offenders(
-            [("modules/ThemePickerGenerationController.qml", 'Rectangle { color: "#123456" }')]
+            [("modules/SettingsThemeCreationController.qml", 'Rectangle { color: "#123456" }')]
         )
 
         self.assertEqual(
-            ['modules/ThemePickerGenerationController.qml:1: Rectangle { color: "#123456" }'],
+            ['modules/SettingsThemeCreationController.qml:1: Rectangle { color: "#123456" }'],
             offenders,
         )
 
@@ -168,7 +172,7 @@ class QmlTokenHygieneTests(unittest.TestCase):
         offenders = literal_offenders(
             [
                 (
-                    "modules/ThemePickerGenerationController.qml",
+                    "modules/SettingsThemeCreationController.qml",
                     '    "background": light ? "#ffffff" : "#111318",',
                 )
             ]
@@ -181,8 +185,8 @@ class QmlTokenHygieneTests(unittest.TestCase):
 
     def test_shape_check_rejects_a_raw_surface_radius(self):
         self.assertEqual(
-            ["modules/ThemePickerOverview.qml:1: radius: 8"],
-            shape_offenders([("modules/ThemePickerOverview.qml", "radius: 8")]),
+            ["modules/SettingsThemePage.qml:1: radius: 8"],
+            shape_offenders([("modules/SettingsThemePage.qml", "radius: 8")]),
         )
 
 

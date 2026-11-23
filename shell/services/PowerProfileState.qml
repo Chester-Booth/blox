@@ -8,6 +8,7 @@ Item {
     property bool providerReady: false
     property bool syncReady: false
     property bool profileServiceAvailable: false
+    property var supportedProfiles: ["power-saver", "balanced", "performance"]
     property bool onBattery: false
     property string profile: "unavailable"
     property string degradationReason: "none"
@@ -57,7 +58,7 @@ Item {
             "onBattery": root.onBattery,
             "profileServiceAvailable": root.profileServiceAvailable,
             "degradationReason": root.degradationReason,
-            "profiles": ["power-saver", "balanced", "performance"],
+            "profiles": root.supportedProfiles,
             "tooltip": root.profile === "unavailable" ? "Power profiles unavailable" : "Power profile: " + root.profile,
             "capability": capability
         };
@@ -72,6 +73,7 @@ Item {
     onProviderReadyChanged: root.markChanged()
     onSyncReadyChanged: root.markChanged()
     onProfileServiceAvailableChanged: root.markChanged()
+    onSupportedProfilesChanged: root.markChanged()
     onOnBatteryChanged: root.markChanged()
     onProfileChanged: root.markChanged()
     onDegradationReasonChanged: root.markChanged()

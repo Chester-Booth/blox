@@ -14,7 +14,7 @@ Rectangle {
     signal panelExited()
 
     function displayCapacity() {
-        if (!root.status || root.status.capacity === undefined)
+        if (!root.status || root.status.capacity === undefined || root.status.capacity === null || root.status.capacity === "")
             return "";
 
         const capacity = Number(root.status.capacity);

@@ -1,0 +1,82 @@
+{
+  "get": {
+    "version": 1,
+    "ok": true,
+    "code": "ok",
+    "message": "",
+    "data": {
+      "schemaVersion": 1,
+      "revision": 1,
+      "beforeRevision": 1,
+      "afterRevision": 1,
+      "observedAt": 100,
+      "dirty": false,
+      "conflict": false,
+      "changedComponents": [],
+      "commitState": "not-applicable",
+      "rollbackState": "not-attempted",
+      "error": null,
+      "settings": {"schemaVersion": 1, "revision": 1}
+    }
+  },
+  "success": {
+    "version": 1,
+    "ok": true,
+    "code": "ok",
+    "message": "",
+    "data": {
+      "schemaVersion": 1,
+      "revision": 1,
+      "beforeRevision": 0,
+      "afterRevision": 1,
+      "observedAt": 100.5,
+      "dirty": false,
+      "conflict": false,
+      "changedComponents": ["bar"],
+      "commitState": "committed",
+      "rollbackState": "not-attempted",
+      "error": null,
+      "settings": {"schemaVersion": 1, "revision": 1, "bar": {"layout": {"position": "right"}}}
+    }
+  },
+  "conflict": {
+    "version": 1,
+    "ok": false,
+    "code": "conflict",
+    "message": "settings revision conflict",
+    "data": {
+      "schemaVersion": 1,
+      "revision": 1,
+      "beforeRevision": 1,
+      "afterRevision": 1,
+      "observedAt": 101.5,
+      "dirty": false,
+      "conflict": true,
+      "changedComponents": [],
+      "commitState": "not-committed",
+      "rollbackState": "not-attempted",
+      "error": {"code": "conflict", "message": "settings revision conflict"},
+      "settings": {"schemaVersion": 1, "revision": 1}
+    }
+  },
+  "validationFailure": {
+    "version": 1,
+    "ok": false,
+    "code": "invalid-data",
+    "message": "bar.layout.position has an unsupported value",
+    "data": {
+      "schemaVersion": 1,
+      "revision": 1,
+      "beforeRevision": 1,
+      "afterRevision": 1,
+      "observedAt": 102.5,
+      "dirty": false,
+      "conflict": false,
+      "changedComponents": [],
+      "commitState": "not-committed",
+      "rollbackState": "not-attempted",
+      "error": {"code": "invalid-data", "message": "bar.layout.position has an unsupported value"},
+      "settings": {"schemaVersion": 1, "revision": 1, "bar": {"layout": {"position": "right"}}}
+    }
+  }
+}

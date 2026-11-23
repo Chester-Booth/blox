@@ -1,3 +1,4 @@
+import qs.shared
 import QtQuick
 import Quickshell
 import Quickshell.Services.UPower
@@ -11,7 +12,7 @@ Scope {
     property int interval: 30000
     property bool syncReady: false
     property string actionError: ""
-    readonly property bool providerReady: root.upowerService !== null
+    readonly property bool providerReady: root.upowerService !== null && availability.available && (!availability.enabled || (root.displayDevice && root.displayDevice.ready === true))
     readonly property var deviceValues: root.upowerService && root.upowerService.devices && root.upowerService.devices.values ? root.upowerService.devices.values : []
     readonly property var displayDevice: root.upowerService ? root.upowerService.displayDevice : null
     readonly property var batteryDevice: root.displayDevice && root.displayDevice.isPresent === true ? root.displayDevice : root.findDevice(UPowerDeviceType.Battery)
@@ -21,6 +22,12 @@ Scope {
     readonly property string lastError: root.actionError
     property var json: ({
     })
+
+    NativeServiceAvailability {
+        id: availability
+        service: "org.freedesktop.UPower"
+        enabled: root.upowerService === UPower
+    }
 
     function findDevice(type) {
         const devices = root.deviceValues;
@@ -65,8 +72,8 @@ Scope {
 
         providerReady: root.providerReady
         syncReady: root.syncReady
-        batteryPresent: root.batteryDevice !== null
-        linePowerPresent: root.linePowerDevice !== null
+        batteryPresent: root.providerReady && root.batteryDevice !== null
+        linePowerPresent: root.providerReady && root.linePowerDevice !== null
         onBattery: root.upowerService ? root.upowerService.onBattery === true : false
         percentage: root.percentage(root.batteryDevice)
         batteryState: root.stateName(root.batteryDevice)

@@ -1,0 +1,22 @@
+{
+  "source": "Bibata Cursor v2.0.7, commit 35ccfe209a808e40d6c2ca60a46cbe4faf68b690",
+  "licence": "GPL-3.0-only",
+  "frames": {
+    "modern-left": {
+      "hotspotX": 55,
+      "hotspotY": 17
+    },
+    "modern-right": {
+      "hotspotX": 207,
+      "hotspotY": 24
+    },
+    "original-left": {
+      "hotspotX": 55,
+      "hotspotY": 17
+    },
+    "original-right": {
+      "hotspotX": 207,
+      "hotspotY": 24
+    }
+  }
+}

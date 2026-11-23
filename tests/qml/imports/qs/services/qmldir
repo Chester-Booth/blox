@@ -1,0 +1,13 @@
+module qs.services
+BarSurfaceController 1.0 ../../../../../shell/services/BarSurfaceController.qml
+BarContentController 1.0 ../../../../../shell/services/BarContentController.qml
+ScriptPoller 1.0 ../../../../../shell/services/ScriptPoller.qml
+singleton SettingsApplyController 1.0 ../../../../../shell/services/SettingsApplyController.qml
+SettingsBundleController 1.0 ../../../../../shell/services/SettingsBundleController.qml
+SettingsController 1.0 ../../../../../shell/services/SettingsController.qml
+SettingsGateway 1.0 ../../../../../shell/services/SettingsGateway.qml
+SettingsState 1.0 ../../../../../shell/services/SettingsState.qml
+SettingsThemeLibrary 1.0 ../../../../../shell/services/SettingsThemeLibrary.qml
+SettingsShellState 1.0 ../../../../../shell/services/SettingsShellState.qml
+SettingsThemeMenuState 1.0 ../../../../../shell/services/SettingsThemeMenuState.qml
+SettingsCompositionController 1.0 ../../../../../shell/services/SettingsCompositionController.qml

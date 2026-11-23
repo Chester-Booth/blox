@@ -29,10 +29,10 @@ Item {
             root.context.contentController.batteryExpanded = expanded;
         }
         onSystemPanelRequested: (centre) => {
-            return root.context.surfaceController.openHoverPanel("system", root.context.mappedCentre(this, centre));
+            return root.context.surfaceController.openHoverPanel("system", root.context.mappedCentre(this, centre), root.context.panelAnchorOwner);
         }
         onSystemPanelHovered: (centre) => {
-            return root.context.surfaceController.hoverButtonEntered("system", root.context.mappedCentre(this, centre), "battery");
+            return root.context.surfaceController.hoverButtonEntered("system", root.context.mappedCentre(this, centre), "battery", root.context.panelAnchorOwner);
         }
         onSystemPanelExited: root.context.surfaceController.hoverButtonExited("battery")
     }
@@ -45,7 +45,7 @@ Item {
         collapsible: root.context.batteryDisplay === "toggle"
         onCollapse: root.context.contentController.batteryExpanded = false
         onPanelHovered: (centre) => {
-            return root.context.surfaceController.hoverButtonEntered("system", root.context.mappedCentre(this, centre), "battery");
+            return root.context.surfaceController.hoverButtonEntered("system", root.context.mappedCentre(this, centre), "battery", root.context.panelAnchorOwner);
         }
         onPanelExited: root.context.surfaceController.hoverButtonExited("battery")
     }

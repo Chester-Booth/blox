@@ -18,6 +18,29 @@ Scope {
     readonly property string wallpaperSource: Theme.wallpaperSource
     readonly property string wallpaperFit: Theme.wallpaperFit
 
+    function handleHyprlandEvent(event) {
+        if (!event || event.name !== "custom")
+            return;
+
+        // Hyprland sends these in key-event order over one socket.
+        switch (String(event.data || "")) {
+        case "blox_shortcut_guide>>arm": arm(); break;
+        case "blox_shortcut_guide>>delay": delay(); break;
+        case "blox_shortcut_guide>>release": release(); break;
+        case "blox_shortcut_guide>>cancel": cancel(); break;
+        case "blox_shortcut_guide>>close": close(); break;
+        case "blox_shortcut_guide>>toggle": toggle(); break;
+        }
+    }
+
+    Connections {
+        target: Hyprland
+
+        function onRawEvent(event) {
+            root.handleHyprlandEvent(event);
+        }
+    }
+
     function focusedScreen() {
         for (const screen of Quickshell.screens) {
             if (Hyprland.monitorFor(screen) === Hyprland.focusedMonitor)

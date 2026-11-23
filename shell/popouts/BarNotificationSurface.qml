@@ -16,12 +16,15 @@ Item {
         contentWidth: notificationCenter.width
         contentHeight: notificationCenter.height
         open: root.geometry.active && root.surfaceController.openPanel === "notifications"
+        persistentKeyboardFocus: open && root.surfaceController.keyboardPanel === "notifications"
+        onDismissRequested: root.surfaceController.closePanel()
         onHoverEntered: root.surfaceController.popoutEntered()
         onHoverExited: root.surfaceController.popoutExited()
 
         NotificationCenterPopout {
             id: notificationCenter
 
+            actionResult: root.notificationController.actionResult
             notifications: root.notificationController.items || []
             dnd: root.notificationController.dnd
             // A horizontal panel is only one bar-thickness tall. Size against the

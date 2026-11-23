@@ -2,6 +2,7 @@ import qs.shared
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
+import Blox.Services 1.0
 
 // Owns one click-through, double-buffered wallpaper surface per output.
 Scope {
@@ -26,7 +27,16 @@ Scope {
             required property var modelData
             property bool frontIsFirst: true
             readonly property real outputScale: modelData ? modelData.devicePixelRatio : 1
-            readonly property url requestedSource: Theme.wallpaperSource || ""
+            readonly property url requestedSource: imageCache.readySource
+
+            ImageCacheResolver {
+                id: imageCache
+                source: Theme.wallpaperSource || ""
+                pixelWidth: Math.max(1, Math.ceil(wallpaperWindow.width * wallpaperWindow.outputScale))
+                pixelHeight: Math.max(1, Math.ceil(wallpaperWindow.height * wallpaperWindow.outputScale))
+                fit: Theme.wallpaperFit || "cover"
+                active: wallpaperWindow.width > 0 && wallpaperWindow.height > 0
+            }
 
             function showWhenReady(image) {
                 if (image.status !== Image.Ready || String(image.source) !== String(requestedSource))
@@ -80,6 +90,10 @@ Scope {
                 asynchronous: true
                 cache: true
                 fillMode: root.fillMode(Theme.wallpaperFit)
+                sourceSize: fillMode === Image.Tile ? undefined : Qt.size(
+                    Math.max(1, Math.ceil(width * wallpaperWindow.outputScale)),
+                    Math.max(1, Math.ceil(height * wallpaperWindow.outputScale)))
+                retainWhileLoading: true
                 mipmap: wallpaperWindow.outputScale <= 1
                 smooth: true
                 opacity: 0
@@ -93,6 +107,10 @@ Scope {
                 asynchronous: true
                 cache: true
                 fillMode: root.fillMode(Theme.wallpaperFit)
+                sourceSize: fillMode === Image.Tile ? undefined : Qt.size(
+                    Math.max(1, Math.ceil(width * wallpaperWindow.outputScale)),
+                    Math.max(1, Math.ceil(height * wallpaperWindow.outputScale)))
+                retainWhileLoading: true
                 mipmap: wallpaperWindow.outputScale <= 1
                 smooth: true
                 opacity: 0

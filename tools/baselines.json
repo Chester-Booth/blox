@@ -1,0 +1,16 @@
+{
+  "recorded": "2026-10-16",
+  "source": "Phase 0 and Phase 5 current-source baselines archived from /home/blox/Code/plans/blox-phase-5/16-performance-rebuild-targets.html",
+  "notes": "Baseline figures before Phase 5 widget rebuild and native C++ services. Whole-cgroup RSS includes Qt6, Quickshell, and Mesa base memory (~350-600 MiB).",
+  "baselines": {
+    "quickshell_cold_start_ms": { "median": 1866.4, "max_of_10": 1925.5 },
+    "launcher_search_p95_ms": { "dispatch_to_frame": 12.69, "internal": 11.52 },
+    "system_popup_p95_ms": { "dispatch_to_frame": 207.51, "internal": 161.09 },
+    "keyboard_nav_p95_ms": { "dispatch_to_frame": 1.93, "internal": 0.71 },
+    "idle_dnd": { "cpu_pct": 3.31, "rss_mib": 716.1 },
+    "todo_widget": { "cpu_pct": 3.76, "rss_mib": 731.3, "process_starts_210s": 3396 },
+    "calendar_widget": { "cpu_pct": 3.76, "rss_mib": 729.4, "process_starts_210s": 3381 },
+    "cava_audio": { "cpu_pct": 10.89, "rss_mib": 742.9, "process_starts_210s": 3370 },
+    "eight_widget_mix": { "cpu_pct": 29.70, "rss_mib": 947.5, "process_starts_210s": 16548 }
+  }
+}

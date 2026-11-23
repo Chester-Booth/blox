@@ -1,18 +1,35 @@
 import qs.shared
-import qs.shared as Shared
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Wayland
+import Blox.Widgets 1.0 as Widgets
+import "../shared/WidgetWorkArea.js" as WidgetWorkArea
 
 PanelWindow {
     id: root
 
     required property bool active
     required property var items
-    property int selectedIndex: -1
+    required property var widgetTheme
+    required property var provider
+    property var qmlRegistry: ({})
+    property string selectedWidgetId: ""
+    property var occupiedBar: null
+    property var externalReservationsByOutput: ({})
+    readonly property var externalReservations: screen ? externalReservationsByOutput[screen.name] : null
+    readonly property bool workAreaReady: Theme.ready && !!externalReservations
+    readonly property rect widgetBounds: WidgetWorkArea.bounds(width, height,
+        externalReservations, occupiedBar)
+    readonly property int selectedIndex: items ? items.findIndex(item => item.id === selectedWidgetId) : -1
     readonly property var selectedItem: selectedIndex >= 0 && selectedIndex < items.length ? items[selectedIndex] : null
+
+    onItemsChanged: {
+        if (selectedWidgetId && items.findIndex(item => item.id === selectedWidgetId) < 0)
+            selectedWidgetId = "";
+    }
 
     signal itemChanged(int index, var item)
     signal exitRequested()
@@ -23,53 +40,51 @@ PanelWindow {
     }
 
     function initialX(item, itemWidth) {
-        const anchor = String(item.anchor || "top-left");
+        const anchor = String(item.placement.anchor);
+        let offset = Number(item.placement.x);
         if (anchor.indexOf("right") >= 0)
-            return width - itemWidth - Number(item.offset_x || 0);
-
-        if (anchor === "centre")
-            return Math.round((width - itemWidth) / 2) + Number(item.offset_x || 0);
-
-        return Number(item.offset_x || 0);
+            offset = widgetBounds.width - itemWidth - offset;
+        else if (anchor === "centre")
+            offset += (widgetBounds.width - itemWidth) / 2;
+        if (item.placement.sizing === "content")
+            offset = Math.max(0, Math.min(offset, widgetBounds.width - itemWidth));
+        return widgetBounds.x + offset;
     }
 
     function initialY(item, itemHeight) {
-        const anchor = String(item.anchor || "top-left");
+        const anchor = String(item.placement.anchor);
+        let offset = Number(item.placement.y);
         if (anchor.indexOf("bottom") >= 0)
-            return height - itemHeight - Number(item.offset_y || 0);
-
-        if (anchor === "centre")
-            return Math.round((height - itemHeight) / 2) + Number(item.offset_y || 0);
-
-        return Number(item.offset_y || 0);
+            offset = widgetBounds.height - itemHeight - offset;
+        else if (anchor === "centre")
+            offset += (widgetBounds.height - itemHeight) / 2;
+        if (item.placement.sizing === "content")
+            offset = Math.max(0, Math.min(offset, widgetBounds.height - itemHeight));
+        return widgetBounds.y + offset;
     }
 
-    function geometryItem(item, itemX, itemY, itemWidth, itemHeight, resized) {
+    function geometryItem(item, itemX, itemY, itemWidth, itemHeight) {
         const next = clone(item);
+        itemX -= widgetBounds.x;
+        itemY -= widgetBounds.y;
+        const width = widgetBounds.width;
+        const height = widgetBounds.height;
         const centreX = itemX + itemWidth / 2;
         const centreY = itemY + itemHeight / 2;
         const nearCentre = Math.abs(centreX - width / 2) < width * 0.16 && Math.abs(centreY - height / 2) < height * 0.16;
         if (nearCentre) {
-            next.anchor = "centre";
-            next.offset_x = Math.round(itemX - (width - itemWidth) / 2);
-            next.offset_y = Math.round(itemY - (height - itemHeight) / 2);
+            next.placement.anchor = "centre";
+            next.placement.x = Math.round(itemX - (width - itemWidth) / 2);
+            next.placement.y = Math.round(itemY - (height - itemHeight) / 2);
         } else {
             const right = centreX >= width / 2;
             const bottom = centreY >= height / 2;
-            next.anchor = (bottom ? "bottom-" : "top-") + (right ? "right" : "left");
-            next.offset_x = Math.round(right ? width - itemX - itemWidth : itemX);
-            next.offset_y = Math.round(bottom ? height - itemY - itemHeight : itemY);
+            next.placement.anchor = (bottom ? "bottom-" : "top-") + (right ? "right" : "left");
+            next.placement.x = Math.round(right ? width - itemX - itemWidth : itemX);
+            next.placement.y = Math.round(bottom ? height - itemY - itemHeight : itemY);
         }
-        if (resized) {
-            const scale = Math.max(0.25, Math.min(4, Number(next.options && next.options.scale || 1)));
-            next.width = Math.round(itemWidth / scale);
-            next.height = Math.round(itemHeight / scale);
-            if (!next.options)
-                next.options = {
-            };
-
-            next.options.auto_size = false;
-        }
+        next.placement.width = Math.round(itemWidth);
+        next.placement.height = Math.round(itemHeight);
         return next;
     }
 
@@ -84,18 +99,15 @@ PanelWindow {
         itemChanged(selectedIndex, next);
     }
 
-    function selectedAutoSize() {
-        if (!selectedItem)
-            return true;
-
-        if (selectedItem.options && selectedItem.options.auto_size !== undefined)
-            return selectedItem.options.auto_size === true;
-
-        return Number(selectedItem.width || 0) === 0 && Number(selectedItem.height || 0) === 0;
+    function updatePlacement(values) {
+        if (!selectedItem) return;
+        const placement = clone(selectedItem.placement);
+        Object.keys(values).forEach(key => placement[key] = values[key]);
+        updateSelected({placement: placement});
     }
 
-    screen: Quickshell.screens.length > 0 ? Quickshell.screens[0] : null
-    visible: active
+    screen: Hyprland.focusedMonitor ? Quickshell.screens.find(screen => screen.name === Hyprland.focusedMonitor.name) || Quickshell.screens[0] : Quickshell.screens[0] || null
+    visible: active && workAreaReady
     color: "transparent"
     exclusiveZone: 0
     exclusionMode: ExclusionMode.Ignore
@@ -103,6 +115,13 @@ PanelWindow {
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "blox-widget-edit"
     WlrLayershell.keyboardFocus: active ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
+
+    Shortcut {
+        sequence: "Escape"
+        context: Qt.WindowShortcut
+        enabled: root.active
+        onActivated: root.exitRequested()
+    }
 
     anchors {
         left: true
@@ -118,18 +137,20 @@ PanelWindow {
 
         MouseArea {
             anchors.fill: parent
-            onClicked: root.selectedIndex = -1
+            onClicked: root.selectedWidgetId = ""
         }
 
     }
 
+    WidgetItemModel { id: editItemModel; items: root.items }
     Repeater {
-        model: root.items
+        model: editItemModel
 
         Item {
             id: editor
 
-            required property var modelData
+            required property string document
+            readonly property var modelData: JSON.parse(document)
             required property int index
             property real startX: 0
             property real startY: 0
@@ -141,21 +162,34 @@ PanelWindow {
             property int frameHeight: 0
             readonly property int edgeSize: 10
 
+            function restoreGeometry() {
+                frameWidth = 0;
+                frameHeight = 0;
+                x = Qt.binding(function() { return root.initialX(editor.modelData, editor.width); });
+                y = Qt.binding(function() { return root.initialY(editor.modelData, editor.height); });
+            }
+            onModelDataChanged: if (!dragArea || !dragArea.pressed) restoreGeometry()
+
             z: 1
             x: root.initialX(modelData, width)
             y: root.initialY(modelData, height)
-            width: surface.width
-            height: surface.height
+            width: frameWidth > 0 ? frameWidth : surface.normalWidth
+            height: frameHeight > 0 ? frameHeight : surface.normalHeight
 
-            Shared.DesktopWidget {
+            Widgets.WidgetHost {
                 id: surface
-
+                x: 0
+                y: 0
+                width: editor.width
+                height: editor.height
                 widget: editor.modelData
-                interactive: false
-                overrideWidth: editor.frameWidth
-                overrideHeight: editor.frameHeight
-                maximumWidth: root.width
-                maximumHeight: root.height
+                theme: root.widgetTheme
+                provider: root.provider
+                qmlRegistry: root.qmlRegistry
+                placementBounds: root.widgetBounds
+                fullscreenBounds: Qt.rect(0, 0, root.width, root.height)
+                editing: true
+                visible: root.visible
             }
 
             Rectangle {
@@ -163,10 +197,11 @@ PanelWindow {
                 color: "transparent"
                 border.width: 2
                 border.color: root.selectedIndex === editor.index ? Theme.blue : Theme.border
-                radius: surface.radius
+                radius: Theme.scaledRadius(12)
             }
 
             MouseArea {
+                id: dragArea
                 anchors.fill: parent
                 hoverEnabled: true
                 acceptedButtons: Qt.LeftButton
@@ -185,7 +220,7 @@ PanelWindow {
                     return Qt.SizeAllCursor;
                 }
                 onPressed: (event) => {
-                    root.selectedIndex = editor.index;
+                    root.selectedWidgetId = editor.modelData.id;
                     editor.startX = editor.x;
                     editor.startY = editor.y;
                     editor.startWidth = editor.width;
@@ -201,28 +236,34 @@ PanelWindow {
                     const dx = pointer.x - editor.startPointer.x;
                     const dy = pointer.y - editor.startPointer.y;
                     if (editor.edges === 0) {
-                        editor.x = Math.max(0, Math.min(root.width - editor.width, editor.startX + dx));
-                        editor.y = Math.max(0, Math.min(root.height - editor.height, editor.startY + dy));
+                        editor.x = Math.max(root.widgetBounds.x, Math.min(root.widgetBounds.x + root.widgetBounds.width - editor.width, editor.startX + dx));
+                        editor.y = Math.max(root.widgetBounds.y, Math.min(root.widgetBounds.y + root.widgetBounds.height - editor.height, editor.startY + dy));
                         return ;
                     }
                     if (editor.edges & 1) {
                         const nextX = Math.min(editor.startX + editor.startWidth - 80, editor.startX + dx);
-                        editor.x = Math.max(0, nextX);
+                        editor.x = Math.max(root.widgetBounds.x, nextX);
                         editor.frameWidth = Math.round(editor.startWidth + editor.startX - editor.x);
                     }
                     if (editor.edges & 2)
-                        editor.frameWidth = Math.round(Math.max(80, Math.min(root.width - editor.x, editor.startWidth + dx)));
+                        editor.frameWidth = Math.round(Math.max(80, Math.min(root.widgetBounds.x + root.widgetBounds.width - editor.x, editor.startWidth + dx)));
 
                     if (editor.edges & 4) {
                         const nextY = Math.min(editor.startY + editor.startHeight - 48, editor.startY + dy);
-                        editor.y = Math.max(0, nextY);
+                        editor.y = Math.max(root.widgetBounds.y, nextY);
                         editor.frameHeight = Math.round(editor.startHeight + editor.startY - editor.y);
                     }
                     if (editor.edges & 8)
-                        editor.frameHeight = Math.round(Math.max(48, Math.min(root.height - editor.y, editor.startHeight + dy)));
+                        editor.frameHeight = Math.round(Math.max(48, Math.min(root.widgetBounds.y + root.widgetBounds.height - editor.y, editor.startHeight + dy)));
 
                 }
-                onReleased: root.itemChanged(editor.index, root.geometryItem(editor.modelData, editor.x, editor.y, editor.width, editor.height, editor.edges !== 0))
+                onReleased: {
+                    const item = root.geometryItem(editor.modelData, editor.x, editor.y, editor.width, editor.height);
+                    if (editor.edges !== 0) item.placement.sizing = "fixed";
+                    root.itemChanged(editor.index, item);
+                    editor.restoreGeometry();
+                }
+                onCanceled: editor.restoreGeometry()
             }
 
         }
@@ -299,9 +340,9 @@ PanelWindow {
             BloxComboBox {
                 Layout.fillWidth: true
                 model: ["top-left", "top-right", "bottom-left", "bottom-right", "centre"]
-                currentIndex: root.selectedItem ? Math.max(0, model.indexOf(root.selectedItem.anchor || "top-left")) : 0
+                currentIndex: root.selectedItem ? Math.max(0, model.indexOf(root.selectedItem.placement.anchor)) : 0
                 onActivated: (index, value) => {
-                    return root.updateSelected({
+                    return root.updatePlacement({
                         "anchor": value
                     });
                 }
@@ -323,48 +364,6 @@ PanelWindow {
                 }
             }
 
-            BloxCheckBox {
-                Layout.columnSpan: 2
-                text: "Automatic size"
-                checked: root.selectedAutoSize()
-                onToggled: (checked) => {
-                    if (!root.selectedItem)
-                        return ;
-
-                    const options = root.clone(root.selectedItem.options || {
-                    });
-                    options.auto_size = checked;
-                    root.updateSelected({
-                        "width": checked ? 0 : Math.max(160, root.selectedItem.width || 0),
-                        "height": checked ? 0 : Math.max(80, root.selectedItem.height || 0),
-                        "options": options
-                    });
-                }
-            }
-
-            Label {
-                text: "Scale"
-                color: Theme.muted
-            }
-
-            BloxTextField {
-                Layout.fillWidth: true
-                suffix: "×"
-                text: root.selectedItem && root.selectedItem.options ? String(root.selectedItem.options.scale || 1) : "1"
-                onEditingFinished: {
-                    if (!root.selectedItem)
-                        return ;
-
-                    const options = root.clone(root.selectedItem.options || {
-                    });
-                    const parsed = Number(text);
-                    options.scale = Math.max(0.25, Math.min(4, isNaN(parsed) ? 1 : parsed));
-                    root.updateSelected({
-                        "options": options
-                    });
-                }
-            }
-
             Label {
                 text: "Transparency"
                 color: Theme.muted
@@ -373,29 +372,26 @@ PanelWindow {
             BloxTextField {
                 Layout.fillWidth: true
                 suffix: "%"
-                text: root.selectedItem && root.selectedItem.options && root.selectedItem.options.background_opacity !== undefined ? String(Math.round((1 - Number(root.selectedItem.options.background_opacity)) * 100)) : String(Math.round((1 - Theme.widgetOpacity) * 100))
+                text: root.selectedItem ? String(Math.round((1 - root.selectedItem.appearance.backgroundOpacity) * 100)) : "0"
                 onEditingFinished: {
                     if (!root.selectedItem)
                         return ;
 
-                    const options = root.clone(root.selectedItem.options || {
-                    });
+                    const appearance = root.clone(root.selectedItem.appearance);
                     const parsed = Number(text);
-                    const transparency = Math.max(0, Math.min(100, isNaN(parsed) ? (1 - Theme.widgetOpacity) * 100 : parsed));
-                    options.background_opacity = 1 - transparency / 100;
-                    root.updateSelected({
-                        "options": options
-                    });
+                    if (!Number.isFinite(parsed)) return;
+                    appearance.backgroundOpacity = 1 - Math.max(0, Math.min(100, parsed)) / 100;
+                    root.updateSelected({appearance: appearance});
                 }
             }
 
             Repeater {
                 model: [{
                     "label": "X offset",
-                    "key": "offset_x"
+                    "key": "x"
                 }, {
                     "label": "Y offset",
-                    "key": "offset_y"
+                    "key": "y"
                 }, {
                     "label": "Width",
                     "key": "width"
@@ -418,21 +414,18 @@ PanelWindow {
                     BloxTextField {
                         Layout.fillWidth: true
                         suffix: "px"
-                        enabled: parent.modelData.key === "offset_x" || parent.modelData.key === "offset_y" || !root.selectedAutoSize()
-                        text: root.selectedItem ? String(root.selectedItem[parent.modelData.key] || 0) : "0"
+                        text: root.selectedItem ? String(root.selectedItem.placement[parent.modelData.key]) : "0"
                         onEditingFinished: {
                             const key = parent.modelData.key;
                             const parsed = parseInt(text);
                             const update = {
                             };
-                            update[key] = key === "width" || key === "height" ? Math.max(1, parsed || 0) : Math.max(-10000, Math.min(10000, isNaN(parsed) ? 0 : parsed));
-                            root.updateSelected(update);
+                            update[key] = key === "width" || key === "height" ? Math.max(1, Math.min(16384, parsed || 0)) : Math.max(-100000, Math.min(100000, isNaN(parsed) ? 0 : parsed));
+                            if (key === "width" || key === "height") update.sizing = "fixed";
+                            root.updatePlacement(update);
                         }
 
-                        BloxToolTip {
-                            shown: parent.hovered && !parent.enabled
-                            text: "Disable Automatic size to set width and height"
-                        }
+
 
                     }
 

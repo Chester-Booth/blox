@@ -7,6 +7,9 @@ Popup {
     id: root
 
     property var event: null
+    readonly property string actionDisabledReason: !root.event ? ""
+        : root.event.busy ? "Event update in progress."
+        : !root.event.can_edit ? String(root.event.capability_reason || "") : ""
 
     signal editRequested(var event)
     signal colourRequested(var event, string colourId)
@@ -14,6 +17,7 @@ Popup {
 
     popupType: Popup.Item
     modal: true
+    focus: true
     dim: false
     width: 174
     padding: Theme.scaledSpacing(8)
@@ -32,32 +36,56 @@ Popup {
             Layout.alignment: Qt.AlignHCenter
             spacing: Theme.scaledSpacing(6)
 
-            BloxButton {
+            Item {
                 Layout.preferredWidth: 64
-                text: "Edit"
-                iconName: "pencil-simple"
-                enabled: root.event && root.event.can_edit && !root.event.busy
-                onClicked: {
-                    var selectedEvent = root.event;
-                    Qt.callLater(function() {
-                        root.close();
-                        root.editRequested(selectedEvent);
-                    });
+                Layout.preferredHeight: 36
+                HoverHandler { id: editHover }
+                BloxToolTip {
+                    objectName: "calendar-event-edit-reason"
+                    shown: editHover.hovered && !editButton.enabled && root.actionDisabledReason.length > 0
+                    text: root.actionDisabledReason
+                }
+                BloxButton {
+                    id: editButton
+                    objectName: "calendar-event-edit"
+                    anchors.fill: parent
+                    text: "Edit"
+                    iconName: "pencil-simple"
+                    enabled: root.event && root.event.can_edit && !root.event.busy
+                    onClicked: {
+                        var selectedEvent = root.event;
+                        Qt.callLater(function() {
+                            root.close();
+                            root.editRequested(selectedEvent);
+                        });
+                    }
                 }
             }
 
-            BloxButton {
+            Item {
                 Layout.preferredWidth: 76
-                text: "Delete"
-                iconName: "trash"
-                destructive: true
-                enabled: root.event && root.event.can_edit && !root.event.busy
-                onClicked: {
-                    var selectedEvent = root.event;
-                    Qt.callLater(function() {
-                        root.close();
-                        root.deleteRequested(selectedEvent);
-                    });
+                Layout.preferredHeight: 36
+                HoverHandler { id: deleteHover }
+                BloxToolTip {
+                    objectName: "calendar-event-delete-reason"
+                    shown: deleteHover.hovered && !deleteButton.enabled && root.actionDisabledReason.length > 0
+                    text: root.actionDisabledReason
+                }
+                BloxButton {
+                    id: deleteButton
+                    objectName: "calendar-event-delete"
+                    anchors.fill: parent
+                    text: "Delete"
+                    iconName: "trash"
+                    destructive: true
+                    enabled: root.event && root.event.can_edit && !root.event.busy
+                    onClicked: {
+                        var selectedEvent = root.event;
+                        Qt.callLater(function() {
+                            root.close();
+                            root.deleteRequested(selectedEvent);
+                        });
+                    }
                 }
             }
 
@@ -108,30 +136,56 @@ Popup {
                     "c": "#ff887c"
                 }]
 
-                Rectangle {
+                Item {
+                    id: colourTarget
                     required property var modelData
+                    property alias reasonTooltip: colourReasonTooltip
 
+                    objectName: "calendar-event-colour-target-" + modelData.id
                     Layout.preferredWidth: 24
                     Layout.preferredHeight: 24
-                    radius: Theme.scaledRadius(12)
-                    color: modelData.c
-                    border.color: root.event && root.event.colour && root.event.colour.event_id === modelData.id ? Theme.foreground : Theme.withAlpha(Theme.foreground, 0.18)
-                    border.width: root.event && root.event.colour && root.event.colour.event_id === modelData.id ? 3 : 1
 
                     HoverHandler {
+                        id: colourHover
                         cursorShape: Qt.PointingHandCursor
                     }
 
-                    TapHandler {
-                        enabled: root.event && root.event.can_edit && !root.event.busy
-                        onTapped: {
-                            var selectedEvent = root.event;
-                            var selectedColour = parent.modelData.id;
-                            Qt.callLater(function() {
-                                root.close();
-                                root.colourRequested(selectedEvent, selectedColour);
-                            });
+                    BloxToolTip {
+                        id: colourReasonTooltip
+                        objectName: "calendar-event-colour-reason-" + colourTarget.modelData.id
+                        shown: colourHover.hovered && !colourSwatch.enabled && root.actionDisabledReason.length > 0
+                        text: root.actionDisabledReason
+                    }
+
+                    Rectangle {
+                        id: colourSwatch
+
+                        objectName: "calendar-event-colour-" + colourTarget.modelData.id
+                        anchors.fill: parent
+                        enabled: !!root.event && root.event.can_edit && !root.event.busy
+                        activeFocusOnTab: enabled
+                        function activate() {
+                            if (!enabled) return;
+                            const selectedEvent = root.event;
+                            const selectedColour = colourTarget.modelData.id;
+                            Qt.callLater(() => { root.close(); root.colourRequested(selectedEvent, selectedColour); });
                         }
+                        Keys.onPressed: event => {
+                            if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
+                                activate();
+                                event.accepted = true;
+                            }
+                        }
+                        radius: Theme.scaledRadius(12)
+                        color: colourTarget.modelData.c
+                        border.color: activeFocus ? Theme.blue : root.event && root.event.colour && root.event.colour.event_id === colourTarget.modelData.id ? Theme.foreground : Theme.withAlpha(Theme.foreground, 0.18)
+                        border.width: root.event && root.event.colour && root.event.colour.event_id === colourTarget.modelData.id ? 3 : 1
+
+                        TapHandler {
+                            enabled: root.event && root.event.can_edit && !root.event.busy
+                            onTapped: colourSwatch.activate()
+                        }
+
                     }
 
                 }

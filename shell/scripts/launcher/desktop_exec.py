@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import os
 import re
 import shlex
@@ -68,14 +69,15 @@ def _workspace_command(
     """Build a quoted shell command for Hyprland's per-process workspace rule."""
     overrides = {
         name: environment[name]
-        for name in CURSOR_ENVIRONMENT_NAMES
+        for name in ("PATH", *CURSOR_ENVIRONMENT_NAMES)
         if name in environment
     }
     if launch_id and VALID_LAUNCH_ID.fullmatch(launch_id):
         overrides["BLOX_LAUNCH_ID"] = launch_id
         overrides["BLOX_LAUNCH_WORKSPACE"] = str(workspace_id)
 
-    command_parts = ["env", "-u", "ELECTRON_RUN_AS_NODE"]
+    command_parts = ["env", "-u", "ELECTRON_RUN_AS_NODE", "-u", "BLOX_WIDGET_ACTION_CONTEXT",
+                     "-u", "BLOX_LAUNCH_ID", "-u", "BLOX_LAUNCH_WORKSPACE"]
     command_parts.extend(f"{name}={value}" for name, value in overrides.items())
     command_parts.extend(command)
     result = shlex.join(command_parts)
@@ -91,25 +93,27 @@ def _launch_with_workspace_rule(
     environment: dict[str, str],
     workspace_id: int,
     launch_id: str | None,
+    timeout_seconds: float | None = None,
 ) -> int:
     """Ask Hyprland to start a process with a one-shot workspace rule."""
     shell_command = _workspace_command(
         command, working_directory, environment, workspace_id, launch_id
     )
     expression = (
-        "hl.dsp.exec_cmd("
+        "hl.dispatch(hl.dsp.exec_cmd("
         + _lua_string(shell_command)
         + ", { workspace = "
         + _lua_string(f"{workspace_id} silent")
-        + " })"
+        + " }))"
     )
     result = subprocess.run(
-        ["hyprctl", "dispatch", expression],
+        ["hyprctl", "eval", expression],
         env=environment,
         stdin=subprocess.DEVNULL,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
         check=False,
+        timeout=timeout_seconds,
     )
     return result.returncode
 
@@ -218,6 +222,7 @@ def _launch_in_transient_service(
     working_directory: str | None,
     environment: dict[str, str],
     desktop_id: str,
+    timeout_seconds: float | None = None,
 ) -> int:
     """Start a long-lived GUI in a cgroup independent of Quickshell."""
     unit = f"blox-desktop-{_desktop_id_key(desktop_id)}-{os.getpid()}-{uuid.uuid4().hex[:8]}.service"
@@ -241,6 +246,7 @@ def _launch_in_transient_service(
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
         check=False,
+        timeout=timeout_seconds,
     )
     return result.returncode
 
@@ -252,6 +258,7 @@ def launch_detached(
     desktop_id: str | None = None,
     workspace_id: int | None = None,
     launch_id: str | None = None,
+    timeout_seconds: float | None = None,
 ) -> int:
     """Start a desktop command with the lifetime it needs.
 
@@ -259,22 +266,55 @@ def launch_detached(
     GUI process, such as Zed's ``zeditor`` CLI. T3 Code and Obsidian need their
     Electron processes kept outside Quickshell's cgroup so shell restarts do
     not kill them. Launch those apps through transient user services. Other
-    workspace-aware launches use Hyprland's exec rule, then fall back to a
-    detached process if the dispatcher is unavailable.
+    workspace-aware launches use Hyprland's exec rule exactly once. A failed
+    dispatcher never falls back to an unplaced second launch. An optional subprocess
+    timeout propagates to the caller without retrying an uncertain launch.
     """
+    requested_workspace = workspace_id
     workspace_id = valid_workspace_id(workspace_id)
+    if requested_workspace is not None and (type(requested_workspace) is not int or workspace_id is None):
+        raise ValueError("Launcher supports positive numeric source workspaces only")
+    environment = dict(environment)
+    environment.pop("BLOX_WIDGET_ACTION_CONTEXT", None)
     if workspace_id and launch_id and VALID_LAUNCH_ID.fullmatch(launch_id):
         environment = dict(environment)
         environment["BLOX_LAUNCH_ID"] = launch_id
         environment["BLOX_LAUNCH_WORKSPACE"] = str(workspace_id)
 
-    if _desktop_id_key(desktop_id) in TRANSIENT_SERVICE_DESKTOP_IDS:
-        return _launch_in_transient_service(command, working_directory, environment, desktop_id or "t3code")
+    if workspace_id and desktop_id:
+        # Place sandbox, splash and secondary startup windows before they map.
+        # The compositor owns expiry, even if Quickshell exits during startup.
+        try:
+            entry = GioUnix.DesktopAppInfo.new(desktop_id.removesuffix(".desktop") + ".desktop")
+        except TypeError:
+            entry = None
+        classes = {desktop_id.removesuffix(".desktop")}
+        if entry and entry.get_string("StartupWMClass"):
+            classes.add(entry.get_string("StartupWMClass"))
+        pattern = "(?i)^(" + "|".join(re.escape(c) for c in sorted(classes)) + ")$"
+        key = "blox-launch-" + hashlib.sha256(desktop_id.encode()).hexdigest()[:16]
+        expression = (
+            "blox_launcher_rules = blox_launcher_rules or {}; "
+            f"local key = {_lua_string(key)}; local old = blox_launcher_rules[key]; "
+            "if old then old.rule:set_enabled(false); old.timer:set_enabled(false) end; "
+            f"local rule = hl.window_rule({{name=key, match={{class={_lua_string(pattern)}}}, "
+            f"workspace={_lua_string(str(workspace_id) + ' silent')}}}); "
+            "rule:set_enabled(true); local timer; "
+            "timer = hl.timer(function() rule:set_enabled(false); timer:set_enabled(false); "
+            "blox_launcher_rules[key] = nil end, {timeout=60000,type='repeat'}); "
+            f"blox_launcher_rules[key] = {{rule=rule,timer=timer,launchId={_lua_string(launch_id or '')}}}"
+        )
+        subprocess.run(["hyprctl", "eval", expression], env=environment,
+                       stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                       stderr=subprocess.DEVNULL, check=False, timeout=timeout_seconds)
 
-    if workspace_id and _launch_with_workspace_rule(
-        command, working_directory, environment, workspace_id, launch_id
-    ) == 0:
-        return 0
+    if _desktop_id_key(desktop_id) in TRANSIENT_SERVICE_DESKTOP_IDS:
+        return _launch_in_transient_service(command, working_directory, environment, desktop_id or "t3code", timeout_seconds)
+
+    if workspace_id:
+        return _launch_with_workspace_rule(
+            command, working_directory, environment, workspace_id, launch_id, timeout_seconds
+        )
 
     process = subprocess.Popen(
         command,

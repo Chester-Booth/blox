@@ -1,4 +1,6 @@
+import qs.shared
 import QtQuick
+import "ActionContract.js" as ActionContract
 import Quickshell
 
 // Guard the optional vendor-performance owner and expose its typed status.
@@ -86,6 +88,25 @@ Scope {
 
     function setFanCurvesEnabled(value) {
         return root.providerReady && providerLoader.item.setFanCurvesEnabled(value);
+    }
+
+    function action(operation, value) {
+        const status = root.json || {};
+        const actionStatus = operation === "set-fan-curves" ? Object.assign({}, status, {capability: status.fanCurveCapability || {}}) : status;
+        const blocked = ActionContract.blockedCode(actionStatus, actionStatus.capability && actionStatus.capability.canChange);
+        if (blocked)
+            return ActionContract.result(false, blocked, "the action is unavailable");
+        const beforeRevision = Number(status.providerRevision || 0);
+        if (operation === "set-profile" && (status.profiles || []).indexOf(String(value)) < 0)
+            return ActionContract.result(false, "invalid-data", "unknown vendor profile");
+        if (operation === "set-fan-curves" && ["on", "off"].indexOf(String(value)) < 0)
+            return ActionContract.result(false, "invalid-data", "fan curves must be on or off");
+        if (["set-profile", "set-fan-curves"].indexOf(operation) < 0)
+            return ActionContract.result(false, "invalid-data", "unknown vendor operation");
+        const accepted = operation === "set-profile" ? root.setProfile(value) : root.setFanCurvesEnabled(value === "on");
+        if (!accepted)
+            return ActionContract.result(false, "failed", "the provider rejected the action");
+        return ActionContract.accepted(operation, value, root.json || {}, beforeRevision);
     }
 
     Loader {

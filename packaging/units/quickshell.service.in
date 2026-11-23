@@ -5,10 +5,14 @@ StartLimitBurst=5
 
 [Service]
 Type=exec
+KillMode=control-group
+TimeoutStopSec=3s
 # Let systemd own restarts. Quickshell's internal crash-recovery parent keeps
 # the old instance registry alive, which can turn later IPC clients into full
 # duplicate shells after a QML crash.
 Environment=QS_DISABLE_CRASH_HANDLER=1
+# Use base pages for jemalloc arena extents.
+Environment=MALLOC_CONF=thp:never
 Environment=PATH=@BIN_ROOT@:/usr/local/sbin:/usr/local/bin:/usr/bin
 Environment=BLOX_DATA_DIR=@PKG_ROOT@/themes
 Environment=BLOX_SHELL_LAYOUT=installed

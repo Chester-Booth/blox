@@ -1,3 +1,4 @@
 #!/bin/sh
 umask 077
-exec "$HOME/.config/quickshell/blox/scripts/launcher/clipboardctl.py" ingest --mime "$BLOX_CLIPBOARD_MIME"
+script_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+exec "$script_dir/clipboardctl.py" ingest --mime "$BLOX_CLIPBOARD_MIME"

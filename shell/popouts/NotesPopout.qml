@@ -7,6 +7,11 @@ Rectangle {
 
     property string title: "notes.md"
     property string body: ""
+    property string draftBody: body
+    onBodyChanged: {
+        draftBody = body;
+        if (!editing) editor.text = body;
+    }
     property string file: ""
     property int index: 0
     property int count: 1
@@ -49,7 +54,13 @@ Rectangle {
     }
 
     onEditingChanged: {
+        if (editing) Qt.callLater(() => { if (root.editing) editor.text = root.draftBody; });
+        else draftBody = editor.text;
         focusEditor();
+    }
+    Keys.onEscapePressed: event => {
+        const currentDraft = root.editing ? editor.text : root.draftBody;
+        event.accepted = currentDraft !== root.body;
     }
     onGeneratedChanged: {
         if (generated)
@@ -111,9 +122,31 @@ Rectangle {
                         visible: modelData.icon !== ""
                         radius: Theme.scaledRadius(5)
                         color: (root.editing && (modelData.action === "prev" || modelData.action === "next")) ? "transparent" : noteMouse.containsMouse ? Theme.surfaceAlt : Theme.surface
-                        border.color: Theme.surfaceAlt
+                        border.color: activeFocus ? Theme.blue : Theme.surfaceAlt
                         border.width: 1
                         opacity: (root.editing && (modelData.action === "prev" || modelData.action === "next")) ? 0.35 : 1
+
+                        objectName: "notes-" + modelData.action
+                        enabled: !(root.editing && (modelData.action === "prev" || modelData.action === "next")) && !(modelData.action === "save" && root.saveBusy) && !(modelData.action === "refresh" && root.refreshBusy)
+                        activeFocusOnTab: visible && enabled
+                        function activate() {
+                            if (!enabled) return;
+                            if (modelData.action === "prev") root.previous();
+                            else if (modelData.action === "next") root.next();
+                            else if (modelData.action === "refresh") root.refresh(root.file);
+                            else if (modelData.action === "save") root.save(root.file, editor.text);
+                            else root.editing = !root.editing;
+                        }
+                        Keys.onPressed: event => {
+                            if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
+                                activate();
+                                event.accepted = true;
+                            }
+                        }
+                        BloxToolTip {
+                            text: modelData.action === "prev" ? "Previous note" : modelData.action === "next" ? "Next note" : modelData.action === "refresh" ? "Refresh" : modelData.action === "save" ? "Save" : root.editing ? "Read note" : "Edit note"
+                            shown: noteMouse.containsMouse
+                        }
 
                         Text {
                             anchors.centerIn: parent
@@ -130,21 +163,7 @@ Rectangle {
                             enabled: !(modelData.action === "save" && root.saveBusy) && !(modelData.action === "refresh" && root.refreshBusy)
                             hoverEnabled: true
                             cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-                            onClicked: {
-                                if (root.editing && (modelData.action === "prev" || modelData.action === "next"))
-                                    return ;
-
-                                if (modelData.action === "prev")
-                                    root.previous();
-                                else if (modelData.action === "next")
-                                    root.next();
-                                else if (modelData.action === "refresh")
-                                    root.refresh(root.file);
-                                else if (modelData.action === "save")
-                                    root.save(root.file, editor.text);
-                                else
-                                    root.editing = !root.editing;
-                            }
+                            onClicked: parent.activate()
                         }
 
                     }
@@ -207,6 +226,7 @@ Rectangle {
 
                 TextEdit {
                     id: editor
+                    objectName: "notes-editor"
 
                     width: Math.max(notesScroll.width, contentWidth)
                     height: Math.max(notesScroll.height, contentHeight)

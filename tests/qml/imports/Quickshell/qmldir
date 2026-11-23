@@ -1,5 +1,15 @@
 module Quickshell
+ElapsedTimer 1.0 ElapsedTimer.qml
 singleton Quickshell 1.0 Quickshell.qml
 Scope 1.0 Scope.qml
 Singleton 1.0 Singleton.qml
 IpcHandler 1.0 IpcHandler.qml
+PopupWindow 1.0 PopupWindow.qml
+PopupWindowAnchor 1.0 PopupWindowAnchor.qml
+PopupSurfaceFormat 1.0 PopupSurfaceFormat.qml
+Region 1.0 Region.qml
+SystemClock 1.0 SystemClock.qml
+
+FloatingWindow 1.0 FloatingWindow.qml
+
+singleton QsMenuButtonType 1.0 QsMenuButtonType.qml

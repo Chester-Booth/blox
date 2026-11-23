@@ -5,6 +5,7 @@ Scope {
     id: root
 
     property alias scriptRoot: controller.scriptRoot
+    property alias audioStatus: controller.audioStatus
 
     function preview(kind, percent, isMuted) {
         controller.preview(kind, percent, isMuted);

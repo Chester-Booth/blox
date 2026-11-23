@@ -4,8 +4,9 @@ set -u
 # shellcheck source=common.sh
 source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/common.sh"
 
-profile="$(asusctl profile get 2>/dev/null | awk -F': ' '{print $2}')"
-[ -n "$profile" ] || profile="Unknown"
+# Profile controls use the power-profile and vendor owners. Keep this legacy
+# field's fallback without starting another vendor query for system metrics.
+profile="Unknown"
 
 fan1="$(cat /sys/class/hwmon/hwmon*/fan1_input 2>/dev/null | head -1)"
 fan2="$(cat /sys/class/hwmon/hwmon*/fan2_input 2>/dev/null | head -1)"

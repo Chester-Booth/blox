@@ -11,6 +11,7 @@ Rectangle {
     property bool dnd: false
     property int clearAnimationRevision: 0
     property double nowMs: Date.now()
+    property var actionResult: null
     readonly property int notificationListChromeHeight: 240
 
     signal toggleDnd()
@@ -47,6 +48,13 @@ Rectangle {
     function notificationMeta(notification) {
         const app = notification && notification.appName ? notification.appName : "notification";
         return app + " • " + root.ageText(notification);
+    }
+
+    function actionResultFor(notification) {
+        const result = root.actionResult;
+        if (!notification || !result || result.ok !== false || !result.data || !result.message)
+            return null;
+        return Number(result.data.notificationId) === Number(notification.id) ? result : null;
     }
 
     width: 360
@@ -146,9 +154,26 @@ Rectangle {
                 height: 30
                 radius: Theme.scaledRadius(7)
                 color: clearMouse.containsMouse ? Theme.surfaceAlt : Theme.surface
-                border.color: Theme.surfaceAlt
-                border.width: 1
+                border.color: activeFocus ? Theme.blue : Theme.surfaceAlt
+                border.width: activeFocus ? 2 : 1
                 opacity: root.notifications.length > 0 ? 1 : 0.45
+                enabled: root.notifications.length > 0
+                activeFocusOnTab: enabled
+                Accessible.role: Accessible.Button
+                Accessible.name: "Clear notifications"
+                Keys.onReturnPressed: clearAll()
+                Keys.onEnterPressed: clearAll()
+                Keys.onSpacePressed: clearAll()
+
+                function clearAll() {
+                    if (enabled)
+                        root.clearAnimationRevision++;
+                }
+
+                BloxToolTip {
+                    shown: clearMouse.containsMouse
+                    text: "Clear notifications"
+                }
 
                 Text {
                     anchors.fill: parent
@@ -165,12 +190,9 @@ Rectangle {
 
                     anchors.fill: parent
                     hoverEnabled: true
-                    cursorShape: root.notifications.length > 0 ? Qt.PointingHandCursor : Qt.ArrowCursor
-                    onClicked: {
-                        if (root.notifications.length > 0)
-                            root.clearAnimationRevision++;
-
-                    }
+                    enabled: clearButton.enabled
+                    cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                    onClicked: clearButton.clearAll()
                 }
 
             }
@@ -228,6 +250,7 @@ Rectangle {
                 }
 
                 Repeater {
+                    objectName: "notification-card-repeater"
                     model: root.orderedNotifications()
 
                     NotificationCard {
@@ -255,7 +278,9 @@ Rectangle {
     component NotificationCard: Rectangle {
         id: card
 
+        objectName: "notification-card-" + (notification && notification.id || 0)
         property var notification
+        readonly property var actionResult: root.actionResultFor(notification)
         property int clearRevision: 0
         property int seenClearRevision: 0
         property bool removing: false
@@ -268,15 +293,21 @@ Rectangle {
             removeTimer.restart();
         }
 
-        height: bodyColumn.implicitHeight + 18
+        height: cardContent.implicitHeight + 18
         x: removing ? width * 0.18 : 0
         scale: removing ? 0.985 : 1
         opacity: removing ? 0 : 1
         transformOrigin: Item.Right
         radius: Theme.scaledRadius(8)
         color: Theme.surface
-        border.color: notification && notification.urgency === NotificationUrgency.Critical ? Theme.red : Theme.surfaceAlt
-        border.width: 1
+        border.color: activeFocus ? Theme.blue : notification && notification.urgency === NotificationUrgency.Critical ? Theme.red : Theme.surfaceAlt
+        border.width: activeFocus ? 2 : 1
+        activeFocusOnTab: true
+        Accessible.role: Accessible.Button
+        Accessible.name: notification && notification.summary ? notification.summary : "Notification"
+        Keys.onReturnPressed: root.activate(notification)
+        Keys.onEnterPressed: root.activate(notification)
+        Keys.onSpacePressed: root.activate(notification)
         onClearRevisionChanged: {
             if (clearRevision === seenClearRevision)
                 return ;
@@ -305,18 +336,34 @@ Rectangle {
             onClicked: root.activate(card.notification)
         }
 
-        NotificationContent {
-            id: bodyColumn
-
+        Column {
+            id: cardContent
             z: 1
             anchors.fill: parent
             anchors.margins: Theme.scaledSpacing(9)
-            notification: card.notification
-            meta: root.notificationMeta(card.notification)
-            maximumBodyLineCount: 4
-            headerRightPadding: 32
-            onActionInvoked: (notification) => {
-                return root.actionInvoked(notification);
+            spacing: Theme.scaledSpacing(6)
+
+            NotificationContent {
+                id: bodyColumn
+                width: parent.width
+                notification: card.notification
+                meta: root.notificationMeta(card.notification)
+                maximumBodyLineCount: 4
+                headerRightPadding: 32
+                onActionInvoked: (notification) => {
+                    return root.actionInvoked(notification);
+                }
+            }
+
+            Text {
+                objectName: "notificationActionError-" + (card.notification && card.notification.id || 0)
+                width: parent.width
+                visible: !!card.actionResult && !card.removing
+                text: visible ? card.actionResult.message : ""
+                color: Theme.red
+                font.family: Theme.bodyFontFamily
+                font.pixelSize: 12
+                wrapMode: Text.WordWrap
             }
         }
 
@@ -332,6 +379,24 @@ Rectangle {
             height: 24
             radius: Theme.scaledRadius(6)
             color: closeMouse.containsMouse ? Theme.surfaceAlt : "transparent"
+            border.color: activeFocus ? Theme.blue : "transparent"
+            border.width: activeFocus ? 2 : 0
+            activeFocusOnTab: true
+            Accessible.role: Accessible.Button
+            Accessible.name: "Dismiss notification"
+            Keys.onReturnPressed: dismissNotification()
+            Keys.onEnterPressed: dismissNotification()
+            Keys.onSpacePressed: dismissNotification()
+
+            function dismissNotification() {
+                if (card.notification)
+                    card.startRemove();
+            }
+
+            BloxToolTip {
+                shown: closeMouse.containsMouse
+                text: "Dismiss notification"
+            }
 
             Text {
                 anchors.centerIn: parent
@@ -347,11 +412,7 @@ Rectangle {
                 anchors.fill: parent
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
-                onClicked: {
-                    if (card.notification)
-                        card.startRemove();
-
-                }
+                onClicked: closeButton.dismissNotification()
             }
 
         }

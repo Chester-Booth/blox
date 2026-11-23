@@ -1,0 +1,2 @@
+module Quickshell.Services.SystemTray
+QsMenuOpener 1.0 QsMenuOpener.qml

@@ -11,6 +11,10 @@ Item {
     required property WorkspaceController workspaceController
     required property NotificationController notificationController
     property bool horizontal: false
+    property string region: ""
+    property Item panelAnchorSource: null
+    property var anchorScreen: null
+    property string registeredAnchorPanel: ""
     property real panelExtent: 0
     property real maximumExtent: Number.POSITIVE_INFINITY
     property bool trayOpensForward: false
@@ -41,24 +45,99 @@ Item {
     }
     readonly property bool runtimeSuppressed: capabilitySuppressed || (itemVisibility === "always" ? false : suppressForRuntimeState())
     readonly property bool contentVisible: contentLoader.item !== null && !runtimeSuppressed
+    readonly property string anchorPanel: {
+        const panels = {
+            "power": "power",
+            "notes": "todo",
+            "clock": "calendar",
+            "battery": "system",
+            "notifications": "notifications",
+            "wifi": "network",
+            "sound": "audio",
+            "privacy": "privacy",
+            "awake": "caffeine",
+            "display": "brightness",
+            "bt": "bluetooth",
+            "updates": "updates",
+            "fan": "system",
+            "gpu": "system"
+        };
+        return panels[itemId] || "";
+    }
+    readonly property real panelAnchorCentre: {
+        const source = panelAnchorSource || root;
+        // mapToItem() does not bind to ancestor geometry, so read the full
+        // chain to keep keyboard-opened popouts aligned during bar movement.
+        let geometryDependency = 0;
+        let ancestor = source;
+        while (ancestor) {
+            geometryDependency += Number(ancestor.x || 0) + Number(ancestor.y || 0)
+                + Number(ancestor.width || 0) + Number(ancestor.height || 0);
+            ancestor = ancestor.parent;
+        }
+        const point = source.mapToItem(null, source.width / 2, source.height / 2);
+        return (horizontal ? point.x : point.y) + geometryDependency * 0;
+    }
+    readonly property bool panelAnchorAvailable: {
+        if (!anchorPanel || !contentVisible || horizontal !== surfaceController.horizontalBar)
+            return false;
+
+        if (region === "hidden")
+            return !!panelAnchorSource;
+
+        let ancestor = root;
+        while (ancestor) {
+            if (ancestor.visible === false)
+                return false;
+            ancestor = ancestor.parent;
+        }
+        return true;
+    }
 
     function mappedCentre(item, centre) {
         return itemContext.mappedCentre(item, centre);
+    }
+
+    function publishPanelAnchor() {
+        if (registeredAnchorPanel && registeredAnchorPanel !== anchorPanel) {
+            surfaceController.unregisterPanelAnchor(registeredAnchorPanel, root);
+            registeredAnchorPanel = "";
+        }
+
+        if (!panelAnchorAvailable) {
+            if (registeredAnchorPanel) {
+                surfaceController.unregisterPanelAnchor(registeredAnchorPanel, root);
+                registeredAnchorPanel = "";
+            }
+            return ;
+        }
+
+        surfaceController.registerPanelAnchor(anchorPanel, root, panelAnchorCentre, region === "hidden" ? 0 : 1, anchorScreen);
+        registeredAnchorPanel = anchorPanel;
     }
 
     function publishNotificationPosition() {
         if (itemId !== "notifications" || horizontal !== surfaceController.horizontalBar || !contentLoader.item)
             return ;
 
-        notificationController.panelY = mappedCentre(contentLoader.item, contentLoader.item.height / 2);
+        notificationController.panelY = panelAnchorCentre;
     }
 
-    onXChanged: publishNotificationPosition()
-    onYChanged: publishNotificationPosition()
-    onWidthChanged: publishNotificationPosition()
-    onHeightChanged: publishNotificationPosition()
-    onHorizontalChanged: publishNotificationPosition()
-    Component.onCompleted: publishNotificationPosition()
+    onXChanged: { publishNotificationPosition(); publishPanelAnchor(); }
+    onYChanged: { publishNotificationPosition(); publishPanelAnchor(); }
+    onWidthChanged: { publishNotificationPosition(); publishPanelAnchor(); }
+    onHeightChanged: { publishNotificationPosition(); publishPanelAnchor(); }
+    onHorizontalChanged: { publishNotificationPosition(); publishPanelAnchor(); }
+    onRegionChanged: publishPanelAnchor()
+    onPanelAnchorSourceChanged: publishPanelAnchor()
+    onAnchorScreenChanged: publishPanelAnchor()
+    onPanelAnchorCentreChanged: { publishNotificationPosition(); publishPanelAnchor(); }
+    onAnchorPanelChanged: publishPanelAnchor()
+    onPanelAnchorAvailableChanged: publishPanelAnchor()
+    onContentVisibleChanged: publishPanelAnchor()
+    onVisibleChanged: publishPanelAnchor()
+    Component.onCompleted: { publishNotificationPosition(); publishPanelAnchor(); }
+    Component.onDestruction: surfaceController.unregisterPanelAnchor(registeredAnchorPanel, root)
     // Keep the cross-axis extent stable. Content such as the expandable battery
     // percentage must only grow along the bar, otherwise a click recentres the
     // whole vertical section and makes neighbouring icons jump sideways.
@@ -71,6 +150,7 @@ Item {
     Connections {
         function onHorizontalBarChanged() {
             root.publishNotificationPosition();
+            root.publishPanelAnchor();
         }
 
         target: root.surfaceController
@@ -83,6 +163,7 @@ Item {
         contentController: root.contentController
         workspaceController: root.workspaceController
         notificationController: root.notificationController
+        panelAnchorOwner: root.region === "hidden" ? null : root
         horizontal: root.horizontal
         panelExtent: root.panelExtent
         maximumExtent: root.maximumExtent
@@ -97,7 +178,10 @@ Item {
         id: contentLoader
 
         anchors.fill: parent
-        onLoaded: root.publishNotificationPosition()
+        onLoaded: {
+            root.publishNotificationPosition();
+            root.publishPanelAnchor();
+        }
         sourceComponent: {
             if (["power", "notes"].indexOf(root.itemId) >= 0)
                 return launcherComponent;

@@ -1,3 +1,4 @@
+import qs.shared
 import QtQuick
 import Quickshell
 import Quickshell.Io
@@ -15,8 +16,11 @@ Scope {
     property int measuredWifiSignal: 0
     property string measuredWifiSsid: ""
     property string pendingWifiStatus: ""
+    property var probedWifiDevice: null
+    property int wifiConnectionRevision: 0
+    property int probedWifiRevision: -1
     property string actionError: ""
-    readonly property bool providerReady: root.networkingService !== null
+    readonly property bool providerReady: root.networkingService !== null && availability.available
     readonly property var deviceValues: root.networkingService && root.networkingService.devices && root.networkingService.devices.values ? root.networkingService.devices.values : []
     readonly property var wifiDevice: root.findDevice(DeviceType.Wifi)
     readonly property var wiredDevice: root.findDevice(DeviceType.Wired)
@@ -27,7 +31,18 @@ Scope {
     readonly property string lastError: root.actionError
     readonly property var json: state.json
 
-    onWifiDeviceChanged: root.refreshWifiStatus()
+    onWifiDeviceChanged: {
+        root.wifiConnectionRevision += 1;
+        root.measuredWifiSignal = 0;
+        root.measuredWifiSsid = "";
+        root.refreshWifiStatus();
+    }
+
+    NativeServiceAvailability {
+        id: availability
+        service: "org.freedesktop.NetworkManager"
+        enabled: root.networkingService === Networking
+    }
 
     function findDevice(type) {
         const devices = root.deviceValues;
@@ -67,6 +82,8 @@ Scope {
         if (wifiStatusProbe.running)
             return;
         root.pendingWifiStatus = "";
+        root.probedWifiDevice = root.wifiDevice;
+        root.probedWifiRevision = root.wifiConnectionRevision;
         wifiStatusProbe.running = true;
     }
 
@@ -116,7 +133,7 @@ Scope {
 
         providerReady: root.providerReady
         syncReady: root.syncReady
-        backendAvailable: root.networkingService && root.networkingService.backend === NetworkBackendType.NetworkManager
+        backendAvailable: root.providerReady && root.networkingService && root.networkingService.backend === NetworkBackendType.NetworkManager
         wifiEnabled: root.networkingService ? root.networkingService.wifiEnabled === true : false
         wifiHardwareEnabled: root.networkingService ? root.networkingService.wifiHardwareEnabled === true : false
         wifiConnected: root.wifiDevice ? root.wifiDevice.connected === true : false
@@ -163,13 +180,27 @@ Scope {
     Process {
         id: wifiStatusProbe
 
-        command: ["python3", Quickshell.shellDir + "/scripts/network_signal.py", root.wifiDevice ? root.wifiDevice.name : ""]
+        command: ["python3", Quickshell.shellDir + "/scripts/network_signal.py", root.probedWifiDevice ? root.probedWifiDevice.name : ""]
         onExited: (exitCode, exitStatus) => {
-            if (exitCode !== 0 || exitStatus !== 0)
+            // A delayed fallback reply belongs to the connection that started it.
+            if (root.probedWifiDevice !== root.wifiDevice || root.probedWifiRevision !== root.wifiConnectionRevision ||
+                    !root.wifiDevice || root.wifiDevice.connected !== true || root.wifiNetwork) {
+                Qt.callLater(root.refreshWifiStatus);
                 return;
+            }
+            if (exitCode !== 0 || exitStatus !== 0) {
+                root.measuredWifiSignal = 0;
+                root.measuredWifiSsid = "";
+                root.refresh();
+                return;
+            }
             const status = root.parseWifiStatus(root.pendingWifiStatus);
-            if (!status)
+            if (!status) {
+                root.measuredWifiSignal = 0;
+                root.measuredWifiSsid = "";
+                root.refresh();
                 return;
+            }
             root.measuredWifiSignal = status.signal;
             root.measuredWifiSsid = status.ssid;
             root.refresh();
@@ -209,6 +240,7 @@ Scope {
         ignoreUnknownSignals: true
 
         function onConnectedChanged() {
+            root.wifiConnectionRevision += 1;
             root.refresh();
             root.refreshWifiStatus();
         }

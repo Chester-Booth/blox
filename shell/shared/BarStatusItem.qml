@@ -116,10 +116,10 @@ Item {
             source: root.source
             active: root.context.surfaceController.openPanel === panel
             onPanelClicked: (panel, centre) => {
-                return root.context.surfaceController.openHoverPanel(panel, root.context.mappedCentre(this, centre));
+                return root.context.surfaceController.openHoverPanel(panel, root.context.mappedCentre(this, centre), root.context.panelAnchorOwner);
             }
             onPanelHovered: (panel, centre, source) => {
-                return root.context.surfaceController.hoverButtonEntered(panel, root.context.mappedCentre(this, centre), source);
+                return root.context.surfaceController.hoverButtonEntered(panel, root.context.mappedCentre(this, centre), source, root.context.panelAnchorOwner);
             }
             onPanelExited: (source) => {
                 return root.context.surfaceController.hoverButtonExited(source);

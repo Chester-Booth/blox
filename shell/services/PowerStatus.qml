@@ -1,5 +1,7 @@
+import qs.shared
 import QtQuick
 import Quickshell
+import Quickshell.Io
 
 // Guard the optional UPower plugin so a missing service or module cannot stop
 // shell startup. The loaded provider owns all battery status reads.
@@ -8,6 +10,8 @@ Scope {
 
     property int interval: 30000
     property url providerSource: Qt.resolvedUrl("UPowerProvider.qml")
+    readonly property bool nativeProvider: root.providerSource === Qt.resolvedUrl("UPowerProvider.qml")
+    property bool nativeActivated: false
     property var json: ({
     })
     property bool ok: true
@@ -15,7 +19,7 @@ Scope {
     property string lastError: providerReady ? String(providerLoader.item.lastError || "") : ""
     readonly property int revision: providerReady ? providerLoader.item.revision : 0
     readonly property bool providerReady: providerLoader.status === Loader.Ready && providerLoader.item !== null
-    readonly property bool providerFailed: providerLoader.status === Loader.Error
+    readonly property bool providerFailed: providerLoader.status === Loader.Error || (root.nativeProvider && !root.nativeActivated && availability.ready && !availability.available)
 
     readonly property var loadingStatus: ({
         "icon": "󰚥",
@@ -77,10 +81,25 @@ Scope {
             root.json = root.loadingStatus;
     }
 
+    // UPower is D-Bus activated. Checking its owner alone never starts it.
+    Process {
+        id: activation
+        objectName: "upower-activation"
+        command: ["busctl", "--system", "--timeout=5s", "call", "org.freedesktop.DBus", "/org/freedesktop/DBus", "org.freedesktop.DBus", "StartServiceByName", "su", "org.freedesktop.UPower", "0"]
+        onExited: availability.refresh()
+    }
+
+    NativeServiceAvailability {
+        id: availability
+        service: "org.freedesktop.UPower"
+        enabled: root.nativeProvider && !root.nativeActivated
+        onServiceFound: { if (root.nativeProvider) root.nativeActivated = true; }
+    }
+
     Loader {
         id: providerLoader
 
-        active: true
+        active: !root.nativeProvider || root.nativeActivated
         source: root.providerSource
         onLoaded: {
             item.interval = root.interval;
@@ -98,6 +117,10 @@ Scope {
     onProviderReadyChanged: root.syncJson()
     onProviderFailedChanged: root.syncJson()
     onProviderSourceChanged: root.syncJson()
-    Component.onCompleted: root.syncJson()
+    Component.onCompleted: {
+        root.syncJson();
+        if (root.nativeProvider)
+            activation.running = true;
+    }
     onIntervalChanged: root.refresh()
 }

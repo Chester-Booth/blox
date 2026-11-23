@@ -35,6 +35,8 @@ Item {
         contentWidth: 320
         contentHeight: basicPopout.height
         open: root.geometry.active && ["updates", "privacy", "caffeine"].indexOf(root.surfaceController.openPanel) >= 0
+        persistentKeyboardFocus: open && root.surfaceController.keyboardPanel === root.surfaceController.openPanel
+        onDismissRequested: root.surfaceController.closePanel()
         onHoverEntered: root.surfaceController.popoutEntered()
         onHoverExited: root.surfaceController.popoutExited()
 

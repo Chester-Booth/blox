@@ -241,6 +241,7 @@
     "path": "wallpapers/showcase/catppuccin-frappe.webp"
   },
   "widgets": {
-    "profile": "compact"
+    "schemaVersion": 1,
+    "widgets": []
   }
 }

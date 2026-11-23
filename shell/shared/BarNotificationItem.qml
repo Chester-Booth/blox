@@ -12,11 +12,11 @@ PanelRailButton {
     onPanelClicked: (panel, centre) => {
         context.publishNotificationPosition();
         context.surfaceController.closeBarOverlays();
-        context.surfaceController.openHoverPanel(panel, context.mappedCentre(this, centre));
+        context.surfaceController.openHoverPanel(panel, context.mappedCentre(this, centre), context.panelAnchorOwner);
     }
     onPanelHovered: (panel, centre, source) => {
         context.publishNotificationPosition();
-        return context.surfaceController.hoverButtonEntered(panel, context.mappedCentre(this, centre), source);
+        return context.surfaceController.hoverButtonEntered(panel, context.mappedCentre(this, centre), source, context.panelAnchorOwner);
     }
     onPanelExited: (source) => {
         return context.surfaceController.hoverButtonExited(source);

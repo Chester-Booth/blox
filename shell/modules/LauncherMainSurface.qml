@@ -19,6 +19,7 @@ PanelWindow {
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: open ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
     WlrLayershell.namespace: "blox-launcher-main"
+
     onOpenChanged: {
         if (open) {
             controller.refresh();
@@ -94,7 +95,7 @@ PanelWindow {
                     if (controller.query.startsWith("%"))
                         controller.query = "";
                     else
-                        controller.closeRequested();
+                        controller.dismissRequested();
                     event.accepted = true;
                 } else if (event.key === Qt.Key_Down) {
                     controller.move(1);

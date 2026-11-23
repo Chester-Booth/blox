@@ -125,20 +125,36 @@ json_status() {
 inhibit_start() {
 	local duration="${1:-infinity}"
 
-	systemctl --user start hypridle.service >/dev/null 2>&1
+	systemctl --user start hypridle.service >/dev/null 2>&1 || return 1
 	if systemctl --user is-active --quiet "$inhibit_unit"; then
-		return 0
+		if [[ "$(systemctl --user show --property=Type --value "$inhibit_unit")" == notify ]]; then
+			return 0
+		fi
+		inhibit_stop || return 1
 	fi
+	# Preserve the notify socket across systemd-inhibit, which clears it for its child.
+	# Only that child can acknowledge that logind granted the inhibitor.
+	# shellcheck disable=SC2016
 	systemd-run --user --unit="${inhibit_unit%.service}" --collect --quiet \
-		systemd-inhibit --what=idle --who=Blox --why="Awake mode" --mode=block sleep "$duration" >/dev/null 2>&1
+		--property=Type=notify --property=NotifyAccess=all --property=TimeoutStartSec=5s \
+		sh -c 'exec systemd-inhibit --what=idle --who=Blox --why="Awake mode" --mode=block sh -c "$1" sh "$2" "$NOTIFY_SOCKET"' \
+		sh 'NOTIFY_SOCKET="$2" systemd-notify --ready && exec sleep "$1"' "$duration" >/dev/null 2>&1 || return 1
+	systemctl --user is-active --quiet "$inhibit_unit"
 }
 
 inhibit_stop() {
-	systemctl --user stop "$inhibit_unit" >/dev/null 2>&1 || true
+	if systemctl --user stop "$inhibit_unit" >/dev/null 2>&1; then
+		return 0
+	fi
+	# A collected transient unit is already stopped. Other stop failures remain errors.
+	[[ "$(systemctl --user show --property=LoadState --value "$inhibit_unit" 2>/dev/null)" == not-found ]]
 }
 
 reconcile() {
 	local deadline=0
+	mkdir -p "$state_dir" || return 1
+	exec 9>"$state_dir/caffeine.lock" || return 1
+	flock 9 || return 1
 
 	if [[ -f "$state_file" ]]; then
 		deadline="$(jq -r '.deadline // 0' "$state_file" 2>/dev/null || echo 0)"
@@ -163,9 +179,9 @@ reconcile() {
 set_awake() {
 	local duration="$1"
 	local mode="$2"
-	local deadline inhibit_duration
+	local deadline inhibit_duration candidate
 
-	mkdir -p "$state_dir"
+	mkdir -p "$state_dir" || return 1
 
 	if [[ "$duration" == "indefinite" ]]; then
 		deadline=-1
@@ -175,45 +191,87 @@ set_awake() {
 		inhibit_duration="$duration"
 	fi
 
-	jq -nc --argjson deadline "$deadline" --arg mode "$mode" '{deadline:$deadline,mode:$mode}' >"$state_file"
-	inhibit_stop
-	inhibit_start "$inhibit_duration"
+	# Publish the requested mode only after the inhibitor is confirmed active.
+	candidate="$(mktemp "$state_dir/.caffeine.XXXXXX")" || return 1
+	if ! jq -nc --argjson deadline "$deadline" --arg mode "$mode" '{deadline:$deadline,mode:$mode}' >"$candidate" ||
+		! inhibit_stop || ! inhibit_start "$inhibit_duration"; then
+		rm -f "$candidate"
+		return 1
+	fi
+	if ! mv "$candidate" "$state_file"; then
+		rm -f "$candidate"
+		inhibit_stop || true
+		return 1
+	fi
 
 	if [[ "$deadline" != "-1" ]]; then
 		(
 			sleep "$duration"
+			exec 9>"$state_dir/caffeine.lock" || exit 1
+			flock 9 || exit 1
 			current="$(jq -r '.deadline // 0' "$state_file" 2>/dev/null || echo 0)"
 			if [[ "$current" == "$deadline" ]]; then
 				rm -f "$state_file"
 				inhibit_stop
 			fi
-		) >/dev/null 2>&1 &
+		) 9>&- >/dev/null 2>&1 &
 	fi
 }
 
 turn_off() {
+	inhibit_stop || return 1
 	rm -f "$state_file"
-	inhibit_stop
 }
 
+action_result() {
+	local ok="$1" code="$2" message="$3"
+	jq -nc --argjson ok "$ok" --arg code "$code" --arg message "$message" \
+		--argjson observedAtMs "$(date +%s%3N)" \
+		'{version:1,ok:$ok,code:$code,message:$message,data:{pending:false,observedAtMs:$observedAtMs}}'
+}
+
+run_action() (
+	local mode="${1:-}" command
+	case "$mode" in off|30m|1h|indefinite) ;;
+	*) action_result false invalid-data "Unknown Awake mode"; exit 2 ;;
+	esac
+	for command in hypridle systemctl systemd-run systemd-inhibit systemd-notify flock; do
+		if ! command -v "$command" >/dev/null 2>&1; then
+			action_result false unavailable "Awake control is unavailable"
+			exit 3
+		fi
+	done
+	if ! mkdir -p "$state_dir" || ! exec 9>"$state_dir/caffeine.lock"; then
+		action_result false permission-denied "Cannot write the Awake state"
+		exit 4
+	fi
+	if ! flock -n 9; then
+		action_result false busy "An Awake change is already in progress"
+		exit 75
+	fi
+	local changed=false
+	case "$mode" in
+	off) turn_off && changed=true ;;
+	30m) set_awake 1800 30m && changed=true ;;
+	1h) set_awake 3600 1h && changed=true ;;
+	indefinite) set_awake indefinite indefinite && changed=true ;;
+	esac
+	if [[ "$changed" != true ]]; then
+		action_result false failed "The Awake inhibitor was not changed"
+		exit 1
+	fi
+	action_result true ok ""
+)
+
 case "${1:-status}" in
+action)
+	run_action "${2:-}"
+	;;
 status)
 	json_status
 	;;
-30m)
-	set_awake 1800 30m
-	json_status
-	;;
-1h)
-	set_awake 3600 1h
-	json_status
-	;;
-indefinite)
-	set_awake indefinite indefinite
-	json_status
-	;;
-off)
-	turn_off
+30m|1h|indefinite|off)
+	run_action "$1" >/dev/null
 	json_status
 	;;
 reconcile)

@@ -1,4 +1,5 @@
 import qs.shared
+import qs.services
 import "../shared/Fuzzy.js" as Fuzzy
 import "../shared/LauncherLogic.js" as LauncherLogic
 import QtQml.WorkerScript
@@ -34,20 +35,6 @@ Scope {
     property var themeSearchRecords: []
     property bool themeSearchWorkerInitialised: false
     property int themeSearchRequest: 0
-    property bool applyingTheme: false
-    property string applyingThemeId: ""
-    property string applyingThemeName: ""
-    property string applyError: ""
-    property var applyProgressStages: []
-    property var applyProgressRows: []
-    property real applyProgressValue: 0
-    property string applyProgressMessage: "Preparing theme application"
-    property bool applyProgressShowTargets: false
-    property bool applyProgressComplete: false
-    property bool applyQuickshellReloadPending: false
-    property string applyGuideTarget: ""
-    property string retryingTarget: ""
-    property bool applyWindowOpen: false
     property var resolvedIconPaths: ({
     })
     property bool iconResolveQueued: false
@@ -98,6 +85,7 @@ Scope {
     }]
 
     signal closeRequested()
+    signal dismissRequested()
     signal dmenuSelected(string value)
     signal themeApplyStarted()
 
@@ -234,134 +222,9 @@ Scope {
     }
 
     function applyTheme(entry) {
-        if (applyingTheme || !entry || !entry.id)
-            return ;
-
-        applyingTheme = true;
-        applyingThemeId = entry.id;
-        applyingThemeName = entry.name || entry.id;
-        applyError = "";
-        retryingTarget = "";
-        applyProgressStages = [{
-            "id": "prepare",
-            "name": "Prepare",
-            "state": "active",
-            "message": "Checking theme and dependencies"
-        }, {
-            "id": "cursor",
-            "name": "Cursor assets",
-            "state": "queued",
-            "message": "Check or build generated assets"
-        }, {
-            "id": "activation",
-            "name": "Activate",
-            "state": "queued",
-            "message": "Write and activate the theme"
-        }, {
-            "id": "applications",
-            "name": "Applications",
-            "state": "queued",
-            "message": "Apply enabled targets"
-        }];
-        applyProgressRows = [];
-        applyProgressValue = 0;
-        applyProgressMessage = "Checking theme and dependencies";
-        applyProgressShowTargets = false;
-        applyProgressComplete = false;
-        applyQuickshellReloadPending = false;
-        applyGuideTarget = "";
-        applyWindowOpen = true;
-        themeApplyProcess.cancelling = false;
-        themeApplyProcess.command = [Quickshell.shellDir + "/scripts/theme/themectl.sh", "apply", entry.id, "--defer-quickshell-restart", "--json", "--progress-ndjson"];
-        themeApplyProcess.running = true;
+        if (SettingsApplyController.busy || !entry || !entry.id) return;
+        SettingsApplyController.quickApply(entry);
         themeApplyStarted();
-    }
-
-    function dismissThemeApply() {
-        applyWindowOpen = false;
-        applyGuideTarget = "";
-        if (themeApplyProcess.running) {
-            themeApplyProcess.cancelling = true;
-            themeApplyProcess.signal(15);
-        }
-        applyingTheme = false;
-        applyProgressComplete = false;
-        applyQuickshellReloadPending = false;
-        retryingTarget = "";
-    }
-
-    function completeThemeApply() {
-        if (!applyProgressComplete)
-            return ;
-
-        const reloadQuickshell = applyQuickshellReloadPending;
-        applyQuickshellReloadPending = false;
-        applyWindowOpen = false;
-        applyGuideTarget = "";
-        applyProgressComplete = false;
-        retryingTarget = "";
-        if (reloadQuickshell)
-            Qt.callLater(() => Theme.reloadCursor());
-    }
-
-    function retryThemeTarget(target) {
-        if (applyingTheme || !applyingThemeId.length)
-            return ;
-
-        retryingTarget = target;
-        applyingTheme = true;
-        applyWindowOpen = true;
-        applyProgressComplete = false;
-        applyProgressMessage = "Retrying " + target.replace("cursor_editor", "cursor");
-        applyProgressRows = applyProgressRows.map((row) => {
-            return row.target === target ? Object.assign({
-            }, row, {
-                "state": "active",
-                "message": "Retrying…"
-            }) : row;
-        });
-        themeApplyProcess.command = [Quickshell.shellDir + "/scripts/theme/themectl.sh", "apply", applyingThemeId, "--targets", target, "--defer-quickshell-restart", "--json", "--progress-ndjson"];
-        themeApplyProcess.running = true;
-    }
-
-    function handleApplyProgress(event) {
-        if (!event || event.type !== "theme-progress")
-            return ;
-
-        applyProgressValue = event.total > 0 ? Number(event.completed || 0) / Number(event.total) : applyProgressValue;
-        applyProgressMessage = event.message || applyProgressMessage;
-        if (Array.isArray(event.pending_reloads) && event.pending_reloads.indexOf("quickshell") >= 0)
-            applyQuickshellReloadPending = true;
-        if (event.targets && !retryingTarget.length)
-            applyProgressRows = event.targets.map((target) => {
-            return ({
-                "target": target,
-                "state": "queued",
-                "message": "Queued"
-            });
-        });
-
-        if (event.kind === "stage") {
-            applyProgressStages = applyProgressStages.map((stage) => {
-                return stage.id === event.stage ? Object.assign({
-                }, stage, {
-                    "state": event.state,
-                    "message": event.message
-                }) : stage;
-            });
-            if (event.stage === "applications" && event.state !== "queued")
-                applyProgressShowTargets = true;
-
-        } else if (event.kind === "target") {
-            applyProgressShowTargets = true;
-            applyProgressRows = applyProgressRows.map((row) => {
-                return row.target === event.target ? Object.assign({
-                }, row, {
-                    "state": event.state,
-                    "message": event.message
-                }) : row;
-            });
-        }
     }
 
     function usageBoost(entry) {
@@ -458,6 +321,10 @@ Scope {
             workspaceTransfers = workspaceTransfers.concat([{
                 "launchId": request.launchId,
                 "workspaceId": request.workspaceId,
+                "desktopId": request.desktopId,
+                "startupClass": request.startupClass,
+                "existingAddresses": (Hyprland.toplevels && Hyprland.toplevels.values || []).map(item => String((item.lastIpcObject || {}).address || "")),
+                "startedAt": Date.now(),
                 "expiresAt": Date.now() + 300000
             }]);
         }
@@ -508,6 +375,7 @@ Scope {
     }
 
     function removeWorkspaceTransfer(launchId) {
+        Quickshell.execDetached(["python3", Quickshell.shellDir + "/scripts/launcher/assign_workspace.py", "--release", launchId]);
         workspaceTransfers = workspaceTransfers.filter((item) => item.launchId !== launchId);
     }
 
@@ -520,7 +388,8 @@ Scope {
 
     function expireWorkspaceTransfers() {
         const now = Date.now();
-        workspaceTransfers = workspaceTransfers.filter((item) => item.expiresAt > now);
+        for (const item of workspaceTransfers.filter(item => item.expiresAt <= now))
+            removeWorkspaceTransfer(item.launchId);
     }
 
     function handleHyprlandEvent(event) {
@@ -528,18 +397,27 @@ Scope {
             return ;
 
         if (event.name === "custom" && String(event.data || "").startsWith("blox_launch_workspace_assigned>>")) {
-            removeWorkspaceTransfer(String(event.data).slice("blox_launch_workspace_assigned>>".length));
+            const launchId = String(event.data).slice("blox_launch_workspace_assigned>>".length);
+            // Splash screens and later main windows belong to the same startup.
+            // Keep a short quiet period, bounded by the original launch deadline.
+            workspaceTransfers = workspaceTransfers.map(item => item.launchId === launchId
+                ? Object.assign({}, item, {expiresAt: Math.min(item.startedAt + 300000, Date.now() + 15000)}) : item);
             return ;
         }
+        expireWorkspaceTransfers();
         if (event.name !== "openwindow" || !workspaceTransfers.length)
             return ;
 
-        const address = String(event.data || "").split(",")[0].trim();
+        let address = String(event.data || "").split(",")[0].trim();
+        if (/^[0-9a-fA-F]+$/.test(address))
+            address = "0x" + address;
         if (!/^0x[0-9a-fA-F]+$/.test(address))
             return ;
 
         const contexts = workspaceTransfers.map((item) => {
-            return {"launchId": item.launchId, "workspaceId": item.workspaceId};
+            return {"launchId": item.launchId, "workspaceId": item.workspaceId,
+                "desktopId": item.desktopId, "startupClass": item.startupClass,
+                "existingAddresses": item.existingAddresses};
         });
         Quickshell.execDetached([
             "python3",
@@ -723,11 +601,6 @@ Scope {
     }
 
     onQueryChanged: {
-        if (!query.startsWith("%")) {
-            applyError = "";
-            applyProgressComplete = false;
-            applyGuideTarget = "";
-        }
         refresh();
     }
     Component.onCompleted: {
@@ -923,58 +796,6 @@ Scope {
 
         stdout: StdioCollector {
             onStreamFinished: themeListProcess.output = text
-        }
-
-    }
-
-    Process {
-        id: themeApplyProcess
-
-        property string output: ""
-        property bool cancelling: false
-
-        onRunningChanged: {
-            if (running)
-                output = "";
-
-        }
-        onExited: (exitCode) => {
-            if (cancelling) {
-                cancelling = false;
-                output = "";
-                return ;
-            }
-            root.applyingTheme = false;
-            try {
-                const response = JSON.parse(output);
-                if (response.ok === true && response.data && response.data.theme_id) {
-                    Theme.reload();
-                    applyQuickshellReloadPending = Array.isArray(response.data.pending_reloads) && response.data.pending_reloads.indexOf("quickshell") >= 0;
-                    root.applyProgressValue = 1;
-                    root.applyProgressComplete = true;
-                    root.applyProgressMessage = "Application finished · Review follow-up actions";
-                    root.retryingTarget = "";
-                    return ;
-                }
-                root.applyError = response.errors && response.errors.length ? response.errors.join("\n") : "Could not apply theme";
-            } catch (error) {
-                root.applyError = "Could not read the apply result";
-            }
-            root.applyProgressComplete = true;
-        }
-
-        stdout: StdioCollector {
-            onStreamFinished: themeApplyProcess.output = text
-        }
-
-        stderr: SplitParser {
-            splitMarker: "\n"
-            onRead: (line) => {
-                try {
-                    root.handleApplyProgress(JSON.parse(line));
-                } catch (error) {
-                }
-            }
         }
 
     }

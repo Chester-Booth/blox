@@ -84,6 +84,30 @@ TestCase {
         compare(target.terminalCanvas, "#654321");
     }
 
+    function test_widget_profile_preview_and_empty_clear() {
+        const catalogue = readJson("../../widgets/catalogue.json");
+        const entry = catalogue.widgets[0];
+        const item = {id: "clock", kind: entry.kind, enabled: true, placement: {}, workspaces: {}, appearance: {}, fullscreen: {}, settings: entry.defaultSettings};
+        verify(item !== undefined);
+        verify(controller.loadWidgetSource({schemaVersion: 1, widgets: [item]}));
+        compare(target.widgetItems.length, 1);
+        compare(target.widgetItems[0].kind, item.kind);
+        verify(controller.loadWidgetSource({schemaVersion: 1, widgets: []}));
+        compare(target.widgetItems.length, 0);
+    }
+
+    function test_complete_widget_profile_is_not_deep_merged() {
+        const source = sourceTheme("invalid-widgets", "#123456");
+        source.widgets = {widgets: []};
+        verify(!controller.previewSource(source));
+        verify(target.widgetError.length > 0);
+        source.widgets = {schemaVersion: 1, widgets: []};
+        verify(controller.previewSource(source));
+        const item = {id: "constructor", kind: "notes", enabled: true, placement: {}, workspaces: {}, appearance: {}, fullscreen: {}, settings: {}};
+        verify(controller.loadWidgetSource({schemaVersion: 1, widgets: [item]}));
+        compare(target.widgetItems[0].id, "constructor");
+    }
+
     function test_bar_shape_inherits_or_uses_bar_overrides() {
         verify(controller.loadJson(generatedTheme("bar-default", "#123456")));
         compare(target.barRadiusAutomatic, true);
@@ -182,13 +206,7 @@ TestCase {
         property var notificationPosition
         property var notificationOffsetX
         property var notificationOffsetY
-        property var widgetProfile
-        property var widgetOpacity
-        property var widgetPadding
-        property var widgetRadius
-        property var widgetBasePadding
-        property var widgetBaseRadius
-        property var widgetFontSize
+        property string widgetError: ""
         property var widgetItems: []
 
         function builtinBarItems() {

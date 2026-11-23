@@ -5,7 +5,9 @@ Image {
     required property string iconName
     property color iconColor: Theme.foreground
 
-    source: iconName === "" ? "" : "../assets/phosphor/" + iconName + ".svg"
+    source: iconName === ""
+        ? ""
+        : Qt.resolvedUrl("../assets/phosphor/" + iconName + ".svg")
     fillMode: Image.PreserveAspectFit
     smooth: true
     mipmap: true

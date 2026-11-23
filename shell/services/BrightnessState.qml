@@ -9,6 +9,7 @@ Item {
     property bool providerReady: false
     property bool syncReady: false
     property bool backendAvailable: false
+    property bool controlAvailable: true
     property string device: ""
     property var backlights: []
     property int percent: 0
@@ -26,7 +27,7 @@ Item {
 
     readonly property bool ready: root.providerReady && root.syncReady && root.backendAvailable
     readonly property bool backlightAvailable: root.device.length > 0
-    readonly property bool canChange: root.ready && root.backlightAvailable
+    readonly property bool canChange: root.ready && root.backlightAvailable && root.controlAvailable
 
     function boundedPercent() {
         const value = Number(root.percent);
@@ -44,7 +45,7 @@ Item {
         let reason = null;
         let permission = "granted";
         const ready = root.providerReady && root.syncReady && root.backendAvailable;
-        const canChange = ready && root.backlightAvailable;
+        const canChange = ready && root.backlightAvailable && root.controlAvailable;
         if (!root.providerReady) {
             reason = "provider-not-ready";
             permission = "unknown";
@@ -54,7 +55,7 @@ Item {
         } else if (!root.backendAvailable) {
             reason = "command-unavailable";
             permission = "unknown";
-        } else if (!root.backlightAvailable) {
+        } else if (!root.backlightAvailable || !root.controlAvailable) {
             reason = "device-unavailable";
             permission = "not-required";
         }
@@ -109,6 +110,7 @@ Item {
     onProviderReadyChanged: root.markChanged()
     onSyncReadyChanged: root.markChanged()
     onBackendAvailableChanged: root.markChanged()
+    onControlAvailableChanged: root.markChanged()
     onDeviceChanged: root.markChanged()
     onBacklightsChanged: root.markChanged()
     onPercentChanged: root.markChanged()

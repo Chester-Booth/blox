@@ -55,6 +55,8 @@ Item {
         contentWidth: performancePopout.width
         contentHeight: performancePopout.height
         open: root.geometry.active && root.surfaceController.openPanel === "system"
+        persistentKeyboardFocus: open && root.surfaceController.keyboardPanel === "system"
+        onDismissRequested: root.surfaceController.closePanel()
         onHoverEntered: root.surfaceController.popoutEntered()
         onHoverExited: root.surfaceController.popoutExited()
         onVisibleChanged: {
@@ -66,6 +68,8 @@ Item {
         PerformancePopout {
             id: performancePopout
 
+            maxWidth: Math.max(1, root.geometry.screenWidth - 16)
+            maxHeight: Math.max(1, root.geometry.screenHeight - 16)
             status: root.contentController.systemInfo.json || ({
             })
             batteryStatus: root.contentController.battery.json || ({
@@ -101,6 +105,8 @@ Item {
         contentWidth: systemPopout.width
         contentHeight: systemPopout.height
         open: root.geometry.active && ["audio", "network", "bluetooth", "brightness"].indexOf(root.surfaceController.openPanel) >= 0
+        persistentKeyboardFocus: open && root.surfaceController.keyboardPanel === root.surfaceController.openPanel
+        onDismissRequested: root.surfaceController.closePanel()
         onHoverEntered: root.surfaceController.popoutEntered()
         onHoverExited: root.surfaceController.popoutExited()
         onVisibleChanged: {
@@ -112,6 +118,7 @@ Item {
         SystemPopout {
             id: systemPopout
 
+            keyboardFocusWindow: systemWindow
             title: root.contentController.content.systemPanelTitle()
             body: root.contentController.content.systemPanelBody()
             statusError: root.contentController.statusError(root.surfaceController.openPanel)

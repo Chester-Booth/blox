@@ -7,9 +7,13 @@ Scope {
     id: root
 
     property string targetAddress: ""
+    property int targetPid: 0
+    property string targetClass: ""
     property bool pending: false
     property bool tracking: false
     property double deadline: 0
+    readonly property bool restoringFocus: restoreFocus.running
+    property bool focusRestoreSuccessful: false
 
     signal closeRequested()
 
@@ -25,16 +29,40 @@ Scope {
         const title = String(state.title || "");
         const windowClass = String(state.class || "");
         const isPicker = windowClass === "org.quickshell" && (title === "Blox Clipboard" || title === "Blox Emoji Picker");
-        if (address.length && !isPicker)
-            targetAddress = address;
+        const pid = Number(state.pid || 0);
+        const validTarget = /^[0-9a-f]+$/.test(address)
+            && Number.isInteger(pid) && pid > 0 && windowClass.trim().length > 0;
+        const currentTargetIsValid = /^[0-9a-f]+$/.test(targetAddress)
+            && targetPid > 0 && targetClass.trim().length > 0;
 
+        if (isPicker || !validTarget) {
+            if (tracking && currentTargetIsValid)
+                return;
+
+            targetAddress = "";
+            targetPid = 0;
+            targetClass = "";
+            return;
+        }
+
+        targetAddress = address;
+        targetPid = pid;
+        targetClass = windowClass;
+    }
+
+    // Explicit picker dismissal returns to its captured app. Outside clicks keep their own focus.
+    function restoreTarget() {
+        if (!targetAddress.length || targetPid <= 0 || !targetClass.length || restoreFocus.running) return false;
+        restoreFocus.command = ["python3", Quickshell.shellDir + "/scripts/launcher/restore_focus.py", targetAddress, String(targetPid), targetClass];
+        restoreFocus.running = true;
+        return true;
     }
 
     function pasteWhenRestored() {
         pending = true;
         deadline = Date.now() + 300;
         closeRequested();
-        pollTimer.restart();
+        if (!restoreTarget()) pollTimer.restart();
     }
 
     function finishWithoutPaste() {
@@ -68,7 +96,21 @@ Scope {
     }
 
     Process {
+        id: restoreFocus
+        objectName: "picker-focus-restore"
+        onStarted: root.focusRestoreSuccessful = false
+        onExited: (exitCode, exitStatus) => {
+            root.focusRestoreSuccessful = exitCode === 0 && exitStatus === 0;
+            if (root.pending) {
+                root.deadline = Date.now() + 300;
+                pollTimer.restart();
+            }
+        }
+    }
+
+    Process {
         id: activeWindow
+        objectName: "picker-active-window"
 
         command: ["hyprctl", "activewindow", "-j"]
 
@@ -97,6 +139,7 @@ Scope {
 
     Process {
         id: paste
+        objectName: "picker-paste"
 
         command: ["wtype", "-M", "ctrl", "-k", "v", "-m", "ctrl"]
         onExited: (exitCode) => {

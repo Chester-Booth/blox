@@ -1,0 +1,6 @@
+module Quickshell.Services.UPower
+singleton UPower 1.0 UPower.qml
+singleton PowerProfiles 1.0 PowerProfiles.qml
+singleton UPowerDeviceType 1.0 UPowerDeviceType.qml
+singleton UPowerDeviceState 1.0 UPowerDeviceState.qml
+singleton PowerProfile 1.0 PowerProfile.qml

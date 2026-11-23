@@ -5,8 +5,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import sys
+import time
 from pathlib import Path
 from typing import Any
 
@@ -38,18 +40,21 @@ def exit_code(action: dict[str, Any]) -> int:
     if action.get("ok") is True:
         return EXIT_OK
     return {
+        "usage": EXIT_USAGE,
         "permission-denied": EXIT_DENIED,
         "denied": EXIT_DENIED,
         "conflict": EXIT_CONFLICT,
         "busy": EXIT_CONFLICT,
         "stale": EXIT_CONFLICT,
+        "timeout": EXIT_CONFLICT,
         "invalid-data": EXIT_INVALID_DATA,
         "unavailable": EXIT_UNAVAILABLE,
     }.get(action.get("code"), EXIT_INTERNAL)
 
 
-def call_owner(method: str = "status", arguments: list[str] | None = None) -> dict[str, Any]:
-    command = [str(IPC), "blox", method, *(arguments or [])]
+def call_owner(method: str = "status", arguments: list[str] | None = None,
+               target: str = "blox") -> dict[str, Any]:
+    command = [str(IPC), target, method, *(arguments or [])]
     try:
         completed = subprocess.run(
             command,
@@ -59,21 +64,27 @@ def call_owner(method: str = "status", arguments: list[str] | None = None) -> di
             text=True,
             timeout=10,
         )
-    except (OSError, subprocess.TimeoutExpired):
+    except subprocess.TimeoutExpired:
+        return result(False, "timeout", "The Blox shell action did not finish before the deadline.")
+    except OSError:
         return result(False, "unavailable", "The Blox shell is not running.")
 
     if completed.returncode != 0:
-        return result(False, "unavailable", "The Blox shell is not running.")
+        data = {"ownerAbsent": True} if completed.returncode == 3 else None
+        return result(False, "unavailable", "The Blox shell action is unavailable.", data)
 
     try:
         action = json.loads(completed.stdout.strip())
     except json.JSONDecodeError:
-        return result(False, "invalid-data", "The Blox shell returned invalid status data.")
+        return result(False, "invalid-data", "The Blox shell returned invalid action data.")
 
     if not isinstance(action, dict):
-        return result(False, "invalid-data", "The Blox shell returned a non-object status result.")
+        return result(False, "invalid-data", "The Blox shell returned a non-object action result.")
     required = {"version", "ok", "code", "message", "data"}
-    if set(action) != required or action["version"] != 1 or not isinstance(action["ok"], bool):
+    if (set(action) != required or type(action["version"]) is not int or action["version"] != 1
+            or not isinstance(action["ok"], bool)
+            or not isinstance(action["code"], str) or not action["code"]
+            or not isinstance(action["message"], str)):
         return result(False, "invalid-data", "The Blox shell returned an invalid action result.")
     return action
 
@@ -106,6 +117,35 @@ def run_gpu(args) -> tuple[int, dict[str, Any]]:
 
 def run_display(args) -> tuple[int, dict[str, Any]]:
     action = call_owner("monitor", [args.display_command, args.monitor, args.rate])
+    return exit_code(action), action
+
+
+def run_settings(args) -> tuple[int, dict[str, Any]]:
+    operation = args.settings_command
+    if operation == "get":
+        request = {}
+    elif operation == "apply-widgets":
+        request = {"expectedRevision": args.revision}
+    elif operation == "set":
+        request = {"path": args.path, "valueJson": args.value, "expectedRevision": args.revision}
+    else:
+        request = {"section": args.section, "expectedRevision": args.revision}
+
+    started = call_owner("begin", [operation, json.dumps(request, separators=(",", ":"))], target="settings")
+    if started.get("code") != "pending":
+        return exit_code(started), started
+    request_id = started.get("data", {}).get("requestId") if isinstance(started.get("data"), dict) else None
+    if not isinstance(request_id, str) or not request_id:
+        action = result(False, "invalid-data", "The Settings owner returned an invalid request id.")
+        return EXIT_INVALID_DATA, action
+
+    deadline = time.monotonic() + 9.0
+    while time.monotonic() < deadline:
+        action = call_owner("poll", [request_id], target="settings")
+        if action.get("code") != "pending":
+            return exit_code(action), action
+        time.sleep(0.05)
+    action = result(False, "timeout", "The Settings transaction did not finish before the deadline.", {"requestId": request_id})
     return exit_code(action), action
 
 
@@ -215,53 +255,63 @@ def _theme_origin(path, theme, core) -> dict[str, Any]:
     return {"kind": "builtin", "theme_id": core.DEFAULT_THEME_ID, "fallback": True}
 
 
-def _dependency_failure(messages: list[str]) -> bool:
-    markers = ("not installed", "required command", "dependency", "does not exist")
-    return any(marker in message.casefold() for message in messages for marker in markers)
+def _apply_backend(action: str, theme_id: str = "") -> dict[str, Any]:
+    command = [sys.executable, str(SCRIPT_ROOT / "apply_runtime.py"), action]
+    if theme_id:
+        command += ["--theme", theme_id]
+    try:
+        completed = subprocess.run(command, capture_output=True, text=True, timeout=180, check=False)
+        records = [json.loads(line) for line in completed.stdout.splitlines() if line.strip()]
+        response = next((record for record in reversed(records) if "event" not in record), None)
+        if not isinstance(response, dict) or response.get("version") != 1:
+            raise ValueError("invalid Apply result")
+        return result(response.get("ok") is True, str(response.get("code", "failed")),
+                      str(response.get("error", "")), response.get("data"))
+    except subprocess.TimeoutExpired:
+        return result(False, "timeout", "Apply timed out. Check Settings recovery before retrying.")
+    except (OSError, ValueError, TypeError):
+        return result(False, "invalid-data", "Could not read the durable Apply result. Check Settings recovery.")
 
 
 def _public_apply(command: str, path, theme, core, runtime, extra_warnings: list[str] | None = None):
-    try:
-        selected = runtime.configured_targets(theme)
-    except runtime.RuntimeFailure as error:
-        return _theme_error(command, "invalid-data", str(error))
-    if not selected:
-        return _theme_error(command, "invalid-data", "theme enables no implemented runtime targets")
-    checked = core.validate_theme(
-        theme,
-        check_dependencies=True,
-        targets=set(selected),
-        source_path=path,
-        dependency_gate=True,
-    )
-    if checked.errors:
-        code = "unavailable" if _dependency_failure(checked.errors) else "invalid-data"
-        return _theme_error(command, code, "; ".join(checked.errors), {"theme_id": theme["id"], "errors": checked.errors})
-    try:
-        manifest, warnings = runtime.apply_theme(
-            path,
-            theme,
-            runtime.TARGET_NAMES,
-            authoritative_targets=True,
-        )
-    except runtime.LockContended as error:
-        return _theme_error(command, "conflict", str(error))
-    except PermissionError as error:
-        return _theme_error(command, "permission-denied", str(error))
-    except (OSError, runtime.RuntimeFailure, TypeError, ValueError) as error:
-        return _theme_error(command, "internal", str(error))
-    all_warnings = list(extra_warnings or []) + checked.warnings + warnings
-    return result(
-        True,
-        "ok",
-        "",
-        _redact_theme_paths({
-            "generation": manifest["generation_id"],
-            "theme_id": manifest["theme_id"],
-            "active_targets": manifest["enabled_targets"],
-            "warnings": all_warnings,
-        }),
-    )
+    owner = call_owner("begin", [theme["id"], str(path)], target="settingsApply")
+    if owner.get("code") == "pending":
+        request_id = (owner.get("data") or {}).get("requestId")
+        if not isinstance(request_id, str) or not request_id:
+            return result(False, "invalid-data", "The Apply owner returned an invalid request id.")
+        deadline = time.monotonic() + 180
+        while time.monotonic() < deadline:
+            receipt = call_owner("poll", [request_id], target="settingsApply")
+            if receipt.get("code") != "pending":
+                return receipt
+            time.sleep(0.05)
+        return result(False, "timeout", "Apply is still pending. Check Settings before retrying.", {"requestId": request_id})
+    if owner.get("code") != "unavailable":
+        return owner
+    # A missing method in a running shell is not permission to bypass that shell.
+    presence = call_owner()
+    if presence.get("code") != "unavailable" or not isinstance(presence.get("data"), dict) or presence["data"].get("ownerAbsent") is not True:
+        return result(False, "unavailable", "The running shell has no ready Settings Apply owner.")
+    preview = Path(os.environ.get("BLOX_HYPRLAND_PREVIEW_STATE") or
+                   str(Path(os.environ.get("XDG_RUNTIME_DIR", "/tmp")) / "blox-theme-hyprland-preview.json"))
+    if os.path.lexists(preview):
+        return result(False, "conflict", "Restore the retained Hyprland preview in Settings before applying.")
+    status = _apply_backend("status")
+    if not status["ok"] or status["data"] is not None:
+        return result(False, "conflict", "Resolve the retained Apply transaction in Settings before applying.", status["data"])
+    review = _apply_backend("review", str(path))
+    if not review["ok"]:
+        return review
+    if (review["data"] or {}).get("scripts") or (review["data"] or {}).get("drift"):
+        return result(False, "conflict", "Open Settings to review scripts or external changes before applying.", review["data"])
+    applied = _apply_backend("apply", str(path))
+    if applied["ok"] and isinstance(applied["data"], dict) and applied["data"].get("phase") == "complete":
+        finished = _apply_backend("finish")
+        if not finished["ok"]:
+            return finished
+    if applied["ok"] and isinstance(applied["data"], dict) and applied["data"].get("phase") != "complete":
+        return result(False, "failed", "Review failed targets in Settings.", applied["data"])
+    return applied
 
 
 def run_theme(args) -> tuple[int, dict[str, Any]]:
@@ -381,6 +431,27 @@ def build_parser() -> argparse.ArgumentParser:
     audio_mic.add_argument("value", choices=("open", "muted"))
     audio_mic.add_argument("--json", action="store_true", dest="as_json")
 
+    for name in ("toggle-mic", "adjust-volume"):
+        child = audio_commands.add_parser(name)
+        if name == "adjust-volume":
+            child.add_argument("value")
+        child.add_argument("--json", action="store_true", dest="as_json")
+
+    hardware_commands = {"brightness": {"set": True, "adjust": True},
+                         "touchpad": {"set": True, "toggle": False},
+                         "vendor": {"set-profile": True, "set-fan-curves": True},
+                         "power-profile": {"set": True},
+                         "night-light": {"set": True, "toggle": False, "restore": False},
+                         "caffeine": {"set": True}}
+    for domain, operations in hardware_commands.items():
+        group = groups.add_parser(domain)
+        commands = group.add_subparsers(dest="hardware_command", required=True)
+        for operation, needs_value in operations.items():
+            child = commands.add_parser(operation)
+            if needs_value:
+                child.add_argument("value")
+            child.add_argument("--json", action="store_true", dest="as_json")
+
     network = groups.add_parser("network", help="NetworkManager actions through the running shell")
     network_commands = network.add_subparsers(dest="network_command", required=True)
     network_toggle = network_commands.add_parser("toggle-wifi")
@@ -413,8 +484,22 @@ def build_parser() -> argparse.ArgumentParser:
     doctor = groups.add_parser("doctor", help="local install health report")
     doctor.add_argument("--json", action="store_true", dest="as_json")
 
-    settings = groups.add_parser("settings", help="settings commands reserved for a later phase")
-    settings.add_argument("--json", action="store_true", dest="as_json")
+    settings = groups.add_parser("settings", help="read and change Settings through the running shell owner")
+    settings_commands = settings.add_subparsers(dest="settings_command", required=True)
+    settings_get = settings_commands.add_parser("get")
+    settings_get.add_argument("--json", action="store_true", dest="as_json")
+    settings_set = settings_commands.add_parser("set")
+    settings_set.add_argument("path")
+    settings_set.add_argument("value", help="value encoded as JSON")
+    settings_set.add_argument("--revision", type=int, required=True)
+    settings_set.add_argument("--json", action="store_true", dest="as_json")
+    settings_widgets = settings_commands.add_parser("apply-widgets")
+    settings_widgets.add_argument("--revision", type=int, required=True)
+    settings_widgets.add_argument("--json", action="store_true", dest="as_json")
+    settings_reset = settings_commands.add_parser("reset")
+    settings_reset.add_argument("section", nargs="?")
+    settings_reset.add_argument("--revision", type=int, required=True)
+    settings_reset.add_argument("--json", action="store_true", dest="as_json")
 
     theme = groups.add_parser("theme", help="list, inspect, preview, apply and reset themes")
     theme_commands = theme.add_subparsers(dest="theme_command", required=True)
@@ -477,12 +562,18 @@ def run(argv: list[str]) -> tuple[int, dict[str, Any], bool, bool]:
         code, action = run_display(args)
         return code, action, as_json, False
 
+    if args.group in ("brightness", "touchpad", "vendor", "power-profile", "night-light", "caffeine"):
+        owner = {"power-profile": "powerProfile", "night-light": "nightLight"}.get(args.group, args.group)
+        action = call_owner(owner, [args.hardware_command, getattr(args, "value", "")])
+        return exit_code(action), action, as_json, False
+
     if args.group == "doctor":
         code, action, printed = run_doctor(as_json)
         return code, action, as_json, printed
 
     if args.group == "settings":
-        return EXIT_UNAVAILABLE, result(False, "unavailable", "The settings commands belong to a later phase."), as_json, False
+        code, action = run_settings(args)
+        return code, action, as_json, False
 
     if args.group == "theme":
         code, action = run_theme(args)

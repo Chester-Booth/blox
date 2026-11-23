@@ -14,6 +14,14 @@ Scope {
     property int pendingWidth: 0
     property int pendingHeight: 0
 
+    function eventEditDisabledReason(event) {
+        if (!event)
+            return "";
+        if (event.busy)
+            return "Event update in progress.";
+        return event.can_edit ? "" : String(event.capability_reason || "");
+    }
+
     function floatWindow(pattern, width, height) {
         pendingTitlePattern = pattern;
         pendingWidth = width;
@@ -118,14 +126,28 @@ Scope {
 
                     }
 
-                    BloxButton {
+                    Item {
                         Layout.preferredWidth: 64
                         Layout.maximumWidth: 64
-                        text: "Edit"
-                        iconName: "pencil-simple"
-                        accent: Theme.accent
-                        enabled: !!root.controller.activeEvent && root.controller.activeEvent.can_edit
-                        onClicked: root.controller.editEvent(root.controller.activeEvent)
+                        Layout.preferredHeight: 34
+                        Layout.maximumHeight: 34
+                        HoverHandler { id: detailsEditHover }
+                        BloxToolTip {
+                            objectName: "calendar-details-edit-reason"
+                            shown: detailsEditHover.hovered && !detailsEditButton.enabled
+                                && root.eventEditDisabledReason(root.controller.activeEvent).length > 0
+                            text: root.eventEditDisabledReason(root.controller.activeEvent)
+                        }
+                        BloxButton {
+                            id: detailsEditButton
+                            objectName: "calendar-details-edit"
+                            anchors.fill: parent
+                            text: "Edit"
+                            iconName: "pencil-simple"
+                            accent: Theme.accent
+                            enabled: !!root.controller.activeEvent && root.controller.activeEvent.can_edit && !root.controller.activeEvent.busy
+                            onClicked: root.controller.editEvent(root.controller.activeEvent)
+                        }
                     }
 
                     BloxButton {
@@ -1017,35 +1039,20 @@ Scope {
 
                 }
 
-                TextArea {
+                CalendarEventDescriptionField {
                     id: descriptionField
-
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     Layout.minimumHeight: 45
-                    placeholderText: "Add description"
-                    placeholderTextColor: Theme.muted
                     text: root.controller.activeEvent ? root.controller.activeEvent.description : ""
-                    color: Theme.foreground
-                    font.family: Theme.bodyFontFamily
-                    font.pixelSize: 12
-                    padding: Theme.scaledSpacing(10)
-                    wrapMode: TextEdit.Wrap
-                    Keys.onTabPressed: function(event) {
+                    onTabPressed: function(event) {
                         calendarButton.forceActiveFocus();
                         event.accepted = true;
                     }
-                    Keys.onBacktabPressed: function(event) {
+                    onBacktabPressed: function(event) {
                         locationField.focusEditor(false);
                         event.accepted = true;
                     }
-
-                    background: Rectangle {
-                        radius: Theme.scaledRadius(8)
-                        color: Theme.background
-                        border.color: Theme.border
-                    }
-
                 }
 
                 RowLayout {

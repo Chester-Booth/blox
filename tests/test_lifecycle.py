@@ -59,6 +59,273 @@ def fake_source(version: str) -> Path:
 
 
 class LifecycleTests(unittest.TestCase):
+    def test_upgrade_retires_owned_desktop_icon_and_binary_alias_with_backups(self):
+        with Fixture() as roots:
+            source = fake_source("0.1.0")
+            try:
+                desktop = source / "applications/.local/share/applications/old.desktop"
+                icon = source / "applications/.local/share/icons/old.svg"
+                for path, content in ((desktop, b"old desktop\n"), (icon, b"old icon\n")):
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    path.write_bytes(content)
+                with mock.patch.object(installer, "INSTALLED_BINS", ("old-launcher",)):
+                    installer.install(roots, source_root=source)
+                old_link = roots.bins / "old-launcher"
+                old_target = os.readlink(old_link)
+                desktop.unlink()
+                icon.unlink()
+                report = installer.install(roots, source_root=source)
+                self.assertFalse((roots.data.parent / "applications/old.desktop").exists())
+                self.assertFalse((roots.data.parent / "icons/old.svg").exists())
+                self.assertFalse(old_link.is_symlink())
+                self.assertEqual(2, sum(action["kind"] == "remove-data" for action in report["plan"]["actions"]))
+                self.assertEqual(1, sum(action["kind"] == "remove-bin" for action in report["plan"]["actions"]))
+                self.assertEqual(b"old desktop\n", next(roots.backups.glob("*/data/applications/old.desktop")).read_bytes())
+                self.assertEqual(b"old icon\n", next(roots.backups.glob("*/data/icons/old.svg")).read_bytes())
+                self.assertEqual(old_target, os.readlink(next(roots.backups.glob("*/bins/old-launcher"))))
+                self.assertEqual([], installer.build_plan(roots, source).actions)
+            finally:
+                shutil.rmtree(source, ignore_errors=True)
+
+    def test_retired_data_and_bin_personal_changes_are_preserved_even_with_force(self):
+        with Fixture() as roots:
+            source = fake_source("0.1.0")
+            try:
+                relatives = ("applications/old.desktop", "icons/linked.svg", "icons/legacy/nested.svg")
+                for relative in relatives:
+                    path = source / "applications/.local/share" / relative
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    path.write_bytes(b"old\n")
+                with mock.patch.object(installer, "INSTALLED_BINS", ("old-link", "old-file")):
+                    installer.install(roots, source_root=source)
+                data_home = roots.data.parent
+                (data_home / relatives[0]).write_bytes(b"personal desktop\n")
+                foreign = roots.config / "personal.svg"
+                foreign.write_bytes(b"old\n")
+                (data_home / relatives[1]).unlink()
+                (data_home / relatives[1]).symlink_to(foreign)
+                outside = roots.config / "personal-icons"
+                outside.mkdir()
+                (outside / "nested.svg").write_bytes(b"old\n")
+                shutil.rmtree(data_home / "icons/legacy")
+                (data_home / "icons/legacy").symlink_to(outside, target_is_directory=True)
+                for name in ("old-link", "old-file"):
+                    (roots.bins / name).unlink()
+                (roots.bins / "old-link").symlink_to(foreign)
+                (roots.bins / "old-file").write_bytes(b"personal executable\n")
+                for relative in relatives:
+                    (source / "applications/.local/share" / relative).unlink()
+                report = installer.install(roots, source_root=source, force=True)
+                self.assertEqual(5, len(report["plan"]["leftovers"]))
+                self.assertEqual(b"personal desktop\n", (data_home / relatives[0]).read_bytes())
+                self.assertTrue((data_home / relatives[1]).is_symlink())
+                self.assertTrue((data_home / "icons/legacy").is_symlink())
+                self.assertEqual(b"old\n", foreign.read_bytes())
+                self.assertEqual(b"old\n", (outside / "nested.svg").read_bytes())
+                self.assertEqual(str(foreign), os.readlink(roots.bins / "old-link"))
+                self.assertEqual(b"personal executable\n", (roots.bins / "old-file").read_bytes())
+            finally:
+                shutil.rmtree(source, ignore_errors=True)
+
+    def test_retired_data_and_bin_removal_requires_current_user_ownership(self):
+        with Fixture() as roots:
+            source = fake_source("0.1.0")
+            try:
+                desktop = source / "applications/.local/share/applications/old.desktop"
+                desktop.parent.mkdir(parents=True)
+                desktop.write_bytes(b"old\n")
+                with mock.patch.object(installer, "INSTALLED_BINS", ("old-launcher",)):
+                    installer.install(roots, source_root=source)
+                desktop.unlink()
+                uid = os.getuid()
+                with mock.patch.object(installer.os, "getuid", return_value=uid + 1):
+                    plan = installer.build_plan(roots, source)
+                    with self.assertRaises(installer.LifecycleError):
+                        installer.install(roots, source_root=source, force=True, migrate=False)
+                self.assertEqual(2, len(plan.leftovers))
+                self.assertEqual(b"old\n", (roots.data.parent / "applications/old.desktop").read_bytes())
+                self.assertTrue((roots.bins / "old-launcher").is_symlink())
+            finally:
+                shutil.rmtree(source, ignore_errors=True)
+
+    def test_later_failure_restores_retired_desktop_binary_link_and_manifest(self):
+        with Fixture() as roots:
+            source = fake_source("0.1.0")
+            try:
+                desktop = source / "applications/.local/share/applications/old.desktop"
+                desktop.parent.mkdir(parents=True)
+                desktop.write_bytes(b"old\n")
+                with mock.patch.object(installer, "INSTALLED_BINS", ("old-launcher",)):
+                    installer.install(roots, source_root=source)
+                old_link = roots.bins / "old-launcher"
+                old_target = os.readlink(old_link)
+                before = roots.manifest.read_bytes()
+                desktop.unlink()
+                real_copy = installer.shutil.copy2
+                def fail_version(source_path, destination, *args, **kwargs):
+                    if Path(source_path) == source / "VERSION":
+                        raise OSError("injected final copy failure")
+                    return real_copy(source_path, destination, *args, **kwargs)
+                with mock.patch.object(installer.shutil, "copy2", side_effect=fail_version):
+                    with self.assertRaises(OSError):
+                        installer.install(roots, source_root=source)
+                self.assertEqual(b"old\n", (roots.data.parent / "applications/old.desktop").read_bytes())
+                self.assertEqual(old_target, os.readlink(old_link))
+                self.assertEqual(before, roots.manifest.read_bytes())
+            finally:
+                shutil.rmtree(source, ignore_errors=True)
+
+    def test_interrupt_at_retired_binary_unlink_restores_data_link_and_manifest(self):
+        with Fixture() as roots:
+            source = fake_source("0.1.0")
+            try:
+                desktop = source / "applications/.local/share/applications/old.desktop"
+                desktop.parent.mkdir(parents=True)
+                desktop.write_bytes(b"old\n")
+                with mock.patch.object(installer, "INSTALLED_BINS", ("old-launcher",)):
+                    installer.install(roots, source_root=source)
+                old_link = roots.bins / "old-launcher"
+                target = os.readlink(old_link)
+                before = roots.manifest.read_bytes()
+                desktop.unlink()
+                real_unlink = installer.os.unlink
+                def interrupt_after_removal(path, *args, **kwargs):
+                    real_unlink(path, *args, **kwargs)
+                    if path == "old-launcher" and "dir_fd" in kwargs:
+                        raise KeyboardInterrupt("interrupted immediately after removal")
+                with mock.patch.object(installer.os, "unlink", side_effect=interrupt_after_removal):
+                    with self.assertRaises(KeyboardInterrupt):
+                        installer.install(roots, source_root=source)
+                self.assertEqual(b"old\n", (roots.data.parent / "applications/old.desktop").read_bytes())
+                self.assertEqual(target, os.readlink(old_link))
+                self.assertEqual(before, roots.manifest.read_bytes())
+            finally:
+                shutil.rmtree(source, ignore_errors=True)
+
+    def test_install_removes_only_unchanged_retired_package_files(self):
+        with Fixture() as roots:
+            source = fake_source("0.1.0")
+            try:
+                old = source / "shell/old-picker.qml"
+                old.write_bytes(b"obsolete picker\n")
+                old.chmod(0o640)
+                installer.install(roots, source_root=source)
+                installed = roots.pkg_root / "shell/old-picker.qml"
+                unrecorded = roots.pkg_root / "shell/personal.qml"
+                unrecorded.write_bytes(b"personal\n")
+                old.unlink()
+                plan = installer.build_plan(roots, source)
+                self.assertEqual([installed], [action.target for action in plan.actions if action.kind == "remove-owned"])
+                report = installer.install(roots, source_root=source)
+                self.assertFalse(installed.exists())
+                self.assertEqual(b"personal\n", unrecorded.read_bytes())
+                self.assertIn(str(installed), report["backed_up"])
+                backup = next(roots.backups.glob("*/pkg/shell/old-picker.qml"))
+                self.assertEqual(b"obsolete picker\n", backup.read_bytes())
+                self.assertEqual(0o640, backup.stat().st_mode & 0o777)
+                self.assertNotIn("shell/old-picker.qml", json.loads(roots.manifest.read_text())["files"])
+                self.assertEqual([], installer.build_plan(roots, source).actions)
+            finally:
+                shutil.rmtree(source, ignore_errors=True)
+
+    def test_retired_modified_files_and_symlink_paths_are_preserved_even_with_force(self):
+        with Fixture() as roots:
+            source = fake_source("0.1.0")
+            try:
+                nested = source / "shell/legacy"
+                nested.mkdir()
+                for name in ("modified.qml", "linked.qml", "legacy/nested.qml"):
+                    (source / "shell" / name).write_bytes(b"old\n")
+                installer.install(roots, source_root=source)
+                modified = roots.pkg_root / "shell/modified.qml"
+                modified.write_bytes(b"personal edit\n")
+                linked = roots.pkg_root / "shell/linked.qml"
+                linked.unlink()
+                foreign = roots.config / "foreign.qml"
+                foreign.write_bytes(b"old\n")
+                linked.symlink_to(foreign)
+                directory = roots.pkg_root / "shell/legacy"
+                shutil.rmtree(directory)
+                outside = roots.config / "personal-directory"
+                outside.mkdir()
+                (outside / "nested.qml").write_bytes(b"old\n")
+                directory.symlink_to(outside, target_is_directory=True)
+                for name in ("modified.qml", "linked.qml", "legacy/nested.qml"):
+                    (source / "shell" / name).unlink()
+                report = installer.install(roots, source_root=source, force=True)
+                self.assertEqual(3, len(report["plan"]["leftovers"]))
+                self.assertEqual(b"personal edit\n", modified.read_bytes())
+                self.assertTrue(linked.is_symlink())
+                self.assertTrue(directory.is_symlink())
+                self.assertEqual(b"old\n", foreign.read_bytes())
+                self.assertEqual(b"old\n", (outside / "nested.qml").read_bytes())
+            finally:
+                shutil.rmtree(source, ignore_errors=True)
+
+    def test_retired_package_removal_requires_current_user_ownership(self):
+        with Fixture() as roots:
+            source = fake_source("0.1.0")
+            try:
+                old = source / "shell/old.qml"
+                old.write_bytes(b"old\n")
+                installer.install(roots, source_root=source)
+                old.unlink()
+                uid = os.getuid()
+                with mock.patch.object(installer.os, "getuid", return_value=uid + 1):
+                    plan = installer.build_plan(roots, source)
+                    with self.assertRaises(installer.LifecycleError):
+                        installer.install(roots, source_root=source, force=True, migrate=False)
+                self.assertEqual(1, len(plan.leftovers))
+                self.assertEqual(b"old\n", (roots.pkg_root / "shell/old.qml").read_bytes())
+            finally:
+                shutil.rmtree(source, ignore_errors=True)
+
+    def test_install_failure_restores_retired_file_and_manifest(self):
+        with Fixture() as roots:
+            source = fake_source("0.1.0")
+            try:
+                old = source / "shell/old.qml"
+                old.write_bytes(b"old\n")
+                installer.install(roots, source_root=source)
+                before = roots.manifest.read_bytes()
+                old.unlink()
+                real_copy = installer.shutil.copy2
+                def fail_version(source_path, destination, *args, **kwargs):
+                    if Path(source_path) == source / "VERSION":
+                        raise OSError("injected final copy failure")
+                    return real_copy(source_path, destination, *args, **kwargs)
+                with mock.patch.object(installer.shutil, "copy2", side_effect=fail_version):
+                    with self.assertRaises(OSError):
+                        installer.install(roots, source_root=source)
+                self.assertEqual(b"old\n", (roots.pkg_root / "shell/old.qml").read_bytes())
+                self.assertEqual(before, roots.manifest.read_bytes())
+            finally:
+                shutil.rmtree(source, ignore_errors=True)
+
+    def test_private_config_migration_preserves_bytes_and_failure_restores_mode(self):
+        with Fixture() as roots:
+            roots.config.mkdir(parents=True, mode=0o755)
+            env = roots.config / "env"
+            env.write_bytes(b"personal environment\n")
+            roots.backups.mkdir(parents=True)
+            before = len(migrations.read_ledger(roots))
+            migrations.run_migrations(roots, "old", "new")
+            self.assertEqual(roots.config.stat().st_mode & 0o777, 0o700)
+            self.assertEqual(env.read_bytes(), b"personal environment\n")
+            migrations.restore_ledger_after(roots, before)
+            self.assertEqual(roots.config.stat().st_mode & 0o777, 0o755)
+            self.assertEqual(env.read_bytes(), b"personal environment\n")
+
+    def test_private_config_migration_refuses_symlink(self):
+        with Fixture() as roots:
+            roots.config.parent.mkdir(parents=True)
+            other = roots.config.parent / "personal"
+            other.mkdir(mode=0o755)
+            roots.config.symlink_to(other)
+            with self.assertRaises(OSError):
+                migrations.migrate_private_config(roots, roots.backups)
+            self.assertEqual(other.stat().st_mode & 0o777, 0o755)
+
     def test_install_creates_manifest_and_repeats_change_nothing(self):
         with Fixture() as roots:
             first = installer.install(roots)
@@ -132,7 +399,7 @@ class LifecycleTests(unittest.TestCase):
     def test_uninstall_keeps_user_data_until_purge(self):
         with Fixture() as roots:
             installer.install(roots)
-            roots.config.mkdir(parents=True)
+            roots.config.mkdir(parents=True, exist_ok=True)
             (roots.config / "config.json").write_text("{}", encoding="utf-8")
             report = installer.uninstall(roots)
             self.assertFalse(roots.pkg_root.exists())
@@ -759,3 +1026,378 @@ class PackageOverlapTests(unittest.TestCase):
                 self.assertEqual([], [n for n in leaked if n == "v1.json"])
             finally:
                 shutil.rmtree(source_a, ignore_errors=True)
+
+
+class LifecycleOwnershipTests(unittest.TestCase):
+    def test_uninstall_preserves_modified_external_paths_and_salvages_package_edits(self):
+        with Fixture() as roots:
+            source = fake_source("0.1.0")
+            try:
+                data = source / "applications/.local/share/applications/test.desktop"
+                data.parent.mkdir(parents=True)
+                data.write_text("original desktop\n")
+                installer.install(roots, source_root=source)
+                desktop = roots.data.parent / "applications/test.desktop"
+                desktop.write_text("personal desktop\n")
+                unit = roots.systemd_user / "quickshell.service"
+                unit.write_text("personal unit\n")
+                binary = roots.bins / "bloxctl"
+                binary.unlink()
+                binary.write_text("personal program\n")
+                package = roots.pkg_root / "shell/shell.qml"
+                package.write_text("personal shell\n")
+                report = installer.uninstall(roots)
+                for path, expected in ((desktop, "personal desktop\n"), (unit, "personal unit\n"), (binary, "personal program\n")):
+                    self.assertEqual(path.read_text(), expected)
+                    self.assertIn(str(path), report["leftovers"])
+                self.assertFalse(roots.pkg_root.exists())
+                self.assertIn(str(package), report["salvaged"])
+                backups = list(roots.backups.glob("*/pkg-leftovers/shell/shell.qml"))
+                self.assertEqual(len(backups), 1)
+                self.assertEqual(backups[0].read_text(), "personal shell\n")
+            finally:
+                shutil.rmtree(source)
+
+    def test_uninstall_preserves_symlink_replacements_without_touching_targets(self):
+        with Fixture() as roots:
+            source = fake_source("0.1.0")
+            try:
+                installer.install(roots, source_root=source)
+                personal = roots.config / "personal.service"
+                personal.parent.mkdir(parents=True, exist_ok=True)
+                personal.write_text("personal target\n")
+                unit = roots.systemd_user / "quickshell.service"
+                unit.unlink()
+                unit.symlink_to(personal)
+                alias = roots.bins / "bloxctl"
+                alias.unlink()
+                alias.symlink_to(personal)
+                report = installer.uninstall(roots)
+                self.assertEqual(personal.read_text(), "personal target\n")
+                self.assertTrue(unit.is_symlink())
+                self.assertTrue(alias.is_symlink())
+                self.assertIn(str(unit), report["leftovers"])
+                self.assertIn(str(alias), report["leftovers"])
+            finally:
+                shutil.rmtree(source)
+
+    def test_purge_keeps_modified_package_backup_outside_deleted_state(self):
+        with Fixture() as roots:
+            source = fake_source("0.1.0")
+            try:
+                installer.install(roots, source_root=source)
+                (roots.pkg_root / "shell/shell.qml").write_text("personal change\n")
+                report = installer.uninstall(roots, purge=True)
+                self.assertFalse(roots.state.exists())
+                preserved = list(Path(report["salvage_backup"]).glob("*/pkg-leftovers/shell/shell.qml"))
+                self.assertEqual(preserved[0].read_text(), "personal change\n")
+            finally:
+                shutil.rmtree(source)
+
+    def test_modified_unit_blocks_update_without_force_and_manifest_records_unit_hashes(self):
+        with Fixture() as roots:
+            sources = [fake_source(v) for v in ("0.1.0", "0.1.1")]
+            try:
+                installer.install(roots, source_root=sources[0])
+                manifest = json.loads(roots.manifest.read_text())
+                unit = roots.systemd_user / "quickshell.service"
+                self.assertEqual(manifest["unit_files"][unit.name]["sha256"], installer.sha256(unit))
+                unit.write_text("personal replacement\n")
+                with self.assertRaises(installer.LifecycleError) as error:
+                    installer.update(roots, source_root=sources[1])
+                self.assertEqual(error.exception.code, "conflict")
+                self.assertEqual(unit.read_text(), "personal replacement\n")
+            finally:
+                for source in sources:
+                    shutil.rmtree(source)
+
+
+class CompleteGenerationRestoreTests(unittest.TestCase):
+    def _sources(self):
+        sources = [fake_source(v) for v in ("0.1.0", "0.1.1")]
+        for index, source in enumerate(sources):
+            directory = source / "applications/.local/share/applications"
+            directory.mkdir(parents=True)
+            (directory / ("old.desktop" if index == 0 else "new.desktop")).write_text(f"generation {index}\n")
+            common = directory / "common.desktop"
+            common.write_text(f"common {index}\n")
+            common.chmod(0o600 if index == 0 else 0o644)
+            icons = source / "applications/.local/share/icons/hicolor"
+            icons.mkdir(parents=True)
+            (icons / ("old.png" if index == 0 else "new.png")).write_bytes(bytes([index, 23]))
+        return sources
+
+    def _external_state(self, roots):
+        state = {}
+        for label, directory in (("data", roots.data.parent), ("unit", roots.systemd_user), ("bin", roots.bins)):
+            paths = list(directory.rglob("*")) if label == "data" else list(directory.iterdir())
+            for path in paths:
+                if label == "data" and path.relative_to(directory).parts[0] not in {"applications", "icons"}:
+                    continue
+                if path.is_symlink():
+                    state[(label, str(path.relative_to(directory)))] = ("link", os.readlink(path))
+                elif path.is_file():
+                    state[(label, str(path.relative_to(directory)))] = ("file", path.read_bytes(), path.stat().st_mode & 0o777)
+        return state
+
+    def test_rollback_restores_all_external_files_modes_and_created_removed_aliases(self):
+        with Fixture() as roots:
+            sources = self._sources()
+            try:
+                with mock.patch.object(installer, "INSTALLED_BINS", ("old-alias",)):
+                    installer.install(roots, source_root=sources[0])
+                before = self._external_state(roots)
+                with mock.patch.object(installer, "INSTALLED_BINS", ("new-alias",)):
+                    installer.update(roots, source_root=sources[1])
+                self.assertFalse((roots.bins / "old-alias").exists())
+                self.assertTrue((roots.bins / "new-alias").is_symlink())
+                installer.rollback(roots)
+                self.assertEqual(self._external_state(roots), before)
+                self.assertEqual(json.loads(roots.manifest.read_text())["product_version"], "0.1.0")
+            finally:
+                for source in sources:
+                    shutil.rmtree(source)
+
+    def test_failed_migration_restores_external_preimages_and_previous_generation(self):
+        with Fixture() as roots:
+            sources = self._sources()
+            try:
+                installer.install(roots, source_root=sources[0])
+                before = self._external_state(roots)
+                package_before = snapshot_state(roots)["pkg"]
+                with mock.patch.object(migrations, "run_migrations", side_effect=OSError("after external writes")):
+                    with self.assertRaises(OSError):
+                        installer.update(roots, source_root=sources[1])
+                self.assertEqual(self._external_state(roots), before)
+                self.assertEqual(snapshot_state(roots)["pkg"], package_before)
+                self.assertEqual(list(roots.state.glob(".update-snapshot-*")), [])
+            finally:
+                for source in sources:
+                    shutil.rmtree(source)
+
+    def test_personal_post_update_change_blocks_rollback_before_mutation(self):
+        with Fixture() as roots:
+            sources = self._sources()
+            try:
+                installer.install(roots, source_root=sources[0])
+                installer.update(roots, source_root=sources[1])
+                desktop = roots.data.parent / "applications/common.desktop"
+                desktop.write_text("personal after update\n")
+                before = snapshot_state(roots)
+                with self.assertRaises(installer.LifecycleError) as error:
+                    installer.rollback(roots)
+                self.assertEqual(error.exception.code, "conflict")
+                self.assertEqual(snapshot_state(roots), before)
+                self.assertEqual(desktop.read_text(), "personal after update\n")
+                self.assertTrue(roots.previous_pkg_root.exists())
+            finally:
+                for source in sources:
+                    shutil.rmtree(source)
+
+    def test_same_second_installs_keep_distinct_backup_bytes(self):
+        with Fixture() as roots:
+            source = fake_source("0.1.0")
+            try:
+                installer.install(roots, source_root=source)
+                with mock.patch.object(installer.time, "strftime", return_value="same-second"):
+                    for text in ("second\n", "third\n"):
+                        (source / "shell/shell.qml").write_text(text)
+                        installer.install(roots, source_root=source)
+                backups = sorted(roots.backups.glob("same-second-*/pkg/shell/shell.qml"))
+                self.assertEqual(len(backups), 2)
+                self.assertEqual({path.read_text() for path in backups}, {"// shell\n", "second\n"})
+            finally:
+                shutil.rmtree(source)
+
+    def test_failed_previous_generation_promotion_restores_current_and_older_receipts(self):
+        with Fixture() as roots:
+            sources = self._sources()
+            third = fake_source("0.1.2")
+            try:
+                installer.install(roots, source_root=sources[0])
+                installer.update(roots, source_root=sources[1])
+                before = self._external_state(roots)
+                package_before = snapshot_state(roots)["pkg"]
+                previous_before = (roots.previous_pkg_root / "manifest.json").read_bytes()
+                receipt_before = (roots.state / "previous-external/manifest.json").read_bytes()
+                real_move = shutil.move
+
+                def fail_external_promotion(source, destination, *args, **kwargs):
+                    if Path(source).name == "external" and Path(destination) == roots.state / "previous-external":
+                        raise OSError("injected generation promotion failure")
+                    return real_move(source, destination, *args, **kwargs)
+
+                with mock.patch.object(installer.shutil, "move", side_effect=fail_external_promotion):
+                    with self.assertRaises(OSError):
+                        installer.update(roots, source_root=third)
+                self.assertEqual(self._external_state(roots), before)
+                self.assertEqual(snapshot_state(roots)["pkg"], package_before)
+                self.assertEqual((roots.previous_pkg_root / "manifest.json").read_bytes(), previous_before)
+                self.assertEqual((roots.state / "previous-external/manifest.json").read_bytes(), receipt_before)
+                installer.rollback(roots)
+                self.assertEqual(json.loads(roots.manifest.read_text())["product_version"], "0.1.0")
+            finally:
+                for source in sources + [third]:
+                    shutil.rmtree(source)
+
+    def test_failed_update_recovery_retains_complete_preimages_for_repair(self):
+        with Fixture() as roots:
+            sources = self._sources()
+            try:
+                installer.install(roots, source_root=sources[0])
+                with mock.patch.object(migrations, "run_migrations", side_effect=OSError("migration failed")), mock.patch.object(installer, "_restore_external", side_effect=OSError("recovery storage unavailable")):
+                    with self.assertRaises(installer.LifecycleError) as error:
+                        installer.update(roots, source_root=sources[1])
+                self.assertEqual(error.exception.code, "conflict")
+                snapshot = Path(error.exception.data["snapshot"])
+                self.assertTrue((snapshot / "package/manifest.json").is_file())
+                receipt = json.loads((snapshot / "external/manifest.json").read_text())
+                image = next(entry for entry in receipt["images"] if entry["relative"] == "applications/common.desktop")
+                self.assertEqual((snapshot / "external" / image["backup"]).read_bytes(), b"common 0\n")
+            finally:
+                for source in sources:
+                    shutil.rmtree(source)
+
+    def test_other_process_waits_for_lifecycle_lock_before_installing(self):
+        import fcntl
+        import subprocess
+        import time
+        with Fixture() as roots:
+            source = fake_source("0.1.0")
+            roots.state.mkdir(parents=True)
+            started = roots.state / "child-started"
+            complete = roots.state / "child-complete"
+            child = None
+            try:
+                lock_path = roots.pkg_root.parent / ".blox-lifecycle.lock"
+                lock_path.parent.mkdir(parents=True, exist_ok=True)
+                with lock_path.open("w") as lock:
+                    fcntl.flock(lock, fcntl.LOCK_EX)
+                    code = "\n".join([
+                        "import sys", "from pathlib import Path",
+                        "sys.path.insert(0, sys.argv[1])", "import install, layout",
+                        "Path(sys.argv[3]).write_text('started')",
+                        "install.install(layout.resolve_roots(), source_root=Path(sys.argv[2]))",
+                        "Path(sys.argv[4]).write_text('complete')",
+                    ])
+                    child = subprocess.Popen([sys.executable, "-c", code, str(REPOSITORY / "packaging"), str(source), str(started), str(complete)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    deadline = time.monotonic() + 5
+                    while not started.exists() and time.monotonic() < deadline:
+                        time.sleep(0.01)
+                    self.assertTrue(started.exists())
+                    with self.assertRaises(subprocess.TimeoutExpired):
+                        child.wait(timeout=0.1)
+                    self.assertFalse(roots.pkg_root.exists())
+                    self.assertFalse(complete.exists())
+                    fcntl.flock(lock, fcntl.LOCK_UN)
+                output, errors = child.communicate(timeout=10)
+                self.assertEqual(child.returncode, 0, errors.decode())
+                self.assertTrue(complete.exists())
+                self.assertTrue(roots.manifest.is_file())
+            finally:
+                if child is not None and child.poll() is None:
+                    child.kill()
+                    child.communicate()
+                shutil.rmtree(source)
+
+    def test_purge_and_changed_state_home_keep_the_same_prefix_lock_inode(self):
+        with Fixture() as roots:
+            source = fake_source("0.1.0")
+            try:
+                installer.install(roots, source_root=source)
+                lock = roots.pkg_root.parent / ".blox-lifecycle.lock"
+                before = (lock.stat().st_dev, lock.stat().st_ino)
+                installer.uninstall(roots, purge=True)
+                self.assertFalse(roots.state.exists())
+                self.assertEqual((lock.stat().st_dev, lock.stat().st_ino), before)
+                with mock.patch.dict(os.environ, {"XDG_STATE_HOME": str(roots.state.parent / "other-state-home")}):
+                    alternative = layout.resolve_roots()
+                    installer.install(alternative, source_root=source)
+                self.assertEqual((lock.stat().st_dev, lock.stat().st_ino), before)
+                self.assertTrue(alternative.manifest.is_file())
+                self.assertFalse(roots.state.exists())
+            finally:
+                shutil.rmtree(source)
+
+
+class HyprlandModuleBootstrapTests(unittest.TestCase):
+    def test_fresh_install_creates_owned_noop_module_without_editing_entrypoint(self):
+        with Fixture() as roots:
+            source = fake_source("0.1.0")
+            try:
+                entrypoint = roots.config.parent / "hypr/hyprland.lua"
+                entrypoint.parent.mkdir(parents=True)
+                entrypoint.write_text("-- personal entrypoint\n")
+                module = roots.config / "hyprland-settings.lua"
+                dry_run = installer.install(roots, source_root=source, dry_run=True)
+                self.assertTrue(any(action["kind"] == "init-config" for action in dry_run["plan"]["actions"]))
+                self.assertFalse(module.exists())
+                installer.install(roots, source_root=source)
+                self.assertEqual(module.read_bytes(), installer.HYPRLAND_DEFAULT_MODULE)
+                self.assertEqual(module.stat().st_mode & 0o777, 0o600)
+                self.assertEqual(roots.config.stat().st_mode & 0o777, 0o700)
+                self.assertEqual(entrypoint.read_text(), "-- personal entrypoint\n")
+                manifest = json.loads(roots.manifest.read_text())
+                self.assertEqual(manifest["config_defaults"][module.name]["sha256"], installer.sha256(module))
+                self.assertEqual(installer.build_plan(roots, source).actions, [])
+            finally:
+                shutil.rmtree(source)
+
+    def test_existing_personal_module_and_symlink_are_never_replaced(self):
+        with Fixture() as roots:
+            source = fake_source("0.1.0")
+            try:
+                roots.config.mkdir(mode=0o700, parents=True)
+                module = roots.config / "hyprland-settings.lua"
+                module.write_text("personal module\n")
+                installer.install(roots, source_root=source)
+                self.assertEqual(module.read_text(), "personal module\n")
+                self.assertNotIn(module.name, json.loads(roots.manifest.read_text())["config_defaults"])
+                installer.uninstall(roots)
+                module.unlink()
+                target = roots.config.parent / "personal.lua"
+                target.write_text("personal target\n")
+                module.symlink_to(target)
+                installer.install(roots, source_root=source)
+                self.assertEqual(os.readlink(module), str(target))
+                self.assertEqual(target.read_text(), "personal target\n")
+            finally:
+                shutil.rmtree(source)
+
+    def test_failed_install_removes_new_module_and_restores_existing_directory_mode(self):
+        with Fixture() as roots:
+            source = fake_source("0.1.0")
+            try:
+                roots.config.mkdir(mode=0o705, parents=True)
+                (roots.config / "personal.json").write_text("personal config\n")
+                real_copy = shutil.copy2
+
+                def fail_package_copy(source, destination, **kwargs):
+                    if Path(destination).is_relative_to(roots.pkg_root):
+                        raise OSError("injected package failure")
+                    return real_copy(source, destination, **kwargs)
+
+                with mock.patch.object(installer.shutil, "copy2", side_effect=fail_package_copy):
+                    with self.assertRaises(OSError):
+                        installer.install(roots, source_root=source, migrate=False)
+                self.assertFalse((roots.config / "hyprland-settings.lua").exists())
+                self.assertEqual(roots.config.stat().st_mode & 0o777, 0o705)
+                self.assertEqual((roots.config / "personal.json").read_text(), "personal config\n")
+            finally:
+                shutil.rmtree(source)
+
+    def test_failed_update_restores_module_absence_after_bootstrap(self):
+        with Fixture() as roots:
+            sources = [fake_source(version) for version in ("0.1.0", "0.1.1")]
+            try:
+                installer.install(roots, source_root=sources[0])
+                module = roots.config / "hyprland-settings.lua"
+                module.unlink()
+                with mock.patch.object(migrations, "run_migrations", side_effect=OSError("after module bootstrap")):
+                    with self.assertRaises(OSError):
+                        installer.update(roots, source_root=sources[1])
+                self.assertFalse(module.exists())
+                self.assertEqual(json.loads(roots.manifest.read_text())["product_version"], "0.1.0")
+            finally:
+                for source in sources:
+                    shutil.rmtree(source)

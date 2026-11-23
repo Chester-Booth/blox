@@ -16,7 +16,7 @@ Item {
         text: root.context.contentController.railClockText(root.context.horizontal)
         dateMode: root.context.contentController.clockDateMode
         onHovered: (centre) => {
-            return root.context.surfaceController.hoverButtonEntered("calendar", root.context.mappedCentre(this, centre), "calendar");
+            return root.context.surfaceController.hoverButtonEntered("calendar", root.context.mappedCentre(this, centre), "calendar", root.context.panelAnchorOwner);
         }
         onExited: root.context.surfaceController.hoverButtonExited("calendar")
         onClicked: root.context.contentController.clockDateMode = !root.context.contentController.clockDateMode
@@ -42,7 +42,7 @@ Item {
         cursorShape: Qt.PointingHandCursor
         onEntered: {
             const point = mapToItem(null, width / 2, height / 2);
-            root.context.surfaceController.hoverButtonEntered("calendar", root.context.horizontal ? point.x : point.y, "calendar");
+            root.context.surfaceController.hoverButtonEntered("calendar", root.context.horizontal ? point.x : point.y, "calendar", root.context.panelAnchorOwner);
         }
         onExited: root.context.surfaceController.hoverButtonExited("calendar")
         onClicked: root.context.contentController.clockDateMode = !root.context.contentController.clockDateMode

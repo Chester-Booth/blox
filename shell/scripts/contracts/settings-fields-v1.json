@@ -1,0 +1,4702 @@
+{
+  "registryVersion": 1,
+  "settingsSchema": "shell/scripts/contracts/settings-v1.schema.json",
+  "themeManifest": "themes/schema/components-v1.json",
+  "documentPathPrefix": "settings",
+  "proofSources": {
+    "schema_registry": "themes/tests/test_settings_contracts.py",
+    "settings_transaction": "Phase 4 proof matrix: Hyprland and settings",
+    "theme_bundle": "Phase 4 proof matrix: Theme composition",
+    "multi_owner_apply": "Phase 4 proof matrix: Multi-owner Apply",
+    "phase6_display": "Phase 6 monitor layout acceptance proof"
+  },
+  "fields": [
+    {
+      "id": "appearance-colour-accent",
+      "component": "appearance",
+      "fieldClass": "theme-data",
+      "storageOwner": "theme-library-document",
+      "runtimeOwner": "Blox theme runtime",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "include",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-theme-component-and-generated-preimage",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle"
+      ],
+      "fields": [
+        {
+          "path": "theme.components.appearance.colours.accent",
+          "legacyReadPath": "theme-v1:colours.accent"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "appearance-colour-background",
+      "component": "appearance",
+      "fieldClass": "theme-data",
+      "storageOwner": "theme-library-document",
+      "runtimeOwner": "Blox theme runtime",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "include",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-theme-component-and-generated-preimage",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle"
+      ],
+      "fields": [
+        {
+          "path": "theme.components.appearance.colours.background",
+          "legacyReadPath": "theme-v1:colours.background"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "appearance-colour-border",
+      "component": "appearance",
+      "fieldClass": "theme-data",
+      "storageOwner": "theme-library-document",
+      "runtimeOwner": "Blox theme runtime",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "include",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-theme-component-and-generated-preimage",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle"
+      ],
+      "fields": [
+        {
+          "path": "theme.components.appearance.colours.border",
+          "legacyReadPath": "theme-v1:colours.border"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "appearance-colour-danger",
+      "component": "appearance",
+      "fieldClass": "theme-data",
+      "storageOwner": "theme-library-document",
+      "runtimeOwner": "Blox theme runtime",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "include",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-theme-component-and-generated-preimage",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle"
+      ],
+      "fields": [
+        {
+          "path": "theme.components.appearance.colours.danger",
+          "legacyReadPath": "theme-v1:colours.danger"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "appearance-colour-foreground",
+      "component": "appearance",
+      "fieldClass": "theme-data",
+      "storageOwner": "theme-library-document",
+      "runtimeOwner": "Blox theme runtime",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "include",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-theme-component-and-generated-preimage",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle"
+      ],
+      "fields": [
+        {
+          "path": "theme.components.appearance.colours.foreground",
+          "legacyReadPath": "theme-v1:colours.foreground"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "appearance-colour-info",
+      "component": "appearance",
+      "fieldClass": "theme-data",
+      "storageOwner": "theme-library-document",
+      "runtimeOwner": "Blox theme runtime",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "include",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-theme-component-and-generated-preimage",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle"
+      ],
+      "fields": [
+        {
+          "path": "theme.components.appearance.colours.info",
+          "legacyReadPath": "theme-v1:colours.info"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "appearance-colour-mauve",
+      "component": "appearance",
+      "fieldClass": "theme-data",
+      "storageOwner": "theme-library-document",
+      "runtimeOwner": "Blox theme runtime",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "include",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-theme-component-and-generated-preimage",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle"
+      ],
+      "fields": [
+        {
+          "path": "theme.components.appearance.colours.mauve",
+          "legacyReadPath": "theme-v1:colours.mauve"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "appearance-colour-muted",
+      "component": "appearance",
+      "fieldClass": "theme-data",
+      "storageOwner": "theme-library-document",
+      "runtimeOwner": "Blox theme runtime",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "include",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-theme-component-and-generated-preimage",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle"
+      ],
+      "fields": [
+        {
+          "path": "theme.components.appearance.colours.muted",
+          "legacyReadPath": "theme-v1:colours.muted"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "appearance-colour-selection-background",
+      "component": "appearance",
+      "fieldClass": "theme-data",
+      "storageOwner": "theme-library-document",
+      "runtimeOwner": "Blox theme runtime",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "include",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-theme-component-and-generated-preimage",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle"
+      ],
+      "fields": [
+        {
+          "path": "theme.components.appearance.colours.selection_background",
+          "legacyReadPath": "theme-v1:colours.selection_background"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "appearance-colour-selection-foreground",
+      "component": "appearance",
+      "fieldClass": "theme-data",
+      "storageOwner": "theme-library-document",
+      "runtimeOwner": "Blox theme runtime",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "include",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-theme-component-and-generated-preimage",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle"
+      ],
+      "fields": [
+        {
+          "path": "theme.components.appearance.colours.selection_foreground",
+          "legacyReadPath": "theme-v1:colours.selection_foreground"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "appearance-colour-success",
+      "component": "appearance",
+      "fieldClass": "theme-data",
+      "storageOwner": "theme-library-document",
+      "runtimeOwner": "Blox theme runtime",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "include",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-theme-component-and-generated-preimage",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle"
+      ],
+      "fields": [
+        {
+          "path": "theme.components.appearance.colours.success",
+          "legacyReadPath": "theme-v1:colours.success"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "appearance-colour-surface",
+      "component": "appearance",
+      "fieldClass": "theme-data",
+      "storageOwner": "theme-library-document",
+      "runtimeOwner": "Blox theme runtime",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "include",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-theme-component-and-generated-preimage",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle"
+      ],
+      "fields": [
+        {
+          "path": "theme.components.appearance.colours.surface",
+          "legacyReadPath": "theme-v1:colours.surface"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "appearance-colour-surface-alt",
+      "component": "appearance",
+      "fieldClass": "theme-data",
+      "storageOwner": "theme-library-document",
+      "runtimeOwner": "Blox theme runtime",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "include",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-theme-component-and-generated-preimage",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle"
+      ],
+      "fields": [
+        {
+          "path": "theme.components.appearance.colours.surface_alt",
+          "legacyReadPath": "theme-v1:colours.surface_alt"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "appearance-colour-teal",
+      "component": "appearance",
+      "fieldClass": "theme-data",
+      "storageOwner": "theme-library-document",
+      "runtimeOwner": "Blox theme runtime",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "include",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-theme-component-and-generated-preimage",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle"
+      ],
+      "fields": [
+        {
+          "path": "theme.components.appearance.colours.teal",
+          "legacyReadPath": "theme-v1:colours.teal"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "appearance-colour-warning",
+      "component": "appearance",
+      "fieldClass": "theme-data",
+      "storageOwner": "theme-library-document",
+      "runtimeOwner": "Blox theme runtime",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "include",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-theme-component-and-generated-preimage",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle"
+      ],
+      "fields": [
+        {
+          "path": "theme.components.appearance.colours.warning",
+          "legacyReadPath": "theme-v1:colours.warning"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "appearance-cursor-base",
+      "component": "appearance",
+      "fieldClass": "theme-data",
+      "storageOwner": "theme-library-document",
+      "runtimeOwner": "Blox cursor owner",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "include",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-theme-component-and-generated-preimage",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle"
+      ],
+      "fields": [
+        {
+          "path": "theme.components.appearance.cursor.base",
+          "legacyReadPath": "theme-v1:cursor.base"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "appearance-cursor-direction",
+      "component": "appearance",
+      "fieldClass": "theme-data",
+      "storageOwner": "theme-library-document",
+      "runtimeOwner": "Blox cursor owner",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "include",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-theme-component-and-generated-preimage",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle"
+      ],
+      "fields": [
+        {
+          "path": "theme.components.appearance.cursor.direction",
+          "legacyReadPath": "theme-v1:cursor.handedness"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "appearance-cursor-follow-theme-shape",
+      "component": "appearance",
+      "fieldClass": "theme-data",
+      "storageOwner": "theme-library-document",
+      "runtimeOwner": "Blox cursor owner",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "include",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-theme-component-and-generated-preimage",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle"
+      ],
+      "fields": [
+        {
+          "path": "theme.components.appearance.cursor.followThemeShape",
+          "legacyReadPath": "theme-v1:cursor.shape_source (theme => true, override => false)"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "appearance-cursor-sizes-sizes",
+      "component": "appearance",
+      "fieldClass": "theme-data",
+      "storageOwner": "theme-library-document",
+      "runtimeOwner": "Blox cursor owner",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "include",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-theme-component-and-generated-preimage",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle"
+      ],
+      "fields": [
+        {
+          "path": "theme.components.appearance.cursor.sizes[*]",
+          "legacyReadPath": "theme-v1:cursor.sizes[*]"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "appearance-font-mono",
+      "component": "appearance",
+      "fieldClass": "theme-data",
+      "storageOwner": "theme-library-document",
+      "runtimeOwner": "Blox theme runtime",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "include",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-theme-component-and-generated-preimage",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle"
+      ],
+      "fields": [
+        {
+          "path": "theme.components.appearance.fonts.mono",
+          "legacyReadPath": "theme-v1:fonts.mono"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "appearance-font-panel",
+      "component": "appearance",
+      "fieldClass": "theme-data",
+      "storageOwner": "theme-library-document",
+      "runtimeOwner": "Blox theme runtime",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "include",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-theme-component-and-generated-preimage",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle"
+      ],
+      "fields": [
+        {
+          "path": "theme.components.appearance.fonts.panel",
+          "legacyReadPath": "theme-v1:fonts.panel"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "appearance-font-ui",
+      "component": "appearance",
+      "fieldClass": "theme-data",
+      "storageOwner": "theme-library-document",
+      "runtimeOwner": "Blox theme runtime",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "include",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-theme-component-and-generated-preimage",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle"
+      ],
+      "fields": [
+        {
+          "path": "theme.components.appearance.fonts.ui",
+          "legacyReadPath": "theme-v1:fonts.ui"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "appearance-icon-theme",
+      "component": "appearance",
+      "fieldClass": "theme-data",
+      "storageOwner": "theme-library-document",
+      "runtimeOwner": "Quickshell icon theme owner",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "include",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-theme-component-and-generated-preimage",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle"
+      ],
+      "fields": [
+        {
+          "path": "theme.components.appearance.iconTheme",
+          "legacyReadPath": "theme-v1:icons.theme"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "appearance-shape-density-scale",
+      "component": "appearance",
+      "fieldClass": "theme-data",
+      "storageOwner": "theme-library-document",
+      "runtimeOwner": "Hyprland window appearance owner",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "include",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-theme-component-and-generated-preimage",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle"
+      ],
+      "fields": [
+        {
+          "path": "theme.components.appearance.shape.densityScale",
+          "legacyReadPath": "theme-v1:shape.density_scale"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "appearance-shape-radius-scale",
+      "component": "appearance",
+      "fieldClass": "theme-data",
+      "storageOwner": "theme-library-document",
+      "runtimeOwner": "Hyprland window appearance owner",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "include",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-theme-component-and-generated-preimage",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle"
+      ],
+      "fields": [
+        {
+          "path": "theme.components.appearance.shape.radiusScale",
+          "legacyReadPath": "theme-v1:shape.radius_scale"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "appearance-shape-window-gap",
+      "component": "appearance",
+      "fieldClass": "theme-data",
+      "storageOwner": "theme-library-document",
+      "runtimeOwner": "Hyprland window appearance owner",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "include",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-theme-component-and-generated-preimage",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle"
+      ],
+      "fields": [
+        {
+          "path": "theme.components.appearance.shape.windowGap",
+          "legacyReadPath": "theme-v1:shape.window_gap"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "appearance-window-border-size",
+      "component": "appearance",
+      "fieldClass": "theme-data",
+      "storageOwner": "theme-library-document",
+      "runtimeOwner": "Hyprland window appearance owner",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "include",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-theme-component-and-generated-preimage",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle"
+      ],
+      "fields": [
+        {
+          "path": "theme.components.appearance.windows.borderSize",
+          "legacyReadPath": "theme-v1:hyprland.border_size"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "appearance-window-inactive-opacity",
+      "component": "appearance",
+      "fieldClass": "theme-data",
+      "storageOwner": "theme-library-document",
+      "runtimeOwner": "Hyprland window appearance owner",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "include",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-theme-component-and-generated-preimage",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle"
+      ],
+      "fields": [
+        {
+          "path": "theme.components.appearance.windows.inactiveOpacity",
+          "legacyReadPath": "theme-v1:hyprland.inactive_opacity"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "settings-autostart-argv",
+      "component": "autostart",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Hyprland Lua owner",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "exclude",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.autostart[*].argv[*]",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-autostart-delayseconds",
+      "component": "autostart",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Hyprland Lua owner",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "exclude",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.autostart[*].delaySeconds",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-autostart-enabled",
+      "component": "autostart",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Hyprland Lua owner",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "exclude",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.autostart[*].enabled",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-autostart-id",
+      "component": "autostart",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Hyprland Lua owner",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "exclude",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.autostart[*].id",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-autostart-name",
+      "component": "autostart",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Hyprland Lua owner",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "exclude",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.autostart[*].name",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-bar-items-display",
+      "component": "bar",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Quickshell bar runtime",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.bar.items[*].display",
+          "legacyReadPath": "theme-v1:shell.bar.items[*].display"
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-bar-items-enabled",
+      "component": "bar",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Quickshell bar runtime",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.bar.items[*].enabled",
+          "legacyReadPath": "theme-v1:shell.bar.items[*].enabled"
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-bar-items-id",
+      "component": "bar",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Quickshell bar runtime",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.bar.items[*].id",
+          "legacyReadPath": "theme-v1:shell.bar.items[*].id"
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-bar-items-order",
+      "component": "bar",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Quickshell bar runtime",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.bar.items[*].order",
+          "legacyReadPath": "theme-v1:shell.bar.items[*].order"
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-bar-items-orientation",
+      "component": "bar",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Quickshell bar runtime",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.bar.items[*].orientation",
+          "legacyReadPath": "theme-v1:shell.bar.items[*].orientation"
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-bar-items-region",
+      "component": "bar",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Quickshell bar runtime",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.bar.items[*].region",
+          "legacyReadPath": "theme-v1:shell.bar.items[*].region"
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-bar-items-titlelength",
+      "component": "bar",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Quickshell bar runtime",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.bar.items[*].titleLength",
+          "legacyReadPath": "theme-v1:shell.bar.items[*].titleLength"
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-bar-items-visibility",
+      "component": "bar",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Quickshell bar runtime",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.bar.items[*].visibility",
+          "legacyReadPath": "theme-v1:shell.bar.items[*].visibility"
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-bar-layout-position",
+      "component": "bar",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Quickshell bar runtime",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.bar.layout.position",
+          "legacyReadPath": "theme-v1:shell.bar.position"
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-bar-layout-separategroups",
+      "component": "bar",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Quickshell bar runtime",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.bar.layout.separateGroups",
+          "legacyReadPath": "theme-v1:shell.bar.separate_groups"
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-bar-style-border",
+      "component": "bar",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Quickshell bar runtime",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.bar.style.border",
+          "legacyReadPath": "theme-v1:shell.bar.border"
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-bar-style-densityautomatic",
+      "component": "bar",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Quickshell bar runtime",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.bar.style.densityAutomatic",
+          "legacyReadPath": "theme-v1:shell.bar.density_automatic"
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-bar-style-densityscale",
+      "component": "bar",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Quickshell bar runtime",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.bar.style.densityScale",
+          "legacyReadPath": "theme-v1:shell.bar.density_scale"
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-bar-style-edgeinset",
+      "component": "bar",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Quickshell bar runtime",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.bar.style.edgeInset",
+          "legacyReadPath": "theme-v1:shell.bar.edge_inset"
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-bar-style-radiusautomatic",
+      "component": "bar",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Quickshell bar runtime",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.bar.style.radiusAutomatic",
+          "legacyReadPath": "theme-v1:shell.bar.radius_automatic"
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-bar-style-radiusscale",
+      "component": "bar",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Quickshell bar runtime",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.bar.style.radiusScale",
+          "legacyReadPath": "theme-v1:shell.bar.radius_scale"
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-binds-action",
+      "component": "binds",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Hyprland Lua owner",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "exclude",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.binds[*].action",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-binds-arguments",
+      "component": "binds",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Hyprland Lua owner",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "exclude",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.binds[*].arguments[*]",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-binds-enabled",
+      "component": "binds",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Hyprland Lua owner",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "exclude",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.binds[*].enabled",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-binds-id",
+      "component": "binds",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Hyprland Lua owner",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "exclude",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.binds[*].id",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-binds-key",
+      "component": "binds",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Hyprland Lua owner",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "exclude",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.binds[*].key",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-binds-modifiers",
+      "component": "binds",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Hyprland Lua owner",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "exclude",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.binds[*].modifiers[*]",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-document-revision",
+      "component": "settings-document",
+      "fieldClass": "document-metadata",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Settings document loader and writer",
+      "sensitivity": "operational",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-document-preimage",
+      "proofSourceIds": [
+        "schema_registry"
+      ],
+      "fields": [
+        {
+          "path": "settings.revision",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "not-applicable"
+    },
+    {
+      "id": "settings-monitors-enabled",
+      "component": "monitors",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Phase 6 monitor layout owner; dormant in Phase 4",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "exclude",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.monitors[*].enabled",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-monitors-height",
+      "component": "monitors",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Phase 6 monitor layout owner; dormant in Phase 4",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "exclude",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.monitors[*].height",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-monitors-id",
+      "component": "monitors",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Phase 6 monitor layout owner; dormant in Phase 4",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "exclude",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.monitors[*].id",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-monitors-refreshrate",
+      "component": "monitors",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Phase 6 monitor layout owner; dormant in Phase 4",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "exclude",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.monitors[*].refreshRate",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-monitors-scale",
+      "component": "monitors",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Phase 6 monitor layout owner; dormant in Phase 4",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "exclude",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.monitors[*].scale",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-monitors-transform",
+      "component": "monitors",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Phase 6 monitor layout owner; dormant in Phase 4",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "exclude",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.monitors[*].transform",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-monitors-width",
+      "component": "monitors",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Phase 6 monitor layout owner; dormant in Phase 4",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "exclude",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.monitors[*].width",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-monitors-x",
+      "component": "monitors",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Phase 6 monitor layout owner; dormant in Phase 4",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "exclude",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.monitors[*].x",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-monitors-y",
+      "component": "monitors",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Phase 6 monitor layout owner; dormant in Phase 4",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "exclude",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.monitors[*].y",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-notifications-offsetx",
+      "component": "notifications",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox notification owner",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.notifications.offsetX",
+          "legacyReadPath": "theme-v1:shell.notifications.offset_x"
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-notifications-offsety",
+      "component": "notifications",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox notification owner",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.notifications.offsetY",
+          "legacyReadPath": "theme-v1:shell.notifications.offset_y"
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-notifications-position",
+      "component": "notifications",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox notification owner",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.notifications.position",
+          "legacyReadPath": "theme-v1:shell.notifications.position"
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-osd-offsetx",
+      "component": "osd",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox OSD owner",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.osd.offsetX",
+          "legacyReadPath": "theme-v1:shell.osd.offset_x"
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-osd-offsety",
+      "component": "osd",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox OSD owner",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.osd.offsetY",
+          "legacyReadPath": "theme-v1:shell.osd.offset_y"
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-osd-position",
+      "component": "osd",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox OSD owner",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.osd.position",
+          "legacyReadPath": "theme-v1:shell.osd.position"
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-power-acprofile",
+      "component": "power",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Power policy owner",
+      "sensitivity": "personal-policy",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "exclude",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.power.acProfile",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-power-batteryprofile",
+      "component": "power",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Power policy owner",
+      "sensitivity": "personal-policy",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "exclude",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.power.batteryProfile",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-schema-version",
+      "component": "settings-document",
+      "fieldClass": "document-metadata",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Settings document loader and writer",
+      "sensitivity": "operational",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-document-preimage",
+      "proofSourceIds": [
+        "schema_registry"
+      ],
+      "fields": [
+        {
+          "path": "settings.schemaVersion",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "not-applicable"
+    },
+    {
+      "id": "settings-targets-btop-enabled",
+      "component": "targets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Theme target registry and named target owners",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.targets.btop.enabled",
+          "legacyReadPath": "theme-v1:targets.btop"
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-targets-chromium-enabled",
+      "component": "targets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Theme target registry and named target owners",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.targets.chromium.enabled",
+          "legacyReadPath": "theme-v1:targets.chromium"
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-targets-code-enabled",
+      "component": "targets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Theme target registry and named target owners",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.targets.code.enabled",
+          "legacyReadPath": "theme-v1:targets.code"
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-targets-cursor-editor-enabled",
+      "component": "targets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Theme target registry and named target owners",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.targets.cursor_editor.enabled",
+          "legacyReadPath": "theme-v1:targets.cursor_editor"
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-targets-cursor-enabled",
+      "component": "targets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Theme target registry and named target owners",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.targets.cursor.enabled",
+          "legacyReadPath": "theme-v1:targets.cursor"
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-targets-glow-enabled",
+      "component": "targets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Theme target registry and named target owners",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.targets.glow.enabled",
+          "legacyReadPath": "theme-v1:targets.glow"
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-targets-grub-enabled",
+      "component": "targets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Theme target registry and named target owners",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.targets.grub.enabled",
+          "legacyReadPath": "theme-v1:targets.grub"
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-targets-gtk-enabled",
+      "component": "targets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Theme target registry and named target owners",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.targets.gtk.enabled",
+          "legacyReadPath": "theme-v1:targets.gtk"
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-targets-gtk-overrides-accent",
+      "component": "target-appearance",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Theme target appearance generator",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle",
+        "multi_owner_apply"
+      ],
+      "fields": [
+        {
+          "path": "settings.targets.gtk.overrides.accent",
+          "legacyReadPath": "theme-v1:overrides.gtk.accent"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "settings-targets-gtk-overrides-background",
+      "component": "target-appearance",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Theme target appearance generator",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle",
+        "multi_owner_apply"
+      ],
+      "fields": [
+        {
+          "path": "settings.targets.gtk.overrides.background",
+          "legacyReadPath": "theme-v1:overrides.gtk.background"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "settings-targets-gtk-overrides-border",
+      "component": "target-appearance",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Theme target appearance generator",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle",
+        "multi_owner_apply"
+      ],
+      "fields": [
+        {
+          "path": "settings.targets.gtk.overrides.border",
+          "legacyReadPath": "theme-v1:overrides.gtk.border"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "settings-targets-gtk-overrides-foreground",
+      "component": "target-appearance",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Theme target appearance generator",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle",
+        "multi_owner_apply"
+      ],
+      "fields": [
+        {
+          "path": "settings.targets.gtk.overrides.foreground",
+          "legacyReadPath": "theme-v1:overrides.gtk.foreground"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "settings-targets-helium-enabled",
+      "component": "targets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Theme target registry and named target owners",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.targets.helium.enabled",
+          "legacyReadPath": "theme-v1:targets.helium"
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-targets-hyprland-enabled",
+      "component": "targets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Theme target registry and named target owners",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.targets.hyprland.enabled",
+          "legacyReadPath": "theme-v1:targets.hyprland"
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-targets-hyprlock-enabled",
+      "component": "targets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Theme target registry and named target owners",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.targets.hyprlock.enabled",
+          "legacyReadPath": "theme-v1:targets.hyprlock"
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-targets-hyprlock-overrides-accent",
+      "component": "target-appearance",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Theme target appearance generator",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle",
+        "multi_owner_apply"
+      ],
+      "fields": [
+        {
+          "path": "settings.targets.hyprlock.overrides.accent",
+          "legacyReadPath": "theme-v1:overrides.hyprlock.accent"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "settings-targets-hyprlock-overrides-background",
+      "component": "target-appearance",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Theme target appearance generator",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle",
+        "multi_owner_apply"
+      ],
+      "fields": [
+        {
+          "path": "settings.targets.hyprlock.overrides.background",
+          "legacyReadPath": "theme-v1:overrides.hyprlock.background"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "settings-targets-hyprlock-overrides-border",
+      "component": "target-appearance",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Theme target appearance generator",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle",
+        "multi_owner_apply"
+      ],
+      "fields": [
+        {
+          "path": "settings.targets.hyprlock.overrides.border",
+          "legacyReadPath": "theme-v1:overrides.hyprlock.border"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "settings-targets-hyprlock-overrides-foreground",
+      "component": "target-appearance",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Theme target appearance generator",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle",
+        "multi_owner_apply"
+      ],
+      "fields": [
+        {
+          "path": "settings.targets.hyprlock.overrides.foreground",
+          "legacyReadPath": "theme-v1:overrides.hyprlock.foreground"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "settings-targets-kitty-enabled",
+      "component": "targets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Theme target registry and named target owners",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.targets.kitty.enabled",
+          "legacyReadPath": "theme-v1:targets.kitty"
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-targets-micro-enabled",
+      "component": "targets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Theme target registry and named target owners",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.targets.micro.enabled",
+          "legacyReadPath": "theme-v1:targets.micro"
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-targets-obsidian-enabled",
+      "component": "targets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Theme target registry and named target owners",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.targets.obsidian.enabled",
+          "legacyReadPath": "theme-v1:targets.obsidian"
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-targets-powerlevel10k-enabled",
+      "component": "targets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Theme target registry and named target owners",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.targets.powerlevel10k.enabled",
+          "legacyReadPath": "theme-v1:targets.powerlevel10k"
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-targets-quickshell-enabled",
+      "component": "targets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Theme target registry and named target owners",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.targets.quickshell.enabled",
+          "legacyReadPath": "theme-v1:targets.quickshell"
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-targets-sddm-enabled",
+      "component": "targets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Theme target registry and named target owners",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.targets.sddm.enabled",
+          "legacyReadPath": "theme-v1:targets.sddm"
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-targets-stylus-enabled",
+      "component": "targets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Theme target registry and named target owners",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.targets.stylus.enabled",
+          "legacyReadPath": "theme-v1:targets.stylus"
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-targets-stylus-style-set",
+      "component": "targets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Stylus theme generator",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction",
+        "theme_bundle",
+        "multi_owner_apply"
+      ],
+      "fields": [
+        {
+          "path": "settings.targets.stylus.styleSet",
+          "legacyReadPath": "theme-v1:stylus.style_set"
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-targets-t3code-enabled",
+      "component": "targets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Theme target registry and named target owners",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.targets.t3code.enabled",
+          "legacyReadPath": "theme-v1:targets.t3code"
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-targets-wallpaper-enabled",
+      "component": "targets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Theme target registry and named target owners",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.targets.wallpaper.enabled",
+          "legacyReadPath": "theme-v1:targets.wallpaper"
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-targets-widgets-enabled",
+      "component": "targets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Theme target registry and named target owners",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.targets.widgets.enabled",
+          "legacyReadPath": "theme-v1:targets.widgets"
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-targets-zed-enabled",
+      "component": "targets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Theme target registry and named target owners",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.targets.zed.enabled",
+          "legacyReadPath": "theme-v1:targets.zed"
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-schemaversion",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.schemaVersion",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-appearance-backgroundopacity",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].appearance.backgroundOpacity",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-appearance-scrollbars",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].appearance.scrollbars",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-enabled",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].enabled",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-fullscreen-enabled",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].fullscreen.enabled",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-fullscreen-mode",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].fullscreen.mode",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-id",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].id",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-kind",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].kind",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-name",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].name",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-placement-anchor",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].placement.anchor",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-placement-height",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].placement.height",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-placement-width",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].placement.width",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-placement-x",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].placement.x",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-placement-y",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].placement.y",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-settings-columns",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].settings.columns",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-settings-command",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "user-command",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "review",
+        "full": "review"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].settings.command[*]",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-settings-daysahead",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].settings.daysAhead",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-settings-directory",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "user-path",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].settings.directory",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-settings-environment",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "user-command",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "review",
+        "full": "review"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].settings.environment",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-settings-format",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].settings.format",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-settings-historysize",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].settings.historySize",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-settings-interfaces",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].settings.interfaces[*]",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-settings-intervalseconds",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].settings.intervalSeconds",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-settings-items-command",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "user-command",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "review",
+        "full": "review"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].settings.items[*].command[*]",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-settings-items-id",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].settings.items[*].id",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-settings-items-label",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].settings.items[*].label",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-settings-latitude",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].settings.latitude",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-settings-layouts",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].settings.layouts[*]",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-settings-longitude",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].settings.longitude",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-settings-manifest",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "user-command",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "review",
+        "full": "review"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].settings.manifest",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-settings-maxentries",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].settings.maxEntries",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-settings-maxevents",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].settings.maxEvents",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-settings-maxruntimeseconds",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].settings.maxRuntimeSeconds",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-settings-path",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "user-path",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].settings.path",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-settings-player",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].settings.player",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-settings-provider",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].settings.provider",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-settings-providers",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].settings.providers[*]",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-settings-rows",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].settings.rows",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-settings-settings",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "user-command",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "review",
+        "full": "review"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].settings.settings",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-settings-showartwork",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].settings.showArtwork",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-settings-showhidden",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].settings.showHidden",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-settings-showseconds",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].settings.showSeconds",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-settings-style",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].settings.style",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-settings-text",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "personal-policy",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].settings.text",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-settings-timezone",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].settings.timezone",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-settings-title",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "personal-policy",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].settings.title",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-settings-workingdirectory",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "user-path",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].settings.workingDirectory",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-visibility",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].visibility",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-workspaces-ids",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].workspaces.ids[*]",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-workspaces-mode",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].workspaces.mode",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-workspaces-ranges",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].workspaces.ranges[*][*]",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "terminal-colour-0",
+      "component": "appearance",
+      "fieldClass": "theme-data",
+      "storageOwner": "theme-library-document",
+      "runtimeOwner": "Blox theme runtime terminal palette",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "include",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-theme-component-and-generated-preimage",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle"
+      ],
+      "fields": [
+        {
+          "path": "theme.components.appearance.terminalColours.color0",
+          "legacyReadPath": "theme-v1:overrides.ansi.color0"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "terminal-colour-1",
+      "component": "appearance",
+      "fieldClass": "theme-data",
+      "storageOwner": "theme-library-document",
+      "runtimeOwner": "Blox theme runtime terminal palette",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "include",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-theme-component-and-generated-preimage",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle"
+      ],
+      "fields": [
+        {
+          "path": "theme.components.appearance.terminalColours.color1",
+          "legacyReadPath": "theme-v1:overrides.ansi.color1"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "terminal-colour-10",
+      "component": "appearance",
+      "fieldClass": "theme-data",
+      "storageOwner": "theme-library-document",
+      "runtimeOwner": "Blox theme runtime terminal palette",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "include",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-theme-component-and-generated-preimage",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle"
+      ],
+      "fields": [
+        {
+          "path": "theme.components.appearance.terminalColours.color10",
+          "legacyReadPath": "theme-v1:overrides.ansi.color10"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "terminal-colour-11",
+      "component": "appearance",
+      "fieldClass": "theme-data",
+      "storageOwner": "theme-library-document",
+      "runtimeOwner": "Blox theme runtime terminal palette",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "include",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-theme-component-and-generated-preimage",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle"
+      ],
+      "fields": [
+        {
+          "path": "theme.components.appearance.terminalColours.color11",
+          "legacyReadPath": "theme-v1:overrides.ansi.color11"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "terminal-colour-12",
+      "component": "appearance",
+      "fieldClass": "theme-data",
+      "storageOwner": "theme-library-document",
+      "runtimeOwner": "Blox theme runtime terminal palette",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "include",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-theme-component-and-generated-preimage",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle"
+      ],
+      "fields": [
+        {
+          "path": "theme.components.appearance.terminalColours.color12",
+          "legacyReadPath": "theme-v1:overrides.ansi.color12"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "terminal-colour-13",
+      "component": "appearance",
+      "fieldClass": "theme-data",
+      "storageOwner": "theme-library-document",
+      "runtimeOwner": "Blox theme runtime terminal palette",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "include",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-theme-component-and-generated-preimage",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle"
+      ],
+      "fields": [
+        {
+          "path": "theme.components.appearance.terminalColours.color13",
+          "legacyReadPath": "theme-v1:overrides.ansi.color13"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "terminal-colour-14",
+      "component": "appearance",
+      "fieldClass": "theme-data",
+      "storageOwner": "theme-library-document",
+      "runtimeOwner": "Blox theme runtime terminal palette",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "include",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-theme-component-and-generated-preimage",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle"
+      ],
+      "fields": [
+        {
+          "path": "theme.components.appearance.terminalColours.color14",
+          "legacyReadPath": "theme-v1:overrides.ansi.color14"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "terminal-colour-15",
+      "component": "appearance",
+      "fieldClass": "theme-data",
+      "storageOwner": "theme-library-document",
+      "runtimeOwner": "Blox theme runtime terminal palette",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "include",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-theme-component-and-generated-preimage",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle"
+      ],
+      "fields": [
+        {
+          "path": "theme.components.appearance.terminalColours.color15",
+          "legacyReadPath": "theme-v1:overrides.ansi.color15"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "terminal-colour-2",
+      "component": "appearance",
+      "fieldClass": "theme-data",
+      "storageOwner": "theme-library-document",
+      "runtimeOwner": "Blox theme runtime terminal palette",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "include",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-theme-component-and-generated-preimage",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle"
+      ],
+      "fields": [
+        {
+          "path": "theme.components.appearance.terminalColours.color2",
+          "legacyReadPath": "theme-v1:overrides.ansi.color2"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "terminal-colour-3",
+      "component": "appearance",
+      "fieldClass": "theme-data",
+      "storageOwner": "theme-library-document",
+      "runtimeOwner": "Blox theme runtime terminal palette",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "include",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-theme-component-and-generated-preimage",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle"
+      ],
+      "fields": [
+        {
+          "path": "theme.components.appearance.terminalColours.color3",
+          "legacyReadPath": "theme-v1:overrides.ansi.color3"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "terminal-colour-4",
+      "component": "appearance",
+      "fieldClass": "theme-data",
+      "storageOwner": "theme-library-document",
+      "runtimeOwner": "Blox theme runtime terminal palette",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "include",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-theme-component-and-generated-preimage",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle"
+      ],
+      "fields": [
+        {
+          "path": "theme.components.appearance.terminalColours.color4",
+          "legacyReadPath": "theme-v1:overrides.ansi.color4"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "terminal-colour-5",
+      "component": "appearance",
+      "fieldClass": "theme-data",
+      "storageOwner": "theme-library-document",
+      "runtimeOwner": "Blox theme runtime terminal palette",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "include",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-theme-component-and-generated-preimage",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle"
+      ],
+      "fields": [
+        {
+          "path": "theme.components.appearance.terminalColours.color5",
+          "legacyReadPath": "theme-v1:overrides.ansi.color5"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "terminal-colour-6",
+      "component": "appearance",
+      "fieldClass": "theme-data",
+      "storageOwner": "theme-library-document",
+      "runtimeOwner": "Blox theme runtime terminal palette",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "include",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-theme-component-and-generated-preimage",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle"
+      ],
+      "fields": [
+        {
+          "path": "theme.components.appearance.terminalColours.color6",
+          "legacyReadPath": "theme-v1:overrides.ansi.color6"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "terminal-colour-7",
+      "component": "appearance",
+      "fieldClass": "theme-data",
+      "storageOwner": "theme-library-document",
+      "runtimeOwner": "Blox theme runtime terminal palette",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "include",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-theme-component-and-generated-preimage",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle"
+      ],
+      "fields": [
+        {
+          "path": "theme.components.appearance.terminalColours.color7",
+          "legacyReadPath": "theme-v1:overrides.ansi.color7"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "terminal-colour-8",
+      "component": "appearance",
+      "fieldClass": "theme-data",
+      "storageOwner": "theme-library-document",
+      "runtimeOwner": "Blox theme runtime terminal palette",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "include",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-theme-component-and-generated-preimage",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle"
+      ],
+      "fields": [
+        {
+          "path": "theme.components.appearance.terminalColours.color8",
+          "legacyReadPath": "theme-v1:overrides.ansi.color8"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "terminal-colour-9",
+      "component": "appearance",
+      "fieldClass": "theme-data",
+      "storageOwner": "theme-library-document",
+      "runtimeOwner": "Blox theme runtime terminal palette",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "include",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-theme-component-and-generated-preimage",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle"
+      ],
+      "fields": [
+        {
+          "path": "theme.components.appearance.terminalColours.color9",
+          "legacyReadPath": "theme-v1:overrides.ansi.color9"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "theme-library-id",
+      "component": "theme-metadata",
+      "fieldClass": "theme-metadata",
+      "storageOwner": "theme-library-document",
+      "runtimeOwner": "theme library",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "include",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-theme-document-preimage",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle"
+      ],
+      "fields": [
+        {
+          "path": "theme.id",
+          "legacyReadPath": "theme-v1:id"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "theme-library-name",
+      "component": "theme-metadata",
+      "fieldClass": "theme-metadata",
+      "storageOwner": "theme-library-document",
+      "runtimeOwner": "theme library",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "include",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-theme-document-preimage",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle"
+      ],
+      "fields": [
+        {
+          "path": "theme.name",
+          "legacyReadPath": "theme-v1:name"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "theme-library-variant",
+      "component": "theme-metadata",
+      "fieldClass": "theme-metadata",
+      "storageOwner": "theme-library-document",
+      "runtimeOwner": "theme library",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "include",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-theme-document-preimage",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle"
+      ],
+      "fields": [
+        {
+          "path": "theme.variant",
+          "legacyReadPath": "theme-v1:variant"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "wallpaper-fit",
+      "component": "wallpaper",
+      "fieldClass": "theme-data",
+      "storageOwner": "theme-library-document",
+      "runtimeOwner": "Blox wallpaper owner",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "include",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-theme-component-and-generated-preimage",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle"
+      ],
+      "fields": [
+        {
+          "path": "theme.components.wallpaper.fit",
+          "legacyReadPath": "theme-v1:wallpaper.fit"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "wallpaper-source",
+      "component": "wallpaper",
+      "fieldClass": "theme-data",
+      "storageOwner": "theme-library-document",
+      "runtimeOwner": "Blox wallpaper owner",
+      "sensitivity": "user-path",
+      "bundle": {
+        "minimal": "include",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-theme-component-and-generated-preimage",
+      "proofSourceIds": [
+        "schema_registry",
+        "theme_bundle"
+      ],
+      "fields": [
+        {
+          "path": "theme.components.wallpaper.source",
+          "legacyReadPath": "theme-v1:wallpaper.path"
+        }
+      ],
+      "previewSupport": "component-preview"
+    },
+    {
+      "id": "settings-widgets-widgets-placement-sizing",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].placement.sizing",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-settings-fontsize",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].settings.fontSize",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-settings-fontfamily",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].settings.fontFamily",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-settings-timeoutseconds",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].settings.timeoutSeconds",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-settings-padding",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].settings.padding",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-appearance-presentation",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "public",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "include",
+        "full": "include"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].appearance.presentation",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-settings-actions",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "user-command",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "review",
+        "full": "review"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].settings.actions.left",
+          "legacyReadPath": null
+        },
+        {
+          "path": "settings.widgets.widgets[*].settings.actions.left.command[*]",
+          "legacyReadPath": null
+        },
+        {
+          "path": "settings.widgets.widgets[*].settings.actions.left.environment",
+          "legacyReadPath": null
+        },
+        {
+          "path": "settings.widgets.widgets[*].settings.actions.left.kind",
+          "legacyReadPath": null
+        },
+        {
+          "path": "settings.widgets.widgets[*].settings.actions.left.timeoutSeconds",
+          "legacyReadPath": null
+        },
+        {
+          "path": "settings.widgets.widgets[*].settings.actions.left.workingDirectory",
+          "legacyReadPath": null
+        },
+        {
+          "path": "settings.widgets.widgets[*].settings.actions.right",
+          "legacyReadPath": null
+        },
+        {
+          "path": "settings.widgets.widgets[*].settings.actions.right.command[*]",
+          "legacyReadPath": null
+        },
+        {
+          "path": "settings.widgets.widgets[*].settings.actions.right.environment",
+          "legacyReadPath": null
+        },
+        {
+          "path": "settings.widgets.widgets[*].settings.actions.right.kind",
+          "legacyReadPath": null
+        },
+        {
+          "path": "settings.widgets.widgets[*].settings.actions.right.timeoutSeconds",
+          "legacyReadPath": null
+        },
+        {
+          "path": "settings.widgets.widgets[*].settings.actions.right.workingDirectory",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    },
+    {
+      "id": "settings-widgets-widgets-settings-restartpolicy",
+      "component": "widgets",
+      "fieldClass": "setting",
+      "storageOwner": "settings-document",
+      "runtimeOwner": "Blox Widgets host",
+      "sensitivity": "user-command",
+      "bundle": {
+        "minimal": "exclude",
+        "standard": "review",
+        "full": "review"
+      },
+      "rollback": "restore-settings-preimage-with-new-revision",
+      "proofSourceIds": [
+        "schema_registry",
+        "settings_transaction"
+      ],
+      "fields": [
+        {
+          "path": "settings.widgets.widgets[*].settings.restartPolicy",
+          "legacyReadPath": null
+        }
+      ],
+      "previewSupport": "none"
+    }
+  ],
+  "derivedFields": [
+    {
+      "path": "settings.targets[id].mode",
+      "runtimeOwner": "SettingsThemeEditorController.targetApplyMode and future target capability registry",
+      "persisted": false,
+      "status": "resolved",
+      "evidence": "Chester confirmed on 27 September 2026. shell/modules/SettingsThemeEditorController.qml::targetApplyMode derives the label by target ID; reference-split/TargetsPage.qml displays it read-only and has no editor.",
+      "resolution": "Read-only apply behavior belongs to the target runtime and is derived from target identity. It is not a user preference and is not persisted in Settings or theme data."
+    }
+  ]
+}

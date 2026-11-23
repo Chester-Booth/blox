@@ -17,6 +17,18 @@ Rectangle {
 
     signal focusRequested()
 
+    function previousControlLabel() {
+        return root.viewIndex ? "Previous day" : "Previous month";
+    }
+
+    function viewControlLabel() {
+        return root.viewIndex ? "Show calendar" : "Show day";
+    }
+
+    function nextControlLabel() {
+        return root.viewIndex ? "Next day" : "Next month";
+    }
+
     function shift(amount) {
         var d = new Date(controller.selectedDate);
         if (viewIndex === 0) {
@@ -38,12 +50,21 @@ Rectangle {
         controller.finishNavigation(pendingNavigationDate, pendingNavigationKind);
     }
 
+    function dismissEventMenu() {
+        eventMenu.close();
+        controller.eventMenuOpen = false;
+    }
+
     function visibleEvents() {
         var start = viewIndex === 0 ? new Date(shownMonth.getFullYear(), shownMonth.getMonth(), 1) : new Date(controller.selectedDate.getFullYear(), controller.selectedDate.getMonth(), controller.selectedDate.getDate());
         var end = viewIndex === 0 ? new Date(shownMonth.getFullYear(), shownMonth.getMonth() + 1, 1) : new Date(controller.selectedDate.getFullYear(), controller.selectedDate.getMonth(), controller.selectedDate.getDate() + 1);
         return controller.events.filter(function(event) {
             return event.time.kind === "all_day" ? event.time.start_date < Qt.formatDate(end, "yyyy-MM-dd") && event.time.end_date_exclusive > Qt.formatDate(start, "yyyy-MM-dd") : event.time.start_ms < end.getTime() && event.time.end_ms > start.getTime();
         });
+    }
+
+    Keys.onEscapePressed: event => {
+        event.accepted = root.controller.childWindowOpen;
     }
 
     width: 360
@@ -84,6 +105,9 @@ Rectangle {
             Layout.fillWidth: true
 
             BloxButton {
+                objectName: "calendar-prev"
+                Accessible.role: Accessible.Button
+                Accessible.name: root.previousControlLabel()
                 compact: true
                 iconName: "arrow-left"
                 onClicked: root.shift(-1)
@@ -91,12 +115,15 @@ Rectangle {
 
                 BloxToolTip {
                     shown: parent.hovered
-                    text: root.viewIndex ? "Previous day" : "Previous month"
+                    text: root.previousControlLabel()
                 }
 
             }
 
             BloxButton {
+                objectName: "calendar-view"
+                Accessible.role: Accessible.Button
+                Accessible.name: root.viewControlLabel()
                 compact: true
                 iconName: root.viewIndex ? "calendar-blank" : "clock"
                 onClicked: {
@@ -106,7 +133,7 @@ Rectangle {
 
                 BloxToolTip {
                     shown: parent.hovered
-                    text: root.viewIndex ? "Show calendar" : "Show day"
+                    text: root.viewControlLabel()
                 }
 
             }
@@ -117,12 +144,16 @@ Rectangle {
 
                 Text {
                     Layout.fillWidth: true
-                    text: root.viewIndex ? Qt.formatDate(root.controller.selectedDate, "dddd d MMMM") : Qt.formatDate(root.shownMonth, "MMMM yyyy")
+                    Layout.minimumWidth: 0
+                    text: root.viewIndex ? Qt.formatDate(root.controller.selectedDate, "ddd d MMMM") : Qt.formatDate(root.shownMonth, "MMMM yyyy")
                     color: Theme.foreground
                     font.family: Theme.bodyFontFamily
                     font.pixelSize: 16
                     font.bold: true
                     horizontalAlignment: Text.AlignHCenter
+                    wrapMode: Text.NoWrap
+                    elide: Text.ElideRight
+                    Accessible.name: root.viewIndex ? Qt.formatDate(root.controller.selectedDate, "dddd d MMMM") : text
 
                     TapHandler {
                         onTapped: {
@@ -148,6 +179,9 @@ Rectangle {
             }
 
             BloxButton {
+                objectName: "calendar-create"
+                Accessible.role: Accessible.Button
+                Accessible.name: "Create event"
                 compact: true
                 iconName: "plus"
                 accent: Theme.accent
@@ -155,12 +189,15 @@ Rectangle {
 
                 BloxToolTip {
                     shown: parent.hovered
-                    text: "Create event"
+                    text: parent.Accessible.name
                 }
 
             }
 
             BloxButton {
+                objectName: "calendar-next"
+                Accessible.role: Accessible.Button
+                Accessible.name: root.nextControlLabel()
                 compact: true
                 iconName: "arrow-right"
                 onClicked: root.shift(1)
@@ -168,7 +205,7 @@ Rectangle {
 
                 BloxToolTip {
                     shown: parent.hovered
-                    text: root.viewIndex ? "Next day" : "Next month"
+                    text: root.nextControlLabel()
                 }
 
             }
@@ -251,6 +288,7 @@ Rectangle {
 
     CalendarEventMenu {
         id: eventMenu
+        objectName: "calendar-event-menu"
 
         onOpened: root.controller.eventMenuOpen = true
         onClosed: root.controller.eventMenuOpen = false

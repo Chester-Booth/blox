@@ -8,6 +8,16 @@ Column {
     property string activePlayerName: ""
     property var mediaPlayers: []
     readonly property bool hasPlayers: root.players().length > 0
+    readonly property string seekDisabledReason: {
+        const player = root.activePlayer();
+        if (!player)
+            return "";
+        if (!player.canSeek)
+            return "This player does not support seeking.";
+        if (!player.lengthSupported || !isFinite(player.length) || player.length <= 0)
+            return "The track length is unavailable.";
+        return "";
+    }
 
     signal selectPlayer(string playerName)
 
@@ -270,35 +280,59 @@ Column {
 
                 }
 
-                Rectangle {
+                Item {
                     width: parent.width
                     height: 10
-                    radius: 999
-                    color: Theme.background
-                    border.color: Qt.rgba(1, 1, 1, 0.08)
-                    border.width: 1
+                    HoverHandler { id: seekHover }
+                    BloxToolTip {
+                        objectName: "media-seek-reason"
+                        shown: seekHover.hovered && !seek.enabled && root.seekDisabledReason.length > 0
+                        text: root.seekDisabledReason
+                    }
 
                     Rectangle {
-                        width: Math.max(parent.height, Math.round((parent.width - 2) * media.progress))
-                        height: parent.height - 2
-                        x: 1
-                        y: 1
-                        radius: 999
-                        color: Theme.blue
-                    }
-
-                    MouseArea {
+                        id: seek
+                        objectName: "media-seek"
                         anchors.fill: parent
-                        enabled: media.player && media.player.canSeek && media.lengthValue > 0
-                        hoverEnabled: true
-                        cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-                        onClicked: (mouse) => {
-                            const ratio = Math.max(0, Math.min(1, mouse.x / width));
-                            media.player.position = ratio * media.lengthValue;
+                        enabled: !!media.player && media.player.canSeek && media.lengthValue > 0
+                        activeFocusOnTab: enabled
+                        Keys.onPressed: event => {
+                            let next = media.visualPosition;
+                            if (event.key === Qt.Key_Left) next -= 5;
+                            else if (event.key === Qt.Key_Right) next += 5;
+                            else if (event.key === Qt.Key_Home) next = 0;
+                            else if (event.key === Qt.Key_End) next = media.lengthValue;
+                            else return;
+                            media.player.position = Math.max(0, Math.min(media.lengthValue, next));
                             media.visualPosition = media.player.position;
+                            event.accepted = true;
+                        }
+                        radius: 999
+                        color: Theme.background
+                        border.color: activeFocus ? Theme.blue : Theme.withAlpha(Theme.foreground, 0.08)
+                        border.width: 1
+
+                        Rectangle {
+                            width: Math.max(parent.height, Math.round((parent.width - 2) * media.progress))
+                            height: parent.height - 2
+                            x: 1
+                            y: 1
+                            radius: 999
+                            color: Theme.blue
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            enabled: media.player && media.player.canSeek && media.lengthValue > 0
+                            hoverEnabled: true
+                            cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                            onClicked: (mouse) => {
+                                const ratio = Math.max(0, Math.min(1, mouse.x / width));
+                                media.player.position = ratio * media.lengthValue;
+                                media.visualPosition = media.player.position;
+                            }
                         }
                     }
-
                 }
 
             }
@@ -333,17 +367,26 @@ Column {
             model: root.players().length
 
             Rectangle {
+                objectName: "media-player-" + index
+                activeFocusOnTab: true
+                function activate() { root.selectPlayer(root.players()[index].dbusName); }
+                Keys.onPressed: event => {
+                    if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
+                        activate();
+                        event.accepted = true;
+                    }
+                }
                 width: 6
                 height: 6
                 radius: 999
                 anchors.verticalCenter: parent.verticalCenter
-                color: index === root.effectivePlayerIndex() ? Theme.blue : Theme.surfaceAlt
+                color: activeFocus || index === root.effectivePlayerIndex() ? Theme.blue : Theme.surfaceAlt
 
                 MouseArea {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: root.selectPlayer(modelData.dbusName)
+                    onClicked: parent.activate()
                 }
 
             }

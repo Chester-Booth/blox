@@ -47,13 +47,36 @@ Singleton {
     property string monoFontFamily: defaults.font("mono")
     property string bodyFontFamily: defaults.font("ui")
     property bool previewActive: false
-    property string widgetProfile: defaults.ready ? defaults.document.widgets.profile : ""
-    property real widgetOpacity: defaults.ready && defaults.widgetProfile(widgetProfile) ? defaults.widgetProfile(widgetProfile).opacity : 0
-    property int widgetBasePadding: defaults.ready && defaults.widgetProfile(widgetProfile) ? defaults.widgetProfile(widgetProfile).padding : 0
-    property int widgetBaseRadius: defaults.ready && defaults.widgetProfile(widgetProfile) ? defaults.widgetProfile(widgetProfile).radius : 0
-    readonly property int widgetPadding: Shape.roundScaled(widgetBasePadding, densityScale)
-    readonly property int widgetRadius: Shape.roundScaled(widgetBaseRadius, radiusScale)
-    property int widgetFontSize: defaults.ready && defaults.widgetProfile(widgetProfile) ? defaults.widgetProfile(widgetProfile).font_size : 0
+    property string widgetError: ""
+    property var widgetRegistry: ({})
+    property bool widgetRegistryLoaded: false
+    readonly property string widgetsRoot: Quickshell.env("BLOX_WIDGETS_ROOT") || Quickshell.shellDir + "/../widgets"
+    function ensureWidgetRegistry() {
+        if (!widgetRegistryLoaded && !widgetRegistryProcess.running
+                && widgetItems.some(item => item.enabled && item.kind === "qml"))
+            widgetRegistryProcess.running = true;
+    }
+    // A scan owns its lifetime. Widget eligibility and a newer Settings scan
+    // cannot cancel it and let a late collector overwrite the newer registry.
+    property Process widgetRegistryProcess: Process {
+        command: ["python3", "-m", "blox_widgets.cli", "registry"]
+        environment: ({PYTHONPATH: root.widgetsRoot + "/lib"})
+        stdout: StdioCollector {
+            onStreamFinished: {
+                if (root.widgetRegistryLoaded) return;
+                try {
+                    const result = JSON.parse(text);
+                    if (result.ok !== true || !result.registry || typeof result.registry !== "object")
+                        throw new Error("registry scan failed");
+                    root.widgetRegistry = result.registry;
+                    root.widgetRegistryLoaded = true;
+                } catch (error) {
+                    console.warn("[blox.widgets] invalid registry response: " + error);
+                }
+            }
+        }
+    }
+    onWidgetItemsChanged: ensureWidgetRegistry()
     property var widgetItems: []
     property string barPosition: defaults.ready ? defaults.themeDocument().shell.bar.position : ""
     property bool barSeparateGroups: defaults.ready ? defaults.themeDocument().shell.bar.separate_groups : false
@@ -106,7 +129,8 @@ Singleton {
 
     signal osdPositionPreviewRequested()
     signal notificationPositionPreviewRequested()
-    signal widgetEditModeRequested()
+    signal widgetLayoutEditRequested()
+    signal widgetEditModeRequested(var widgets)
     signal widgetEditModeCancelRequested()
     signal widgetEditModeFinished(string widgetsJson, string returnWorkspace)
 
@@ -266,6 +290,14 @@ Singleton {
         return themeId;
     }
 
+    function useDefaultsWhenThemeUnavailable() {
+        if (root.ready || root.previewActive || !defaults.ready)
+            return;
+
+        document.reset();
+        root.ready = true;
+    }
+
     // Cursor images belong to each Wayland client. Recreate Blox's windows so
     // they request the cursor image from the newly selected theme.
     function reloadCursor() : string {
@@ -287,7 +319,7 @@ Singleton {
 
     function reloadWidgets() : string {
         widgetFile.reload();
-        return widgetProfile;
+        return widgetError || "reloaded";
     }
 
     ThemeDefaults {
@@ -313,12 +345,15 @@ Singleton {
             if (!defaults.ready)
                 return ;
 
-            if (!root.previewActive)
-                root.loadJson(text());
-            else
+            if (!root.previewActive) {
+                if (!root.loadJson(text()))
+                    root.useDefaultsWhenThemeUnavailable();
+            } else {
                 root.loadActiveIdentity(text());
+            }
             root.ready = defaults.ready;
         }
+        onLoadFailed: root.useDefaultsWhenThemeUnavailable()
         onFileChanged: {
             if (!root.previewActive)
                 reload();
@@ -362,9 +397,15 @@ Singleton {
         watchChanges: true
         printErrors: false
         onLoaded: {
-            if (!root.previewActive && !root.loadWidgets(text()))
-                root.resetWidgets();
+            if (!root.previewActive)
+                root.loadWidgets(text());
 
+        }
+        onLoadFailed: {
+            if (!root.previewActive) {
+                root.widgetItems = [];
+                root.widgetError = "Widget profile could not be read.";
+            }
         }
         onFileChanged: {
             if (!root.previewActive)

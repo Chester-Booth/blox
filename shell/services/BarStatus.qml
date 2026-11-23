@@ -1,9 +1,12 @@
+import qs.shared
 import QtQuick
 import Quickshell
 import Quickshell.Io
 
 Scope {
     id: root
+
+    property var settingsController: null
 
     property string scriptRoot: ""
     property bool barVisible: true
@@ -105,28 +108,24 @@ Scope {
 
     ScriptPoller {
         id: workspaces
-
         command: [root.scriptRoot + "/workspaces/status.py"]
         interval: 300000
     }
 
     ScriptPoller {
         id: systemInfo
-
         command: [root.scriptRoot + "/status/system.sh"]
         interval: 60000
     }
 
     ScriptPoller {
         id: todo
-
         command: [root.scriptRoot + "/todo/status.sh"]
         interval: 60000
     }
 
     ScriptPoller {
         id: updates
-
         command: [root.scriptRoot + "/update/status.sh"]
         interval: 3.6e+06
         timeout: 155000
@@ -141,6 +140,8 @@ Scope {
 
     PowerProfileStatus {
         id: powerProfile
+        batteryStatus: battery.json
+        policy: root.settingsController && root.settingsController.settings ? root.settingsController.settings.power : null
 
         interval: 60000
     }
@@ -211,14 +212,12 @@ Scope {
 
     ScriptPoller {
         id: privacy
-
         command: [root.scriptRoot + "/status/privacy.py"]
         interval: 30000
     }
 
     ScriptPoller {
         id: caffeine
-
         command: [root.scriptRoot + "/status/caffeine.sh"]
         interval: 30000
     }

@@ -1,0 +1,56 @@
+{
+  "modules/SettingsApplyReviewPage.qml": [
+    "spacing: 3",
+    "spacing: 3",
+    "spacing: 3",
+    "spacing: 2"
+  ],
+  "modules/SettingsBundleIncludedFileCard.qml": [
+    "spacing: 1",
+    "spacing: 0",
+    "Layout.topMargin: -1"
+  ],
+  "modules/SettingsDriftReviewLayer.qml": [
+    "spacing: 2",
+    "spacing: 4"
+  ],
+  "modules/SettingsPageContent.qml": [
+    "spacing: 20"
+  ],
+  "modules/SettingsSearchResults.qml": [
+    "spacing: 6",
+    "spacing: 7",
+    "Layout.topMargin: 24",
+    "spacing: 0",
+    "anchors.leftMargin: 8",
+    "anchors.rightMargin: 8",
+    "spacing: 8",
+    "spacing: 0",
+    "anchors.leftMargin: 12",
+    "anchors.rightMargin: 12",
+    "spacing: 10",
+    "spacing: 3"
+  ],
+  "modules/SettingsShapePreview.qml": [
+    "anchors.margins: Math.max(2, root.innerPadding + (active ? root.borderSize : 0))",
+    "spacing: Math.max(2, 3 * root.densityScale * root.sceneScale)",
+    "spacing: 3 * root.densityScale * root.sceneScale",
+    "radius: Math.min(width / 2, 2 * root.radiusScale * root.sceneScale)"
+  ],
+  "modules/SettingsSubpageButton.qml": [
+    "spacing: 2"
+  ],
+  "modules/SettingsWindow.qml": [
+    "anchors.margins: 1",
+    "padding: 6",
+    "spacing: 2",
+    "anchors.leftMargin: 8",
+    "anchors.rightMargin: 8",
+    "spacing: 2",
+    "anchors.rightMargin: 4",
+    "spacing: 1",
+    "Layout.leftMargin: 27",
+    "spacing: 1",
+    "spacing: 2"
+  ]
+}

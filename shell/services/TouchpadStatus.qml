@@ -1,4 +1,6 @@
+import qs.shared
 import QtQuick
+import "ActionContract.js" as ActionContract
 import Quickshell
 
 // Guard the compositor-backed touchpad owner. No touchpad is a valid ready
@@ -85,6 +87,22 @@ Scope {
 
     function toggle() {
         return root.providerReady && providerLoader.item.toggle();
+    }
+
+    function action(operation, value) {
+        const status = root.json || {};
+        const blocked = ActionContract.blockedCode(status, status.capability && status.capability.canChange);
+        if (blocked)
+            return ActionContract.result(false, blocked, "the action is unavailable");
+        const beforeRevision = Number(status.providerRevision || 0);
+        if (["set", "toggle"].indexOf(operation) < 0 || (operation === "set" && ["on", "off"].indexOf(String(value)) < 0))
+            return ActionContract.result(false, "invalid-data", "use touchpad set on|off or toggle");
+        const enabled = operation === "toggle" ? status.enabled !== true : value === "on";
+        const accepted = root.setEnabled(enabled);
+        value = enabled ? "on" : "off";
+        if (!accepted)
+            return ActionContract.result(false, "failed", "the provider rejected the action");
+        return ActionContract.accepted(operation, value, root.json || {}, beforeRevision);
     }
 
     Loader {

@@ -5,6 +5,7 @@ set -u
 # unavailable result, not a reason for the shell to fail.
 # shellcheck source=common.sh
 source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/common.sh"
+query_script="$(dirname -- "${BASH_SOURCE[0]}")/asusctl-query.py"
 
 unavailable() {
 	local reason="${1:-command-unavailable}"
@@ -22,16 +23,25 @@ unavailable() {
 	emit_status "$payload" false false false unknown "$reason"
 }
 
-if ! command -v asusctl >/dev/null 2>&1 || ! command -v jq >/dev/null 2>&1; then
+if ! command -v asusctl >/dev/null 2>&1 || ! command -v jq >/dev/null 2>&1 ||
+	! command -v python3 >/dev/null 2>&1; then
 	unavailable
 	exit 0
 fi
 
-profiles_raw="$(asusctl profile list 2>/dev/null)" || {
+# All three reads share six seconds, including time between queries. Each read
+# also keeps its own two-second budget in the independent capture supervisor.
+BLOX_ASUSCTL_DEADLINE="$(python3 "$query_script" --deadline)" || {
 	unavailable "query-failed"
 	exit 0
 }
-active_raw="$(asusctl profile get 2>/dev/null)" || {
+export BLOX_ASUSCTL_DEADLINE
+
+profiles_raw="$(python3 "$query_script" profile list)" || {
+	unavailable "query-failed"
+	exit 0
+}
+active_raw="$(python3 "$query_script" profile get)" || {
 	unavailable "query-failed"
 	exit 0
 }
@@ -61,7 +71,7 @@ fi
 fan_curve_available=false
 fan_curve_enabled=false
 fan_curve_reason="fan-curves-unsupported"
-if fan_curve_raw="$(asusctl fan-curve --get-enabled 2>&1)" &&
+if fan_curve_raw="$(python3 "$query_script" fan-curve --get-enabled)" &&
 	[[ -n "$fan_curve_raw" ]] &&
 	! grep -Eqi '(^|[[:space:]])error:|unknowninterface|not supported' <<<"$fan_curve_raw"; then
 	fan_curve_available=true

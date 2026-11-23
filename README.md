@@ -15,8 +15,14 @@ and one theme model that drives every surface.
 ## Install
 
 ```sh
+make native-services
 ./bin/bloxctl lifecycle install --prefix "$HOME/.local"
 ```
+
+The native QML module needs a C++17 compiler, `pkg-config` and Qt 6 Gui, QML and
+D-Bus development tools, including `moc`. Rebuild it before installing or
+updating after native source changes. Installation checks the compiled module;
+startup never compiles it.
 
 The installer is unprivileged, idempotent, supports `--dry-run`, reports
 conflicts before overwriting anything, and keeps pre-image backups under
@@ -32,14 +38,16 @@ bloxctl audio toggle-mute --json
 bloxctl audio set-mic muted --json
 bloxctl display set-refresh eDP-1 144 --json
 bloxctl gpu set-mode hybrid --json
+bloxctl settings get --json   # current Settings document and revision
+bloxctl theme list --json     # available themes
 bloxctl doctor [--json]        # local install health, redacted by default
 bloxctl lifecycle update       # new generation plus recorded migrations
 bloxctl lifecycle rollback     # back to the previous generation
 bloxctl lifecycle uninstall    # remove owned paths, keep user data
 ```
 
-`settings` and `theme` groups are reserved for later releases and return a
-typed unavailable result today.
+`settings set` and `settings reset` require the revision returned by
+`settings get`. The `theme` group supports list, show, preview, apply and reset.
 
 Refresh choices come from each active Hyprland monitor at its current
 resolution. GPU mode needs both integrated and discrete graphics plus
@@ -64,8 +72,11 @@ when the vendor backend proves that independent curves can be read and changed.
 
 Package data lives under `<prefix>/share/blox/`. User config, personal
 overrides, imported content, generated state, cache and runtime files follow
-the XDG ownership rules in `packaging/layout.py`. Blox never writes outside
-its owned roots and never needs root privileges.
+the XDG ownership rules in `packaging/layout.py`. Enabling theme targets also
+updates their application configuration, with pre-images for rollback. The
+installer does not need root privileges.
+Corrupt Settings files are retained as private `settings.json.corrupt.*` or
+`settings.json.bak.corrupt.*` diagnostic copies until an explicit config purge.
 
 ## Development
 

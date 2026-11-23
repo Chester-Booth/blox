@@ -2,6 +2,7 @@ import qs.popouts
 import qs.services
 import qs.shared
 import QtQuick
+import QtQuick.Window
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
@@ -9,8 +10,11 @@ import Quickshell.Wayland
 Scope {
     id: root
 
+    property var settingsController: null
     property bool barOpen: true
+    property var fullscreenWidgetOutputs: []
     readonly property alias controller: barSurfaceController
+    readonly property alias audioStatus: barContentController.audio
 
     BarSurfaceController {
         id: barSurfaceController
@@ -34,7 +38,9 @@ Scope {
         // BLOX_NOTIFICATION_FOCUS_SCRIPT; the feature stays off when unset.
         focusScript: Quickshell.env("BLOX_NOTIFICATION_FOCUS_SCRIPT") || ""
         onOpenRequested: (centreY) => {
-            return barSurfaceController.openHoverPanel("notifications", centreY);
+            if (centreY > 0)
+                return barSurfaceController.openHoverPanel("notifications", centreY);
+            return barSurfaceController.openKeyboardPanel("notifications");
         }
         onCloseRequested: barSurfaceController.closePanel()
     }
@@ -54,6 +60,7 @@ Scope {
     BarContentController {
         id: barContentController
 
+        settingsController: root.settingsController
         scriptRoot: barSurfaceController.scriptRoot
         barVisible: barSurfaceController.barVisible
         openPanel: barSurfaceController.openPanel
@@ -62,6 +69,13 @@ Scope {
     CalendarEventWindows {
         controller: barContentController.calendarController
         targetScreen: barSurfaceController.activeScreen
+    }
+
+    Connections {
+        target: barContentController.brightness
+        function onBrightnessApplied(percent) {
+            barSurfaceController.osdLevelPreview("brightness", percent, false);
+        }
     }
 
     Variants {
@@ -80,19 +94,31 @@ Scope {
             // Reserve the bar and one equal inset on each side of the bar.
             // This keeps the gap from the screen edge to the bar equal to the
             // gap from the bar to the window area.
-            readonly property int barDepth: Theme.railWidth + barInset * 2
+            readonly property int barDepth: barSurfaceController.barDepth
             // Keep a smaller inset at the two open ends of the bar.
             readonly property int barEndInset: Math.round(barInset / 2)
+            property string submittingReservationKey: ""
 
             screen: modelData
             implicitWidth: barSurfaceController.horizontalBar ? modelData.width : (barSurfaceController.barVisible || barSurfaceController.barSlide > 0.01 ? barDepth : 1)
             implicitHeight: barSurfaceController.horizontalBar ? (barSurfaceController.barVisible || barSurfaceController.barSlide > 0.01 ? barDepth : 1) : modelData.height
-            exclusiveZone: barSurfaceController.barPinnedOpen ? Math.round(barDepth * barSurfaceController.barSlide) : 0
+            exclusiveZone: barSurfaceController.requestedExclusiveZone
             focusable: false
             visible: Theme.ready
             color: "transparent"
             WlrLayershell.layer: WlrLayer.Overlay
             WlrLayershell.namespace: "blox-bar"
+
+            Connections {
+                target: panel.contentItem.Window.window
+                function onAfterAnimating() {
+                    panel.submittingReservationKey = barSurfaceController.reservationKey;
+                }
+                function onFrameSwapped() {
+                    if (panel.backingWindowVisible)
+                        barSurfaceController.barFrameSubmitted(panel.modelData.name, panel.submittingReservationKey);
+                }
+            }
 
             anchors {
                 left: Theme.barPosition === "left"
@@ -119,6 +145,9 @@ Scope {
             }
 
             Rectangle {
+                id: railSurface
+                // Keep the mapped bar and its reservation while hiding covered visuals.
+                opacity: root.fullscreenWidgetOutputs.indexOf(panel.modelData.name) >= 0 ? 0 : 1
                 x: barSurfaceController.horizontalBar ? panel.barEndInset : Theme.barPosition === "left" ? panel.barInset + Math.round(-panel.barDepth * (1 - barSurfaceController.barSlide)) : Theme.barPosition === "right" ? panel.barInset + Math.round(panel.barDepth * (1 - barSurfaceController.barSlide)) : 0
                 y: barSurfaceController.horizontalBar ? (Theme.barPosition === "top" ? panel.barInset + Math.round(-panel.barDepth * (1 - barSurfaceController.barSlide)) : Theme.barPosition === "bottom" ? panel.barInset + Math.round(panel.barDepth * (1 - barSurfaceController.barSlide)) : 0) : panel.barEndInset
                 width: barSurfaceController.horizontalBar ? Math.max(0, parent.width - panel.barEndInset * 2) : Theme.railWidth
@@ -147,6 +176,7 @@ Scope {
 
                     property var verticalTrayToggleItem: null
                     property var horizontalTrayToggleItem: null
+                    readonly property var panelScreen: panel.screen
                     property string verticalTrayRegion: ""
                     property string horizontalTrayRegion: ""
                     readonly property real alongSurfacePadding: Theme.barScaledSpacing(4)
@@ -508,6 +538,9 @@ Scope {
                                     workspaceController: barWorkspaceController
                                     notificationController: barNotificationController
                                     horizontal: false
+                                    region: "hidden"
+                                    panelAnchorSource: configuredRail.verticalTrayToggleItem
+                                    anchorScreen: configuredRail.panelScreen
                                     panelExtent: panel.height
                                 }
 
@@ -591,6 +624,9 @@ Scope {
                                     workspaceController: barWorkspaceController
                                     notificationController: barNotificationController
                                     horizontal: true
+                                    region: "hidden"
+                                    panelAnchorSource: configuredRail.horizontalTrayToggleItem
+                                    anchorScreen: configuredRail.panelScreen
                                     panelExtent: panel.height
                                 }
 
@@ -615,8 +651,9 @@ Scope {
                 targetScreen: modelData
                 open: barSurfaceController.activeScreen === modelData && barSurfaceController.openPanel === "power"
                 updateSummary: barContentController.content.updateSummary()
+                actions: barContentController.actions
                 onAction: (kind) => {
-                    return barContentController.run(barContentController.content.powerCommand(kind));
+                    barContentController.runPower(barContentController.content.powerCommand(kind));
                 }
                 onClose: barSurfaceController.closePanel()
             }

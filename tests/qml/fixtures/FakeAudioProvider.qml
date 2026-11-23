@@ -7,6 +7,7 @@ QtObject {
     property real lastUpdatedMs: 1000
     property bool ok: true
     property string lastError: ""
+    property int volume: 42
     property bool muted: false
     property bool micMuted: false
     readonly property var json: ({
@@ -16,7 +17,7 @@ QtObject {
         "stale": false,
         "busy": false,
         "errorCode": null,
-        "volume": 42,
+        "volume": root.volume,
         "muted": root.muted,
         "micMuted": root.micMuted,
         "micCanChange": true,
@@ -38,6 +39,7 @@ QtObject {
     }
 
     function setVolume(value) {
+        root.volume = Number(value);
         root.changed();
         return true;
     }

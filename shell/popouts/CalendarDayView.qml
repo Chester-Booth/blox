@@ -172,6 +172,16 @@ ColumnLayout {
 
             Rectangle {
                 required property int index
+                objectName: "calendar-week-day-" + index
+                activeFocusOnTab: true
+                Keys.onPressed: event => {
+                    if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
+                        root.selected(day);
+                        event.accepted = true;
+                    }
+                }
+                border.width: activeFocus ? 1 : 0
+                border.color: Theme.blue
                 property date day: root.weekDate(index)
                 property bool chosen: day.toDateString() === root.selectedDate.toDateString()
 

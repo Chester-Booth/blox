@@ -1,0 +1,299 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://blox.local/schemas/settings-fields-v1.json",
+  "title": "Blox persistent field registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "registryVersion",
+    "settingsSchema",
+    "themeManifest",
+    "documentPathPrefix",
+    "proofSources",
+    "fields",
+    "derivedFields"
+  ],
+  "properties": {
+    "registryVersion": {
+      "const": 1
+    },
+    "settingsSchema": {
+      "type": "string"
+    },
+    "themeManifest": {
+      "type": "string"
+    },
+    "documentPathPrefix": {
+      "const": "settings"
+    },
+    "proofSources": {
+      "type": "object",
+      "properties": {
+        "schema_registry": {
+          "type": "string",
+          "minLength": 1
+        },
+        "settings_transaction": {
+          "type": "string",
+          "minLength": 1
+        },
+        "theme_bundle": {
+          "type": "string",
+          "minLength": 1
+        },
+        "multi_owner_apply": {
+          "type": "string",
+          "minLength": 1
+        },
+        "phase6_display": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "schema_registry",
+        "settings_transaction",
+        "theme_bundle",
+        "multi_owner_apply",
+        "phase6_display"
+      ]
+    },
+    "fields": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/fieldGroup"
+      }
+    },
+    "derivedFields": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/derivedField"
+      }
+    }
+  },
+  "$defs": {
+    "bundleRules": {
+      "type": "object",
+      "properties": {
+        "minimal": {
+          "type": "string",
+          "enum": [
+            "include",
+            "exclude",
+            "review"
+          ]
+        },
+        "standard": {
+          "type": "string",
+          "enum": [
+            "include",
+            "exclude",
+            "review"
+          ]
+        },
+        "full": {
+          "type": "string",
+          "enum": [
+            "include",
+            "exclude",
+            "review"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "minimal",
+        "standard",
+        "full"
+      ]
+    },
+    "field": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "legacyReadPath": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "legacyReadPath"
+      ]
+    },
+    "fieldGroup": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*$"
+        },
+        "component": {
+          "type": "string",
+          "minLength": 1
+        },
+        "fieldClass": {
+          "type": "string",
+          "enum": [
+            "setting",
+            "theme-data",
+            "theme-metadata",
+            "document-metadata",
+            "private-content"
+          ]
+        },
+        "storageOwner": {
+          "type": "string",
+          "minLength": 1
+        },
+        "runtimeOwner": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sensitivity": {
+          "type": "string",
+          "enum": [
+            "public",
+            "user-path",
+            "user-command",
+            "personal-policy",
+            "machine-specific",
+            "private",
+            "operational"
+          ]
+        },
+        "bundle": {
+          "$ref": "#/$defs/bundleRules"
+        },
+        "rollback": {
+          "type": "string",
+          "minLength": 1
+        },
+        "proofSourceIds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "fields": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/field"
+          }
+        },
+        "previewSupport": {
+          "type": "string",
+          "enum": [
+            "component-preview",
+            "field-preview",
+            "none",
+            "not-applicable"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "component",
+        "fieldClass",
+        "storageOwner",
+        "runtimeOwner",
+        "sensitivity",
+        "bundle",
+        "rollback",
+        "proofSourceIds",
+        "fields",
+        "previewSupport"
+      ]
+    },
+    "derivedField": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "runtimeOwner": {
+          "type": "string",
+          "minLength": 1
+        },
+        "persisted": {
+          "const": false
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "resolved",
+            "ownership-conflict"
+          ]
+        },
+        "evidence": {
+          "type": "string"
+        },
+        "resolution": {
+          "type": "string",
+          "minLength": 1
+        },
+        "conflict": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "runtimeOwner",
+        "persisted",
+        "status",
+        "evidence"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "resolved"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "required": [
+              "resolution"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "ownership-conflict"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "required": [
+              "conflict"
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

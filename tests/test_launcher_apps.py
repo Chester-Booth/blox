@@ -1,6 +1,7 @@
 import importlib.util
 import json
 import os
+import re
 import shlex
 import subprocess
 import shutil
@@ -24,9 +25,9 @@ import sys
 sys.path.insert(0, str(%r))
 from desktop_exec import GioUnix, resolve_command
 
-entry = GioUnix.DesktopAppInfo.new("blox-theme-picker.desktop")
+entry = GioUnix.DesktopAppInfo.new("blox-settings.desktop")
 assert entry is not None, "desktop entry was not resolved"
-command, working_directory = resolve_command("blox-theme-picker")
+command, working_directory = resolve_command("blox-settings")
 assert command == shlex.split(entry.get_string("Exec")), command
 assert working_directory is None, working_directory
 """ % str(DESKTOP_EXEC_MODULE.parent)
@@ -121,29 +122,62 @@ class AppControllerTests(unittest.TestCase):
 
         popen.assert_not_called()
         command = run.call_args.args[0]
-        self.assertEqual(command[:2], ["hyprctl", "dispatch"])
+        self.assertEqual(command[:2], ["hyprctl", "eval"])
+        self.assertIn("hl.dispatch(hl.dsp.exec_cmd(", command[2])
         self.assertIn('workspace = "3 silent"', command[2])
         self.assertIn("BLOX_LAUNCH_ID=request-1", command[2])
         self.assertIn("BLOX_LAUNCH_WORKSPACE=3", command[2])
         self.assertIn("XCURSOR_THEME=blox-generated", command[2])
         self.assertIn("cd -- '/tmp/work files'", command[2])
         self.assertIn("'two words'", command[2])
+        startup_rule = run.call_args_list[0].args[0][2]
+        self.assertIn("hl.window_rule(", startup_rule)
+        self.assertIn("old.rule:set_enabled(false)", startup_rule)
+        self.assertIn("timer:set_enabled(false)", startup_rule)
+        self.assertIn("timeout=60000", startup_rule)
+
+    def test_workspace_launch_finds_user_bin_with_compositor_system_path(self):
+        with tempfile.TemporaryDirectory(prefix="blox-launch-path-") as temporary:
+            user_bin = Path(temporary) / "user bin"
+            user_bin.mkdir()
+            executable = user_bin / "blox-settings-ipc"
+            executable.write_text("#!/bin/sh\nprintf '%s' \"$1\"\n")
+            executable.chmod(0o755)
+            command = desktop_exec._workspace_command(
+                ["blox-settings-ipc", "settingsUi"], None,
+                {"PATH": f"{user_bin}:/usr/bin"}, 3, "path-proof",
+            )
+            result = subprocess.run(
+                ["/bin/sh", "-c", command], env={"PATH": "/usr/bin"},
+                capture_output=True, text=True, check=True,
+            )
+            self.assertEqual(result.stdout, "settingsUi")
 
     @mock.patch.object(desktop_exec.subprocess, "run")
     @mock.patch.object(desktop_exec.subprocess, "Popen")
-    def test_workspace_rule_failure_falls_back_to_detached_process(self, popen, run):
+    def test_workspace_rule_failure_never_launches_an_unplaced_second_process(self, popen, run):
         run.return_value.returncode = 1
         popen.return_value.pid = 1234
 
         self.assertEqual(
-            0,
+            1,
             desktop_exec.launch_detached(
                 ["example-app"], None, {}, "example-app.desktop", 3, "request-2"
             ),
         )
 
-        self.assertEqual("request-2", popen.call_args.kwargs["env"]["BLOX_LAUNCH_ID"])
-        self.assertEqual("3", popen.call_args.kwargs["env"]["BLOX_LAUNCH_WORKSPACE"])
+        popen.assert_not_called()
+
+    @mock.patch.object(desktop_exec.subprocess, "run")
+    @mock.patch.object(desktop_exec.subprocess, "Popen")
+    def test_workspace_timeout_does_not_duplicate_an_uncertain_launch(self, popen, run):
+        run.side_effect = subprocess.TimeoutExpired(["hyprctl"], 5)
+        with self.assertRaises(subprocess.TimeoutExpired):
+            desktop_exec.launch_detached(["example-app"], None, {}, workspace_id=3,
+                                         launch_id="widget-test", timeout_seconds=5)
+        self.assertEqual(run.call_args.kwargs["timeout"], 5)
+        run.assert_called_once()
+        popen.assert_not_called()
 
     @mock.patch.object(desktop_exec.subprocess, "run")
     @mock.patch.object(desktop_exec.subprocess, "Popen")
@@ -394,8 +428,8 @@ class AppControllerTests(unittest.TestCase):
         # shipped IPC passthrough exactly as an installed system would.
         fake_bin = data_home / "bin"
         fake_bin.mkdir()
-        (fake_bin / "blox-theme-ipc").write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
-        (fake_bin / "blox-theme-ipc").chmod(0o755)
+        (fake_bin / "blox-settings-ipc").write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+        (fake_bin / "blox-settings-ipc").chmod(0o755)
         probe_env = {**os.environ, "XDG_DATA_HOME": str(data_home), "PATH": f"{fake_bin}:{os.environ['PATH']}"}
         probe = subprocess.run(
             [sys.executable, "-c", DESKTOP_EXEC_PROBE],
@@ -406,10 +440,91 @@ class AppControllerTests(unittest.TestCase):
         )
         self.assertEqual(0, probe.returncode, (probe.stderr or "") + (probe.stdout or ""))
 
-    def test_launcher_accepts_a_successful_apply_with_warnings(self):
+    def test_launcher_retains_startup_context_for_later_windows(self):
         source = LAUNCHER.read_text(encoding="utf-8")
-        self.assertIn("response.ok === true && response.data && response.data.theme_id", source)
-        self.assertNotIn("(exitCode === 0 || exitCode === 10) && response.data", source)
+        method = re.search(r"function handleHyprlandEvent\(event\) \{(.*?)^    \}", source, re.M | re.S)
+        probe = r"""
+const assert = require('node:assert/strict');
+const vm = require('node:vm');
+const body = JSON.parse(require('node:fs').readFileSync(0, 'utf8')).body;
+const now = Date.now();
+const context = {workspaceTransfers: [{launchId:'request-1', workspaceId:3, startedAt:now, expiresAt:now+300000}]};
+vm.runInNewContext('function handle(event) {' + body + '}', context);
+context.handle({name:'custom',data:'blox_launch_workspace_assigned>>request-1'});
+assert.equal(context.workspaceTransfers.length,1);
+assert.ok(context.workspaceTransfers[0].expiresAt >= now+14000);
+assert.ok(context.workspaceTransfers[0].expiresAt <= now+16000);
+context.workspaceTransfers[0].startedAt=now-299000;
+context.handle({name:'custom',data:'blox_launch_workspace_assigned>>request-1'});
+assert.equal(context.workspaceTransfers[0].expiresAt,now+1000);
+"""
+        result = subprocess.run(["node", "-e", probe], input=json.dumps({"body":method.group(1)}),
+                                capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_launcher_normalises_hyprland_window_addresses(self):
+        source = LAUNCHER.read_text(encoding="utf-8")
+        method = re.search(
+            r"function handleHyprlandEvent\(event\) \{(.*?)^    \}",
+            source,
+            re.M | re.S,
+        )
+        self.assertIsNotNone(method)
+        probe = r"""
+const assert = require('node:assert/strict');
+const request = JSON.parse(require('node:fs').readFileSync(0, 'utf8'));
+const calls = [];
+const transfers = [{launchId: 'request-1', workspaceId: 3}];
+const quickshell = {shellDir: '/shell', execDetached(args) { calls.push(args); }};
+const handle = new Function('event', 'workspaceTransfers', 'Quickshell', 'expireWorkspaceTransfers', request.body);
+handle({name: 'openwindow', data: 'abc123,3,Example,Title'}, transfers, quickshell, () => {});
+handle({name: 'openwindow', data: '0xdef456,3,Example,Title'}, transfers, quickshell, () => {});
+handle({name: 'openwindow', data: 'not-an-address,3,Example,Title'}, transfers, quickshell, () => {});
+assert.equal(calls.length, 2);
+assert.equal(calls[0][2], '0xabc123');
+assert.equal(calls[1][2], '0xdef456');
+assert.deepEqual(JSON.parse(calls[0][3]), [{launchId: 'request-1', workspaceId: 3}]);
+"""
+        completed = subprocess.run(
+            ["node", "-e", probe],
+            input=json.dumps({"body": method.group(1)}),
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+
+    def test_launcher_theme_activation_uses_shared_owner_and_preserves_busy_guard(self):
+        source = LAUNCHER.read_text(encoding="utf-8")
+        method = re.search(r"function applyTheme\(entry\) \{(.*?)^    \}", source, re.M | re.S)
+        self.assertIsNotNone(method)
+        probe = r"""
+const assert = require('node:assert/strict');
+const request = JSON.parse(require('node:fs').readFileSync(0, 'utf8'));
+const calls = [];
+let signals = 0;
+const owner = {busy: false, quickApply(entry) { calls.push(entry); }};
+const activate = new Function('SettingsApplyController', 'themeApplyStarted', 'entry', request.body);
+function apply(entry) { activate(owner, () => signals++, entry); }
+apply(null);
+apply({name: 'No source'});
+assert.equal(calls.length, 0);
+assert.equal(signals, 0);
+owner.busy = true;
+apply(request.entry);
+assert.equal(calls.length, 0);
+assert.equal(signals, 0);
+owner.busy = false;
+apply(request.entry);
+assert.deepEqual(calls, [request.entry]);
+assert.equal(signals, 1);
+"""
+        completed = subprocess.run(
+            ["node", "-e", probe],
+            input=json.dumps({"body": method.group(1), "entry": {"id": "catppuccin-mocha", "name": "Mocha", "preview": {"widget_count": 2}}}),
+            capture_output=True, text=True, check=False,
+        )
+        self.assertEqual(completed.returncode, 0, completed.stderr)
 
     def test_active_cursor_environment_uses_the_current_generation(self):
         state = Path(tempfile.mkdtemp(prefix="blox-desktop-cursor-"))
@@ -476,9 +591,35 @@ class AppControllerTests(unittest.TestCase):
         )
 
         self.assertTrue(moved)
-        self.assertEqual("dispatch", commands[1][1])
+        self.assertEqual(["hyprctl", "eval"], commands[1][:2])
+        self.assertIn("hl.dispatch(hl.dsp.window.move({", commands[1][2])
         self.assertIn('workspace = 3, window = "address:0xabc", follow = false', commands[1][2])
+        self.assertEqual(["hyprctl", "eval"], commands[2][:2])
+        self.assertIn("hl.dispatch(hl.dsp.event(", commands[2][2])
         self.assertIn("blox_launch_workspace_assigned>>request-3", commands[2][2])
+
+    def test_sandboxed_startup_windows_match_one_pending_desktop(self):
+        client = {"address": "0xabc", "pid": 4242, "class": "org.example.App",
+                  "workspace": {"id": 4}}
+        def run(command, **kwargs):
+            return subprocess.CompletedProcess(command, 0,
+                json.dumps([client]) if command[1:3] == ["clients", "-j"] else "", "")
+        context = {"launchId": "request-1", "workspaceId": 3,
+                   "desktopId": "org.example.App", "existingAddresses": []}
+        with mock.patch.object(assign_workspace, "_environment_for", return_value={}):
+            for address in ["0xabc", "0xdef"]:
+                client["address"] = address
+                self.assertTrue(assign_workspace.assign_workspace(address, [context], run=run))
+            self.assertFalse(assign_workspace.assign_workspace("0xdef",
+                [{**context, "existingAddresses": ["0xdef"]}], run=run))
+            self.assertFalse(assign_workspace.assign_workspace("0xdef",
+                [context, {**context, "launchId": "request-2"}], run=run))
+            for tags in [{b"BLOX_LAUNCH_ID": b"other", b"BLOX_LAUNCH_WORKSPACE": b"3"},
+                         {b"BLOX_LAUNCH_ID": b"request-1", b"BLOX_LAUNCH_WORKSPACE": b"4"}]:
+                with mock.patch.object(assign_workspace, "_environment_for", return_value=tags):
+                    self.assertFalse(assign_workspace.assign_workspace("0xdef", [context], run=run))
+            client["class"] = "unrelated"
+            self.assertFalse(assign_workspace.assign_workspace("0xdef", [context], run=run))
 
     def test_open_window_with_an_untracked_launch_is_left_alone(self):
         root = Path(tempfile.mkdtemp(prefix="blox-launch-environment-"))
@@ -516,13 +657,14 @@ class AppControllerTests(unittest.TestCase):
     @mock.patch.object(appctl.subprocess, "check_output")
     def test_focuses_the_most_recent_matching_window(self, check_output, run):
         check_output.return_value = json.dumps([
-            {"address": "0xold", "class": "Example", "initialClass": "", "focusHistoryID": 8},
-            {"address": "0xnew", "class": "other", "initialClass": "example.desktop", "focusHistoryID": 0},
+            {"address": "0xabc", "class": "Example", "initialClass": "", "focusHistoryID": 8},
+            {"address": "0xdef", "class": "other", "initialClass": "example.desktop", "focusHistoryID": 0},
         ]).encode()
         run.return_value.returncode = 0
         with mock.patch.object(appctl.sys, "argv", ["appctl.py", "Example.desktop"]):
             self.assertEqual(0, appctl.main())
-        self.assertEqual("address:0xnew", run.call_args.args[0][-1])
+        self.assertEqual(["hyprctl", "eval"], run.call_args.args[0][:2])
+        self.assertIn('hl.dispatch(hl.dsp.focus({window="address:0xdef"}))', run.call_args.args[0][-1])
 
     @mock.patch.object(appctl.subprocess, "check_output", return_value=b"[]")
     def test_returns_three_when_the_app_is_not_running(self, _check_output):

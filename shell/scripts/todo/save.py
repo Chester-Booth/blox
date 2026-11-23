@@ -40,4 +40,11 @@ def main():
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    try:
+        raise SystemExit(main())
+    except PermissionError as error:
+        print(str(error), file=sys.stderr)
+        raise SystemExit(4)
+    except OSError as error:
+        print(str(error), file=sys.stderr)
+        raise SystemExit(1)

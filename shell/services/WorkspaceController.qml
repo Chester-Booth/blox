@@ -1,3 +1,4 @@
+import qs.shared
 import QtQuick
 import Quickshell
 import Quickshell.Hyprland
@@ -7,13 +8,27 @@ Scope {
     id: root
 
     property string scriptRoot: ""
+    property var hyprland: Hyprland
     property var items: []
     property var special: ({
     })
     property string alertWorkspaceIds: ","
     property string alertWindowAddress: ""
-    property string pendingLookupAddress: ""
+    property var alertLookupRequests: ({})
+    property var activeLookupRequest: null
+    property var pendingFocusLookup: null
+    property var pendingUrgentLookup: null
+    readonly property string pendingLookupAddress: pendingUrgentLookup ? pendingUrgentLookup.address
+        : pendingFocusLookup ? pendingFocusLookup.address : ""
+    property int focusLookupRevision: 0
+    property int urgentLookupRevision: 0
+    property int workspaceRevision: 0
+    property bool lookupExited: false
+    property bool lookupOutputFinished: false
+    property string lookupOutput: ""
+    property bool lookupSucceeded: false
     property bool blinkOn: true
+    property bool statusRefreshQueued: false
 
     signal statusRefreshRequested()
     signal privacyRefreshRequested()
@@ -29,21 +44,27 @@ Scope {
     }
 
     function focusedWorkspaceId() {
-        return Hyprland.focusedWorkspace ? Hyprland.focusedWorkspace.id : activeWorkspaceId();
+        return hyprland.focusedWorkspace ? hyprland.focusedWorkspace.id : activeWorkspaceId();
     }
 
     function hasAlert(id) {
         return alertWorkspaceIds.indexOf("," + id + ",") >= 0;
     }
 
-    function addAlert(id, address) {
+    function addAlert(id, address, request) {
         if (id <= 0)
             return ;
+
+        const previous = alertLookupRequests[id];
+        if (request && request.purpose === "focus" && previous && previous.purpose === "urgent") return;
+        const requests = Object.assign({}, alertLookupRequests);
+        requests[id] = request || {purpose: "urgent", address: address};
+        alertLookupRequests = requests;
 
         if (!hasAlert(id))
             alertWorkspaceIds += id + ",";
 
-        if (address !== undefined && address.length > 0)
+        if ((!request || request.purpose !== "focus") && address !== undefined && address.length > 0)
             alertWindowAddress = address;
 
         urgentSwitchDelay.restart();
@@ -51,15 +72,25 @@ Scope {
 
     function clearAlert(id) {
         alertWorkspaceIds = alertWorkspaceIds.replace("," + id + ",", ",");
+        const requests = Object.assign({}, alertLookupRequests);
+        delete requests[id];
+        alertLookupRequests = requests;
     }
 
     function dispatch(expression) {
         Quickshell.execDetached(["hyprctl", "dispatch", expression]);
     }
 
-    function focusWindow(address) {
+    // Socket events omit 0x while the clients snapshot includes it.
+    function normaliseWindowAddress(address) {
         const value = String(address || "");
-        if (!/^0x[0-9a-fA-F]+$/.test(value))
+        if (!/^(0x)?[0-9a-fA-F]+$/.test(value)) return "";
+        return value.startsWith("0x") ? value : "0x" + value;
+    }
+
+    function focusWindow(address) {
+        const value = normaliseWindowAddress(address);
+        if (!value)
             return false;
 
         dispatch("hl.dsp.focus({ window = \"address:" + value + "\" })");
@@ -83,21 +114,138 @@ Scope {
         statusRefreshRequested();
     }
 
-    function lookupWindowWorkspace(address) {
-        const value = String(address || "");
-        if (!/^0x[0-9a-fA-F]+$/.test(value))
-            return ;
-
-        if (lookup.running) {
-            pendingLookupAddress = value;
-            return ;
+    // Focus affects the chosen application and titles appear in workspace tooltips.
+    // Keep both event versions, but batch a compositor update into one snapshot.
+    function affectsStatus(name) {
+        switch (name) {
+        case "workspace": case "workspacev2":
+        case "createworkspace": case "createworkspacev2":
+        case "destroyworkspace": case "destroyworkspacev2":
+        case "moveworkspace": case "moveworkspacev2":
+        case "renameworkspace":
+        case "activespecial": case "activespecialv2":
+        case "focusedmon": case "focusedmonv2":
+        case "monitoradded": case "monitoraddedv2":
+        case "monitorremoved": case "monitorremovedv2":
+        case "openwindow": case "closewindow":
+        case "movewindow": case "movewindowv2":
+        case "activewindow": case "activewindowv2":
+        case "windowtitle": case "windowtitlev2":
+        case "urgent": case "pin": case "configreloaded":
+            return true;
+        default:
+            return false;
         }
-        lookup.command = ["python3", scriptRoot + "/workspaces/window-for-address.py", value];
+    }
+
+    function flushStatusRefresh() {
+        statusRefreshQueued = false;
+        statusRefreshRequested();
+    }
+
+    function queueStatusRefresh() {
+        if (statusRefreshQueued) return;
+        statusRefreshQueued = true;
+        Qt.callLater(flushStatusRefresh);
+    }
+
+    function handleRawEvent(event) {
+        if (affectsStatus(event.name)) queueStatusRefresh();
+        if (event.name === "workspace" || event.name === "workspacev2") {
+            invalidateFocusLookup();
+            const activeId = parseInt(event.data.split(",")[0]);
+            if (!isNaN(activeId)) clearAlert(activeId);
+        } else if (event.name === "openwindow" || event.name === "closewindow") {
+            if (event.name === "closewindow") invalidateFocusLookup();
+            privacyRefreshRequested();
+        } else if (event.name === "urgent") {
+            alertWindowAddress = normaliseWindowAddress(event.data);
+            lookupWindowWorkspace(alertWindowAddress, "urgent");
+            urgentSwitchDelay.restart();
+        } else if (event.name === "activewindowv2") {
+            lookupWindowWorkspace(event.data || "", "focus");
+        } else if (["focusedmon", "focusedmonv2", "activespecial", "activespecialv2",
+                    "movewindow", "movewindowv2"].indexOf(event.name) >= 0) {
+            invalidateFocusLookup();
+        }
+    }
+
+    function invalidateFocusLookup() {
+        workspaceRevision++;
+        focusLookupRevision++;
+        pendingFocusLookup = null;
+        clearFocusAlerts();
+    }
+
+    function clearFocusAlerts() {
+        for (const id of Object.keys(alertLookupRequests)) {
+            if (alertLookupRequests[id].purpose === "focus") clearAlert(id);
+        }
+    }
+
+    function lookupWindowWorkspace(address, purpose) {
+        const urgent = purpose === "urgent";
+        if (!urgent) {
+            focusLookupRevision++;
+            pendingFocusLookup = null;
+            clearFocusAlerts();
+        }
+        const value = normaliseWindowAddress(address);
+        if (!value) return;
+        const request = {address: value, purpose: urgent ? "urgent" : "focus",
+            revision: urgent ? ++urgentLookupRevision : focusLookupRevision,
+            workspaceRevision: workspaceRevision, workspaceId: focusedWorkspaceId()};
+        if (urgent) pendingUrgentLookup = request;
+        else pendingFocusLookup = request;
+        drainLookups();
+    }
+
+    // Read the latest pending state when the previous process and its pipe finish.
+    function drainLookups() {
+        if (activeLookupRequest || lookup.running) return;
+        const request = pendingUrgentLookup || pendingFocusLookup;
+        if (!request) return;
+        if (request.purpose === "urgent") pendingUrgentLookup = null;
+        else pendingFocusLookup = null;
+        activeLookupRequest = request;
+        lookupExited = false;
+        lookupOutputFinished = false;
+        lookupSucceeded = false;
+        lookupOutput = "";
+        lookup.command = ["python3", scriptRoot + "/workspaces/window-for-address.py", request.address];
         lookup.running = true;
     }
 
+    function finishLookup() {
+        if (!activeLookupRequest || !lookupExited || !lookupOutputFinished) return;
+        const request = activeLookupRequest;
+        const current = request.purpose === "urgent"
+            ? request.revision === urgentLookupRevision
+            : request.revision === focusLookupRevision && request.workspaceRevision === workspaceRevision
+                && request.workspaceId === focusedWorkspaceId();
+        if (lookupSucceeded && current) {
+            try {
+                const info = JSON.parse(lookupOutput);
+                const workspaceId = parseInt(info.workspace);
+                if (normaliseWindowAddress(info.address) === request.address
+                        && !isNaN(workspaceId) && workspaceId !== focusedWorkspaceId())
+                    addAlert(workspaceId, request.address, request);
+            } catch (error) { }
+        }
+        activeLookupRequest = null;
+        Qt.callLater(drainLookups);
+    }
+
+    // Quickshell reports a failed exec through runningChanged without exited.
+    function finishFailedLookupStart() {
+        if (!activeLookupRequest || lookup.running || lookupExited) return;
+        activeLookupRequest = null;
+        Qt.callLater(drainLookups);
+    }
+
     function activate(item) {
-        if (!focusWindow(item.urgentAddress || alertWindowAddress))
+        const alert = alertLookupRequests[item.id];
+        if (!focusWindow(item.urgentAddress || (alert ? alert.address : "") || alertWindowAddress))
             focusWorkspace(item.id);
 
         clearAlert(item.id);
@@ -108,28 +256,18 @@ Scope {
     Process {
         id: lookup
 
-        onExited: {
-            if (root.pendingLookupAddress.length === 0)
-                return ;
-
-            const address = root.pendingLookupAddress;
-            root.pendingLookupAddress = "";
-            Qt.callLater(() => {
-                return root.lookupWindowWorkspace(address);
-            });
+        onRunningChanged: if (!running) Qt.callLater(root.finishFailedLookupStart)
+        onExited: (code, status) => {
+            root.lookupExited = true;
+            root.lookupSucceeded = code === 0 && status === 0;
+            root.finishLookup();
         }
 
         stdout: StdioCollector {
             onStreamFinished: {
-                try {
-                    const info = this.text.trim().length > 0 ? JSON.parse(this.text.trim()) : {
-                    };
-                    const workspaceId = parseInt(info.workspace);
-                    if (!isNaN(workspaceId) && workspaceId !== root.focusedWorkspaceId())
-                        root.addAlert(workspaceId, info.address || "");
-
-                } catch (error) {
-                }
+                root.lookupOutput = this.text;
+                root.lookupOutputFinished = true;
+                root.finishLookup();
             }
         }
 
@@ -137,28 +275,17 @@ Scope {
 
     Connections {
         function onFocusedMonitorChanged() {
+            root.invalidateFocusLookup();
             root.focusedMonitorChanged();
         }
 
-        function onRawEvent(event) {
-            root.statusRefreshRequested();
-            if (event.name === "workspace" || event.name === "workspacev2") {
-                const activeId = parseInt(event.data.split(",")[0]);
-                if (!isNaN(activeId))
-                    root.clearAlert(activeId);
+        function onFocusedWorkspaceChanged() { root.invalidateFocusLookup(); }
 
-            } else if (event.name === "openwindow" || event.name === "closewindow") {
-                root.privacyRefreshRequested();
-            } else if (event.name === "urgent") {
-                root.alertWindowAddress = event.data || "";
-                root.lookupWindowWorkspace(root.alertWindowAddress);
-                urgentSwitchDelay.restart();
-            } else if (event.name === "activewindowv2") {
-                root.lookupWindowWorkspace(event.data || "");
-            }
+        function onRawEvent(event) {
+            root.handleRawEvent(event);
         }
 
-        target: Hyprland
+        target: root.hyprland
     }
 
     Timer {
@@ -182,7 +309,8 @@ Scope {
                 if (!item.active) {
                     root.activate(item);
                 } else {
-                    root.focusWindow(item.urgentAddress || root.alertWindowAddress);
+                    const alert = root.alertLookupRequests[item.id];
+                    root.focusWindow(item.urgentAddress || (alert ? alert.address : "") || root.alertWindowAddress);
                     root.clearAlert(item.id);
                     root.alertWindowAddress = "";
                     root.statusRefreshRequested();

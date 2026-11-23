@@ -71,6 +71,7 @@ Item {
 
                     TrayRailItem {
                         item: modelData
+                        menuOpen: root.context.surfaceController.trayMenuOpen
                         onHovered: root.context.surfaceController.trayItemEntered()
                         onOpenMenu: (item, centre) => {
                             return root.context.surfaceController.openTrayMenu(item, root.context.mappedCentre(this, centre));

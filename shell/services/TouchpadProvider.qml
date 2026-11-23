@@ -1,3 +1,4 @@
+import qs.shared
 import QtQuick
 import Quickshell
 import Quickshell.Io
@@ -16,7 +17,8 @@ Scope {
     property var pendingEnabled: null
     property string queryError: ""
     property string actionError: ""
-    property bool timedOut: false
+    property bool queryTimedOut: false
+    property bool actionTimedOut: false
     readonly property bool providerReady: root.scriptRoot.length > 0
     readonly property bool actionBusy: actionProcess.running || root.pendingEnabled !== null
     readonly property int revision: state.revision
@@ -54,7 +56,7 @@ Scope {
         }
         root.refreshPending = false;
         root.pendingRaw = "";
-        root.timedOut = false;
+        root.queryTimedOut = false;
         queryProcess.running = true;
     }
 
@@ -63,7 +65,8 @@ Scope {
             return false;
         root.actionError = "";
         root.pendingEnabled = value === true;
-        actionProcess.command = [root.scriptRoot + "/osd/control.sh", root.pendingEnabled ? "touchpad-on" : "touchpad-off"];
+        root.actionTimedOut = false;
+        actionProcess.command = [root.scriptRoot + "/providers/hardware-control.sh", "touchpad-set", root.pendingEnabled ? "true" : "false"];
         actionProcess.running = true;
         actionWatchdog.restart();
         return true;
@@ -89,8 +92,8 @@ Scope {
         onStarted: queryWatchdog.restart()
         onExited: (exitCode, exitStatus) => {
             queryWatchdog.stop();
-            forceKill.stop();
-            if (root.timedOut) {
+            queryKill.stop();
+            if (root.queryTimedOut) {
                 root.applyQueryFailure("query-timeout");
             } else if (exitCode === 0 && exitStatus === 0) {
                 const output = root.pendingRaw.trim();
@@ -120,7 +123,8 @@ Scope {
         command: []
         onExited: (exitCode, exitStatus) => {
             actionWatchdog.stop();
-            if (root.timedOut)
+            actionKill.stop();
+            if (root.actionTimedOut)
                 root.actionError = "action-timeout";
             else if (exitCode !== 0 || exitStatus !== 0)
                 root.actionError = "action-failed";
@@ -139,9 +143,9 @@ Scope {
         onTriggered: {
             if (!queryProcess.running)
                 return ;
-            root.timedOut = true;
+            root.queryTimedOut = true;
             queryProcess.signal(15);
-            forceKill.restart();
+            queryKill.restart();
         }
     }
 
@@ -153,20 +157,27 @@ Scope {
         onTriggered: {
             if (!actionProcess.running)
                 return ;
-            root.timedOut = true;
+            root.actionTimedOut = true;
             actionProcess.signal(15);
-            forceKill.restart();
+            actionKill.restart();
         }
     }
 
     Timer {
-        id: forceKill
-
+        id: queryKill
         interval: 1000
         repeat: false
         onTriggered: {
             if (queryProcess.running)
                 queryProcess.signal(9);
+        }
+    }
+
+    Timer {
+        id: actionKill
+        interval: 1000
+        repeat: false
+        onTriggered: {
             if (actionProcess.running)
                 actionProcess.signal(9);
         }

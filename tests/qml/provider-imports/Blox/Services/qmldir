@@ -1,0 +1,4 @@
+module Blox.Services
+NativeServiceOwner 1.0 NativeServiceOwner.qml
+ImageCacheResolver 1.0 ImageCacheResolver.qml
+KeyboardBacklightWatcher 1.0 KeyboardBacklightWatcher.qml

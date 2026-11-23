@@ -1,3 +1,4 @@
+import qs.shared
 import QtQuick
 import Quickshell
 import Quickshell.Io
@@ -10,6 +11,9 @@ Scope {
     property string scriptRoot: ""
     property int interval: 60000
     property int timeout: 5000
+    // Three two-second reads share a six-second deadline. Leave time for
+    // capture and JSON parsing before the provider cancels the whole helper.
+    property int queryTimeout: Math.max(8000, root.timeout)
     property bool syncReady: false
     property bool refreshPending: false
     property string pendingRaw: ""
@@ -17,7 +21,10 @@ Scope {
     property var pendingFanCurve: null
     property string queryError: ""
     property string actionError: ""
-    property bool timedOut: false
+    property bool queryTimedOut: false
+    property bool actionTimedOut: false
+    property int queryFailureCount: 0
+    property real retryAfterMs: 0
     readonly property bool providerReady: root.scriptRoot.length > 0
     readonly property bool actionBusy: actionProcess.running || root.pendingProfile !== null || root.pendingFanCurve !== null
     readonly property int revision: state.revision
@@ -28,14 +35,15 @@ Scope {
 
     function applyPayload(payload) {
         const capability = payload && payload.capability ? payload.capability : ({ });
-        root.queryError = "";
+        root.queryError = capability.available === false ? String(payload.errorCode || capability.reason || "query-failed") : "";
+        root.recordQueryResult(root.queryError.length > 0);
         state.backendAvailable = capability.reason !== "command-unavailable" && capability.available !== false;
         state.vendor = String(payload.vendor || "");
         state.profile = String(payload.profile || "unavailable");
         state.profileLabel = String(payload.profileLabel || "");
         state.profiles = Array.isArray(payload.profiles) ? payload.profiles : [];
         state.profileControlDomain = String(payload.profileControlDomain || "");
-        state.fanCurveAvailable = payload.fanCurveCapability && payload.fanCurveCapability.available === true;
+        state.fanCurveAvailable = !!payload.fanCurveCapability && payload.fanCurveCapability.available === true;
         state.fanCurveEnabled = payload.fanCurveEnabled === true;
         state.fanCurveCapability = payload.fanCurveCapability || ({
             "available": false,
@@ -50,6 +58,7 @@ Scope {
 
     function applyQueryFailure(message) {
         root.queryError = message;
+        root.recordQueryResult(true);
         root.syncReady = true;
         state.backendAvailable = false;
         state.profiles = [];
@@ -60,16 +69,33 @@ Scope {
         state.markChanged();
     }
 
-    function refresh() {
+    function recordQueryResult(failed) {
+        if (!failed) {
+            root.queryFailureCount = 0;
+            root.retryAfterMs = 0;
+            return;
+        }
+        root.queryFailureCount = Math.min(8, root.queryFailureCount + 1);
+        const delay = Math.min(300000, Math.max(5000, root.interval) * Math.pow(2, root.queryFailureCount - 1));
+        root.retryAfterMs = Date.now() + delay;
+    }
+
+    function refresh(explicit) {
         if (!root.providerReady)
             return ;
+        const force = explicit !== false;
+        if (!force && Date.now() < root.retryAfterMs)
+            return;
         if (queryProcess.running) {
-            root.refreshPending = true;
+            // Periodic ticks need no follow-up. Explicit refreshes and action
+            // completion still coalesce into one immediate recovery attempt.
+            if (force)
+                root.refreshPending = true;
             return ;
         }
         root.refreshPending = false;
         root.pendingRaw = "";
-        root.timedOut = false;
+        root.queryTimedOut = false;
         queryProcess.running = true;
     }
 
@@ -79,7 +105,8 @@ Scope {
             return false;
         root.actionError = "";
         root.pendingProfile = profile;
-        actionProcess.command = [root.scriptRoot + "/control.sh", "fan-profile", profile];
+        root.actionTimedOut = false;
+        actionProcess.command = [root.scriptRoot + "/providers/hardware-control.sh", "profile-set", profile];
         actionProcess.running = true;
         actionWatchdog.restart();
         return true;
@@ -90,7 +117,8 @@ Scope {
             return false;
         root.actionError = "";
         root.pendingFanCurve = value === true;
-        actionProcess.command = [root.scriptRoot + "/control.sh", "fan-curves", value === true ? "on" : "off"];
+        root.actionTimedOut = false;
+        actionProcess.command = [root.scriptRoot + "/providers/hardware-control.sh", "fan-curves-set", value === true ? "on" : "off"];
         actionProcess.running = true;
         actionWatchdog.restart();
         return true;
@@ -112,8 +140,8 @@ Scope {
         onStarted: queryWatchdog.restart()
         onExited: (exitCode, exitStatus) => {
             queryWatchdog.stop();
-            forceKill.stop();
-            if (root.timedOut) {
+            queryKill.stop();
+            if (root.queryTimedOut) {
                 root.applyQueryFailure("query-timeout");
             } else if (exitCode === 0 && exitStatus === 0) {
                 const output = root.pendingRaw.trim();
@@ -135,6 +163,13 @@ Scope {
         stdout: StdioCollector {
             onStreamFinished: root.pendingRaw = this.text
         }
+
+        stderr: StdioCollector {
+            onStreamFinished: {
+                if (this.text.trim().length > 0)
+                    console.warn("[blox.vendor-performance] " + this.text.trim());
+            }
+        }
     }
 
     Process {
@@ -143,12 +178,13 @@ Scope {
         command: []
         onExited: (exitCode, exitStatus) => {
             actionWatchdog.stop();
-            if (root.timedOut)
+            actionKill.stop();
+            root.pendingProfile = null;
+            root.pendingFanCurve = null;
+            if (root.actionTimedOut)
                 root.actionError = "action-timeout";
             else if (exitCode !== 0 || exitStatus !== 0)
                 root.actionError = "action-failed";
-            root.pendingProfile = null;
-            root.pendingFanCurve = null;
             state.markChanged();
             if (root.actionError.length === 0)
                 root.refresh();
@@ -158,14 +194,14 @@ Scope {
     Timer {
         id: queryWatchdog
 
-        interval: Math.max(1, root.timeout)
+        interval: Math.max(1, root.queryTimeout)
         repeat: false
         onTriggered: {
             if (!queryProcess.running)
                 return ;
-            root.timedOut = true;
+            root.queryTimedOut = true;
             queryProcess.signal(15);
-            forceKill.restart();
+            queryKill.restart();
         }
     }
 
@@ -177,20 +213,27 @@ Scope {
         onTriggered: {
             if (!actionProcess.running)
                 return ;
-            root.timedOut = true;
+            root.actionTimedOut = true;
             actionProcess.signal(15);
-            forceKill.restart();
+            actionKill.restart();
         }
     }
 
     Timer {
-        id: forceKill
-
+        id: queryKill
         interval: 1000
         repeat: false
         onTriggered: {
             if (queryProcess.running)
                 queryProcess.signal(9);
+        }
+    }
+
+    Timer {
+        id: actionKill
+        interval: 1000
+        repeat: false
+        onTriggered: {
             if (actionProcess.running)
                 actionProcess.signal(9);
         }
@@ -201,7 +244,7 @@ Scope {
         running: root.providerReady && root.interval > 0
         repeat: true
         triggeredOnStart: true
-        onTriggered: root.refresh()
+        onTriggered: root.refresh(false)
     }
 
     Connections {
@@ -212,6 +255,10 @@ Scope {
     }
 
     function syncAction() {
+        // A failed discovery must not invalidate an action still in flight.
+        // Its completion owns the result and requests a fresh query on success.
+        if (actionProcess.running)
+            return;
         if (root.pendingProfile !== null) {
             if (!state.canChange) {
                 root.pendingProfile = null;

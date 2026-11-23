@@ -11,6 +11,15 @@ Text {
     signal exited()
     signal clicked()
 
+    activeFocusOnTab: true
+    Keys.onPressed: event => {
+        if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
+            root.clicked();
+            event.accepted = true;
+        }
+    }
+    opacity: activeFocus ? 0.68 : 1
+
     Layout.alignment: Qt.AlignHCenter
     color: dateMode ? Theme.foreground : Theme.blue
     font.family: Theme.fontFamily

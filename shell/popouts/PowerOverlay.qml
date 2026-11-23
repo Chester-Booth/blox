@@ -7,10 +7,22 @@ Rectangle {
 
     property bool overlayOpen: false
     property string updateSummary: "Check updates"
+    property bool actionBusy: false
+    property string actionError: ""
     property int openAnimationDuration: 900
 
     signal action(string command)
     signal close()
+
+    Keys.onEscapePressed: close()
+
+    onOverlayOpenChanged: {
+        if (overlayOpen)
+            Qt.callLater(() => {
+                if (root.overlayOpen)
+                    root.forceActiveFocus(Qt.OtherFocusReason);
+            });
+    }
 
     color: "transparent"
 
@@ -60,6 +72,18 @@ Rectangle {
 
         }
 
+        Text {
+            objectName: "power-action-status"
+            Layout.fillWidth: true
+            visible: root.actionError.length > 0
+            text: root.actionError
+            color: Theme.red
+            font.family: Theme.bodyFontFamily
+            font.pixelSize: 13
+            wrapMode: Text.WordWrap
+            horizontalAlignment: Text.AlignHCenter
+        }
+
         GridLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
@@ -68,6 +92,8 @@ Rectangle {
             columnSpacing: 12
 
             Repeater {
+                id: powerTiles
+
                 model: [{
                     "icon": "󰌾",
                     "label": "Lock",
@@ -99,6 +125,7 @@ Rectangle {
 
                 Rectangle {
                     id: buttonCard
+                    objectName: "power-action-" + modelData.command
 
                     function show() {
                         hideAnimation.stop();
@@ -115,8 +142,21 @@ Rectangle {
 
                     radius: Theme.scaledRadius(8)
                     color: powerMouse.containsMouse ? Theme.withAlpha(Theme.surfaceAlt, 0.93) : Theme.withAlpha(Theme.surface, 0.87)
-                    border.color: modelData.danger ? Theme.red : Theme.surfaceAlt
-                    border.width: 1
+                    border.color: activeFocus ? Theme.blue : modelData.danger ? Theme.red : Theme.surfaceAlt
+                    border.width: activeFocus ? 2 : 1
+                    enabled: root.overlayOpen && !root.actionBusy
+                    activeFocusOnTab: true
+                    Accessible.role: Accessible.Button
+                    Accessible.name: modelData.label
+                    Keys.onReturnPressed: activateAction()
+                    Keys.onEnterPressed: activateAction()
+                    Keys.onSpacePressed: activateAction()
+
+                    function activateAction() {
+                        if (!root.overlayOpen)
+                            return;
+                        root.action(modelData.command);
+                    }
                     opacity: 0
                     scale: 0.96
                     transformOrigin: Item.Center
@@ -241,10 +281,7 @@ Rectangle {
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            root.action(modelData.command);
-                            root.close();
-                        }
+                        onClicked: buttonCard.activateAction()
                     }
 
                     transform: Translate {

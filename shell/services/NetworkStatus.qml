@@ -1,4 +1,6 @@
+import qs.shared
 import QtQuick
+import "ActionContract.js" as ActionContract
 import Quickshell
 
 // Guard the optional Networking plugin so a missing backend cannot stop the
@@ -8,13 +10,15 @@ Scope {
 
     property int interval: 30000
     property url providerSource: Qt.resolvedUrl("NetworkManagerProvider.qml")
+    readonly property bool nativeProvider: root.providerSource === Qt.resolvedUrl("NetworkManagerProvider.qml")
+    property bool nativeActivated: false
     property var json: providerReady ? providerLoader.item.json : providerFailed ? unavailableStatus : loadingStatus
     property bool ok: true
     property real lastUpdatedMs: providerReady ? providerLoader.item.lastUpdatedMs : 0
     property string lastError: providerReady ? String(providerLoader.item.lastError || "") : ""
     readonly property int revision: providerReady ? providerLoader.item.revision : 0
     readonly property bool providerReady: providerLoader.status === Loader.Ready && providerLoader.item !== null
-    readonly property bool providerFailed: providerLoader.status === Loader.Error
+    readonly property bool providerFailed: providerLoader.status === Loader.Error || (root.nativeProvider && !root.nativeActivated && availability.ready && !availability.available)
 
     readonly property var loadingStatus: ({
         "icon": "󰤩",
@@ -89,7 +93,7 @@ Scope {
             "beforeRevision": beforeRevision,
             "afterRevision": afterRevision,
             "observedAtMs": Number(status.observedAtMs || 0),
-            "pending": afterRevision < beforeRevision + 1
+            "pending": status.busy === true || status.wifiEnabled !== (value === "on")
         };
         if (value !== undefined)
             data.value = value;
@@ -105,10 +109,9 @@ Scope {
         const status = root.json || ({ });
         const capability = status.capability || ({ });
         const beforeRevision = Number(status.providerRevision || 0);
-        if (status.busy === true)
-            return root.actionResult(false, "busy", "a Wi-Fi action is already in progress", null);
-        if (capability.canChange !== true)
-            return root.actionResult(false, "unavailable", "the Wi-Fi radio is unavailable", null);
+        const blocked = ActionContract.blockedCode(status, capability.canChange);
+        if (blocked)
+            return root.actionResult(false, blocked, "the network action is unavailable", null);
         let enabled;
         if (name === "set-wifi") {
             if (["on", "off"].indexOf(String(value || "")) < 0)
@@ -122,10 +125,17 @@ Scope {
         return root.actionResult(true, "ok", "", root.actionData(name, enabled ? "on" : "off", beforeRevision));
     }
 
+    NativeServiceAvailability {
+        id: availability
+        service: "org.freedesktop.NetworkManager"
+        enabled: root.nativeProvider && !root.nativeActivated
+        onServiceFound: { if (root.nativeProvider) root.nativeActivated = true; }
+    }
+
     Loader {
         id: providerLoader
 
-        active: true
+        active: !root.nativeProvider || root.nativeActivated
         source: root.providerSource
         onLoaded: item.interval = root.interval
     }

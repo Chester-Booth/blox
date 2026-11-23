@@ -12,6 +12,7 @@ Rectangle {
     property bool compact: false
     property bool elideText: false
     property bool activationEnabled: true
+    property bool exclusiveTap: true
     readonly property bool hovered: hover.hovered
     readonly property bool down: tap.pressed
 
@@ -87,6 +88,7 @@ Rectangle {
         id: tap
 
         enabled: buttonRoot.enabled && buttonRoot.activationEnabled
+        gesturePolicy: buttonRoot.exclusiveTap ? TapHandler.WithinBounds : TapHandler.DragThreshold
         onTapped: buttonRoot.clicked()
     }
 

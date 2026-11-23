@@ -24,7 +24,8 @@ TestCase {
         tryCompare(status, "providerReady", true);
         const reply = status.action("set-refresh", "panel", "144");
         verify(reply.ok);
-        verify(reply.data.pending);
+        verify(!reply.data.pending);
+        verify(reply.data.afterRevision > reply.data.beforeRevision);
         compare(status.json.monitors[0].refreshId, "144");
     }
 

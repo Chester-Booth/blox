@@ -1,0 +1,20 @@
+module qs.shared
+singleton Theme 1.0 Theme.qml
+PhosphorIcon 1.0 PhosphorIcon.qml
+HoverPopupWindow 1.0 ../../../../../shell/shared/HoverPopupWindow.qml
+BloxButton 1.0 ../../../../../shell/shared/BloxButton.qml
+BloxCheckBox 1.0 ../../../../../shell/shared/BloxCheckBox.qml
+BloxComboBox 1.0 ../../../../../shell/shared/BloxComboBox.qml
+BloxFontPicker 1.0 ../../../../../shell/shared/BloxFontPicker.qml
+BloxScrollBar 1.0 ../../../../../shell/shared/BloxScrollBar.qml
+BloxSlider 1.0 ../../../../../shell/shared/BloxSlider.qml
+BloxTextField 1.0 ../../../../../shell/shared/BloxTextField.qml
+BloxToolTip 1.0 ../../../../../shell/shared/BloxToolTip.qml
+BloxWheelHandler 1.0 ../../../../../shell/shared/BloxWheelHandler.qml
+CopyPathButton 1.0 ../../../../../shell/shared/CopyPathButton.qml
+CalendarNotice 1.0 ../../../../../shell/shared/CalendarNotice.qml
+PillSelector 1.0 ../../../../../shell/shared/PillSelector.qml
+NotificationHeader 1.0 ../../../../../shell/shared/NotificationHeader.qml
+NotificationBody 1.0 ../../../../../shell/shared/NotificationBody.qml
+NotificationContent 1.0 ../../../../../shell/shared/NotificationContent.qml
+ThemeApplyProgress 1.0 ../../../../../shell/shared/ThemeApplyProgress.qml

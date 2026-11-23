@@ -2,18 +2,26 @@
 set -u
 
 script_root="${QUICKSHELL_SCRIPT_ROOT:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)}"
-brightness_device="${BRIGHTNESS_DEVICE:-}"
-if [[ -z "$brightness_device" ]]; then
-	brightness_device="$("$script_root/status/brightness-device.sh" 2>/dev/null || true)"
-fi
+# Shared system actions go through the loaded owner. Never retry a denied action
+# with a native command. Keyboard/camera controls below remain separate adapters.
+case "${1:-}" in
+volume-up) exec "$script_root/bloxctl.py" audio adjust-volume "${2:-2}" --json;;
+volume-down) exec "$script_root/bloxctl.py" audio adjust-volume "-${2:-2}" --json;;
+volume-set) exec "$script_root/bloxctl.py" audio set-volume "${2:-0}" --json;;
+volume-mute) exec "$script_root/bloxctl.py" audio toggle-mute --json;;
+mic-mute) exec "$script_root/bloxctl.py" audio toggle-mic --json;;
+brightness-up) exec "$script_root/bloxctl.py" brightness adjust "${2:-2}" --json;;
+brightness-down) exec "$script_root/bloxctl.py" brightness adjust "-${2:-2}" --json;;
+brightness-set) exec "$script_root/bloxctl.py" brightness set "${2:-0}" --json;;
+touchpad-on) exec "$script_root/bloxctl.py" touchpad set on --json;;
+touchpad-off) exec "$script_root/bloxctl.py" touchpad set off --json;;
+touchpad-toggle) exec "$script_root/bloxctl.py" touchpad toggle --json;;
+esac
+
 keyboard_device="${KEYBOARD_BRIGHTNESS_DEVICE:-asus::kbd_backlight}"
 camera_device="${CAMERA_DEVICE:-asus::camera}"
 camera_usb_id="${CAMERA_USB_ID:-3277:0010}"
 camera_authorized_override="${CAMERA_AUTHORIZED_FILE:-}"
-mic_led_device="${MIC_LED_DEVICE:-platform::micmute}"
-touchpad_device="${TOUCHPAD_DEVICE:-}"
-touchpad_device_script="$script_root/status/touchpad-device.sh"
-touchpad_state_file="${XDG_RUNTIME_DIR:-$HOME/.cache}/quickshell-touchpad-enabled"
 caps_led="${CAPS_LOCK_LED:-}"
 upower_kbd_service="org.freedesktop.UPower"
 upower_kbd_path="/org/freedesktop/UPower/KbdBacklight"
@@ -21,30 +29,6 @@ upower_kbd_interface="org.freedesktop.UPower.KbdBacklight"
 
 ipc() {
 	"$script_root/ipc.sh" osd "$@" >/dev/null 2>&1 || true
-}
-
-brightness_percent() {
-	"$script_root/status/brightness.sh" "$brightness_device" | jq -r '.percent // 0'
-}
-
-sink_volume() {
-	pactl get-sink-volume @DEFAULT_SINK@ 2>/dev/null | awk -F'/' 'NR==1 { gsub(/[ %]/, "", $2); print $2 }'
-}
-
-sink_muted() {
-	pactl get-sink-mute @DEFAULT_SINK@ 2>/dev/null | awk '{print $2 == "yes" ? "true" : "false"}'
-}
-
-source_muted() {
-	pactl get-source-mute @DEFAULT_SOURCE@ 2>/dev/null | awk '{print $2 == "yes" ? "true" : "false"}'
-}
-
-set_mic_led() {
-	local muted="$1"
-	local value=0
-
-	[[ "$muted" == "true" ]] && value=1
-	brightnessctl -d "$mic_led_device" set "$value" >/dev/null 2>&1 || true
 }
 
 keyboard_percent() {
@@ -128,39 +112,6 @@ caps_enabled() {
 	printf 'false\n'
 }
 
-show_volume() {
-	ipc volume "$(sink_volume)" "$(sink_muted)"
-}
-
-raise_volume() {
-	local step="${1:-2}"
-	local current next
-
-	current="$(sink_volume)"
-	[[ "$current" =~ ^[0-9]+$ ]] || current=0
-	[[ "$step" =~ ^[0-9]+$ ]] || step=2
-	next=$((current + step))
-
-	if ((current < 100 && next > 100)); then
-		pactl set-sink-volume @DEFAULT_SINK@ 100%
-	else
-		pactl set-sink-volume @DEFAULT_SINK@ +"$step%"
-	fi
-}
-
-show_mic() {
-	local muted percent
-	muted="$(source_muted)"
-	set_mic_led "$muted"
-	percent=100
-	[[ "$muted" == "true" ]] && percent=0
-	ipc mic "$percent" "$muted"
-}
-
-show_brightness() {
-	ipc brightness "$(brightness_percent)"
-}
-
 show_keyboard() {
 	ipc keyboard "$(keyboard_percent)"
 }
@@ -229,77 +180,11 @@ show_camera() {
 	ipc camera "$(camera_enabled)"
 }
 
-touchpad_enabled() {
-	if [[ -r "$touchpad_state_file" ]]; then
-		case "$(cat "$touchpad_state_file")" in
-		true | false)
-			cat "$touchpad_state_file"
-			return
-			;;
-		esac
-	fi
-
-	printf 'true\n'
-}
-
-set_touchpad() {
-	local enabled="$1"
-	local device="$touchpad_device"
-
-	[[ "$enabled" == "true" || "$enabled" == "false" ]] || return 1
-	if [[ -z "$device" ]]; then
-		device="$($touchpad_device_script 2>/dev/null | head -n1)" || return 1
-	fi
-	[[ "$device" =~ ^[a-zA-Z0-9_.:-]+$ ]] || return 1
-	hyprctl eval "hl.device({ name = \"$device\", enabled = $enabled })" >/dev/null || return 1
-	mkdir -p "$(dirname "$touchpad_state_file")"
-	printf '%s\n' "$enabled" >"$touchpad_state_file"
-}
-
-show_touchpad() {
-	ipc touchpad "$(touchpad_enabled)"
-}
-
 show_caps() {
 	ipc caps "$(caps_enabled)"
 }
 
 case "${1:-}" in
-volume-up)
-	raise_volume "${2:-2}" || exit 1
-	show_volume
-	;;
-volume-down)
-	pactl set-sink-volume @DEFAULT_SINK@ -"${2:-2}%" || exit 1
-	show_volume
-	;;
-volume-set)
-	pactl set-sink-volume @DEFAULT_SINK@ "${2:-0}%" || exit 1
-	show_volume
-	;;
-volume-mute)
-	pactl set-sink-mute @DEFAULT_SINK@ toggle || exit 1
-	show_volume
-	;;
-mic-mute)
-	pactl set-source-mute @DEFAULT_SOURCE@ toggle || exit 1
-	show_mic
-	;;
-mic-show)
-	show_mic
-	;;
-brightness-up)
-	brightnessctl -d "$brightness_device" set +"${2:-2}%" || exit 1
-	show_brightness
-	;;
-brightness-down)
-	brightnessctl -d "$brightness_device" set "${2:-2}%-" || exit 1
-	show_brightness
-	;;
-brightness-set)
-	brightnessctl -d "$brightness_device" set "${2:-0}%" || exit 1
-	show_brightness
-	;;
 keyboard-up)
 	keyboard_change "${2:-1}" || exit 1
 	show_keyboard
@@ -324,22 +209,6 @@ camera-toggle)
 		set_camera true || exit 1
 	fi
 	show_camera
-	;;
-touchpad-on)
-	set_touchpad true || exit 1
-	show_touchpad
-	;;
-touchpad-off)
-	set_touchpad false || exit 1
-	show_touchpad
-	;;
-touchpad-toggle)
-	if [[ "$(touchpad_enabled)" == "true" ]]; then
-		set_touchpad false || exit 1
-	else
-		set_touchpad true || exit 1
-	fi
-	show_touchpad
 	;;
 caps)
 	sleep 0.12

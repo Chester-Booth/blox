@@ -7,6 +7,23 @@ QtObject {
     property string title: ""
     property string body: ""
     property string statusError: ""
+    property string actionError: ""
+    property var pendingActions: []
+    property var actionErrorProvider: null
+    property string actionErrorCode: ""
+    readonly property string disabledReasonText: root.disabledReason()
+    readonly property string feedbackText: {
+        if (root.actionError.length > 0)
+            return root.actionError;
+        if (root.statusError.length > 0)
+            return "Status error: " + root.statusError + (root.body.length > 0 ? "\n" + root.body : "");
+        if (root.disabledReasonText.length > 0)
+            return root.disabledReasonText;
+        if (root.body.length > 0 && root.currentMode() !== "network" && root.currentMode() !== "bluetooth" && root.currentMode() !== "brightness")
+            return root.body;
+        return "";
+    }
+    readonly property bool feedbackIsError: root.actionError.length > 0 || root.statusError.length > 0
     property var actions: []
     property string scriptRoot: ""
     property int audioVolume: 0
@@ -80,8 +97,10 @@ QtObject {
         if (!item)
             return ;
 
-        if (item.id === "mic-toggle" && root.setMicMuted(!root.micMuted))
+        if (item.id === "mic-toggle") {
+            root.setMicMuted(!root.micMuted);
             return ;
+        }
 
         if (item.id === "network-toggle") {
             root.setNetworkEnabled(!root.networkEnabled);
@@ -95,6 +114,155 @@ QtObject {
 
         actionRequested(item.command || "", keepOpen);
 
+    }
+
+    function providerStatus(provider) {
+        return provider && provider.json && typeof provider.json === "object" ? provider.json : ({ });
+    }
+
+    function capabilityReason(provider) {
+        const status = root.providerStatus(provider);
+        const capability = status.capability || ({ });
+        return String(capability.reason || status.errorCode || "");
+    }
+
+    function reasonMessage(provider) {
+        const reason = root.capabilityReason(provider);
+        const messages = {
+            "provider-not-ready": "Provider is not ready",
+            "provider-loading": "Waiting for provider",
+            "provider-unavailable": "Provider is unavailable",
+            "backend-unavailable": "NetworkManager is unavailable",
+            "command-unavailable": "Brightness control is unavailable",
+            "no-default-sink": "No default audio output is available",
+            "device-not-ready": "Audio output is not ready",
+            "no-wifi-hardware": "No Wi-Fi hardware is available",
+            "no-adapter": "No Bluetooth adapter is available",
+            "permission-denied": "Permission denied",
+            "device-unavailable": "Control device is unavailable"
+        };
+        return messages[reason] || reason.replace(/-/g, " ");
+    }
+
+    function disabledReason() {
+        if (currentMode() === "audio") {
+            if (!audioCanChange)
+                return root.reasonMessage(audioProvider);
+            if (!micCanChange)
+                return "Default microphone is unavailable";
+        } else if (currentMode() === "network" && !networkCanChange) {
+            return root.reasonMessage(networkProvider);
+        } else if (currentMode() === "bluetooth" && !bluetoothCanChange) {
+            return root.reasonMessage(bluetoothProvider);
+        } else if (currentMode() === "brightness" && !brightnessCanChange) {
+            return root.reasonMessage(brightnessProvider);
+        }
+        return "";
+    }
+
+    function actionCodeMessage(name, code, provider) {
+        if (code === "unavailable")
+            return root.reasonMessage(provider) || name + " is unavailable";
+        if (code === "busy")
+            return name + " action is already in progress";
+        if (code === "permission-denied")
+            return "Permission denied";
+        if (code === "stale")
+            return name + " status is out of date";
+        if (code === "timeout" || code === "action-timeout")
+            return name + " action timed out";
+        if (code === "device-removed")
+            return name + " device was removed";
+        if (code === "action-failed")
+            return name + " action failed";
+        return code ? name + " action failed (" + code + ")" : name + " action failed";
+    }
+
+    function actionFailure(result, provider, name) {
+        const code = result && result.code ? String(result.code) : "";
+        if (["unavailable", "busy", "permission-denied", "stale", "timeout", "action-timeout", "device-removed", "action-failed"].indexOf(code) >= 0)
+            return root.actionCodeMessage(name, code, provider);
+        if (result && result.message)
+            return String(result.message);
+        return root.actionCodeMessage(name, code, provider);
+    }
+
+    function isProviderActionError(provider, code, reason) {
+        if (code.length === 0 || code === reason)
+            return false;
+        if (provider === brightnessProvider)
+            return code === "action-timeout" || code === "action-failed";
+        return true;
+    }
+
+    function setActionError(message, provider, code) {
+        actionError = message;
+        actionErrorProvider = provider || null;
+        actionErrorCode = String(code || "");
+    }
+
+    function clearActionError() {
+        actionError = "";
+        actionErrorProvider = null;
+        actionErrorCode = "";
+    }
+
+    function syncPendingActionError(provider) {
+        if (!provider)
+            return;
+        const status = root.providerStatus(provider);
+        const code = String(status.errorCode || "");
+        const reason = String((status.capability || ({ })).reason || "");
+
+        if (provider === actionErrorProvider && status.busy !== true
+                && code !== actionErrorCode && reason !== actionErrorCode)
+            root.clearActionError();
+
+        const remaining = [];
+        for (let i = 0; i < pendingActions.length; i++) {
+            const pending = pendingActions[i];
+            if (pending.provider !== provider) {
+                remaining.push(pending);
+                continue;
+            }
+
+            if (root.isProviderActionError(provider, code, reason)) {
+                root.setActionError(root.actionCodeMessage(pending.name, code, provider), provider, code);
+                continue;
+            }
+
+            if (status.busy === true)
+                remaining.push(pending);
+        }
+        pendingActions = remaining;
+    }
+
+    function runProviderAction(provider, operation, value, name) {
+        root.clearActionError();
+        if (!provider || typeof provider.action !== "function") {
+            root.setActionError(root.reasonMessage(provider) || name + " provider is unavailable", provider, "unavailable");
+            return false;
+        }
+
+        let result;
+        try {
+            result = provider.action(operation, value);
+        } catch (error) {
+            root.setActionError(String(error && error.message ? error.message : error), provider, "failed");
+            return false;
+        }
+        if (!result || result.ok !== true) {
+            const code = result && result.code ? String(result.code) : "failed";
+            root.setActionError(root.actionFailure(result, provider, name), provider, code);
+            return false;
+        }
+
+        const data = result.data || ({ });
+        const status = root.providerStatus(provider);
+        if (data.pending === true || status.busy === true)
+            pendingActions = pendingActions.concat([{"provider": provider, "name": name}]);
+        root.syncPendingActionError(provider);
+        return true;
     }
 
     function heroIcon() {
@@ -134,46 +302,26 @@ QtObject {
     }
 
     function setNetworkEnabled(value) {
-        if (!networkCanChange || !root.networkProvider)
-            return false;
-        return root.networkProvider.setWifiEnabled(value === true);
+        return root.runProviderAction(root.networkProvider, "set-wifi", value === true ? "on" : "off", "Wi-Fi");
     }
 
     function setBluetoothEnabled(value) {
-        if (!bluetoothCanChange || !root.bluetoothProvider)
-            return false;
-        return root.bluetoothProvider.setBluetoothEnabled(value === true);
+        return root.runProviderAction(root.bluetoothProvider, "set-enabled", value === true ? "on" : "off", "Bluetooth");
     }
 
     function toggleAudio() {
-        if (!audioCanChange)
-            return ;
-
-        if (root.audioProvider && root.audioProvider.toggleMute())
-            return ;
-
-        runCommand(scriptRoot + "/control.sh audio-toggle", true);
+        return root.runProviderAction(root.audioProvider, "toggle-mute", "", "Audio");
     }
 
     function setMicMuted(value) {
-        if (!micCanChange)
-            return false;
-
-        if (root.audioProvider && root.audioProvider.setMicMuted(value))
-            return true;
-
-        runCommand(scriptRoot + "/control.sh mic " + (value ? "muted" : "open"), true);
-        return true;
+        return root.runProviderAction(root.audioProvider, "set-mic", value ? "muted" : "open", "Microphone");
     }
 
     function applyAudio() {
         if (!audioCanChange)
             return ;
         audioApplyPending = false;
-        if (root.audioProvider && root.audioProvider.setVolume(visualAudioVolume))
-            return ;
-
-        runCommand(scriptRoot + "/control.sh audio-set-silent " + visualAudioVolume, true);
+        return root.runProviderAction(root.audioProvider, "set-volume", String(visualAudioVolume), "Audio");
     }
 
     function queueAudio(value) {
@@ -202,9 +350,7 @@ QtObject {
         if (!brightnessCanChange)
             return ;
         brightnessApplyPending = false;
-        if (root.brightnessProvider && root.brightnessProvider.setBrightness(visualBrightnessPercent))
-            return ;
-        runCommand(scriptRoot + "/control.sh brightness-set-silent " + visualBrightnessPercent, true);
+        return root.runProviderAction(root.brightnessProvider, "set", String(visualBrightnessPercent), "Brightness");
     }
 
     function queueBrightness(value) {
@@ -273,6 +419,34 @@ QtObject {
         interval: 250
         repeat: false
         onTriggered: root.visualBrightnessPercent = root.brightnessPercent
+    }
+
+    property Connections audioActionConnection: Connections {
+        target: root.audioProvider
+        ignoreUnknownSignals: true
+
+        function onJsonChanged() { root.syncPendingActionError(root.audioProvider); }
+    }
+
+    property Connections networkActionConnection: Connections {
+        target: root.networkProvider
+        ignoreUnknownSignals: true
+
+        function onJsonChanged() { root.syncPendingActionError(root.networkProvider); }
+    }
+
+    property Connections bluetoothActionConnection: Connections {
+        target: root.bluetoothProvider
+        ignoreUnknownSignals: true
+
+        function onJsonChanged() { root.syncPendingActionError(root.bluetoothProvider); }
+    }
+
+    property Connections brightnessActionConnection: Connections {
+        target: root.brightnessProvider
+        ignoreUnknownSignals: true
+
+        function onJsonChanged() { root.syncPendingActionError(root.brightnessProvider); }
     }
 
 }

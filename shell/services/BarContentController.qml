@@ -6,6 +6,9 @@ import Quickshell.Io
 Scope {
     id: root
 
+    property var settingsController: null
+
+    property int caffeineObservationRevision: 0
     property string scriptRoot: ""
     property bool barVisible: true
     property string openPanel: ""
@@ -33,6 +36,25 @@ Scope {
     property alias calendarController: calendarController
     readonly property date now: clock.date
 
+    function caffeineStatus() {
+        const result = barActions.caffeineResult;
+        const actionObserved = result.data && Number(result.data.observedAtMs || 0);
+        return Object.assign({}, root.caffeine.json, {
+            schemaVersion: 1,
+            providerRevision: root.caffeineObservationRevision + barActions.caffeineRevision,
+            observedAtMs: Math.max(root.caffeine.lastUpdatedMs, actionObserved || 0),
+            stale: !root.caffeine.ok || root.caffeine.lastUpdatedMs === 0,
+            busy: barActions.caffeineBusy,
+            errorCode: result.ok === false ? result.code : root.caffeine.timedOut ? "timeout" : !root.caffeine.ok ? "failed" : null,
+            lastAction: result
+        });
+    }
+
+    Connections {
+        target: root.caffeine
+        function onJsonChanged() { root.caffeineObservationRevision += 1; }
+    }
+
     function run(command) {
         barActions.run(command);
     }
@@ -43,6 +65,10 @@ Scope {
 
     function runPerformance(command) {
         barActions.runPerformance(command);
+    }
+
+    function runPower(command) {
+        barActions.runPower(command);
     }
 
     function setPerformancePolling(visible) {
@@ -115,8 +141,11 @@ Scope {
         return poller && !poller.ok ? poller.lastError : "";
     }
 
+    NightLightStatus { id: nightLightOwner; scriptRoot: root.scriptRoot }
+
     BarStatus {
         id: barStatus
+        settingsController: root.settingsController
 
         scriptRoot: root.scriptRoot
         barVisible: root.barVisible
@@ -158,7 +187,12 @@ Scope {
         brightness: root.brightness.json
         network: root.network.json
         privacy: root.privacy.json
-        caffeine: root.caffeine.json
+        caffeine: root.caffeineStatus()
+    }
+
+    MediaKeyController {
+        audio: root.audio
+        brightness: root.brightness
     }
 
     IpcHandler {
@@ -184,6 +218,31 @@ Scope {
 
         function monitor(operation: string, monitor: string, rate: string) : string {
             return JSON.stringify(root.monitorAction(operation, monitor, rate));
+        }
+
+        function brightness(operation: string, value: string) : string {
+            return JSON.stringify(root.brightness.action(operation, value));
+        }
+
+        function touchpad(operation: string, value: string) : string {
+            return JSON.stringify(root.touchpad.action(operation, value));
+        }
+
+        function vendor(operation: string, value: string) : string {
+            return JSON.stringify(root.vendorPerformance.action(operation, value));
+        }
+
+        function powerProfile(operation: string, value: string) : string {
+            return JSON.stringify(root.powerProfile.action(operation, value));
+        }
+
+        function caffeine(operation: string, value: string) : string {
+            return JSON.stringify(operation === "set" ? barActions.runCaffeine(value) :
+                barActions.actionResult(false, "invalid-data", "Unknown Awake operation", null));
+        }
+
+        function nightLight(operation: string, value: string) : string {
+            return JSON.stringify(nightLightOwner.action(operation, value));
         }
 
         target: "blox"

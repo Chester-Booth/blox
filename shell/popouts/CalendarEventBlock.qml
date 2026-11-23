@@ -23,6 +23,22 @@ Item {
     signal resizeChanged(var event, real pointerY)
     signal resizeFinished(var event, bool cancelled)
 
+    activeFocusOnTab: !!event
+    Keys.onPressed: keyEvent => {
+        if (!root.event) return;
+        if (keyEvent.key === Qt.Key_Return || keyEvent.key === Qt.Key_Enter || keyEvent.key === Qt.Key_Space) root.opened(root.event);
+        else if (keyEvent.key === Qt.Key_Menu || (keyEvent.key === Qt.Key_F10 && (keyEvent.modifiers & Qt.ShiftModifier))) root.menuRequested(root.event, Qt.point(width / 2, height / 2));
+        else return;
+        keyEvent.accepted = true;
+    }
+    Rectangle {
+        anchors.fill: parent
+        color: "transparent"
+        border.width: root.activeFocus ? 1 : 0
+        border.color: Theme.blue
+        z: 10
+    }
+
     function time12(value) {
         var minutes = Math.round((value - Math.floor(value)) * 60), h = Math.floor(value), shown = h % 12 || 12;
         return shown + (minutes ? (":" + (minutes < 10 ? "0" : "") + minutes) : "") + (h < 12 ? "am" : "pm");

@@ -1,4 +1,6 @@
+import qs.shared
 import QtQuick
+import "ActionContract.js" as ActionContract
 import Quickshell
 
 // Guard optional graphics discovery and expose a typed status to the bar and
@@ -128,19 +130,23 @@ Scope {
     function action(operation, value) {
         if (operation !== "set-mode")
             return actionResult(false, "invalid-data", "unknown GPU operation", null);
-        if (!root.providerReady || !root.json.capability || root.json.capability.canChange !== true)
+        if (!root.providerReady)
             return actionResult(false, "unavailable", "GPU mode control is unavailable", null);
-        if (root.json.stale === true)
-            return actionResult(false, "stale", "GPU state is stale", null);
-        if (root.json.busy === true)
-            return actionResult(false, "busy", "a GPU mode change is already in progress", null);
+        const blocked = ActionContract.blockedCode(root.json, root.json.capability && root.json.capability.canChange);
+        if (blocked)
+            return actionResult(false, blocked, "GPU mode control is unavailable", null);
         const mode = String(value || "");
         if (!Array.isArray(root.json.supportedModes) || root.json.supportedModes.indexOf(mode) < 0)
             return actionResult(false, "invalid-data", "the requested GPU mode is unsupported", null);
         const beforeRevision = Number(root.json.providerRevision || 0);
         if (!root.setMode(mode))
             return actionResult(false, "failed", "the GPU controller rejected the request", null);
-        return actionResult(true, "ok", "", {"operation": operation, "mode": mode, "beforeRevision": beforeRevision, "afterRevision": beforeRevision, "pending": true, "pendingAction": root.json.pendingAction || null});
+        const after = root.json || ({});
+        return actionResult(true, "ok", "", {"operation": operation, "mode": mode,
+            "beforeRevision": beforeRevision, "afterRevision": Number(after.providerRevision || beforeRevision),
+            "observedAtMs": Number(after.observedAtMs || 0),
+            "pending": after.busy === true || after.mode !== mode || after.pendingMode != null || after.pendingAction != null,
+            "pendingAction": after.pendingAction || null});
     }
 
     Loader {

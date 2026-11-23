@@ -82,7 +82,7 @@ TestCase {
     WorkerScript {
         id: worker
 
-        source: "../../shell/modules/EmojiSearchWorker.mjs"
+        source: "fixtures/EmojiSearchOracle.mjs"
         onMessage: (message) => {
             return testCase.response = message;
         }

@@ -1,7 +1,7 @@
 import qs.shared
 import QtQuick
 import Quickshell
-import Quickshell.Io
+import Blox.Services 1.0
 
 Scope {
     id: root
@@ -19,9 +19,101 @@ Scope {
     property int activeSegments: 0
     property bool noticeMode: false
     property color noticeAccent: Theme.blue
-    property double volumePreviewUntil: 0
+    property var audioStatus: null
+    property var observedAudioSink: null
+    property var observedAudioVolume: null
+    property bool observedAudioMuted: false
     readonly property bool volumeOverdriven: label === "Volume" && !muted && value > 100
     readonly property int fillValue: Math.max(0, Math.min(100, value))
+
+    // Remember only enough to detect output changes. Values always come from
+    // the bar's shared native owner, including reconciliation after a preview.
+    function audioObservation() {
+        const owner = root.audioStatus;
+        const status = owner && owner.json;
+        const capability = status && status.capability;
+        const sink = owner && owner.sink;
+        if (!owner || owner.providerReady !== true || !sink || !status || !capability
+            || capability.available !== true || capability.ready !== true || capability.canChange !== true
+            || capability.permission === "denied" || status.stale === true || status.busy === true || status.errorCode)
+            return null;
+        const volume = status.volume;
+        if (typeof volume !== "number" || !isFinite(volume) || volume < 0 || Math.round(volume) !== volume
+            || typeof status.muted !== "boolean")
+            return null;
+        return {sink: sink, volume: volume, muted: status.muted};
+    }
+
+    function cancelAudioPreview(hide) {
+        const active = audioPreviewDelay.running;
+        // Consume queued observations while the preview still suppresses them.
+        // An explicit show must not be replaced by an already queued change.
+        if (active && !hide)
+            root.observeAudio();
+        audioPreviewDelay.stop();
+        if (hide && active && root.label === "Volume") {
+            root.showing = false;
+            hideFinish.restart();
+        }
+    }
+
+    function resetAudioObservation() {
+        root.observedAudioSink = null;
+        root.observedAudioVolume = null;
+        root.cancelAudioPreview(true);
+    }
+
+    function observeAudio(reconcile) {
+        const current = root.audioObservation();
+        if (!current) {
+            root.resetAudioObservation();
+            if (reconcile === true && root.label === "Volume") {
+                root.showing = false;
+                hideFinish.restart();
+            }
+            return;
+        }
+        const baseline = root.observedAudioVolume === null || root.observedAudioSink !== current.sink;
+        const changed = !baseline && (root.observedAudioVolume !== current.volume || root.observedAudioMuted !== current.muted);
+        root.observedAudioSink = current.sink;
+        root.observedAudioVolume = current.volume;
+        root.observedAudioMuted = current.muted;
+        if (!baseline && !audioPreviewDelay.running && (changed || reconcile === true))
+            root.show("volume", current.volume, current.muted);
+    }
+
+    function queueAudioObservation() {
+        if (!root.audioObservation())
+            root.resetAudioObservation();
+        // Let the owner's sink identity and status bindings settle together.
+        Qt.callLater(root.observeAudio);
+    }
+
+    onAudioStatusChanged: {
+        root.resetAudioObservation();
+        root.queueAudioObservation();
+    }
+    Component.onCompleted: root.queueAudioObservation()
+
+    Connections {
+        target: root.audioStatus
+        function onJsonChanged() { root.queueAudioObservation(); }
+        function onSinkChanged() {
+            root.resetAudioObservation();
+            root.queueAudioObservation();
+        }
+        function onProviderReadyChanged() {
+            root.resetAudioObservation();
+            root.queueAudioObservation();
+        }
+    }
+
+    Timer {
+        id: audioPreviewDelay
+        interval: 300
+        repeat: false
+        onTriggered: root.observeAudio(true)
+    }
 
     function clamp(percent) {
         return Math.max(0, Math.min(100, parseInt(percent) || 0));
@@ -49,6 +141,7 @@ Scope {
     }
 
     function showBlueLight(mode, active) {
+        root.cancelAudioPreview(false);
         const id = String(mode || "auto").toLowerCase();
         const isActive = active === true || active === "true" || active === "yes" || active === "1";
         label = "Blue light";
@@ -73,6 +166,7 @@ Scope {
     }
 
     function showGpu(mode) {
+        root.cancelAudioPreview(false);
         const id = String(mode || "integrated").toLowerCase();
         label = "GPU mode";
         muted = false;
@@ -97,6 +191,7 @@ Scope {
     }
 
     function showFan(profile) {
+        root.cancelAudioPreview(false);
         const id = String(profile || "balanced").toLowerCase();
         label = "Fan profile";
         muted = false;
@@ -121,6 +216,7 @@ Scope {
     }
 
     function show(kind, percent, isMuted) {
+        root.cancelAudioPreview(false);
         noticeAccent = Theme.blue;
         noticeMode = false;
         value = kind === "volume" ? Math.max(0, parseInt(percent) || 0) : clamp(percent);
@@ -163,13 +259,13 @@ Scope {
     }
 
     function preview(kind, percent, isMuted) {
-        if (kind === "volume")
-            volumePreviewUntil = Date.now() + 300;
-
         show(kind, percent, isMuted);
+        if (kind === "volume")
+            audioPreviewDelay.restart();
     }
 
     function showNotice(title, message, iconName, level, durationMs) {
+        root.cancelAudioPreview(false);
         label = title || "Status";
         icon = iconName || "󰋼";
         valueText = message || "";
@@ -212,90 +308,10 @@ Scope {
         }
     }
 
-    Timer {
-        id: restartKeyboardWatcher
-
-        interval: 2000
-        repeat: false
-        onTriggered: keyboardWatcher.running = true
-    }
-
-    Timer {
-        id: restartAudioWatcher
-
-        interval: 2000
-        repeat: false
-        onTriggered: audioWatcher.running = true
-    }
-
-    Process {
-        id: audioWatcher
-
-        command: [root.scriptRoot + "/osd/watch-audio.sh"]
-        running: true
-        onExited: (exitCode) => {
-            if (exitCode !== 0)
-                restartAudioWatcher.restart();
-
+    KeyboardBacklightWatcher {
+        onLevelChanged: (value, maximum) => {
+            root.show("keyboard", Math.round(value * 100 / maximum), false);
         }
-        Component.onDestruction: {
-            if (running)
-                signal(15);
-
-        }
-
-        stdout: SplitParser {
-            splitMarker: "\n"
-            onRead: (data) => {
-                let event = {
-                };
-                try {
-                    event = JSON.parse(data.trim());
-                } catch (error) {
-                    return ;
-                }
-                if (Date.now() >= root.volumePreviewUntil)
-                    root.show("volume", event.volume, event.muted);
-
-            }
-        }
-
-    }
-
-    Process {
-        id: keyboardWatcher
-
-        command: [root.scriptRoot + "/osd/watch-keyboard-backlight.sh"]
-        running: true
-        onExited: (exitCode) => {
-            if (exitCode !== 0)
-                restartKeyboardWatcher.restart();
-
-        }
-        Component.onDestruction: {
-            if (running)
-                signal(15);
-
-        }
-
-        stdout: SplitParser {
-            splitMarker: "\n"
-            onRead: (data) => {
-                let event = {
-                };
-                try {
-                    event = JSON.parse(data.trim());
-                } catch (error) {
-                    return ;
-                }
-                const max = parseInt(event.max) || 0;
-                const value = parseInt(event.value) || 0;
-                if (max > 0)
-                    root.show("keyboard", Math.round(value * 100 / max), false);
-
-            }
-        }
-
     }
 
 }

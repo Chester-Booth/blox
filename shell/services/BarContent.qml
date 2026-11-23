@@ -66,7 +66,8 @@ QtObject {
 
     function typedStatus(status, fields) {
         const result = {};
-        for (const field of fields) {
+        const commonFields = ["schemaVersion", "providerRevision", "observedAtMs", "stale", "busy", "errorCode"];
+        for (const field of commonFields.concat(fields)) {
             if (status && status[field] !== undefined)
                 result[field] = status[field];
         }
@@ -91,7 +92,7 @@ QtObject {
             "data": {
                 "updates": typedStatus(updates, ["repoCount", "aurCount", "totalCount"]),
                 "battery": typedStatus(battery, ["class", "capacity", "status", "timeLabel", "source", "onBattery", "batteryPresent"]),
-                "powerProfile": typedStatus(powerProfile, ["profile", "onBattery", "profileServiceAvailable", "degradationReason"]),
+                "powerProfile": typedStatus(powerProfile, ["profile", "profiles", "onBattery", "profileServiceAvailable", "degradationReason"]),
                 "vendorPerformance": typedStatus(vendorPerformance, ["vendor", "profile", "profileLabel", "profiles"]),
                 "gpu": typedStatus(gpu, ["devices", "deviceCount", "integratedCount", "discreteCount", "backend", "controller", "controllerMode", "mode", "supportedModes", "pendingMode", "pendingAction", "gpuOn", "gpuUtil", "gpuTemp", "vramUsed", "vramTotal", "controlReason"]),
                 "monitors": typedStatus(monitors, ["monitors", "monitorCount"]),
@@ -101,7 +102,7 @@ QtObject {
                 "audio": typedStatus(audio, ["volume", "muted", "micMuted", "micCanChange"]),
                 "brightness": typedStatus(brightness, ["percent", "blueLightMode", "blueLightActive", "device", "backlightCount", "backlights", "ddcAvailable", "ddcDisplayCount", "ddcReason"]),
                 "privacy": typedStatus(privacy, ["active", "microphoneCount", "videoCount"]),
-                "caffeine": typedStatus(caffeine, ["active", "mode", "remaining", "hypridleRunning", "inhibitActive"])
+                "caffeine": typedStatus(caffeine, ["active", "mode", "remaining", "hypridleRunning", "inhibitActive", "lastAction"])
             }
         };
     }

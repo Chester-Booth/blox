@@ -1,0 +1,231 @@
+{
+  "schemaVersion": 1,
+  "revision": 0,
+  "bar": {
+    "layout": {
+      "position": "left",
+      "separateGroups": false
+    },
+    "style": {
+      "border": false,
+      "edgeInset": 0,
+      "radiusAutomatic": true,
+      "radiusScale": 1.25,
+      "densityAutomatic": true,
+      "densityScale": 1.0
+    },
+    "items": [
+      {
+        "id": "power",
+        "enabled": true,
+        "region": "start",
+        "order": 0
+      },
+      {
+        "id": "notes",
+        "enabled": true,
+        "region": "start",
+        "order": 1
+      },
+      {
+        "id": "workspaces",
+        "enabled": true,
+        "region": "start",
+        "order": 2
+      },
+      {
+        "id": "clock",
+        "enabled": true,
+        "region": "centre",
+        "order": 0
+      },
+      {
+        "id": "active-window-title",
+        "enabled": false,
+        "region": "centre",
+        "order": 1,
+        "orientation": "inward",
+        "titleLength": "truncate"
+      },
+      {
+        "id": "battery",
+        "enabled": true,
+        "region": "end",
+        "order": 0,
+        "display": "toggle"
+      },
+      {
+        "id": "tray",
+        "enabled": true,
+        "region": "end",
+        "order": 1
+      },
+      {
+        "id": "notifications",
+        "enabled": true,
+        "region": "end",
+        "order": 2
+      },
+      {
+        "id": "wifi",
+        "enabled": true,
+        "region": "end",
+        "order": 3
+      },
+      {
+        "id": "sound",
+        "enabled": true,
+        "region": "end",
+        "order": 4
+      },
+      {
+        "id": "privacy",
+        "enabled": true,
+        "region": "hidden",
+        "order": 0,
+        "visibility": "normal"
+      },
+      {
+        "id": "awake",
+        "enabled": true,
+        "region": "hidden",
+        "order": 1
+      },
+      {
+        "id": "display",
+        "enabled": true,
+        "region": "hidden",
+        "order": 2
+      },
+      {
+        "id": "bt",
+        "enabled": true,
+        "region": "hidden",
+        "order": 3
+      },
+      {
+        "id": "updates",
+        "enabled": true,
+        "region": "hidden",
+        "order": 4
+      },
+      {
+        "id": "fan",
+        "enabled": true,
+        "region": "hidden",
+        "order": 5,
+        "visibility": "normal"
+      },
+      {
+        "id": "gpu",
+        "enabled": true,
+        "region": "hidden",
+        "order": 6,
+        "visibility": "hybrid"
+      },
+      {
+        "id": "application-tray",
+        "enabled": true,
+        "region": "hidden",
+        "order": 7
+      },
+      {
+        "id": "touchpad",
+        "enabled": true,
+        "region": "hidden",
+        "order": 8,
+        "visibility": "normal"
+      }
+    ]
+  },
+  "osd": {
+    "position": "centre-bottom",
+    "offsetX": 0,
+    "offsetY": 0
+  },
+  "notifications": {
+    "position": "top-right",
+    "offsetX": 0,
+    "offsetY": 0
+  },
+  "widgets": {
+    "schemaVersion": 1,
+    "widgets": []
+  },
+  "targets": {
+    "btop": {
+      "enabled": false
+    },
+    "code": {
+      "enabled": false
+    },
+    "cursor": {
+      "enabled": false
+    },
+    "cursor_editor": {
+      "enabled": false
+    },
+    "t3code": {
+      "enabled": false
+    },
+    "zed": {
+      "enabled": false
+    },
+    "glow": {
+      "enabled": false
+    },
+    "grub": {
+      "enabled": false
+    },
+    "gtk": {
+      "enabled": false
+    },
+    "helium": {
+      "enabled": false
+    },
+    "chromium": {
+      "enabled": false
+    },
+    "hyprland": {
+      "enabled": false
+    },
+    "hyprlock": {
+      "enabled": false
+    },
+    "kitty": {
+      "enabled": false
+    },
+    "micro": {
+      "enabled": false
+    },
+    "obsidian": {
+      "enabled": false
+    },
+    "powerlevel10k": {
+      "enabled": false
+    },
+    "quickshell": {
+      "enabled": false
+    },
+    "sddm": {
+      "enabled": false
+    },
+    "stylus": {
+      "enabled": false,
+      "styleSet": "recommended"
+    },
+    "wallpaper": {
+      "enabled": false
+    },
+    "widgets": {
+      "enabled": false
+    }
+  },
+  "binds": [],
+  "autostart": [],
+  "power": {
+    "acProfile": null,
+    "batteryProfile": null
+  },
+  "monitors": []
+}

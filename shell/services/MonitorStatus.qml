@@ -1,4 +1,6 @@
+import qs.shared
 import QtQuick
+import "ActionContract.js" as ActionContract
 import Quickshell
 
 // Guard the Hyprland monitor owner and keep its absence non-fatal.
@@ -42,14 +44,23 @@ Scope {
     function action(operation, monitor, rate) {
         if (operation !== "set-refresh")
             return actionResult(false, "invalid-data", "unknown monitor operation", null);
-        if (!root.providerReady || !root.json.capability || root.json.capability.canChange !== true)
+        if (!root.providerReady)
             return actionResult(false, "unavailable", "refresh control is unavailable", null);
-        if (root.json.busy === true)
-            return actionResult(false, "busy", "a refresh change is already in progress", null);
+        const blocked = ActionContract.blockedCode(root.json, root.json.capability && root.json.capability.canChange);
+        if (blocked)
+            return actionResult(false, blocked, "refresh control is unavailable", null);
+        const choice = (root.json.monitors || []).find(item => item.name === monitor);
+        if (!choice || choice.canChange !== true || !(choice.rates || []).some(item => String(item.id) === String(rate)))
+            return actionResult(false, "invalid-data", "the monitor or refresh rate is unavailable", null);
         const beforeRevision = Number(root.json.providerRevision || 0);
         if (!root.setRefresh(monitor, rate))
-            return actionResult(false, "invalid-data", "the monitor or refresh rate is unavailable", null);
-        return actionResult(true, "ok", "", {"operation": operation, "monitor": monitor, "refreshId": rate, "beforeRevision": beforeRevision, "afterRevision": beforeRevision, "pending": true});
+            return actionResult(false, "failed", "the monitor action was rejected", null);
+        const after = root.json || ({});
+        const observed = (after.monitors || []).find(item => item.name === monitor);
+        return actionResult(true, "ok", "", {"operation": operation, "monitor": monitor, "refreshId": rate,
+            "beforeRevision": beforeRevision, "afterRevision": Number(after.providerRevision || beforeRevision),
+            "observedAtMs": Number(after.observedAtMs || 0),
+            "pending": after.busy === true || !observed || String(observed.refreshId) !== String(rate)});
     }
 
     Loader {

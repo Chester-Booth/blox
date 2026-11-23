@@ -1,5 +1,6 @@
 import qs.shared
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 
 Rectangle {
@@ -25,6 +26,8 @@ Rectangle {
     property bool actionBusy: false
     property string actionError: ""
     property string statusError: ""
+    property int maxWidth: 268
+    property int maxHeight: 720
     readonly property string visibleError: actionError.length > 0 ? actionError : statusError
     readonly property bool powerProfileReady: root.powerProfileStatus && root.powerProfileStatus.capability && root.powerProfileStatus.capability.ready === true
     readonly property bool powerProfileCanChange: root.powerProfileStatus && root.powerProfileStatus.capability && root.powerProfileStatus.capability.canChange === true
@@ -102,17 +105,59 @@ Rectangle {
         return (status.swapUsed || "?") + "/" + (status.swapTotal || "?") + " GB";
     }
 
-    width: 268
-    height: (status.vramTotal ? 517 : 465) + (root.performanceProfileCanChange ? 0 : -56) + (root.fanCurveCanChange ? 56 : 0) + (root.gpuCanChange ? 0 : -56) + root.refreshMonitors.length * 56 + (root.gpuPendingAction.length > 0 ? 22 : 0) + (visibleError.length > 0 ? Math.max(26, errorText.implicitHeight) : 0)
+    readonly property int naturalHeight: (status.vramTotal ? 517 : 465)
+        + (root.performanceProfileCanChange ? 0 : -56)
+        + (root.fanCurveCanChange ? 56 : 0)
+        + (root.gpuCanChange ? 0 : -56)
+        + root.refreshMonitors.length * 56
+        + (root.gpuPendingAction.length > 0 ? 22 : 0)
+        + (visibleError.length > 0 ? Math.max(26, errorText.implicitHeight) : 0)
+    width: Math.min(268, maxWidth)
+    height: Math.min(naturalHeight, maxHeight)
+    clip: true
     radius: Theme.scaledRadius(8)
     color: Theme.background
     border.color: Theme.surfaceAlt
     border.width: 1
 
-    ColumnLayout {
+    Flickable {
+        id: detailsScroll
+        objectName: "performance-details-scroll"
         anchors.fill: parent
-        anchors.margins: Theme.scaledSpacing(12)
-        spacing: Theme.scaledSpacing(10)
+        contentWidth: width
+        contentHeight: detailsContent.implicitHeight + Theme.scaledSpacing(24)
+        clip: true
+        boundsBehavior: Flickable.StopAtBounds
+        activeFocusOnTab: contentHeight > height
+        Accessible.name: "Performance details"
+        Keys.onPressed: event => {
+            const step = Math.max(40, detailsScroll.height * 0.8);
+            if (event.key === Qt.Key_PageDown || event.key === Qt.Key_Down) {
+                detailsScroll.contentY = Math.min(detailsScroll.contentHeight - detailsScroll.height, detailsScroll.contentY + step);
+                event.accepted = true;
+            } else if (event.key === Qt.Key_PageUp || event.key === Qt.Key_Up) {
+                detailsScroll.contentY = Math.max(0, detailsScroll.contentY - step);
+                event.accepted = true;
+            } else if (event.key === Qt.Key_End) {
+                detailsScroll.contentY = detailsScroll.contentHeight - detailsScroll.height;
+                event.accepted = true;
+            } else if (event.key === Qt.Key_Home) {
+                detailsScroll.contentY = 0;
+                event.accepted = true;
+            }
+        }
+        ScrollBar.vertical: BloxScrollBar {
+            policy: detailsScroll.contentHeight > detailsScroll.height ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff
+        }
+
+        ColumnLayout {
+            id: detailsContent
+            // The scrollbar fits within the right padding, keeping both sides equal.
+            width: detailsScroll.width - 2 * Theme.scaledSpacing(12)
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.margins: Theme.scaledSpacing(12)
+            spacing: Theme.scaledSpacing(10)
 
         RowLayout {
             Layout.fillWidth: true
@@ -338,6 +383,7 @@ Rectangle {
             wrapMode: Text.Wrap
         }
 
+        }
     }
 
     component DetailPill: Rectangle {

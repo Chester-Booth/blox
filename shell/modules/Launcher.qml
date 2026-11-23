@@ -1,3 +1,5 @@
+import qs.shared
+import qs.services
 import QtQuick
 import Quickshell
 import Quickshell.Hyprland
@@ -10,6 +12,17 @@ Scope {
     property var targetScreen: null
     property bool clipboardPositionReady: false
     property bool emojiPositionReady: false
+
+    // Construct closed so the first open runs the same refresh/focus handlers
+    // as later opens. These synchronous loaders stay active after first use.
+    function ensureSurface(surface) {
+        if (surface === "main" || surface === "dmenu")
+            mainSurfaceLoader.active = true;
+        else if (surface === "clipboard")
+            clipboardLoader.active = true;
+        else if (surface === "emoji")
+            emojiLoader.active = true;
+    }
 
     function focusedScreen() {
         for (const screen of Quickshell.screens) if (Hyprland.monitorFor(screen) === Hyprland.focusedMonitor) {
@@ -47,6 +60,8 @@ Scope {
         } else if (!opening) {
             positionFallback.stop();
         }
+        if (opening)
+            ensureSurface(surface);
         activeSurface = activeSurface === surface ? "idle" : surface;
         return activeSurface;
     }
@@ -76,7 +91,9 @@ Scope {
         id: windowStateRestart
 
         interval: 1000
-        onTriggered: windowState.running = true
+        onTriggered: {
+            windowState.running = true;
+        }
     }
 
     Timer {
@@ -134,13 +151,22 @@ Scope {
         id: mainController
 
         onCloseRequested: root.close()
+        onDismissRequested: mainFocusReturn.dismiss()
         onThemeApplyStarted: root.close()
+    }
+
+    LauncherMainFocusReturn {
+        id: mainFocusReturn
+
+        targetController: pasteController
+        onCloseRequested: root.close()
     }
 
     ClipboardController {
         id: clipboardController
 
         onCloseRequested: root.close()
+        onDismissRequested: { pasteController.restoreTarget(); root.close(); }
         onPasteRequested: pasteController.pasteWhenRestored()
     }
 
@@ -148,6 +174,7 @@ Scope {
         id: emojiController
 
         onCloseRequested: root.close()
+        onDismissRequested: { pasteController.restoreTarget(); root.close(); }
         onPasteRequested: pasteController.pasteWhenRestored()
     }
 
@@ -162,6 +189,8 @@ Scope {
         id: dmenu
 
         onRequest: (options, prompt, query, settings) => {
+            if (root.activeSurface === "idle")
+                pasteController.captureTarget();
             root.targetScreen = root.requestedScreen(settings.monitor);
             mainController.dmenuMode = true;
             mainController.dmenuOptions = options;
@@ -171,6 +200,7 @@ Scope {
             mainController.dmenuBottom = settings.bottom;
             mainController.query = query;
             mainController.refresh();
+            root.ensureSurface("dmenu");
             root.activeSurface = "dmenu";
         }
         onUpdated: (options) => {
@@ -191,6 +221,7 @@ Scope {
             dmenu.finish(value, false);
             mainController.dmenuMode = false;
             mainController.dmenuPrompt = "";
+            mainFocusReturn.selectDmenu();
         }
 
         target: mainController
@@ -200,30 +231,63 @@ Scope {
         id: watcher
     }
 
-    LauncherMainSurface {
-        controller: mainController
-        targetScreen: root.targetScreen
-        open: root.activeSurface === "main" || root.activeSurface === "dmenu"
+    Loader {
+        id: mainSurfaceLoader
+        active: false
+        asynchronous: false
+        sourceComponent: LauncherMainSurface {
+            controller: mainController
+            targetScreen: root.targetScreen
+            open: root.activeSurface === "main" || root.activeSurface === "dmenu"
+        }
     }
 
-    LauncherThemeApplyWindow {
-        controller: mainController
-        targetScreen: root.targetScreen
+    Loader {
+        id: quickApplyLoader
+        active: false
+        asynchronous: false
+        sourceComponent: LauncherThemeApplyWindow {
+            controller: mainController
+            targetScreen: root.targetScreen
+        }
     }
 
-    ClipboardPicker {
-        controller: clipboardController
-        positionReady: root.clipboardPositionReady
-        watcherHealthy: watcher.healthy
-        targetScreen: root.targetScreen
-        open: root.activeSurface === "clipboard"
+    Connections {
+        target: SettingsApplyController
+        function onQuickWindowOpenChanged() {
+            if (SettingsApplyController.quickWindowOpen)
+                quickApplyLoader.active = true;
+        }
     }
 
-    EmojiPicker {
-        controller: emojiController
-        positionReady: root.emojiPositionReady
-        targetScreen: root.targetScreen
-        open: root.activeSurface === "emoji"
+    Component.onCompleted: {
+        if (SettingsApplyController.quickWindowOpen)
+            quickApplyLoader.active = true;
+    }
+
+    Loader {
+        id: clipboardLoader
+        active: false
+        asynchronous: false
+        sourceComponent: ClipboardPicker {
+            controller: clipboardController
+            positionReady: root.clipboardPositionReady
+            watcherHealthy: watcher.healthy
+            targetScreen: root.targetScreen
+            open: root.activeSurface === "clipboard"
+        }
+    }
+
+    Loader {
+        id: emojiLoader
+        active: false
+        asynchronous: false
+        sourceComponent: EmojiPicker {
+            controller: emojiController
+            positionReady: root.emojiPositionReady
+            targetScreen: root.targetScreen
+            open: root.activeSurface === "emoji"
+        }
     }
 
 }

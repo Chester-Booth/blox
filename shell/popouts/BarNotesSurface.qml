@@ -17,8 +17,9 @@ Item {
         anchorY: root.geometry.popupY(notesPopout.height, root.geometry.openPanelY)
         contentWidth: notesPopout.width
         contentHeight: notesPopout.height
-        persistentKeyboardFocus: notesPopout.editing
         open: root.geometry.active && root.surfaceController.openPanel === "todo"
+        persistentKeyboardFocus: notesPopout.editing || (open && root.surfaceController.keyboardPanel === "todo")
+        onDismissRequested: root.surfaceController.closePanel()
         onHoverEntered: root.surfaceController.popoutEntered()
         onHoverExited: root.surfaceController.popoutExited()
         onVisibleChanged: {

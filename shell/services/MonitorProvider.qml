@@ -1,3 +1,4 @@
+import qs.shared
 import QtQuick
 import Quickshell
 import Quickshell.Io
@@ -15,7 +16,8 @@ Scope {
     property string actionError: ""
     property var pendingRequest: null
     property bool syncReady: false
-    property bool timedOut: false
+    property bool queryTimedOut: false
+    property bool actionTimedOut: false
     readonly property bool providerReady: root.scriptRoot.length > 0
     readonly property bool actionBusy: actionProcess.running || root.pendingRequest !== null
     readonly property int revision: state.revision
@@ -36,7 +38,7 @@ Scope {
         if (!root.providerReady || queryProcess.running)
             return false;
         root.pendingRaw = "";
-        root.timedOut = false;
+        root.queryTimedOut = false;
         queryProcess.running = true;
         return true;
     }
@@ -49,8 +51,8 @@ Scope {
             return false;
         root.actionError = "";
         root.actionRaw = "";
-        root.timedOut = false;
         root.pendingRequest = {"monitor": monitor.name, "refreshId": String(refreshId)};
+        root.actionTimedOut = false;
         actionProcess.command = [root.scriptRoot + "/graphicsctl.py", "set-refresh", monitor.name, String(refreshId), JSON.stringify(monitor)];
         actionProcess.running = true;
         return true;
@@ -70,7 +72,8 @@ Scope {
         onStarted: queryWatchdog.restart()
         onExited: (exitCode, exitStatus) => {
             queryWatchdog.stop();
-            if (root.timedOut) {
+            queryKill.stop();
+            if (root.queryTimedOut) {
                 root.queryError = "query-timeout";
                 state.backendAvailable = false;
                 root.syncReady = true;
@@ -98,7 +101,8 @@ Scope {
         onStarted: actionWatchdog.restart()
         onExited: (exitCode, exitStatus) => {
             actionWatchdog.stop();
-            if (root.timedOut) {
+            actionKill.stop();
+            if (root.actionTimedOut) {
                 root.actionError = "timeout";
             } else {
                 try {
@@ -121,8 +125,9 @@ Scope {
         repeat: false
         onTriggered: {
             if (queryProcess.running) {
-                root.timedOut = true;
+                root.queryTimedOut = true;
                 queryProcess.signal(15);
+                queryKill.restart();
             }
         }
     }
@@ -133,10 +138,25 @@ Scope {
         repeat: false
         onTriggered: {
             if (actionProcess.running) {
-                root.timedOut = true;
+                root.actionTimedOut = true;
                 actionProcess.signal(15);
+                actionKill.restart();
             }
         }
+    }
+
+    Timer {
+        id: queryKill
+        interval: 1000
+        repeat: false
+        onTriggered: { if (queryProcess.running) queryProcess.signal(9); }
+    }
+
+    Timer {
+        id: actionKill
+        interval: 1000
+        repeat: false
+        onTriggered: { if (actionProcess.running) actionProcess.signal(9); }
     }
 
     Timer {

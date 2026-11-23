@@ -34,5 +34,36 @@ class ParentGuardTests(unittest.TestCase):
             parent_guard.arm(42)
 
 
+RESTORE_SPEC = importlib.util.spec_from_file_location("restore_focus", MODULE.with_name("restore_focus.py"))
+restore_focus = importlib.util.module_from_spec(RESTORE_SPEC)
+RESTORE_SPEC.loader.exec_module(restore_focus)
+
+
+class PickerFocusRestoreTests(unittest.TestCase):
+    def clients(self, address="0xabc", pid=42, window_class="editor"):
+        import json
+        return mock.Mock(returncode=0, stdout=json.dumps([{"address": address, "pid": pid, "class": window_class}]))
+
+    def test_restores_only_the_matching_captured_window(self):
+        with mock.patch.object(restore_focus.subprocess, "run", side_effect=[self.clients(), mock.Mock(returncode=0)]) as run:
+            self.assertTrue(restore_focus.restore("abc", 42, "editor"))
+        self.assertEqual(run.call_args.args[0], ["hyprctl", "eval", "hl.dispatch(hl.dsp.focus({window='address:0xabc'}))"])
+
+    def test_closed_or_reused_address_never_dispatches_focus(self):
+        for clients in (self.clients(address="0xdef"), self.clients(pid=99), self.clients(window_class="other")):
+            with self.subTest(clients=clients.stdout), mock.patch.object(restore_focus.subprocess, "run", return_value=clients) as run:
+                self.assertFalse(restore_focus.restore("abc", 42, "editor"))
+                self.assertEqual(run.call_count, 1)
+
+    def test_invalid_address_and_unreadable_clients_never_dispatch(self):
+        with mock.patch.object(restore_focus.subprocess, "run") as run:
+            self.assertFalse(restore_focus.restore("abc';bad", 42, "editor"))
+            self.assertFalse(restore_focus.restore("abc", 0, "editor"))
+            run.assert_not_called()
+        with mock.patch.object(restore_focus.subprocess, "run", return_value=mock.Mock(returncode=0, stdout="invalid")) as run:
+            self.assertFalse(restore_focus.restore("abc", 42, "editor"))
+            self.assertEqual(run.call_count, 1)
+
+
 if __name__ == "__main__":
     unittest.main()

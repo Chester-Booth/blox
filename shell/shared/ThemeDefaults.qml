@@ -12,12 +12,10 @@ QtObject {
         const configured = Quickshell.env("BLOX_DATA_DIR") || "";
         if (configured.length > 0)
             return configured + "/defaults/v1.json";
-        // Installed layout: <root>/shell and <root>/themes are siblings.
-        const installed = Quickshell.shellDir + "/../themes/defaults/v1.json";
-        if (Quickshell.env("BLOX_SHELL_LAYOUT") === "installed")
-            return installed;
-        // Source checkout: the themes tree sits four levels above the shell.
-        return Quickshell.shellDir + "/../../../../themes/defaults/v1.json";
+        // Source and installed trees both keep shell, themes and widgets as siblings.
+        const widgetsRoot = Quickshell.env("BLOX_WIDGETS_ROOT") || "";
+        return widgetsRoot ? widgetsRoot + "/../themes/defaults/v1.json"
+            : Quickshell.shellDir + "/../themes/defaults/v1.json";
     }
 
     signal loaded()
@@ -42,7 +40,7 @@ QtObject {
                     || !Array.isArray(bar.items) || !Array.isArray(bar.reset_items))
                 throw new Error("defaults document has incomplete bar values");
 
-            if (!data.widgets.profile || !data.widgets.profiles)
+            if (data.widgets.schemaVersion !== 1 || !Array.isArray(data.widgets.widgets))
                 throw new Error("defaults document has incomplete widget values");
 
             document = data;
@@ -82,11 +80,6 @@ QtObject {
 
     function defaultWidgetItems() {
         return [];
-    }
-
-    function widgetProfile(profile) {
-        const name = profile || (ready ? document.widgets.profile : "");
-        return ready && document.widgets.profiles[name] ? clone(document.widgets.profiles[name]) : null;
     }
 
     function resolvedBarItems(overrides) {

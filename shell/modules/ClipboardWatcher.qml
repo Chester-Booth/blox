@@ -1,3 +1,4 @@
+import qs.shared
 import QtQuick
 import Quickshell
 import Quickshell.Io
@@ -86,21 +87,27 @@ Scope {
         id: textRestart
 
         interval: 2000
-        onTriggered: textWatcher.running = true
+        onTriggered: {
+            textWatcher.running = true;
+        }
     }
 
     Timer {
         id: imageRestart
 
         interval: 2000
-        onTriggered: imageWatcher.running = true
+        onTriggered: {
+            imageWatcher.running = true;
+        }
     }
 
     Timer {
         id: filesRestart
 
         interval: 2000
-        onTriggered: filesWatcher.running = true
+        onTriggered: {
+            filesWatcher.running = true;
+        }
     }
 
 }

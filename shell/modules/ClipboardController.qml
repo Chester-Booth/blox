@@ -1,3 +1,4 @@
+import qs.shared
 import QtQuick
 import Quickshell
 import Quickshell.Io
@@ -21,6 +22,7 @@ Scope {
     readonly property string command: Quickshell.shellDir + "/scripts/launcher/clipboardctl.py"
 
     signal closeRequested()
+    signal dismissRequested()
     signal pasteRequested()
 
     function refresh() {

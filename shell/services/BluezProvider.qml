@@ -1,3 +1,4 @@
+import qs.shared
 import QtQuick
 import Quickshell
 import Quickshell.Bluetooth
@@ -12,7 +13,7 @@ Scope {
     property bool syncReady: false
     property var pendingEnabled: null
     property string actionError: ""
-    readonly property bool providerReady: root.bluetoothService !== null
+    readonly property bool providerReady: root.bluetoothService !== null && availability.available
     readonly property var adapter: root.bluetoothService ? root.bluetoothService.defaultAdapter : null
     readonly property var deviceValues: root.bluetoothService && root.bluetoothService.devices && root.bluetoothService.devices.values ? root.bluetoothService.devices.values : []
     readonly property bool actionBusy: root.pendingEnabled !== null
@@ -20,6 +21,12 @@ Scope {
     readonly property real lastUpdatedMs: state.observedAtMs
     readonly property string lastError: root.actionError
     readonly property var json: state.json
+
+    NativeServiceAvailability {
+        id: availability
+        service: "org.bluez"
+        enabled: root.bluetoothService === Bluetooth
+    }
 
     function deviceName(device) {
         if (!device)
@@ -73,10 +80,10 @@ Scope {
 
         providerReady: root.providerReady
         syncReady: root.syncReady
-        adapterAvailable: root.adapter !== null
+        adapterAvailable: root.providerReady && root.adapter !== null
         adapterEnabled: root.adapter ? root.adapter.enabled === true : false
         adapterBlocked: root.adapter ? root.adapter.state === BluetoothAdapterState.Blocked : false
-        connectedNames: root.connectedDeviceNames()
+        connectedNames: root.providerReady ? root.connectedDeviceNames() : []
         busy: root.actionBusy
         actionError: root.actionError
     }

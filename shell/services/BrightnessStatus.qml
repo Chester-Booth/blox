@@ -1,4 +1,6 @@
+import qs.shared
 import QtQuick
+import "ActionContract.js" as ActionContract
 import Quickshell
 
 // Keep the script-backed display owner behind the same typed optional-provider
@@ -7,6 +9,7 @@ Scope {
     id: root
 
     property string scriptRoot: ""
+    signal brightnessApplied(int percent)
     property int interval: 30000
     property url providerSource: Qt.resolvedUrl("BrightnessProvider.qml")
     property var json: ({
@@ -92,6 +95,35 @@ Scope {
         return root.providerReady && providerLoader.item.setBrightness(value);
     }
 
+    function action(operation, value) {
+        const status = root.json || {};
+        // This provider keeps one replaceable target, so repeats can accumulate
+        // while its current write finishes. Other busy providers still deny.
+        const queued = root.providerReady && providerLoader.item.actionBusy === true
+            && providerLoader.item.pendingBrightness !== undefined
+            && providerLoader.item.pendingBrightness.length > 0;
+        const blocked = ActionContract.blockedCode(queued ? Object.assign({}, status, {busy: false}) : status,
+            status.capability && status.capability.canChange);
+        if (blocked)
+            return ActionContract.result(false, blocked, "the action is unavailable");
+        const beforeRevision = Number(status.providerRevision || 0);
+        if (["set", "adjust"].indexOf(operation) < 0)
+            return ActionContract.result(false, "invalid-data", "unknown brightness operation");
+        const requested = Number(value);
+        if (!isFinite(requested) || Math.round(requested) !== requested)
+            return ActionContract.result(false, "invalid-data", "brightness must be an integer");
+        const base = root.providerReady && providerLoader.item.adjustmentBase !== undefined
+            ? Number(providerLoader.item.adjustmentBase) : Number(status.percent || 0);
+        const target = operation === "adjust" ? Math.max(0, Math.min(100, base + requested)) : requested;
+        if (target < 0 || target > 100)
+            return ActionContract.result(false, "invalid-data", "brightness must be from 0 to 100");
+        const accepted = root.setBrightness(target);
+        value = target;
+        if (!accepted)
+            return ActionContract.result(false, "failed", "the provider rejected the action");
+        return ActionContract.accepted(operation, value, root.json || {}, beforeRevision);
+    }
+
     Loader {
         id: providerLoader
 
@@ -110,6 +142,7 @@ Scope {
         ignoreUnknownSignals: true
 
         function onJsonChanged() { root.syncJson(); }
+        function onBrightnessApplied(percent) { root.brightnessApplied(percent); }
     }
 
     onScriptRootChanged: {

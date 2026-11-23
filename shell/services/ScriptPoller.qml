@@ -1,4 +1,5 @@
 import QtQuick
+import qs.shared
 import Quickshell
 import Quickshell.Io
 
@@ -6,6 +7,7 @@ Scope {
     id: root
 
     property var command: []
+    property bool parseJson: true
     property int interval: 5000
     property int timeout: 15000
     property string raw: ""
@@ -37,7 +39,9 @@ Scope {
         id: process
 
         command: root.command
-        onStarted: watchdog.restart()
+        onStarted: {
+            watchdog.restart();
+        }
         onExited: (exitCode, exitStatus) => {
             watchdog.stop();
             forceKill.stop();
@@ -48,7 +52,7 @@ Scope {
             } else if (exitCode === 0 && exitStatus === 0) {
                 const output = root.pendingRaw.trim();
                 try {
-                    const parsed = output.length > 0 ? JSON.parse(output) : {
+                    const parsed = root.parseJson && output.length > 0 ? JSON.parse(output) : {
                     };
                     root.raw = output;
                     root.json = parsed;

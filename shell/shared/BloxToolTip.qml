@@ -9,16 +9,19 @@ Popup {
     property int delay: 320
     property string preferredPlacement: "auto"
     readonly property var hostWindow: parent ? parent.Window.window : null
+    readonly property bool requested: shown || parent && parent.activeFocus
 
     popupType: Popup.Item
+    // Keep hints above selection and search popups in the same window overlay.
+    z: 10000
     modal: false
     dim: false
     focus: false
     closePolicy: Popup.NoAutoClose
     padding: Theme.scaledSpacing(7)
     width: Math.max(40, Math.min(320, hostWindow ? hostWindow.width - 8 : 320, tooltipLabel.implicitWidth + leftPadding + rightPadding))
-    onShownChanged: {
-        if (shown) {
+    onRequestedChanged: {
+        if (requested) {
             showTimer.restart();
         } else {
             showTimer.stop();
@@ -31,7 +34,7 @@ Popup {
 
         interval: root.delay
         onTriggered: {
-            if (root.shown) {
+            if (root.requested) {
                 const hostWindow = root.hostWindow;
                 if (!hostWindow)
                     return ;

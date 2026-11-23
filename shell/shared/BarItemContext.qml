@@ -6,6 +6,7 @@ QtObject {
     required property BarContentController contentController
     required property WorkspaceController workspaceController
     required property NotificationController notificationController
+    property var panelAnchorOwner: null
     property bool horizontal: false
     property real panelExtent: 0
     property real maximumExtent: Number.POSITIVE_INFINITY

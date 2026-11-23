@@ -6,13 +6,16 @@ ColumnLayout {
     id: root
 
     required property SystemPopoutController controller
+    signal keyboardFocusRequested(Item item)
 
     Layout.fillWidth: true
     visible: controller.currentMode() === "brightness"
     spacing: Theme.scaledSpacing(10)
 
     SystemLevelSlider {
+        id: brightnessSlider
         Layout.fillWidth: true
+        label: "Brightness"
         interactive: root.controller.brightnessCanChange
         value: root.controller.visualBrightnessPercent
         accent: Theme.yellow
@@ -21,6 +24,7 @@ ColumnLayout {
             root.controller.queueBrightness(value);
         }
         onDragFinished: root.controller.finishBrightness()
+        onFocusEntered: item => root.keyboardFocusRequested(item)
     }
 
     PillSelector {

@@ -1,91 +1,17 @@
 #!/usr/bin/env bash
+# Compatibility client for the running action owner.
 set -euo pipefail
-
-script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-action="${1:-}"
-
-case "$action" in
-audio-toggle)
-	exec "$script_dir/osd/control.sh" volume-mute
-	;;
-audio-set-silent)
-	exec pactl set-sink-volume @DEFAULT_SINK@ "${2:-0}%"
-	;;
-mic-toggle)
-	exec "$script_dir/osd/control.sh" mic-mute
-	;;
-mic)
-	case "${2:-}" in
-	open) pactl set-source-mute @DEFAULT_SOURCE@ 0 ;;
-	muted) pactl set-source-mute @DEFAULT_SOURCE@ 1 ;;
-	*)
-		echo "usage: $0 mic open|muted" >&2
-		exit 2
-		;;
-	esac
-	exec "$script_dir/osd/control.sh" mic-show
-	;;
-brightness-set-silent)
-	brightness_device="${BRIGHTNESS_DEVICE:-}"
-	if [[ -z "$brightness_device" ]]; then
-		brightness_device="$("$script_dir/status/brightness-device.sh" 2>/dev/null || true)"
-	fi
-	[[ -n "$brightness_device" ]] || exit 1
-	exec brightnessctl -q -d "$brightness_device" set "${2:-0}%"
-	;;
-wifi)
-	case "${2:-}" in
-	on | off) nmcli radio wifi "$2" ;;
-	*)
-		echo "usage: $0 wifi on|off" >&2
-		exit 2
-		;;
-	esac
-	;;
-bluetooth-toggle)
-	rfkill toggle bluetooth
-	;;
-bluetooth)
-	case "${2:-}" in
-	on) rfkill unblock bluetooth ;;
-	off) rfkill block bluetooth ;;
-	*)
-		echo "usage: $0 bluetooth on|off" >&2
-		exit 2
-		;;
-	esac
-	;;
-fan-profile)
-	case "${2:-}" in
-	performance | balanced | quiet)
-		asusctl profile set "$2"
-		"$script_dir/osd/fan-profile.sh" "$2"
-		;;
-	*)
-		echo "usage: $0 fan-profile performance|balanced|quiet" >&2
-		exit 2
-		;;
-	esac
-	;;
-fan-curves)
-	case "${2:-}" in
-	on | off)
-		profile="$(asusctl profile get | sed -n 's/^Active profile:[[:space:]]*//p' | head -n1)"
-		[[ -n "$profile" ]] || exit 1
-		if [[ "$2" == "on" ]]; then
-			asusctl fan-curve --mod-profile "$profile" --enable-fan-curves true
-		else
-			asusctl fan-curve --mod-profile "$profile" --enable-fan-curves false
-		fi
-		;;
-	*)
-		echo "usage: $0 fan-curves on|off" >&2
-		exit 2
-		;;
-	esac
-	;;
-*)
-	echo "usage: $0 audio-toggle|audio-set-silent|mic-toggle|mic|brightness-set-silent|wifi|bluetooth-toggle|bluetooth|fan-profile|fan-curves" >&2
-	exit 2
-	;;
+script_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+case "${1:-}" in
+audio-toggle) exec "$script_root/bloxctl.py" audio toggle-mute --json;;
+audio-set-silent) exec "$script_root/bloxctl.py" audio set-volume "${2:-0}" --json;;
+mic-toggle) exec "$script_root/bloxctl.py" audio toggle-mic --json;;
+mic) exec "$script_root/bloxctl.py" audio set-mic "${2:-}" --json;;
+brightness-set-silent) exec "$script_root/bloxctl.py" brightness set "${2:-0}" --json;;
+wifi) exec "$script_root/bloxctl.py" network set-wifi "${2:-}" --json;;
+bluetooth-toggle) exec "$script_root/bloxctl.py" bluetooth toggle-enabled --json;;
+bluetooth) exec "$script_root/bloxctl.py" bluetooth set-enabled "${2:-}" --json;;
+fan-profile) exec "$script_root/bloxctl.py" vendor set-profile "${2:-}" --json;;
+fan-curves) exec "$script_root/bloxctl.py" vendor set-fan-curves "${2:-}" --json;;
+*) echo 'Unknown control action' >&2; exit 2;;
 esac

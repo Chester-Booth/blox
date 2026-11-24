@@ -116,6 +116,10 @@ FloatingWindow {
     function discardSettingsEdits() {
         draftSettingsWrites = ({}); draftUserWrites = ({}); draftUserEdited = false; settingsFeedback = "";
         if (themeEditorController) themeEditorController.revertCandidate();
+        if (Theme.activeThemeId.length > 0 && themeLibrary.selectedThemeId !== Theme.activeThemeId) {
+            Theme.cancelPreview();
+            selectTheme(Theme.activeThemeId, true);
+        }
         stagedThemeTargetsId = "";
         stageThemeTargets();
         Qt.callLater(previewDraftSettings);
@@ -515,8 +519,13 @@ FloatingWindow {
                 || importedSourceReloadPending || stagedThemeTargetsId === themeEditorController.selectedId) return;
         const candidate = themeEditorController.candidate;
         const targets = candidate.targets || {};
+        const unavailable = themeEditorController.unavailableTargetKeys || [];
         const next = Object.assign({}, draftSettingsWrites);
         Object.keys(targets).forEach(key => {
+            if (unavailable.indexOf(key) >= 0) {
+                next["targets." + key + ".enabled"] = false;
+                return;
+            }
             const target = targets[key];
             next["targets." + key + ".enabled"] = typeof target === "boolean" ? target : target.enabled === true;
         });

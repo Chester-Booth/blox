@@ -538,8 +538,15 @@ FloatingWindow {
         ["osd", "notifications"].forEach(section => Object.keys(shell[section] || {}).forEach(key => next[section + "." + (aliases[key] || key)] = shell[section][key]));
         const saved = settingsController.settings;
         const source = themeEditorController.sourceTheme;
+        const builtinTheme = themeEditorController.selectedThemeBuiltin
+            || (themeEditorController.themes || []).some(entry => entry && entry.id === candidate.id && entry.builtin === true);
+        const effectiveSource = source || candidate;
+        const sourceWidgets = effectiveSource && Object.prototype.hasOwnProperty.call(effectiveSource, "widgets") ? effectiveSource.widgets : null;
+        // Built-in themes carry an empty widget profile placeholder; switching to one keeps the user's widgets.
+        const builtinEmptyWidgets = builtinTheme && (!sourceWidgets || !Array.isArray(sourceWidgets.widgets) || !sourceWidgets.widgets.length);
         const savedOwnsWidgets = candidate.id === Theme.activeThemeId
-            || source && !Object.prototype.hasOwnProperty.call(source, "widgets");
+            || builtinEmptyWidgets
+            || (source && !Object.prototype.hasOwnProperty.call(source, "widgets"));
         if (savedOwnsWidgets && saved && Object.prototype.hasOwnProperty.call(saved, "widgets"))
             next.widgets = JSON.parse(JSON.stringify(saved.widgets));
         else if (Object.prototype.hasOwnProperty.call(candidate, "widgets"))
@@ -554,7 +561,13 @@ FloatingWindow {
         const candidate = JSON.parse(JSON.stringify(value));
         const raw = source && typeof source === "object" ? source : value;
         const settings = settingsController.settings;
+        const builtinTheme = (themeEditorController && Array.isArray(themeEditorController.themes)
+            && themeEditorController.themes.some(entry => entry && entry.id === candidate.id && entry.builtin === true))
+            || !!(themeEditorController && themeEditorController.selectedThemeBuiltin && candidate.id === themeEditorController.selectedId);
+        const rawWidgets = Object.prototype.hasOwnProperty.call(raw, "widgets") ? raw.widgets : null;
+        const builtinEmptyWidgets = builtinTheme && (!rawWidgets || !Array.isArray(rawWidgets.widgets) || !rawWidgets.widgets.length);
         const savedOwnsWidgets = candidate.id === Theme.activeThemeId
+            || builtinEmptyWidgets
             || !Object.prototype.hasOwnProperty.call(raw, "widgets");
         if (savedOwnsWidgets && settings && Object.prototype.hasOwnProperty.call(settings, "widgets"))
             candidate.widgets = JSON.parse(JSON.stringify(settings.widgets));

@@ -211,6 +211,20 @@ TestCase {
         verify(!subject.prepareSettingsForApply());
         compare(provider.submitted.sections.widgets.widgets.length, 0);
     }
+    function test_builtin_theme_empty_placeholder_preserves_saved_widgets() {
+        provider.settings = {widgets: widgetProfile()};
+        editor.themes = [{id: "nord", builtin: true}];
+        editor.selectedId = "nord";
+        editor.selectedThemeBuiltin = true;
+        const builtinEmpty = {id: "nord", widgets: {schemaVersion: 1, widgets: []}, targets: {}};
+        const prepared = subject.prepareEditorSource(builtinEmpty, builtinEmpty);
+        compare(prepared.widgets.widgets.length, 1);
+        editor.sourceTheme = builtinEmpty;
+        editor.candidate = prepared;
+        subject.stageThemeTargets();
+        compare(subject.draftSettingsWrites.widgets.widgets.length, 1);
+        compare(subject.draftSettingsWrites.widgets.widgets[0].id, "clock");
+    }
     function test_theme_staging_copies_profile_as_one_value() {
         editor.candidate = {widgets: widgetProfile(), targets: {}};
         subject.stageThemeTargets();

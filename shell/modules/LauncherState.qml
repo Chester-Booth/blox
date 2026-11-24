@@ -19,13 +19,28 @@ Singleton {
     property alias emojiUsage: state.emojiUsage
     property alias applicationUsage: state.applicationUsage
 
+    Timer {
+        id: saveTimer
+        interval: 250
+        repeat: false
+        onTriggered: stateFile.writeAdapter()
+    }
+
+    Component.onDestruction: {
+        if (saveTimer.running) {
+            saveTimer.stop();
+            stateFile.writeAdapter();
+        }
+    }
+
     FileView {
+        id: stateFile
         path: Quickshell.statePath("launcher-state.json")
         preload: true
         blockLoading: true
         atomicWrites: true
         printErrors: false
-        onAdapterUpdated: writeAdapter()
+        onAdapterUpdated: saveTimer.restart()
 
         JsonAdapter {
             id: state

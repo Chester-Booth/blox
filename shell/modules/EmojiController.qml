@@ -12,8 +12,12 @@ Scope {
     readonly property int nerdFontCount: nativeIndex.nerdFontCount
     property var items: []
     property var categoryIndices: []
-    property var categorySubcategories: []
     property bool nativeCategoryBrowse: false
+    property bool nativeSearchBrowse: false
+    property int searchCount: 0
+    property bool sectionedBrowse: false
+    property int sectionedCount: 0
+    property int gridColumns: 5
     property int browseRevision: 0
     property var browsePinned: ({
     })
@@ -31,8 +35,22 @@ Scope {
         "count": 0
     }]
     property var nerdFontPurposes: []
+    readonly property var symbolSections: [
+        {key: "emoji", title: "Emoji signs"},
+        {key: "common", title: "Common marks & games"},
+        {key: "shape", title: "Shapes"},
+        {key: "arrow", title: "Arrows"},
+        {key: "maths", title: "Maths & logic"},
+        {key: "currency", title: "Currency"},
+        {key: "technical", title: "Technical notation"}
+    ]
     readonly property bool copyBusy: copy.running
-    readonly property int itemCount: virtualBrowse ? nativeIndex.count : nativeCategoryBrowse ? categoryIndices.length : items.length
+    readonly property int itemCount: virtualBrowse ? nativeIndex.count
+        : sectionedBrowse ? sectionedCount
+        : nativeSearchBrowse ? searchCount
+        : nativeCategoryBrowse ? categoryIndices.length
+        : items.length
+    readonly property int gridCount: sectionedBrowse ? nativeIndex.gridCount : itemCount
     readonly property var categories: ["Search", "Recent", "Smileys & Emotion", "People & Body", "Animals & Nature", "Food & Drink", "Activities", "Travel & Places", "Objects", "Flags", "Symbols", "Nerd Fonts"]
     readonly property var toneNames: ["", "light skin tone", "medium-light skin tone", "medium skin tone", "medium-dark skin tone", "dark skin tone"]
     readonly property var toneCharacters: ["", "🏻", "🏼", "🏽", "🏾", "🏿"]
@@ -217,21 +235,55 @@ Scope {
         };
     }
 
-    function itemAt(index) {
-        // Cells must refresh after a reorder or tone change even when count is unchanged.
-        const revision = root.browseRevision;
-        if (index < 0) return null;
-        if (!root.virtualBrowse && !root.nativeCategoryBrowse) return root.items[index] || null;
-        if (index >= (root.virtualBrowse ? nativeIndex.count : root.categoryIndices.length)) return null;
-        const sourceIndex = root.virtualBrowse ? nativeIndex.sourceIndexAt(index) : root.categoryIndices[index];
-        const item = nativeIndex.item(sourceIndex);
-        return root.displayItem(item, Boolean(root.browsePinned[root.itemKey(item)]));
+    function setGridColumns(columns) {
+        const clamped = Math.max(1, columns);
+        if (clamped === root.gridColumns) return;
+        root.gridColumns = clamped;
+        if (root.sectionedBrowse) {
+            nativeIndex.relayoutSectionedGrid(clamped);
+            root.browseRevision++;
+        }
     }
 
-    function itemSubcategory(index) {
-        if (root.nativeCategoryBrowse) return root.categorySubcategories[index] || "";
-        const item = root.itemAt(index);
-        return item ? String(item.subcategory || "") : "";
+    function gridRowKind(row) { return nativeIndex.gridRowKind(row); }
+    function gridRowItemIndex(row) { return nativeIndex.gridRowItemIndex(row); }
+    function gridRowTitle(row) { return nativeIndex.gridRowTitle(row); }
+    function gridIndexForItem(itemIndex) {
+        const rev = root.browseRevision;
+        return nativeIndex.gridIndexForItem(itemIndex);
+    }
+    function gridHeadingRow(sectionKey) { return nativeIndex.gridHeadingRow(sectionKey); }
+    function activeSectionForRow(firstRow, fallback) { return nativeIndex.activeSectionForRow(firstRow, fallback); }
+
+    function itemAt(index) {
+        // Cells must refresh after a reorder, search, or tone change even when count is unchanged.
+        const revision = root.browseRevision;
+        if (index < 0) return null;
+        if (root.virtualBrowse) {
+            if (index >= nativeIndex.count) return null;
+            const sourceIndex = nativeIndex.sourceIndexAt(index);
+            const item = nativeIndex.item(sourceIndex);
+            return root.displayItem(item, Boolean(root.browsePinned[root.itemKey(item)]));
+        }
+        if (root.sectionedBrowse) {
+            if (index >= root.sectionedCount) return null;
+            const sourceIndex = nativeIndex.sectionedSourceIndexAt(index);
+            const item = nativeIndex.item(sourceIndex);
+            return root.displayItem(item, Boolean(root.browsePinned[root.itemKey(item)]));
+        }
+        if (root.nativeSearchBrowse) {
+            if (index >= root.searchCount) return null;
+            const sourceIndex = nativeIndex.searchSourceIndexAt(index);
+            const item = nativeIndex.item(sourceIndex);
+            return root.displayItem(item, Boolean(root.browsePinned[root.itemKey(item)]));
+        }
+        if (root.nativeCategoryBrowse) {
+            if (index >= root.categoryIndices.length) return null;
+            const sourceIndex = root.categoryIndices[index];
+            const item = nativeIndex.item(sourceIndex);
+            return root.displayItem(item, Boolean(root.browsePinned[root.itemKey(item)]));
+        }
+        return root.items[index] || null;
     }
 
     function filterSync() {
@@ -241,22 +293,44 @@ Scope {
         root.browsePinned = pinSet;
         if (root.category === "Search" && !root.query.trim().length) {
             nativeIndex.setPins(pins);
+            nativeIndex.clearSectionedGrid();
             root.virtualBrowse = true;
+            root.sectionedBrowse = false;
+            root.sectionedCount = 0;
+            root.nativeSearchBrowse = false;
+            root.searchCount = 0;
             root.nativeCategoryBrowse = false;
             root.categoryIndices = [];
-            root.categorySubcategories = [];
             root.items = [];
-        } else if (root.category !== "Recent") {
+        } else if (root.category === "Symbols" || root.category === "Nerd Fonts") {
+            const sections = root.category === "Symbols" ? root.symbolSections : root.nerdFontPurposes;
             root.virtualBrowse = false;
+            root.nativeSearchBrowse = false;
+            root.searchCount = 0;
+            root.nativeCategoryBrowse = false;
+            root.categoryIndices = [];
+            root.items = [];
+            root.sectionedCount = nativeIndex.buildSectionedGrid(root.category, root.nerdFontSource, pins, sections, root.gridColumns);
+            root.sectionedBrowse = true;
+        } else if (root.category !== "Recent") {
+            nativeIndex.clearSectionedGrid();
+            root.virtualBrowse = false;
+            root.sectionedBrowse = false;
+            root.sectionedCount = 0;
+            root.nativeSearchBrowse = false;
+            root.searchCount = 0;
             root.categoryIndices = nativeIndex.filteredIndices(root.category, root.nerdFontSource, pins);
-            root.categorySubcategories = root.categoryIndices.map(index => nativeIndex.subcategoryAt(index));
             root.nativeCategoryBrowse = true;
             root.items = [];
         } else {
+            nativeIndex.clearSectionedGrid();
             root.virtualBrowse = false;
+            root.sectionedBrowse = false;
+            root.sectionedCount = 0;
+            root.nativeSearchBrowse = false;
+            root.searchCount = 0;
             root.nativeCategoryBrowse = false;
             root.categoryIndices = [];
-            root.categorySubcategories = [];
             const matches = LauncherState.recentEmoji.map((item, order) => {
                 const key = root.itemKey(item);
                 const usage = LauncherState.emojiUsage[key] || {};
@@ -273,15 +347,19 @@ Scope {
         const needle = query.trim().toLowerCase();
         if (root.category !== "Search" || !needle.length) return;
         const pins = LauncherState.pinnedEmoji;
-        const indices = nativeIndex.search(needle, pins);
+        const pinSet = {};
+        for (const key of pins) pinSet[key] = true;
+        root.browsePinned = pinSet;
+        nativeIndex.clearSectionedGrid();
         root.virtualBrowse = false;
+        root.sectionedBrowse = false;
+        root.sectionedCount = 0;
         root.nativeCategoryBrowse = false;
         root.categoryIndices = [];
-        root.categorySubcategories = [];
-        root.items = indices.map(index => {
-            const item = nativeIndex.item(index);
-            return root.displayItem(item, pins.indexOf(root.itemKey(item)) >= 0);
-        });
+        root.items = [];
+        root.searchCount = nativeIndex.setSearchResults(needle, pins);
+        root.nativeSearchBrowse = true;
+        root.browseRevision++;
         root.selectedIndex = 0;
     }
 

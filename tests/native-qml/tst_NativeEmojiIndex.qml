@@ -86,6 +86,25 @@ TestCase {
             && filter.keys.indexOf(sourceItems[record.index].source) >= 0);
         compare(JSON.stringify(index.filteredIndices("Nerd Fonts", filter.key, pins)), JSON.stringify(records.map(record => record.index)));
     }
+    function test_sectioned_grid_and_relayout() {
+        const count = index.buildSectionedGrid("Nerd Fonts", "all", [], nerdDocument.purposes, 5);
+        verify(count > 0);
+        const grid5 = index.gridCount;
+        verify(grid5 > count);
+        compare(index.gridRowKind(0), 1);
+        const firstItemGridIdx = index.gridIndexForItem(0);
+        verify(firstItemGridIdx >= 5);
+        compare(index.gridRowKind(firstItemGridIdx), 0);
+        compare(index.gridRowItemIndex(firstItemGridIdx), 0);
+        index.relayoutSectionedGrid(8);
+        verify(index.gridCount !== grid5);
+        compare(index.gridRowKind(0), 1);
+        compare(index.gridRowItemIndex(index.gridIndexForItem(0)), 0);
+        const searchCount = index.setSearchResults("arrow", []);
+        compare(searchCount, index.search("arrow", []).length);
+        compare(index.searchSourceIndexAt(0), index.search("arrow", [])[0]);
+    }
+
     function test_z_partial_source_failure_and_reload_keep_healthy_half() {
         verify(!index.loadNerdFontData('{"items": [], "purposes": null}'));
         compare(index.sourceCount, emojiDocument.items.length);

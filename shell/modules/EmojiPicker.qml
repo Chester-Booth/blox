@@ -15,18 +15,9 @@ FloatingWindow {
     property int contextItemIndex: -1
     property point contextAnchor: Qt.point(0, 0)
     readonly property var contextItem: contextItemIndex >= 0 ? controller.itemAt(contextItemIndex) : null
-    property var gridItems: []
     readonly property var categoryIcons: ["magnifying-glass", "clock-counter-clockwise", "smiley", "person-simple", "paw-print", "hamburger", "soccer-ball", "airplane", "lamp", "flag", "shapes", "code"]
     readonly property var toneColours: ["#ffdc5d", "#f7dece", "#e0bb95", "#c58c6b", "#a56b46", "#6f432a"]
-    readonly property var symbolSections: [
-        {key: "emoji", title: "Emoji signs"},
-        {key: "common", title: "Common marks & games"},
-        {key: "shape", title: "Shapes"},
-        {key: "arrow", title: "Arrows"},
-        {key: "maths", title: "Maths & logic"},
-        {key: "currency", title: "Currency"},
-        {key: "technical", title: "Technical notation"}
-    ]
+    readonly property var symbolSections: controller.symbolSections
     property string activeNerdFontSection: "files"
     property string activeSymbolSection: "emoji"
 
@@ -48,94 +39,29 @@ FloatingWindow {
         controller.selectedIndex = itemIndex;
     }
 
-    function symbolSectionKey(subcategory) {
-        const subgroup = String(subcategory || "");
-        if (!subgroup.startsWith("text-")) return "emoji";
-        if (subgroup === "text-common" || subgroup === "text-punctuation") return "common";
-        if (subgroup === "text-shape") return "shape";
-        if (subgroup === "text-arrow") return "arrow";
-        if (subgroup === "text-maths") return "maths";
-        if (subgroup === "text-currency") return "currency";
-        return "technical";
-    }
-
-    function appendHeading(target, key, title, columns) {
-        while (target.length % columns)
-            target.push({kind: "spacer", itemIndex: -1});
-        target.push({kind: "heading", sectionKey: key, title: title, itemIndex: -1});
-        for (let index = 1; index < columns; index++)
-            target.push({kind: "spacer", itemIndex: -1});
-    }
-
-    function gridItemRow(index) {
-        return {kind: "emoji", item: controller.nativeCategoryBrowse ? null : controller.items[index], itemIndex: index};
-    }
-
-    function rebuildGridItems() {
-        if (controller.virtualBrowse) {
-            gridItems = [];
-            return;
-        }
-        const itemCount = controller.nativeCategoryBrowse ? controller.categoryIndices.length : controller.items.length;
-        const columns = Math.max(1, Math.floor((emojiGrid.width - emojiGrid.rightMargin) / emojiGrid.cellWidth));
-        const display = [];
-        if (controller.category === "Symbols" || controller.category === "Nerd Fonts") {
-            const sections = controller.category === "Symbols" ? symbolSections : controller.nerdFontPurposes;
-            for (const section of sections) {
-                const matches = [];
-                for (let index = 0; index < itemCount; index++) {
-                    const sectionKey = controller.category === "Symbols"
-                        ? symbolSectionKey(controller.itemSubcategory(index))
-                        : controller.itemSubcategory(index);
-                    if (sectionKey === section.key)
-                        matches.push(root.gridItemRow(index));
-                }
-                if (!matches.length) continue;
-                appendHeading(display, section.key, section.title, columns);
-                for (const match of matches) display.push(match);
-            }
-        } else {
-            for (let index = 0; index < itemCount; index++)
-                display.push(root.gridItemRow(index));
-        }
-        gridItems = display;
-    }
-
-    function gridIndexForItem(itemIndex) {
-        for (let index = 0; index < gridItems.length; index++) {
-            if (gridItems[index].itemIndex === itemIndex)
-                return index;
-        }
-        return -1;
+    function syncGridColumns() {
+        const cols = Math.max(1, Math.floor((emojiGrid.width - emojiGrid.rightMargin) / emojiGrid.cellWidth));
+        controller.setGridColumns(cols);
     }
 
     function jumpToSection(key, isNerdFonts) {
-        for (let index = 0; index < gridItems.length; index++) {
-            const item = gridItems[index];
-            if (item.kind === "heading" && item.sectionKey === key) {
-                if (isNerdFonts) activeNerdFontSection = key;
-                else activeSymbolSection = key;
-                emojiGrid.positionViewAtIndex(index, GridView.Beginning);
-                emojiGrid.forceActiveFocus();
-                return;
-            }
-        }
+        const index = controller.gridHeadingRow(key);
+        if (index < 0) return;
+        if (isNerdFonts) activeNerdFontSection = key;
+        else activeSymbolSection = key;
+        emojiGrid.positionViewAtIndex(index, GridView.Beginning);
+        emojiGrid.forceActiveFocus();
     }
 
     function updateActiveSymbolSection() {
-        if (controller.category !== "Symbols" && controller.category !== "Nerd Fonts")
+        if (!controller.sectionedBrowse)
             return;
         const columns = Math.max(1, Math.floor((emojiGrid.width - emojiGrid.rightMargin) / emojiGrid.cellWidth));
-        const firstIndex = Math.min(gridItems.length - 1, Math.max(0, Math.floor(emojiGrid.contentY / emojiGrid.cellHeight) * columns));
-        for (let index = firstIndex; index >= 0; index--) {
-            if (gridItems[index].kind === "heading") {
-                if (controller.category === "Symbols") activeSymbolSection = gridItems[index].sectionKey;
-                else activeNerdFontSection = gridItems[index].sectionKey;
-                return;
-            }
-        }
-        if (controller.category === "Symbols")
-            activeSymbolSection = "emoji";
+        const firstIndex = Math.max(0, Math.floor(emojiGrid.contentY / emojiGrid.cellHeight) * columns);
+        const fallback = controller.category === "Symbols" ? "emoji" : activeNerdFontSection;
+        const active = controller.activeSectionForRow(firstIndex, fallback);
+        if (controller.category === "Symbols") activeSymbolSection = active;
+        else activeNerdFontSection = active;
     }
 
     function nerdFontSourceTitle() {
@@ -184,9 +110,9 @@ FloatingWindow {
 
     Connections {
         target: controller
-        function onItemsChanged() { root.rebuildGridItems(); emojiGrid.positionViewAtBeginning(); }
-        function onBrowseRevisionChanged() { root.rebuildGridItems(); emojiGrid.positionViewAtBeginning(); }
-        function onVirtualBrowseChanged() { root.rebuildGridItems(); emojiGrid.positionViewAtBeginning(); }
+        function onCategoryChanged() { emojiGrid.positionViewAtBeginning(); }
+        function onNerdFontSourceChanged() { emojiGrid.positionViewAtBeginning(); }
+        function onQueryChanged() { emojiGrid.positionViewAtBeginning(); }
     }
 
     Rectangle {
@@ -401,12 +327,12 @@ FloatingWindow {
                     cellWidth: 58
                     cellHeight: 54
                     clip: true
-                    model: controller.virtualBrowse ? controller.itemCount : root.gridItems.length
-                    currentIndex: controller.virtualBrowse ? controller.selectedIndex : root.gridIndexForItem(controller.selectedIndex)
+                    model: controller.sectionedBrowse ? controller.gridCount : controller.itemCount
+                    currentIndex: controller.sectionedBrowse ? controller.gridIndexForItem(controller.selectedIndex) : controller.selectedIndex
                     activeFocusOnTab: true
-                    onWidthChanged: root.rebuildGridItems()
+                    onWidthChanged: root.syncGridColumns()
                     onContentYChanged: root.updateActiveSymbolSection()
-                    Component.onCompleted: root.rebuildGridItems()
+                    Component.onCompleted: root.syncGridColumns()
                     Keys.onPressed: event => {
                         const columns = Math.max(1, Math.floor(width / cellWidth));
                         const pageSize = columns * Math.max(1, Math.floor(height / cellHeight));
@@ -431,15 +357,16 @@ FloatingWindow {
                             return;
                         }
                         if ((event.key === Qt.Key_Home || event.key === Qt.Key_End) && controller.itemCount) {
-                            if (controller.virtualBrowse) {
+                            if (!controller.sectionedBrowse) {
                                 controller.selectedIndex = event.key === Qt.Key_Home ? 0 : controller.itemCount - 1;
                                 positionViewAtIndex(controller.selectedIndex, GridView.Contain);
                             } else {
                                 const step = event.key === Qt.Key_Home ? 1 : -1;
-                                let target = event.key === Qt.Key_Home ? 0 : root.gridItems.length - 1;
-                                while (target >= 0 && target < root.gridItems.length && root.gridItems[target].kind !== "emoji") target += step;
-                                if (target >= 0 && target < root.gridItems.length) {
-                                    controller.selectedIndex = root.gridItems[target].itemIndex;
+                                const total = controller.gridCount;
+                                let target = event.key === Qt.Key_Home ? 0 : total - 1;
+                                while (target >= 0 && target < total && controller.gridRowKind(target) !== 0) target += step;
+                                if (target >= 0 && target < total) {
+                                    controller.selectedIndex = controller.gridRowItemIndex(target);
                                     positionViewAtIndex(target, GridView.Contain);
                                 }
                             }
@@ -447,16 +374,17 @@ FloatingWindow {
                             return;
                         }
                         if (delta !== 0 && controller.itemCount) {
-                            if (controller.virtualBrowse) {
+                            if (!controller.sectionedBrowse) {
                                 const target = Math.max(0, Math.min(controller.itemCount - 1, currentIndex + delta));
                                 controller.selectedIndex = target;
                                 positionViewAtIndex(target, GridView.Contain);
                             } else {
-                                let target = Math.max(0, Math.min(root.gridItems.length - 1, currentIndex + delta));
+                                const total = controller.gridCount;
+                                let target = Math.max(0, Math.min(total - 1, currentIndex + delta));
                                 const direction = delta < 0 ? -1 : 1;
-                                while (target >= 0 && target < root.gridItems.length && root.gridItems[target].kind !== "emoji") target += direction;
-                                if (target >= 0 && target < root.gridItems.length) {
-                                    controller.selectedIndex = root.gridItems[target].itemIndex;
+                                while (target >= 0 && target < total && controller.gridRowKind(target) !== 0) target += direction;
+                                if (target >= 0 && target < total) {
+                                    controller.selectedIndex = controller.gridRowItemIndex(target);
                                     positionViewAtIndex(target, GridView.Contain);
                                 }
                             }
@@ -494,10 +422,16 @@ FloatingWindow {
 
                         required property int index
                         readonly property var modelData: {
-                            const row = controller.virtualBrowse ? {kind: "emoji", itemIndex: index} : root.gridItems[index];
-                            if (!row || row.kind !== "emoji") return row || {kind: "spacer", itemIndex: -1};
-                            if (row.item) return row;
-                            return {kind: "emoji", item: controller.itemAt(row.itemIndex), itemIndex: row.itemIndex};
+                            const revision = controller.browseRevision;
+                            if (!controller.sectionedBrowse)
+                                return {kind: "emoji", item: controller.itemAt(index), itemIndex: index};
+                            const rowKind = controller.gridRowKind(index);
+                            if (rowKind === 1)
+                                return {kind: "heading", title: controller.gridRowTitle(index), itemIndex: -1};
+                            if (rowKind !== 0)
+                                return {kind: "spacer", itemIndex: -1};
+                            const itemIndex = controller.gridRowItemIndex(index);
+                            return {kind: "emoji", item: controller.itemAt(itemIndex), itemIndex: itemIndex};
                         }
                         readonly property bool mixedToneCapable: Boolean(modelData.kind === "emoji" && modelData.item && modelData.item.hasMixedTones)
 

@@ -14,9 +14,9 @@ FloatingWindow {
     readonly property bool importing: flowState.bundleFlowKind === "import"
     readonly property bool open: flowState.dialogKind === "import-review"
         || (flowState.dialogKind === "export-review" && flowState.bundleStep === "contents")
-    readonly property var importedCard: flowState.importedCard
+    readonly property var importedCard: flowState.importedCard || {id: "", name: "Theme", palette: []}
     readonly property var exportCard: flowState.themeCards.find(entry => entry.id === flowState.exportThemeId) || flowState.themeCards[0] || {id: "", name: "Theme", palette: []}
-    readonly property var shownCard: importing ? importedCard : exportCard
+    readonly property var shownCard: (importing ? importedCard : exportCard) || {id: "", name: "Theme", palette: []}
     readonly property bool compactStep: flowState.bundleStep === "result"
     property bool exportTargetsExpanded: false
 

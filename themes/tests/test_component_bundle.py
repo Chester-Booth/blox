@@ -266,6 +266,14 @@ class ComponentBundleTests(unittest.TestCase):
         with self.assertRaisesRegex(PortabilityFailure, 'unsafe script'):
             review_export(self.theme, self.settings, 'full', wallpaper=False)
 
+    def test_first_party_installed_scripts_do_not_require_user_script_review(self):
+        from themes.lib.blox_theme.core import repository_root
+        first_party = repository_root() / 'shell/scripts/widgets/todo-content.sh'
+        self.assertTrue(first_party.is_file())
+        self.settings['widgets'] = {'schemaVersion': 1, 'widgets': [
+            widget_model().default_widget('command', 'todo', {'command': [str(first_party)]})]}
+        self.assertEqual([], review_export(self.theme, self.settings, 'full', wallpaper=False))
+
     def test_system_executable_and_argument_paths_are_not_collected(self):
         transitive = self.root / 'argument.txt'; transitive.write_text('PRIVATE_ARGUMENT_FILE')
         self.settings['autostart'] = [{'id': 'system', 'name': 'System', 'enabled': True,

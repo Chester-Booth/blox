@@ -774,8 +774,11 @@ Scope {
             try {
                 const response = JSON.parse(output);
                 if (exitCode === 0 && Array.isArray(response.data)) {
-                    root.themes = response.data;
-                    root.themeSearchRecords = response.data.map((entry, index) => {
+                    const validThemes = response.data.filter((entry) => {
+                        return entry && !entry.invalid && typeof entry.id === "string" && entry.id.length > 0;
+                    });
+                    root.themes = validThemes;
+                    root.themeSearchRecords = validThemes.map((entry, index) => {
                         return {
                             "index": index,
                             "name": String(entry.name || entry.id || ""),

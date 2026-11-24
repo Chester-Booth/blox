@@ -183,7 +183,8 @@ Scope {
     }
     function reviewApplyScripts(records) {
         applyScriptReview = true; bundleFlowKind = "import"; bundleStep = "sensitive"; dialogKind = "import-review";
-        importedCard = windowOwner.libraryProvider.cardFor(SettingsApplyController.selectedThemeId);
+        importedCard = windowOwner.libraryProvider.cardFor(SettingsApplyController.selectedThemeId)
+            || {id: SettingsApplyController.selectedThemeId || "", name: SettingsApplyController.selectedThemeName || SettingsApplyController.selectedThemeId || "Theme", palette: []};
         sensitiveImportFiles = records.map(file => Object.assign({}, file, {id: file.path, preview: file.contents, reason: file.path + " · " + file.size + " bytes · SHA-256 " + file.sha256, viewMode: file.contents.split("\n").length > 4 ? "expand" : "plain"}));
         selectedImportSections = ["appearance"]; approvedSensitiveFiles = []; importState = "valid";
     }

@@ -165,8 +165,9 @@ Singleton {
         operation = action;
         busy = true;
         failureMessage = "";
-        if (action !== "status" && action !== "review" && action !== "drift-keep" && action !== "drift-reapply") {
+        if (action !== "status" && action !== "drift-keep" && action !== "drift-reapply") {
             applyState = action === "retry" ? "retrying" : action === "rollback" || action === "recover" ? "rolling-back" : "running";
+            applyMessage = action === "review" ? "Checking theme and dependencies" : "Apply saved targets";
             applyStages = stageRows("queued");
             applyStages[0].state = "active";
             applyStages = applyStages.slice();
@@ -363,9 +364,10 @@ Singleton {
                 return;
             }
             if (data.scripts && data.scripts.length) {
+                applyState = "ready";
                 if (windowOwner) windowOwner.reviewApplyScripts(data.scripts);
                 else fail("Open Settings to approve user-owned scripts before applying.");
-            } else if (data.drift) { drift = data.drift; driftReviewOpen = true; }
+            } else if (data.drift) { applyState = "ready"; drift = data.drift; driftReviewOpen = true; }
             else Qt.callLater(applyReviewed);
             return;
         }

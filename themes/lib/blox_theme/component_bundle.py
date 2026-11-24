@@ -98,9 +98,42 @@ def _references(components: dict) -> list[tuple[dict, str, str, str]]:
     return refs
 
 
+def _first_party_script_roots() -> tuple[Path, ...]:
+    xdg_data = Path(os.environ.get('XDG_DATA_HOME') or (Path.home() / '.local/share')).expanduser()
+    candidates = [
+        repository_root() / 'shell/scripts',
+        xdg_data / 'blox/shell/scripts',
+    ]
+    roots = []
+    for candidate in candidates:
+        try:
+            resolved = candidate.resolve()
+        except OSError:
+            continue
+        if resolved not in roots:
+            roots.append(resolved)
+    return tuple(roots)
+
+
+def _is_first_party_script(candidate: Path) -> bool:
+    """Return True for non-symlink scripts inside Blox's own script roots."""
+    if candidate.is_symlink():
+        return False
+    try:
+        info = candidate.lstat()
+        if not stat.S_ISREG(info.st_mode):
+            return False
+        resolved = candidate.resolve(strict=True)
+    except OSError:
+        return False
+    return any(resolved.is_relative_to(root) for root in _first_party_script_roots())
+
+
 def _user_script(path: str) -> bool:
     candidate = Path(path).expanduser()
     if not candidate.is_absolute() or path.startswith('assets/'):
+        return False
+    if _is_first_party_script(candidate):
         return False
     if candidate.is_relative_to(Path.home()):
         return True

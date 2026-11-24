@@ -14,6 +14,8 @@ FloatingWindow {
     property int activeEmojiPopups: 0
     property int contextItemIndex: -1
     property point contextAnchor: Qt.point(0, 0)
+    property Item hoveredCell: null
+    property var hoveredItem: null
     readonly property var contextItem: contextItemIndex >= 0 ? controller.itemAt(contextItemIndex) : null
     readonly property var categoryIcons: ["magnifying-glass", "clock-counter-clockwise", "smiley", "person-simple", "paw-print", "hamburger", "soccer-ball", "airplane", "lamp", "flag", "shapes", "code"]
     readonly property var toneColours: ["#ffdc5d", "#f7dece", "#e0bb95", "#c58c6b", "#a56b46", "#6f432a"]
@@ -95,6 +97,8 @@ FloatingWindow {
             else
                 Qt.callLater(() => emojiGrid.forceActiveFocus());
         } else {
+            root.hoveredCell = null;
+            root.hoveredItem = null;
             emojiSidebar.closeToneMenu();
             contextPopups.closeAll();
             activeEmojiPopups = 0;
@@ -327,7 +331,7 @@ FloatingWindow {
                     cellWidth: 58
                     cellHeight: 54
                     clip: true
-                    model: controller.sectionedBrowse ? controller.gridCount : controller.itemCount
+                    model: controller.gridModel
                     currentIndex: controller.sectionedBrowse ? controller.gridIndexForItem(controller.selectedIndex) : controller.selectedIndex
                     activeFocusOnTab: true
                     onWidthChanged: root.syncGridColumns()
@@ -474,52 +478,60 @@ FloatingWindow {
                             font.pixelSize: 25
                         }
 
-                        PhosphorIcon {
+                        Loader {
                             anchors.right: parent.right
                             anchors.rightMargin: Theme.scaledSpacing(3)
                             anchors.top: parent.top
                             anchors.topMargin: Theme.scaledSpacing(3)
                             width: 12
                             height: 12
-                            visible: Boolean(modelData.kind === "emoji" && modelData.item && modelData.item.pinned)
-                            iconName: "push-pin"
-                            iconColor: Theme.foreground
+                            active: Boolean(modelData.kind === "emoji" && modelData.item && modelData.item.pinned)
+                            sourceComponent: PhosphorIcon {
+                                iconName: "push-pin"
+                                iconColor: Theme.foreground
+                            }
                         }
 
-                        Item {
+                        Loader {
                             anchors.left: parent.left
                             anchors.leftMargin: Theme.scaledSpacing(3)
                             anchors.bottom: parent.bottom
                             anchors.bottomMargin: Theme.scaledSpacing(3)
                             width: 18
                             height: 11
-                            visible: Boolean(modelData.kind === "emoji" && modelData.item && modelData.item.hasMixedTones && (emojiHover.hovered || modelData.itemIndex === controller.selectedIndex))
-
-                            Rectangle {
-                                anchors.left: parent.left
-                                anchors.verticalCenter: parent.verticalCenter
-                                width: 10; height: 10; radius: Theme.scaledRadius(5)
-                                color: root.toneColours[controller.preferredTonePair(modelData.item)[0]]
-                                border.color: Theme.surface
+                            active: Boolean(modelData.kind === "emoji" && modelData.item && modelData.item.hasMixedTones && (emojiHover.hovered || modelData.itemIndex === controller.selectedIndex))
+                            sourceComponent: Item {
+                                readonly property var tones: controller.preferredTonePair(emojiCell.modelData.item)
+                                Rectangle {
+                                    anchors.left: parent.left
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: 10; height: 10; radius: Theme.scaledRadius(5)
+                                    color: root.toneColours[tones[0]]
+                                    border.color: Theme.surface
+                                }
+                                Rectangle {
+                                    anchors.right: parent.right
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: 10; height: 10; radius: Theme.scaledRadius(5)
+                                    color: root.toneColours[tones[1]]
+                                    border.color: Theme.surface
+                                }
                             }
-                            Rectangle {
-                                anchors.right: parent.right
-                                anchors.verticalCenter: parent.verticalCenter
-                                width: 10; height: 10; radius: Theme.scaledRadius(5)
-                                color: root.toneColours[controller.preferredTonePair(modelData.item)[1]]
-                                border.color: Theme.surface
-                            }
-                        }
-
-                        BloxToolTip {
-                            shown: modelData.kind === "emoji" && emojiHover.hovered
-                            text: modelData.item ? modelData.item.name + (modelData.item.pinned ? " · Pinned" : " · Right-click to pin") + (modelData.item.hasMixedTones ? modelData.item.pinned ? " · Right-click for tones" : " or adjust tones" : "") : ""
                         }
 
                         HoverHandler {
                             id: emojiHover
                             enabled: modelData.kind === "emoji"
                             cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                            onHoveredChanged: {
+                                if (hovered && emojiCell.modelData.kind === "emoji" && emojiCell.modelData.item) {
+                                    root.hoveredCell = emojiCell;
+                                    root.hoveredItem = emojiCell.modelData.item;
+                                } else if (root.hoveredCell === emojiCell) {
+                                    root.hoveredCell = null;
+                                    root.hoveredItem = null;
+                                }
+                            }
                         }
 
                         TapHandler {
@@ -544,6 +556,12 @@ FloatingWindow {
         }
 
         WindowResizeHandles { targetWindow: root; baseZ: 100 }
+
+        BloxToolTip {
+            parent: root.hoveredCell || card
+            shown: root.open && root.hoveredCell !== null && root.hoveredItem !== null
+            text: root.hoveredItem ? root.hoveredItem.name + (root.hoveredItem.pinned ? " · Pinned" : " · Right-click to pin") + (root.hoveredItem.hasMixedTones ? root.hoveredItem.pinned ? " · Right-click for tones" : " or adjust tones" : "") : ""
+        }
     }
 
     EmojiContextPopups {

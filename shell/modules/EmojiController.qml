@@ -51,6 +51,10 @@ Scope {
         : nativeCategoryBrowse ? categoryIndices.length
         : items.length
     readonly property int gridCount: sectionedBrowse ? nativeIndex.gridCount : itemCount
+    readonly property var gridModel: nativeIndex.gridModel
+
+    onGridCountChanged: nativeIndex.syncGridModelCount(gridCount)
+    Component.onCompleted: nativeIndex.syncGridModelCount(gridCount)
     readonly property var categories: ["Search", "Recent", "Smileys & Emotion", "People & Body", "Animals & Nature", "Food & Drink", "Activities", "Travel & Places", "Objects", "Flags", "Symbols", "Nerd Fonts"]
     readonly property var toneNames: ["", "light skin tone", "medium-light skin tone", "medium skin tone", "medium-dark skin tone", "dark skin tone"]
     readonly property var toneCharacters: ["", "🏻", "🏼", "🏽", "🏾", "🏿"]

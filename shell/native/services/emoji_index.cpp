@@ -9,12 +9,42 @@
 
 namespace {
 
+// Lightweight row-count model that diffs only the tail on size changes so
+// GridView reuses visible delegates in place instead of resetting on resize or search.
+class TailDiffListModel : public QAbstractListModel {
+    Q_OBJECT
+public:
+    explicit TailDiffListModel(QObject *parent = nullptr) : QAbstractListModel(parent) {}
+
+    int rowCount(const QModelIndex &parent = {}) const override { return parent.isValid() ? 0 : m_count; }
+    QVariant data(const QModelIndex &, int) const override { return {}; }
+
+    void setRowCount(int next)
+    {
+        next = std::max(0, next);
+        if (next == m_count) return;
+        if (next > m_count) {
+            beginInsertRows({}, m_count, next - 1);
+            m_count = next;
+            endInsertRows();
+        } else {
+            beginRemoveRows({}, next, m_count - 1);
+            m_count = next;
+            endRemoveRows();
+        }
+    }
+
+private:
+    int m_count = 0;
+};
+
 // Asset data stays native. QML requests payloads for displayed cells and keeps
 // only row indices for browsing and search, rather than copying both datasets.
 class NativeEmojiIndex : public QAbstractListModel {
     Q_OBJECT
     Q_PROPERTY(int count READ rowCount NOTIFY countChanged)
     Q_PROPERTY(int gridCount READ gridCount NOTIFY gridChanged)
+    Q_PROPERTY(QObject *gridModel READ gridModel CONSTANT)
     Q_PROPERTY(int sourceCount READ sourceCount NOTIFY datasetChanged)
     Q_PROPERTY(int emojiCount READ emojiCount NOTIFY datasetChanged)
     Q_PROPERTY(int nerdFontCount READ nerdFontCount NOTIFY datasetChanged)
@@ -22,10 +52,13 @@ class NativeEmojiIndex : public QAbstractListModel {
     Q_PROPERTY(QVariantList nerdFontSources READ nerdFontSources NOTIFY datasetChanged)
 
 public:
-    explicit NativeEmojiIndex(QObject *parent = nullptr) : QAbstractListModel(parent) {}
+    explicit NativeEmojiIndex(QObject *parent = nullptr)
+        : QAbstractListModel(parent), m_gridModel(new TailDiffListModel(this)) {}
 
     int rowCount(const QModelIndex &parent = {}) const override { return parent.isValid() ? 0 : m_browse.size(); }
     int gridCount() const { return m_gridCells.size(); }
+    QObject *gridModel() const { return m_gridModel; }
+    Q_INVOKABLE void syncGridModelCount(int count) { m_gridModel->setRowCount(count); }
     int sourceCount() const { return m_records.size(); }
     int emojiCount() const { return m_emoji.size(); }
     int nerdFontCount() const { return m_nerds.size(); }
@@ -428,6 +461,7 @@ private:
         emit countChanged();
     }
 
+    TailDiffListModel *m_gridModel = nullptr;
     QJsonArray m_emoji, m_nerds;
     bool m_emojiLoaded = false, m_nerdsLoaded = false;
     QVariantList m_purposes, m_sourceFilters, m_sources;

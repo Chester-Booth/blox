@@ -183,7 +183,7 @@ Item {
                     required property var modelData
 
                     spacing: Theme.scaledSpacing(4)
-                    height: 12
+                    height: Math.max(12, implicitHeight)
                     width: Math.min(implicitWidth, root.width)
 
                     Rectangle {

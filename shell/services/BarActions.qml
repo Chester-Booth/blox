@@ -179,6 +179,7 @@ Scope {
             "hibernate": {title: "Hibernate", forceLabel: "Hibernate anyway", verb: "Hibernating anyway"},
             "reboot": {title: "Reboot", forceLabel: "Reboot anyway", verb: "Rebooting anyway"},
             "shutdown": {title: "Shut down", forceLabel: "Shut down anyway", verb: "Shutting down anyway"},
+            "update-shutdown": {title: "Update + shutdown", forceLabel: "Continue anyway", verb: "Updating and shutting down"},
             "lock": {title: "Lock", forceLabel: "", verb: ""}
         };
         return map[actionName] || {title: "Power action", forceLabel: "", verb: ""};

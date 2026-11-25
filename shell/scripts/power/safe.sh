@@ -154,6 +154,8 @@ micro_items_json() {
 
 # Lists active systemd-logind block inhibitors matching a given scope ("sleep" or "shutdown").
 # Only mode == "block" locks match; delay inhibitors and idle-only locks (e.g. Blox Awake) are excluded.
+# Shutdown-class actions also treat sleep block inhibitors as blockers because powering off or rebooting
+# interrupts active work more severely than sleeping.
 block_inhibitors_json() {
 	local scope="$1"
 	local raw=""
@@ -173,7 +175,14 @@ block_inhibitors_json() {
 		(.data[0] // [])
 		| map(
 			select((.[3] // "") == "block")
-			| select(((.[0] // "") | split(":")) | index($scope) != null)
+			| ((.[0] // "") | split(":")) as $scopes
+			| select(
+				if $scope == "shutdown" then
+					(($scopes | index("shutdown")) != null) or (($scopes | index("sleep")) != null)
+				else
+					($scopes | index($scope)) != null
+				end
+			)
 			| {
 				who: (.[1] // "Unknown app"),
 				why: (.[2] // "Blocking power action"),
@@ -332,6 +341,20 @@ inhibitors)
 	else
 		printf '{"sleep":[],"shutdown":[],"micro":[]}\n'
 	fi
+	exit 0
+	;;
+precheck)
+	target_action="${extra_arg:-shutdown}"
+	action="$target_action"
+	guard_micro_before_power_action
+	case "$target_action" in
+	sleep|hibernate)
+		guard_inhibitors_before_power_action sleep
+		;;
+	*)
+		guard_inhibitors_before_power_action shutdown
+		;;
+	esac
 	exit 0
 	;;
 focus-special)

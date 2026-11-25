@@ -70,8 +70,32 @@ class PowerSafeTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         payload = json.loads(result.stdout)
         self.assertEqual([item["who"] for item in payload["sleep"]], ["T3 Code", "fwupd"])
-        self.assertEqual([item["who"] for item in payload["shutdown"]], ["fwupd"])
+        self.assertEqual([item["who"] for item in payload["shutdown"]], ["T3 Code", "fwupd"])
         self.assertEqual(payload["micro"], [])
+
+    def test_sleep_inhibitor_also_blocks_shutdown_and_update_shutdown_precheck(self):
+        _, fake_bin, log_file, env = self.make_sandbox()
+        inhibitors = {
+            "type": "a(ssssuu)",
+            "data": [[
+                ["sleep", "T3 Code", "Agents are working", "block", 1000, 578100],
+            ]],
+        }
+        write_executable(fake_bin / "busctl", f"printf '%s\\n' '{json.dumps(inhibitors)}'\n")
+
+        shutdown_result = self.run_safe(["--json", "shutdown"], env)
+        self.assertEqual(shutdown_result.returncode, 1)
+        shutdown_payload = json.loads(shutdown_result.stdout)
+        self.assertEqual(shutdown_payload["code"], "inhibited")
+        self.assertEqual(shutdown_payload["data"]["action"], "shutdown")
+        self.assertEqual(shutdown_payload["data"]["items"][0]["who"], "T3 Code")
+
+        precheck_result = self.run_safe(["--json", "precheck", "update-shutdown"], env)
+        self.assertEqual(precheck_result.returncode, 1)
+        precheck_payload = json.loads(precheck_result.stdout)
+        self.assertEqual(precheck_payload["code"], "inhibited")
+        self.assertEqual(precheck_payload["data"]["action"], "update-shutdown")
+        self.assertNotIn("systemctl:", log_file.read_text(encoding="utf-8"))
 
     def test_inhibited_sleep_returns_structured_json_without_locking_screen(self):
         _, fake_bin, log_file, env = self.make_sandbox()

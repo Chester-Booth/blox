@@ -49,7 +49,10 @@ QtObject {
 
     function powerCommand(kind, ignoreInhibitors) {
         if (kind === "update-shutdown")
-            return terminalCommand("update-shutdown", scriptRoot + "/update/run.sh && " + scriptRoot + "/power/safe.sh shutdown");
+            return scriptRoot + "/power/safe.sh --json precheck update-shutdown && " + terminalCommand("update-shutdown", scriptRoot + "/update/run.sh && " + scriptRoot + "/power/safe.sh shutdown");
+
+        if (kind === "force:update-shutdown")
+            return terminalCommand("update-shutdown", scriptRoot + "/update/run.sh && " + scriptRoot + "/power/safe.sh --ignore-inhibitors shutdown");
 
         if (kind.indexOf("force:") === 0)
             return scriptRoot + "/power/safe.sh --json --ignore-inhibitors " + kind.slice("force:".length);

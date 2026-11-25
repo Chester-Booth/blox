@@ -154,7 +154,7 @@ Rectangle {
                     "command": "reboot",
                     "danger": true
                 }, {
-                    "icon": "⏻",
+                    "icon": "󰤆",
                     "label": "Shut down",
                     "command": "shutdown",
                     "danger": true

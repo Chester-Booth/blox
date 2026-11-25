@@ -1,9 +1,15 @@
 import QtQuick
 import QtQuick.Effects
+import QtQuick.Window
 
+// Rasterises Phosphor SVGs at the item's native physical pixel size with mipmapped
+// layer tinting so small icons stay anti-aliased instead of aliasing on downscale.
 Image {
+    id: root
+
     required property string iconName
     property color iconColor: Theme.foreground
+    readonly property real deviceScale: Screen.devicePixelRatio > 0 ? Screen.devicePixelRatio : 1
 
     source: iconName === ""
         ? ""
@@ -11,15 +17,17 @@ Image {
     fillMode: Image.PreserveAspectFit
     smooth: true
     mipmap: true
-    sourceSize: Qt.size(128, 128)
+    sourceSize: Qt.size(
+        Math.max(1, Math.ceil((width > 0 ? width : 16) * deviceScale)),
+        Math.max(1, Math.ceil((height > 0 ? height : 16) * deviceScale))
+    )
     layer.enabled: true
     layer.smooth: true
-    layer.textureSize: Qt.size(Math.max(64, width * 4), Math.max(64, height * 4))
+    layer.mipmap: true
 
     layer.effect: MultiEffect {
         brightness: 1
         colorization: 1
-        colorizationColor: iconColor
+        colorizationColor: root.iconColor
     }
-
 }

@@ -43,8 +43,6 @@ Rectangle {
     }
 
     function clearAlert() {
-        root.actionAlert = null;
-        root.actionError = "";
         root.dismissAlert();
     }
 
@@ -74,7 +72,7 @@ Rectangle {
         if (hasAlert && overlayOpen) {
             Qt.callLater(() => {
                 if (root.hasAlert && root.overlayOpen)
-                    alertSecondaryButton.forceActiveFocus(Qt.OtherFocusReason);
+                    root.forceActiveFocus(Qt.OtherFocusReason);
             });
         }
     }

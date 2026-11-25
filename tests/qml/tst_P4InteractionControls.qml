@@ -37,6 +37,10 @@ TestCase {
                 overlayOpen: true
                 Component.onCompleted: windowRoot.powerOverlayRef = powerOverlay
                 onAction: command => windowRoot.powerAction = command
+                onDismissAlert: {
+                    powerOverlay.actionAlert = null;
+                    powerOverlay.actionError = "";
+                }
                 onClose: overlayOpen = false
             }
 
@@ -196,8 +200,10 @@ TestCase {
             secondaryLabel: "Cancel"
         };
         const primary = findChild(overlay, "power-alert-primary");
-        verify(primary);
+        const secondary = findChild(overlay, "power-alert-secondary");
+        verify(primary && secondary);
         tryCompare(primary, "visible", true);
+        compare(secondary.activeFocus, false);
         primary.clicked();
         compare(testWindow.powerAction, "force:sleep");
 
@@ -205,6 +211,23 @@ TestCase {
         keyClick(Qt.Key_Escape);
         tryCompare(overlay, "hasAlert", false);
         compare(overlay.overlayOpen, true);
+
+        // Re-raising an alert after dismissal works without broken bindings.
+        overlay.actionAlert = {
+            code: "inhibited",
+            tone: "warning",
+            title: "Sleep blocked",
+            body: "Still blocked.",
+            items: [{who: "T3 Code", why: "Agents are working", meta: "PID 578100"}],
+            primaryLabel: "Sleep anyway",
+            primaryKind: "force:sleep",
+            primaryTone: "warning",
+            secondaryLabel: "Cancel"
+        };
+        tryCompare(overlay, "hasAlert", true);
+        secondary.clicked();
+        tryCompare(overlay, "hasAlert", false);
+
         keyClick(Qt.Key_Escape);
         tryCompare(overlay, "overlayOpen", false);
     }

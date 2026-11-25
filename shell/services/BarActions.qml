@@ -45,11 +45,16 @@ Scope {
     property int generatedExitStatus: 0
     property bool powerBusy: false
     property string powerError: ""
+    property var powerAlert: null
+    property var powerBlockers: ({"sleep": [], "shutdown": [], "micro": []})
+    property string powerRaw: ""
     property string powerProcessError: ""
     property bool powerProcessExited: false
+    property bool powerStdoutFinished: false
     property bool powerStderrFinished: false
     property int powerExitCode: 0
     property int powerExitStatus: 0
+    property string powerBlockersRaw: ""
 
     signal controlRefreshRequested()
     signal performanceRefreshRequested()
@@ -155,15 +160,102 @@ Scope {
         return performanceResult;
     }
 
+    function clearPowerError() {
+        powerError = "";
+        powerAlert = null;
+    }
+
+    function refreshPowerBlockers() {
+        if (scriptRoot.length === 0 || powerBlockersProcess.running)
+            return;
+        powerBlockersRaw = "";
+        powerBlockersProcess.command = ["timeout", "5s", scriptRoot + "/power/safe.sh", "inhibitors"];
+        powerBlockersProcess.running = true;
+    }
+
+    function powerActionMeta(actionName) {
+        const map = {
+            "sleep": {title: "Sleep", forceLabel: "Sleep anyway", verb: "Sleeping anyway"},
+            "hibernate": {title: "Hibernate", forceLabel: "Hibernate anyway", verb: "Hibernating anyway"},
+            "reboot": {title: "Reboot", forceLabel: "Reboot anyway", verb: "Rebooting anyway"},
+            "shutdown": {title: "Shut down", forceLabel: "Shut down anyway", verb: "Shutting down anyway"},
+            "lock": {title: "Lock", forceLabel: "", verb: ""}
+        };
+        return map[actionName] || {title: "Power action", forceLabel: "", verb: ""};
+    }
+
+    function buildPowerAlert(reply) {
+        const data = reply && reply.data && typeof reply.data === "object" ? reply.data : {};
+        const actionName = String(data.action || "");
+        const meta = powerActionMeta(actionName);
+        const items = Array.isArray(data.items) ? data.items : [];
+        const code = String(reply && reply.code || "failed");
+
+        if (code === "inhibited") {
+            const count = items.length;
+            const sleepScope = data.scope === "sleep" || actionName === "sleep" || actionName === "hibernate";
+            const body = sleepScope
+                ? (count > 1
+                    ? "Active apps are keeping the laptop awake. " + meta.verb + " may interrupt them."
+                    : "An active app is keeping the laptop awake. " + meta.verb + " may interrupt it.")
+                : (count > 1
+                    ? "Active apps are blocking " + meta.title.toLowerCase() + ". " + meta.verb + " may interrupt them."
+                    : "An active app is blocking " + meta.title.toLowerCase() + ". " + meta.verb + " may interrupt it.");
+            return {
+                code: code,
+                tone: "warning",
+                title: meta.title + " blocked",
+                body: body,
+                items: items,
+                primaryLabel: meta.forceLabel,
+                primaryKind: actionName.length > 0 ? ("force:" + actionName) : "",
+                primaryTone: "warning",
+                secondaryLabel: "Cancel"
+            };
+        }
+
+        if (code === "micro-open") {
+            const workspace = String(data.workspace || "");
+            return {
+                code: code,
+                tone: "warning",
+                title: meta.title + " blocked",
+                body: "micro is open in a special workspace. Save or close it first.",
+                items: items,
+                primaryLabel: workspace.length > 0 ? ("Open " + workspace) : "",
+                primaryKind: workspace.length > 0 ? ("focus-special:" + workspace) : "",
+                primaryTone: "info",
+                secondaryLabel: "Cancel"
+            };
+        }
+
+        const primaryLabel = actionName === "hibernate" ? "Sleep instead" : "";
+        const primaryKind = actionName === "hibernate" ? "sleep" : "";
+        return {
+            code: code,
+            tone: "error",
+            title: meta.title + " failed",
+            body: reply && reply.message ? String(reply.message) : "The power action did not complete.",
+            items: items,
+            primaryLabel: primaryLabel,
+            primaryKind: primaryKind,
+            primaryTone: "info",
+            secondaryLabel: "Close"
+        };
+    }
+
     function runPower(command) {
         if (powerBusy || powerProcess.running)
             return powerResult = actionResult(false, "busy", "A power action is already in progress", null);
         if (command.length === 0)
             return powerResult = actionResult(false, "invalid-data", "No power action was selected", null);
 
+        powerRaw = "";
         powerProcessError = "";
         powerError = "";
+        powerAlert = null;
         powerProcessExited = false;
+        powerStdoutFinished = false;
         powerStderrFinished = false;
         powerBusy = true;
         powerProcess.command = ["timeout", "90s", "sh", "-c", command];
@@ -173,15 +265,38 @@ Scope {
     }
 
     function finishPower() {
-        if (!powerProcessExited || !powerStderrFinished)
+        if (!powerProcessExited || !powerStdoutFinished || !powerStderrFinished)
             return;
 
         powerBusy = false;
-        const message = powerProcessError.trim().length > 0
-            ? errorMessage("Power action failed", powerExitCode, powerProcessError)
+        let reply = null;
+        if (powerRaw.trim().length > 0) {
+            try {
+                const parsed = JSON.parse(powerRaw);
+                if (parsed && parsed.version === 1 && typeof parsed.ok === "boolean"
+                        && typeof parsed.code === "string" && typeof parsed.message === "string")
+                    reply = parsed;
+            } catch (error) {
+                reply = null;
+            }
+        }
+
+        if (reply && !(reply.ok && (powerExitCode !== 0 || powerExitStatus !== 0))) {
+            powerResult = reply;
+            powerError = reply.ok ? "" : reply.message;
+            powerAlert = reply.ok ? null : buildPowerAlert(reply);
+            powerFinished(reply.ok);
+            return;
+        }
+
+        const lines = powerProcessError.trim().split("\n").map((line) => line.trim()).filter((line) => line.length > 0);
+        const firstLine = lines.length > 0 ? lines[0].slice(0, 180) : "";
+        const message = firstLine.length > 0
+            ? "Power action failed: " + firstLine
             : powerExitCode === 124 ? "Power action timed out" : "Power action failed (exit " + powerExitCode + ")";
         powerResult = completed("power", powerExitCode, powerExitStatus, message);
         powerError = powerResult.ok ? "" : powerResult.message;
+        powerAlert = powerResult.ok ? null : buildPowerAlert(powerResult);
         powerFinished(powerResult.ok);
     }
 
@@ -358,11 +473,40 @@ Scope {
             root.powerProcessExited = true;
             root.finishPower();
         }
+        stdout: StdioCollector {
+            onStreamFinished: {
+                root.powerRaw = this.text;
+                root.powerStdoutFinished = true;
+                root.finishPower();
+            }
+        }
         stderr: StdioCollector {
             onStreamFinished: {
                 root.powerProcessError = this.text;
                 root.powerStderrFinished = true;
                 root.finishPower();
+            }
+        }
+    }
+
+    Process {
+        id: powerBlockersProcess
+        objectName: "power-blockers-process"
+        stdout: StdioCollector {
+            onStreamFinished: {
+                root.powerBlockersRaw = this.text;
+                try {
+                    const parsed = JSON.parse(root.powerBlockersRaw);
+                    if (parsed && typeof parsed === "object") {
+                        root.powerBlockers = {
+                            "sleep": Array.isArray(parsed.sleep) ? parsed.sleep : [],
+                            "shutdown": Array.isArray(parsed.shutdown) ? parsed.shutdown : [],
+                            "micro": Array.isArray(parsed.micro) ? parsed.micro : []
+                        };
+                    }
+                } catch (error) {
+                    // Keep the last known empty/safe blocker map on malformed output.
+                }
             }
         }
     }

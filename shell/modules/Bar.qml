@@ -671,6 +671,7 @@ Scope {
                 onAction: (kind) => {
                     barContentController.runPower(barContentController.content.powerCommand(kind));
                 }
+                onReopen: barSurfaceController.openKeyboardPanel("power")
                 onClose: barSurfaceController.closePanel()
             }
 

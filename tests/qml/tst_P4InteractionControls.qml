@@ -144,15 +144,69 @@ TestCase {
         testWindow = controlWindow.createObject(testCase);
         const overlay = testWindow.powerOverlayRef;
         verify(overlay);
-        overlay.actionError = "Power action failed: denied";
-        const status = findChild(overlay, "power-action-status");
         const lock = findChild(overlay, "power-action-lock");
-        verify(status);
         verify(lock);
-        tryCompare(status, "visible", true);
+        const initialY = lock.y;
+        const initialHeight = lock.height;
+        overlay.actionError = "Power action failed: denied";
+        const modal = findChild(overlay, "power-alert-modal");
+        const status = findChild(overlay, "power-action-status");
+        verify(modal);
+        verify(status);
+        tryCompare(modal, "visible", true);
         compare(status.text, "Power action failed: denied");
+        compare(lock.y, initialY);
+        compare(lock.height, initialHeight);
+        compare(lock.enabled, false);
+        overlay.actionError = "";
         overlay.actionBusy = true;
         compare(lock.enabled, false);
+    }
+
+    function test_power_overlay_badges_blocked_tiles_and_modal_override() {
+        testWindow = controlWindow.createObject(testCase);
+        testWindow.requestActivate();
+        tryCompare(testWindow, "active", true);
+        const overlay = testWindow.powerOverlayRef;
+        verify(overlay);
+        overlay.powerBlockers = {
+            sleep: [{who: "T3 Code", why: "Agents are working", meta: "PID 578100"}],
+            shutdown: [],
+            micro: []
+        };
+        const sleepBadge = findChild(overlay, "power-badge-sleep");
+        const hibernateBadge = findChild(overlay, "power-badge-hibernate");
+        const lockBadge = findChild(overlay, "power-badge-lock");
+        const shutdownBadge = findChild(overlay, "power-badge-shutdown");
+        verify(sleepBadge && hibernateBadge && lockBadge && shutdownBadge);
+        compare(sleepBadge.visible, true);
+        compare(hibernateBadge.visible, true);
+        compare(lockBadge.visible, false);
+        compare(shutdownBadge.visible, false);
+
+        overlay.actionAlert = {
+            code: "inhibited",
+            tone: "warning",
+            title: "Sleep blocked",
+            body: "An active app is keeping the laptop awake.",
+            items: [{who: "T3 Code", why: "Agents are working", meta: "PID 578100"}],
+            primaryLabel: "Sleep anyway",
+            primaryKind: "force:sleep",
+            primaryTone: "warning",
+            secondaryLabel: "Cancel"
+        };
+        const primary = findChild(overlay, "power-alert-primary");
+        verify(primary);
+        tryCompare(primary, "visible", true);
+        primary.clicked();
+        compare(testWindow.powerAction, "force:sleep");
+
+        // Escape dismisses the modal first without closing the power overlay.
+        keyClick(Qt.Key_Escape);
+        tryCompare(overlay, "hasAlert", false);
+        compare(overlay.overlayOpen, true);
+        keyClick(Qt.Key_Escape);
+        tryCompare(overlay, "overlayOpen", false);
     }
 
     function test_busy_power_action_rejects_a_second_command_without_starting_a_process() {

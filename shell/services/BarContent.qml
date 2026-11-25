@@ -47,11 +47,17 @@ QtObject {
         return value;
     }
 
-    function powerCommand(kind) {
+    function powerCommand(kind, ignoreInhibitors) {
         if (kind === "update-shutdown")
-            return terminalCommand("update-shutdown", scriptRoot + "/update/run.sh; " + scriptRoot + "/power/safe.sh shutdown");
+            return terminalCommand("update-shutdown", scriptRoot + "/update/run.sh && " + scriptRoot + "/power/safe.sh shutdown");
 
-        return scriptRoot + "/power/safe.sh " + kind;
+        if (kind.indexOf("force:") === 0)
+            return scriptRoot + "/power/safe.sh --json --ignore-inhibitors " + kind.slice("force:".length);
+
+        if (kind.indexOf("focus-special:") === 0)
+            return scriptRoot + "/power/safe.sh --json focus-special " + kind.slice("focus-special:".length);
+
+        return scriptRoot + "/power/safe.sh --json" + (ignoreInhibitors === true ? " --ignore-inhibitors" : "") + " " + kind;
     }
 
     function terminalCommand(title, command) {

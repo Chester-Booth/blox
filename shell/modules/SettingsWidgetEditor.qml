@@ -395,7 +395,7 @@ ColumnLayout {
             ColumnLayout {
                 visible: root.currentTab === 3
                 Layout.fillWidth: true
-                SettingsWidgetScalarField { fieldName: "visibility"; label: "Show when"; controlName: "widgetVisibility"; rule: ({enum:["always","empty-workspace"]}); value: root.draft ? root.draft.visibility : "always"; onEdited: value => root.controller.updateWidgetDraft({visibility:value}) }
+                SettingsWidgetScalarField { fieldName: "visibility"; label: "Show when"; controlName: "widgetVisibility"; rule: ({enum:["always","empty-workspace"]}); value: root.draft ? root.draft.visibility : "empty-workspace"; onEdited: value => root.controller.updateWidgetDraft({visibility:value}) }
                 SettingsWidgetScalarField { fieldName: "workspaces"; label: "Workspaces"; controlName: "widgetWorkspaceMode"; rule: ({enum:["All","Selected"]}); value: root.draft && root.draft.workspaces.mode === "include" ? "Selected" : "All"; onEdited: value => root.updateSection("workspaces", "mode", value === "All" ? "all" : "include") }
                 SettingsWidgetScalarField { visible: !!root.draft && root.draft.workspaces.mode === "include"; fieldName: "ids"; label: "IDs and names"; controlName: "widgetWorkspaceIds"; rule: ({type:"string"}); value: root.draft ? root.workspaceIdsText(root.draft.workspaces.ids) : ""; onEdited: value => root.editWorkspaceIds(value) }
                 SettingsWidgetScalarField { visible: !!root.draft && root.draft.workspaces.mode === "include"; fieldName: "ranges"; label: "Ranges"; controlName: "widgetWorkspaceRanges"; rule: ({type:"string"}); value: root.draft ? root.workspaceRangesText(root.draft.workspaces.ranges) : ""; onEdited: value => root.editWorkspaceRanges(value) }

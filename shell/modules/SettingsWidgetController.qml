@@ -210,7 +210,7 @@ QtObject {
         return {id: uniqueId(), kind: entry.kind, name: entry.name, enabled: true,
             placement: {anchor: "top-left", x: 24, y: 24, width: entry.width, height: entry.height,
                 sizing: entry.kind === "command" ? "content" : "fixed"},
-            workspaces: {mode: "all", ids: [], ranges: []}, visibility: "always",
+            workspaces: {mode: "all", ids: [], ranges: []}, visibility: "empty-workspace",
             appearance: {presentation: "open", backgroundOpacity: 0.8, scrollbars: "auto"},
             fullscreen: {enabled: false, mode: entry.kind === "terminal" ? "resize" : "native"}, settings: copy(entry.defaultSettings)};
     }

@@ -28,6 +28,7 @@ Scope {
     property var hosts: []
     property string fullscreenWidgetId: ""
     property string fullscreenOutputName: ""
+    property int workspaceRevision: 0
     readonly property var visibleFullscreenOutputs: root.hosts.filter(host => host.fullscreenVisible).map(host => host.outputName)
     readonly property var activeItems: Theme.widgetItems.filter(item => item.enabled === true)
     WidgetItemModel { id: widgetModel; items: root.activeItems }
@@ -76,9 +77,12 @@ Scope {
 
     function workspaceSnapshot(workspace) {
         if (!workspace) return {id: null, name: "", special: false, empty: false};
+        const toplevels = workspace.toplevels && workspace.toplevels.values ? workspace.toplevels.values : [];
+        const ipcWindows = workspace.lastIpcObject && typeof workspace.lastIpcObject.windows === "number"
+            ? workspace.lastIpcObject.windows : 0;
         return {id: workspace.id, name: workspace.name,
             special: String(workspace.name).startsWith("special:"),
-            empty: workspace.toplevels.values.length === 0};
+            empty: toplevels.length === 0 && ipcWindows === 0};
     }
 
     function interactiveWidget(widget) {
@@ -303,6 +307,28 @@ Scope {
         brokerEnvironment: ({PYTHONPATH: Quickshell.env("BLOX_WIDGETS_ROOT") + "/lib"})
     }
     Process { id: keyboardFocusRestore; objectName: "desktop-widget-focus-restore" }
+    Component.onCompleted: {
+        Hyprland.refreshToplevels();
+        Hyprland.refreshWorkspaces();
+    }
+
+    Connections {
+        target: Hyprland
+        function onRawEvent(event) {
+            if (["openwindow", "closewindow", "movewindow", "movewindowv2", "workspace", "workspacev2",
+                    "activespecial", "focusedmon", "createworkspace", "destroyworkspace"].indexOf(event.name) < 0)
+                return;
+            Hyprland.refreshToplevels();
+            Hyprland.refreshWorkspaces();
+            root.workspaceRevision++;
+        }
+    }
+    Connections {
+        target: Hyprland.toplevels
+        function onValuesChanged() { root.workspaceRevision++; }
+        function onObjectInsertedPost() { root.workspaceRevision++; }
+        function onObjectRemovedPost() { root.workspaceRevision++; }
+    }
     Connections {
         target: Theme
         function onWidgetItemsChanged() { root.reconcileKeyboardFocus(); }
@@ -320,8 +346,20 @@ Scope {
             readonly property bool workAreaReady: Theme.ready && !!externalReservations
             readonly property rect widgetBounds: WidgetWorkArea.bounds(width, height,
                 externalReservations, root.occupiedBar)
-            readonly property var workspaceObject: root.workspaceForMonitor(outputMonitor)
-            readonly property var workspaceState: root.workspaceSnapshot(workspaceObject)
+            readonly property var workspaceObject: {
+                void root.workspaceRevision;
+                return root.workspaceForMonitor(outputMonitor);
+            }
+            readonly property var workspaceState: {
+                void root.workspaceRevision;
+                return root.workspaceSnapshot(workspaceObject);
+            }
+            Connections {
+                target: outputSurface.workspaceObject ? outputSurface.workspaceObject.toplevels : null
+                function onValuesChanged() { root.workspaceRevision++; }
+                function onObjectInsertedPost() { root.workspaceRevision++; }
+                function onObjectRemovedPost() { root.workspaceRevision++; }
+            }
             readonly property bool keyboardFocused: !!root.keyboardHost && root.keyboardHost.outputWindow === outputSurface
                 && (root.keyboardHost.phase === "visible" || root.terminalRecoveryAvailable(root.keyboardHost))
             screen: modelData

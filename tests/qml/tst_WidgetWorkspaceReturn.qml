@@ -180,6 +180,10 @@ TestCase {
         compare(subject.workspaceSnapshot(workspace).empty, true);
         workspace.toplevels.values = [{}];
         compare(subject.workspaceSnapshot(workspace).empty, false);
+        const ipcOccupied = {id: 2, name: "2", toplevels: {values: []}, lastIpcObject: {windows: 1}};
+        compare(subject.workspaceSnapshot(ipcOccupied).empty, false);
+        ipcOccupied.lastIpcObject.windows = 0;
+        compare(subject.workspaceSnapshot(ipcOccupied).empty, true);
     }
     function test_current_empty_special_record_keeps_normal_workspace() {
         const normal = {id: 9, name: "9", toplevels: {values: []}};

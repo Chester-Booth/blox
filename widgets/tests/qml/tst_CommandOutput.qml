@@ -254,7 +254,7 @@ TestCase {
     function test_wrappedErrorFitsNarrowBounds_data() {
         const rows = [];
         for (const retained of [false, true])
-            for (const height of [600, 70, 20])
+            for (const height of [760, 70, 20])
                 rows.push({tag: retained + "/" + height, retained: retained, height: height});
         return rows;
     }
@@ -281,7 +281,7 @@ TestCase {
         verify(host.width <= 100);
         verify(host.height <= row.height);
         verify(host.contentHeight >= label.implicitHeight + 48);
-        if (row.height === 600) {
+        if (row.height === 760) {
             compare(label.height, label.implicitHeight);
             verify(label.y >= 24);
             compare(viewport.height, findChild(host, "commandText").implicitHeight);

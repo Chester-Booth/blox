@@ -28,6 +28,7 @@ class ApplyOwnersTests(unittest.TestCase):
             "XDG_STATE_HOME": str(self.root / "state"),
             "XDG_DATA_HOME": str(self.root / "data"),
             "BLOX_DATA_DIR": str(Path(__file__).resolve().parents[1]),
+            "BLOX_SHELL_DIR": str(self.root / "shell"),
         })
         environment.start()
         self.addCleanup(environment.stop)
@@ -40,6 +41,9 @@ class ApplyOwnersTests(unittest.TestCase):
             patcher.start()
             self.addCleanup(patcher.stop)
         (self.root / "config").mkdir()
+        quickshell_loader = self.root / "shell/shared/Theme.qml"
+        quickshell_loader.parent.mkdir(parents=True)
+        quickshell_loader.write_text("watchChanges: true\nfunction loadJson() {}\n", encoding="utf-8")
         entrypoint = self.root / "config/hypr/hyprland.lua"
         entrypoint.parent.mkdir()
         entrypoint.write_text(ENTRYPOINT_LINE + "\n")
